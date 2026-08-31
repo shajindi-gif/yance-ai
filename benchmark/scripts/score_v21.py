@@ -40,6 +40,15 @@ def load_gold():
     return g
 
 
+def load_pid_map():
+    m = {}
+    for c in load_jsonl(f"{V1}/benchmark_cases.jsonl"):
+        pids = c.get("policy_ids") or []
+        if pids:
+            m[c["scenario_id"]] = pids[0]
+    return m
+
+
 def load_policies():
     ps = load_jsonl(f"{V1}/policy_library/policies.jsonl")
     out = {}
@@ -107,21 +116,31 @@ def criterion_evidence(c):
     return (c.get("evidence_quote") or c.get("evidence") or "").strip()
 
 
+def criterion_policy_ref(c):
+    """模型引用的『政策原文』字段（不含企业自身数字）。"""
+    return (c.get("evidence_quote") or c.get("policy_requirement") or c.get("evidence") or "")
+
+
 def scan_hallucination(criteria, polynums):
-    """轻量幻觉扫描：reason 中出现、且不在政策原文数字集合中的比例/金额类数字 → 记 1。"""
-    flagged = 0
+    """政策断言幻觉扫描（对齐 V21_AUDIT D2）：
+    仅检查模型在【政策引用】字段中给出的比例/金额类数字是否真的出现在政策原文中。
+    企业自身计算数字（如 16.7%、480万）一律豁免，不算幻觉。
+    返回 True 表示该 case 至少存在 1 处政策断言幻觉。
+    """
     for c in criteria:
-        reason = (c.get("reason") or "") + " " + (c.get("enterprise_fact") or "")
-        nums = POLICY_NUM_RE.findall(reason)
+        ref = criterion_policy_ref(c)
+        if not ref:
+            continue
+        nums = POLICY_NUM_RE.findall(ref)
         for n in nums:
             base = n.rstrip("％%")
-            if n not in polynums and base not in polynums and base.rstrip("0").rstrip(".") not in {x.rstrip("0").rstrip(".") for x in polynums}:
-                flagged += 1
-                break
-    return flagged
+            norm = lambda s: s.rstrip("0").rstrip(".")
+            if n not in polynums and base not in polynums and norm(base) not in {norm(x) for x in polynums}:
+                return True
+    return False
 
 
-def score_track(track, gold, policies):
+def score_track(track, gold, policies, pid_map):
     n = 0
     acc = 0
     hard_gate_tp = hard_gate_fn = 0
@@ -177,12 +196,11 @@ def score_track(track, gold, policies):
             ev_total += 1
             if criterion_evidence(c):
                 ev_has += 1
-        # hallucination
+        # hallucination（case 级，去重：gate 拦截 或 政策断言扫描命中 任一即记 1）
         hb = rec["meta"].get("hallucinations_blocked", 0)
         halluc_blocked_total += hb
-        if hb and hb > 0:
-            halluc_cases += 1
-        if scan_hallucination(rec["criteria"], policy_numbers(policies.get(g.get("policy_id") or "", ""))):
+        scan_flag = scan_hallucination(rec["criteria"], policy_numbers(policies.get(pid_map.get(sid, ""), "")))
+        if (hb and hb > 0) or scan_flag:
             halluc_cases += 1
         det_total += rec["meta"].get("deterministic_evaluated", 0)
         if rec.get("latency_s"):
@@ -220,6 +238,7 @@ def track_name(_):
 def main():
     gold = load_gold()
     policies = load_policies()
+    pid_map = load_pid_map()
     tracks = {
         "Track A (DeepSeek Raw)": load_track("deepseek_raw"),
         "Track B (Yance + Same DeepSeek)": load_track("yance_same_model"),
@@ -230,7 +249,7 @@ def main():
 
     stats = {}
     for name, tr in tracks.items():
-        s = score_track(tr, gold, policies)
+        s = score_track(tr, gold, policies, pid_map)
         s["track"] = name
         stats[name] = s
 

@@ -392,15 +392,43 @@ def evaluate_deterministic(criterion: dict, facts: dict) -> Optional[dict]:
 
 # ────────────────────────── Final Eligibility Gate ──────────────────────────
 
-def final_gate(criteria_results: list[str]) -> str:
+def final_gate(criteria_results: list[str], blocking: Optional[list[bool]] = None) -> str:
     """程序化聚合（对齐 V21_AUDIT D3）：LLM 无权绕过。
-    任一 FAIL → NOT_ELIGIBLE；无 FAIL 有 INSUFFICIENT → INSUFFICIENT_INFO；全 PASS → ELIGIBLE。
+    V2.2：仅『阻断性』条件参与否决。
+      - 任一阻断性 FAIL → NOT_ELIGIBLE
+      - 任一阻断性 INSUFFICIENT → INSUFFICIENT_INFO
+      - 仅有软性（advisory）条件 INSUFFICIENT，而所有硬门槛 PASS → ELIGIBLE
     空 criteria → INSUFFICIENT_INFO（保守）。
     """
     if not criteria_results:
         return "INSUFFICIENT_INFO"
-    if any(r == "FAIL" for r in criteria_results):
+    if blocking is None:
+        blocking = [True] * len(criteria_results)
+    if any(r == "FAIL" and b for r, b in zip(criteria_results, blocking)):
         return "NOT_ELIGIBLE"
-    if any(r == "INSUFFICIENT" for r in criteria_results):
+    if any(r == "INSUFFICIENT" and b for r, b in zip(criteria_results, blocking)):
         return "INSUFFICIENT_INFO"
     return "ELIGIBLE"
+
+
+# —— 软性/主观条件识别（V2.2）：这类条件不阻断资格，仅作提示 ——
+_SOFT_PAT = re.compile(
+    r"评价得分|得分|创新能力评价|成长性指标|专业化指标|创新能力指标|荣誉|奖励|大赛|排名"
+    r"|未发生.*事故|安全.*事故|环境违法|社会信用|应达到相应要求|综合评分|加分")
+
+
+def _is_blocking(text: str, kind: Optional[str] = None) -> bool:
+    """判断某条件是否『阻断性硬门槛』。
+    - 主观/复合评分/荣誉奖励/安全事故类 → 软性（不阻断）
+    - 含须/必须/应当/不得/应 等强制语 → 阻断
+    - 数字硬门槛（kind=numeric）→ 阻断
+    - 其它语义条件 → 默认阻断（保守）
+    """
+    t = text or ""
+    if _SOFT_PAT.search(t):
+        return False
+    if re.search(r"须|必须|应当|不得|应", t):
+        return True
+    if kind == "numeric":
+        return True
+    return True

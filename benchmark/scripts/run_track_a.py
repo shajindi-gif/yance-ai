@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Track A: DeepSeek Raw Baseline。与 Yance 引擎使用同一 DeepSeek 模型(deepseek-chat)、
 同一企业画像、同一政策原文、temperature=0，但不经任何 Yance 系统层。"""
-import json, os, time, datetime, urllib.request, urllib.error
+import json, os, time, datetime, urllib.request, urllib.error, sys
 
 ENV_PROD = "/Users/shajindi/Desktop/yance-backup/env.prod"
 V1_BENCH = "/Users/shajindi/AI-Workspace/qoder 项目1/benchmark"
@@ -42,19 +42,31 @@ SYSTEM = (
     "6) 严格输出 JSON。"
 )
 
-def chat(system, user, max_tokens=4000, timeout=180):
+def chat(system, user, max_tokens=4000, timeout=180, max_retry=4):
     payload = {"model": MODEL, "messages": [{"role": "system", "content": system},
                {"role": "user", "content": user}], "max_tokens": max_tokens, "temperature": 0}
     req = urllib.request.Request("https://api.deepseek.com/chat/completions",
         data=json.dumps(payload).encode(), method="POST",
         headers={"Content-Type": "application/json", "Authorization": f"Bearer {API_KEY}"})
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            return 200, json.loads(r.read().decode())
-    except urllib.error.HTTPError as e:
-        return e.code, e.read().decode(errors="replace")
-    except Exception as e:
-        return -1, f"{type(e).__name__}: {e}"
+    backoff = 5
+    for attempt in range(max_retry):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return 200, json.loads(r.read().decode())
+        except urllib.error.HTTPError as e:
+            body = e.read().decode(errors="replace")
+            if e.code == 429 and attempt < max_retry - 1:
+                print(f"  429 rate-limit, retry {attempt+1} after {backoff}s", flush=True)
+                time.sleep(backoff); backoff *= 2
+                continue
+            return e.code, body
+        except Exception as e:
+            if attempt < max_retry - 1:
+                print(f"  {type(e).__name__}, retry {attempt+1} after {backoff}s", flush=True)
+                time.sleep(backoff); backoff *= 2
+                continue
+            return -1, f"{type(e).__name__}: {e}"
+    return 429, "exhausted retries"
 
 def main():
     os.makedirs(OUT, exist_ok=True)

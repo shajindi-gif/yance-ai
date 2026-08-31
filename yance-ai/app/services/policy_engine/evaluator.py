@@ -24,7 +24,7 @@ from app.services.policy_engine.schemas import (
     EvidenceItem, MissingMaterial, RiskItem, NextBestAction,
 )
 from app.services.policy_engine.deterministic import (
-    normalize_facts, normalize_criteria, evaluate_deterministic, final_gate,
+    normalize_facts, normalize_criteria, evaluate_deterministic, final_gate, _is_blocking,
 )
 
 _llm = LLMRouter()
@@ -209,17 +209,24 @@ def validate_evidence(result: EligibilityJudgment, policy_content: str) -> tuple
     """只校验「政策门槛断言」：policy_requirement / policy_quote 中出现、且不在 frozen policy
     全文中的比例/金额/分数类数字 → 记幻觉并降级为 INSUFFICIENT。
     enterprise_fact / reason 中的企业自身数字一律豁免（V2.1 修复 D2）。
+    V2.2 修复：数字比较前先去除千分位逗号（"5,000万"=="5000万"），否则逗号格式差异会导致
+    合法政策数字被误判为幻觉（V2.1 中 46 次误杀的根因）。
     """
     hallucinations = []
     full = policy_content[:12000]
+    full_norm = re.sub(r",(?=\d)", "", full)  # 去千分位逗号
     # 政策中合法出现的数字形态
-    policy_numbers = set(re.findall(r'\d+(?:\.\d+)?(?:%|％|万|亿|年|个月|天|人|项|件|分)', full))
+    policy_numbers = set(re.findall(r'\d+(?:\.\d+)?(?:%|％|万|亿|年|个月|天|人|项|件|分)', full_norm))
+
+    def _norm_field(s: str) -> str:
+        return re.sub(r",(?=\d)", "", s or "")
 
     for criterion in result.criteria:
         checked_fields = [criterion.policy_requirement or "", criterion.evidence_quote or ""]
         for field in checked_fields:
-            nums = set(re.findall(r'\d+(?:\.\d+)?(?:%|％|万|亿|分)', field))
-            unsupported = {n for n in nums if n not in policy_numbers and n.rstrip('%％') not in full}
+            fn = _norm_field(field)
+            nums = set(re.findall(r'\d+(?:\.\d+)?(?:%|％|万|亿|分)', fn))
+            unsupported = {n for n in nums if n not in policy_numbers and n.rstrip('%％') not in full_norm}
             if unsupported:
                 hallucinations.append(
                     f"条件 [{criterion.criterion[:30]}] 的要求引用了政策原文中不存在的数值: {sorted(unsupported)}")
@@ -334,8 +341,9 @@ async def evaluate_policy(
     # Step 3: Evidence Gate（精准化）
     judgment, hallucinations = validate_evidence(judgment, policy_content)
 
-    # Step 3.5: Final Eligibility Gate（D3 程序聚合）
-    overall_str = final_gate([c.result.value for c in judgment.criteria])
+    # Step 3.5: Final Eligibility Gate（D3 程序聚合，V2.2 区分阻断性/软性条件）
+    blocking = [_is_blocking(cn["criterion"], cn.get("kind")) for cn in criteria_norm]
+    overall_str = final_gate([c.result.value for c in judgment.criteria], blocking)
     judgment.overall_result = OverallResult(overall_str)
     logic_failures = logic_validate(judgment)
     telemetry["validation_failure_count"] += len(logic_failures)

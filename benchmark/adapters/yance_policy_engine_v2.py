@@ -8,6 +8,7 @@ import asyncio
 import json
 import os
 import sys
+import time
 
 # 注入 yance-ai 到 path
 YANCE_AI = "/Users/shajindi/Desktop/yance-backup/yance/yance-ai"
@@ -81,28 +82,37 @@ def main():
         if os.path.exists(out_path):
             print(f"skip {sid}")
             continue
-        try:
-            res = asyncio.run(run_engine(case, policies, policies_meta, provider))
-            rec = {
-                "scenario_id": sid,
-                "benchmark_case_id": case["benchmark_case_id"],
-                "provider": provider,
-                "overall_result": res["overall_result"],
-                "criteria_count": len(res.get("criteria", [])),
-                "evidence_count": len(res.get("evidence", [])),
-                "hard_failures": res.get("hard_failures", []),
-                "missing_information": res.get("missing_information", []),
-                "model_metadata": res.get("model_metadata", {}),
-                "criteria": res.get("criteria", []),
-                "full": res,
-            }
+        res = None
+        last_err = None
+        for attempt in range(3):
+            try:
+                res = asyncio.run(run_engine(case, policies, policies_meta, provider))
+                break
+            except Exception as e:
+                last_err = e
+                print(f"ERROR {sid} attempt {attempt+1}: {type(e).__name__}: {str(e)[:160]}")
+                time.sleep(5 * (attempt + 1))
+        if res is None:
             with open(out_path, "w", encoding="utf-8") as f:
-                json.dump(rec, f, ensure_ascii=False, indent=2)
-            print(f"done {sid} -> {res['overall_result']} (crit={len(res.get('criteria',[]))})")
-        except Exception as e:
-            print(f"ERROR {sid}: {type(e).__name__}: {str(e)[:200]}")
-            with open(out_path, "w", encoding="utf-8") as f:
-                json.dump({"scenario_id": sid, "error": f"{type(e).__name__}: {str(e)[:300]}"}, f, ensure_ascii=False)
+                json.dump({"scenario_id": sid, "error": f"{type(last_err).__name__}: {str(last_err)[:300]}"}, f, ensure_ascii=False)
+            continue
+        rec = {
+            "scenario_id": sid,
+            "benchmark_case_id": case["benchmark_case_id"],
+            "provider": provider,
+            "overall_result": res["overall_result"],
+            "criteria_count": len(res.get("criteria", [])),
+            "evidence_count": len(res.get("evidence", [])),
+            "hard_failures": res.get("hard_failures", []),
+            "missing_information": res.get("missing_information", []),
+            "model_metadata": res.get("model_metadata", {}),
+            "criteria": res.get("criteria", []),
+            "full": res,
+        }
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(rec, f, ensure_ascii=False, indent=2)
+        print(f"done {sid} -> {res['overall_result']} (crit={len(res.get('criteria',[]))})")
+        time.sleep(1.5)  # 礼貌限速，避免触发 DeepSeek 429
 
 
 if __name__ == "__main__":
