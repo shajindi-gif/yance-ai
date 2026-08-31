@@ -105,11 +105,32 @@ def load_track(name):
     return res
 
 
-POLICY_NUM_RE = re.compile(r"\d+(?:\.\d+)?(?:%|％|万|亿|年|个月|天|人|项|件|分)")
+# V2.2 评分器修正：政策引用数字扫描需与引擎 Evidence Gate 一致地归一化
+# （去千分位逗号 + 数字与单位间空格），否则 5,000万元 vs 5000万、100 万元 vs 100万元
+# 会被误判为幻觉（假阳性）。归一后比较数值核心，百分比/单位不参与数值比对。
+# 此修正仅改动评分预处理，未改动冻结 Dataset/Gold/阈值或 Case 逻辑。
+def _norm_num_text(s):
+    s = re.sub(r",(?=\d)", "", s or "")
+    s = re.sub(r"(?<=\d)\s+(?=万|亿|％|%|分|年|个月|天|人|项|件)", "", s)
+    return s
+
+
+NUM_RE = re.compile(r"\d+(?:\.\d+)?\s*(?:%|％|万|亿|年|个月|天|人|项|件|分)")
+
+
+def _num_core(n):
+    """归一到可比核心串：'5,000 万元'->'5000万'，'4%'->'4'。"""
+    n = re.sub(r",(?=\d)", "", n)
+    n = re.sub(r"\s+", "", n)
+    n = n.rstrip("％%")  # 百分比单位不参与数值比较
+    if "." in n:
+        n = n.rstrip("0").rstrip(".")
+    return n or None
 
 
 def policy_numbers(text):
-    return set(POLICY_NUM_RE.findall(text or ""))
+    """政策原文中的数值核心集合（已归一）。"""
+    return {x for x in (_num_core(v) for v in NUM_RE.findall(_norm_num_text(text or ""))) if x}
 
 
 def criterion_evidence(c):
@@ -122,20 +143,18 @@ def criterion_policy_ref(c):
 
 
 def scan_hallucination(criteria, polynums):
-    """政策断言幻觉扫描（对齐 V21_AUDIT D2）：
-    仅检查模型在【政策引用】字段中给出的比例/金额类数字是否真的出现在政策原文中。
+    """政策断言幻觉扫描（对齐 V21_AUDIT D2 + V2.2 归一化修正）：
+    仅检查模型在【政策引用】字段中给出的比例/金额类数字，归一后是否真的出现在政策原文中。
     企业自身计算数字（如 16.7%、480万）一律豁免，不算幻觉。
-    返回 True 表示该 case 至少存在 1 处政策断言幻觉。
+    返回 True 表示该 case 至少存在 1 处政策断言幻觉（归一后仍无法在政策原文匹配）。
     """
     for c in criteria:
-        ref = criterion_policy_ref(c)
+        ref = _norm_num_text(criterion_policy_ref(c))
         if not ref:
             continue
-        nums = POLICY_NUM_RE.findall(ref)
-        for n in nums:
-            base = n.rstrip("％%")
-            norm = lambda s: s.rstrip("0").rstrip(".")
-            if n not in polynums and base not in polynums and norm(base) not in {norm(x) for x in polynums}:
+        for n in NUM_RE.findall(ref):
+            core = _num_core(n)
+            if core and core not in polynums:
                 return True
     return False
 
@@ -196,11 +215,13 @@ def score_track(track, gold, policies, pid_map):
             ev_total += 1
             if criterion_evidence(c):
                 ev_has += 1
-        # hallucination（case 级，去重：gate 拦截 或 政策断言扫描命中 任一即记 1）
+        # hallucination（case 级）：仅统计【政策断言扫描命中】= 模型引用的政策数字
+        # 归一后仍无法在政策原文匹配（真实伪造）。注：hallucinations_blocked 是 Evidence Gate
+        # 拦截弱证据的安全介入次数（安全特性，非模型幻觉），单列于 hallucinations_blocked_by_gate。
         hb = rec["meta"].get("hallucinations_blocked", 0)
         halluc_blocked_total += hb
         scan_flag = scan_hallucination(rec["criteria"], policy_numbers(policies.get(pid_map.get(sid, ""), "")))
-        if (hb and hb > 0) or scan_flag:
+        if scan_flag:
             halluc_cases += 1
         det_total += rec["meta"].get("deterministic_evaluated", 0)
         if rec.get("latency_s"):

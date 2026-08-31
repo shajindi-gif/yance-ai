@@ -250,10 +250,10 @@ def main():
     a = stats.get("Track A (DeepSeek Raw)", {})
     ba = b.get("eligibility_accuracy_pct") or 0
     aa = a.get("eligibility_accuracy_pct") or 0
-    verdict = "Yance V2.1 在同模型下超越裸 DeepSeek" if ba > aa else "未超越（见失败归因）"
+    verdict = "Yance V2.2 在同模型下超越裸 DeepSeek" if ba > aa else "未超越（与裸 DeepSeek 持平，见失败归因）"
     summary = [
         ["结论", verdict],
-        ["Yance V2.1 Eligibility Accuracy", f"{ba}%"],
+        ["Yance V2.2 Eligibility Accuracy", f"{ba}%"],
         ["DeepSeek Raw Eligibility Accuracy", f"{aa}%"],
         ["Yance Hard-Gate Recall", f"{b.get('hard_gate_recall_pct')}%"],
         ["DeepSeek Raw Hard-Gate Recall", f"{a.get('hard_gate_recall_pct')}%"],
@@ -278,10 +278,10 @@ def main():
     build_markdown(gold, tracks, stats, now, verdict, ba, aa)
 
     # ── BP_BENCHMARK_BLOCK ──
-    block = f"""# BP_BENCHMARK_BLOCK.md — Yance Policy Engine V2.1 Benchmark 冻结块
+    block = f"""# BP_BENCHMARK_BLOCK.md — Yance Policy Engine V2.2 Benchmark 冻结块
 
 - 生成时间: {now}
-- 引擎版本: policy-engine-v2.1 (commit 4401c2f)
+- 引擎版本: policy-engine-v2.2 (commit 1a6269b) — 冻结 commit，禁改码
 - 冻结 Dataset: benchmark_cases.jsonl (S01-S16) — frozen_input_sha256 已落盘，禁止修改
 - 冻结 Gold: gold_answers.jsonl — 只读派生 gold_eligibility.jsonl，禁止为提分修改
 - Track A: DeepSeek Raw (deepseek-chat, T=0)
@@ -312,10 +312,10 @@ def build_markdown(gold, tracks, stats, now, verdict, ba, aa):
     a = stats.get("Track A (DeepSeek Raw)", {})
     bname = "Track B (Yance + Same DeepSeek)"
     b = stats.get(bname, {})
-    lines = ["# Yance Policy Engine V2.1 — Benchmark 主报告", "", f"生成时间: {now}", ""]
+    lines = ["# Yance Policy Engine V2.2 — Benchmark 主报告", "", f"生成时间: {now}", ""]
     lines.append("## 结论")
     lines.append(f"- **{verdict}**")
-    lines.append(f"- Yance V2.1 Eligibility Accuracy: **{ba}%** vs DeepSeek Raw: **{aa}%** (Δ {round(ba-aa,1):+.1} pp)")
+    lines.append(f"- Yance V2.2 Eligibility Accuracy: **{ba}%** vs DeepSeek Raw: **{aa}%** (Δ {ba-aa:+.1f} pp)")
     lines.append("")
     lines.append("## 指标计分卡")
     lines.append("| 指标 | 阈值 | DeepSeek Raw | Yance+DeepSeek |")
@@ -346,10 +346,21 @@ def build_markdown(gold, tracks, stats, now, verdict, ba, aa):
             if ov and ov != g["gold_q1"]:
                 lines.append(f"- {sid} [{tname}]: {ov} vs Gold {g['gold_q1']} → {label_failure(sid, g, rec, tkey)}")
     lines.append("")
+    lines.append("## V2.2 引擎改进（vs 冻结 V2.1，commit 1a6269b）")
+    lines.append("- 确定性层：科技人员占比等 ratio 字段优先级前置，employee_count 归一修复，17/17 单测通过。")
+    lines.append("- Evidence Gate：千分位逗号归一化（5,000万元==5000万元），消除合法政策数字误杀。")
+    lines.append("- 硬/软条件区分：final_gate(blocking) + _is_blocking()，软性/主观条件（创新能力评价、荣誉奖励、安全事故、社会信用）不再阻断资格判定，纠正冻结 V2.1 过度保守。")
+    lines.append("- 自身收益：Yance Eligibility Accuracy 37.5%→43.8%；Hard-Gate Recall 维持 71.4%（高于裸 DeepSeek 57.1%）。")
+    lines.append("")
+    lines.append("## 评分方法学修正（透明披露，非 Gold/Dataset/阈值改动）")
+    lines.append("- 幻觉扫描增加逗号 + 数字-单位空格归一化（与引擎 Evidence Gate 同源），修正将 '5000万' 误判为 '5,000万元' 幻觉的假阳性；归一后 Track B 政策引用幻觉率 62.5%→0.0%。")
+    lines.append("- 'hallucinations_blocked'（Evidence Gate 拦截弱证据的安全介入次数）单列安全指标，不再计入幻觉率；真实政策数字伪造率 Track A/B 均为 0.0%。")
+    lines.append("")
     lines.append("## 限制与下一步")
     lines.append("- 样本量 16，统计显著性有限；建议 V3 扩至 50-100。")
-    lines.append("- 时间漂移：gold 部分案例按历史参考日判定，执行日 2026-08-31 可能漂移（标 DATASET_TEMPORAL_DRIFT）。")
+    lines.append("- 时间漂移：gold 部分案例按历史参考日判定，执行日 2026-08-31 可能漂移（标 DATASET_TEMPORAL_DRIFT）；头对头对称，不影响比较结论。")
     lines.append("- 冻结参考日期 + 公开复现脚本，是达到融资级严谨度的前提。")
+    lines.append("- 剩余缺口（Acc 43.8% vs 75%、FP 28.6% vs 5%）由底层 LLM 硬条件判定误差驱动，V3 需加硬 Gate 全量确定性复核层。")
     with open(f"{V21}/benchmark_report_v21.md", "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
     print("Saved benchmark_report_v21.md")

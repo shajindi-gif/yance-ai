@@ -69,3 +69,4 @@ benchmark/results/v21/raw/
 benchmark/results/v21/probe/
 benchmark/results/v21/stats_v21.json
 benchmark/results/v21/*.json
+benchmark/results/v21/*.xlsx
