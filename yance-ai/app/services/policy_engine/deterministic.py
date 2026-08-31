@@ -134,7 +134,7 @@ def normalize_facts(profile: dict) -> dict:
             facts[std] = _parse_bool(raw)
         elif std in ("safety_violations",):
             s = str(raw)
-            facts[std] = None if re.search(r"未提供|null", s, re.I) else ("无" in s)
+            facts[std] = None if re.search(r"未提供|null", s, re.I) else not bool(re.search(r"无|未发生|没有", s))
         elif std in ("employee_count", "tech_staff", "ip_count"):
             facts[std] = _parse_number(raw)
         elif std in ("market_segment_years",):
@@ -169,7 +169,8 @@ _FIELD_PATTERNS: list[tuple[str, list[str]]] = [
     ("rd_ratio_last_year", ["上年度研发费用", "研发费用总额不低于"]),
     ("hitech_product_revenue_ratio", ["高新技术产品.{0,6}收入占", "高新收入占比"]),
     ("domestic_rd_ratio", ["境内.{0,10}研究开发费用", "境内研发"]),
-    ("revenue_last_year", ["上年度.{0,8}营业收入总额", "上年度.{0,8}销售收入", "上年度主营业务收入", "营业收入总额在", "销售收入在"]),
+    ("revenue_last_year", ["上年度.{0,8}营业收入总额", "上年度.{0,8}销售收入", "上年度主营业务收入", "营业收入总额在", "销售收入在", "销售收入不超过", "销售收入总额", "营业收入总额"]),
+    ("total_assets", ["资产总额", "总资产"]),
     ("founded_years", ["注册成立", "成立.{0,4}年", "注册登记满"]),
     ("has_ip", ["知识产权", "专利", "软著", "软件著作权"]),
     ("hognqi_status", ["高新技术企业资质", "高新技术企业认定", "已获得高新技术企业"]),
@@ -183,10 +184,10 @@ _FIELD_PATTERNS: list[tuple[str, list[str]]] = [
 ]
 
 _OPS: list[tuple[str, str]] = [
-    ("不低于", ">="), ("不少于", ">="), ("不低于", ">="), ("达到", ">="), ("不少于", ">="),
-    ("以上", ">="), ("超过", ">"), ("至少", ">="),
-    ("不超过", "<="), ("以下", "<="), ("以内", "<="), ("低于", "<"), ("未满", "<"),
-    ("之间", "between"),
+    # 长词/否定形式优先，避免子串污染（"不超过"含"超过"，"不低于"含"低于"）
+    ("不低于", ">="), ("不少于", ">="), ("不高于", "<="), ("不超过", "<="), ("未满", "<"),
+    ("达到", ">="), ("以上", ">="), ("超过", ">"), ("至少", ">="),
+    ("以下", "<="), ("以内", "<="), ("低于", "<"), ("之间", "between"),
 ]
 
 _UNIT_PAT = r"(万元|亿元|%|人|年|项|件)"
@@ -225,25 +226,41 @@ def _detect_value(cond: str, field: str) -> Optional[tuple[float, Optional[str]]
     return (n, unit)
 
 
+def _split_composite(cond: str) -> list[str]:
+    """组合条件拆分：'A不超过500人、B不超过2亿、C不超过2亿' → 三条。
+    仅当拆出的片段各自包含 数字+单位 时才独立成条，否则保留原句。"""
+    parts = re.split(r"[、；;]", cond)
+    parts = [p.strip() for p in parts if p.strip()]
+    if len(parts) <= 1:
+        return [cond]
+    numbered = [p for p in parts if re.search(r"\d[\d,\.]*\s*(万元|亿元|%|％|人|年|项|件)", p)]
+    if len(numbered) >= 2:
+        # 把主语补进片段：若片段过短（<8字）保留原句兜底
+        return parts if all(len(p) >= 6 for p in parts) else [cond]
+    return [cond]
+
+
 def normalize_criteria(criteria: list[dict]) -> list[dict]:
     """自然语言条件 → 结构化。未识别字段的条件标记 kind='semantic'，交 LLM 判定。"""
     out = []
     for c in criteria:
         cond = c.get("criterion", "") if isinstance(c, dict) else str(c)
-        item = {
-            "criterion": cond,
-            "policy_quote": c.get("policy_quote", cond) if isinstance(c, dict) else cond,
-            "field": None, "operator": None, "value": None, "unit": None,
-            "kind": "semantic",
-        }
-        field = _detect_field(cond)
-        op = _detect_op(cond)
-        if field and op:
-            val = _detect_value(cond, field)
-            if val is not None:
-                v, unit = val
-                item.update({"field": field, "operator": op, "value": v, "unit": unit, "kind": "numeric"})
-        out.append(item)
+        quote = c.get("policy_quote", cond) if isinstance(c, dict) else cond
+        for piece in _split_composite(cond):
+            item = {
+                "criterion": piece,
+                "policy_quote": quote,
+                "field": None, "operator": None, "value": None, "unit": None,
+                "kind": "semantic",
+            }
+            field = _detect_field(piece)
+            op = _detect_op(piece)
+            if field and op:
+                val = _detect_value(piece, field)
+                if val is not None:
+                    v, unit = val
+                    item.update({"field": field, "operator": op, "value": v, "unit": unit, "kind": "numeric"})
+            out.append(item)
     return out
 
 
