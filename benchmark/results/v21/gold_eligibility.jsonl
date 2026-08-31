@@ -1,0 +1,16 @@
+{"scenario_id": "S01", "case_type": "明确不符合", "difficulty": "easy", "gold_q1": "NOT_ELIGIBLE", "gold_q1_raw": "不符合", "gold_q2": "?", "gold_q2_raw": "当前状态下不具备申报条件；若目标未来年度申报，材料/行动缺口如下"}
+{"scenario_id": "S02", "case_type": "符合申报资格", "difficulty": "easy", "gold_q1": "ELIGIBLE", "gold_q1_raw": "符合（指标层面全部达标，但需确认高新收入占比）", "gold_q2": "?", "gold_q2_raw": "可进入申报准备"}
+{"scenario_id": "S03", "case_type": "信息不足", "difficulty": "medium", "gold_q1": "INSUFFICIENT_INFO", "gold_q1_raw": "信息不足", "gold_q2": "?", "gold_q2_raw": "需先补数据"}
+{"scenario_id": "S04", "case_type": "边界案例", "difficulty": "hard", "gold_q1": "NOT_ELIGIBLE", "gold_q1_raw": "不符合", "gold_q2": "NOT_ELIGIBLE", "gold_q2_raw": "不符合；补强方向=提高研发费用归集或按2亿元以下档位规则重新核实近3年口径"}
+{"scenario_id": "S05", "case_type": "符合申报资格", "difficulty": "medium", "gold_q1": "ELIGIBLE", "gold_q1_raw": "符合", "gold_q2": "?", "gold_q2_raw": "可申报"}
+{"scenario_id": "S06", "case_type": "幻觉陷阱", "difficulty": "hard", "gold_q1": "NOT_ELIGIBLE", "gold_q1_raw": "不符合（以2026年常规上半年申报窗口计，注册未满1年）；且需按实际经营期重算研发占比与委托研发80%口径", "gold_q2": "?", "gold_q2_raw": "当前窗口不可申报"}
+{"scenario_id": "S07", "case_type": "幻觉陷阱", "difficulty": "hard", "gold_q1": "ELIGIBLE", "gold_q1_raw": "符合（全部指标达标；注册资本不是认定条件）", "gold_q2": "?", "gold_q2_raw": "可申报"}
+{"scenario_id": "S08", "case_type": "明确不符合", "difficulty": "medium", "gold_q1": "NOT_ELIGIBLE", "gold_q1_raw": "不符合", "gold_q2": "?", "gold_q2_raw": "不满足申报前提"}
+{"scenario_id": "S09", "case_type": "边界案例", "difficulty": "hard", "gold_q1": "NOT_ELIGIBLE", "gold_q1_raw": "不符合", "gold_q2": "?", "gold_q2_raw": "差额极小，建议下一年度补足后申报"}
+{"scenario_id": "S10", "case_type": "符合申报资格", "difficulty": "medium", "gold_q1": "ELIGIBLE", "gold_q1_raw": "符合", "gold_q2": "?", "gold_q2_raw": "可申报，但须确认/完成创新型中小企业前置"}
+{"scenario_id": "S11", "case_type": "信息不足", "difficulty": "medium", "gold_q1": "INSUFFICIENT_INFO", "gold_q1_raw": "信息不足", "gold_q2": "?", "gold_q2_raw": "补齐关键信息后可申报"}
+{"scenario_id": "S12", "case_type": "幻觉陷阱", "difficulty": "hard", "gold_q1": "ELIGIBLE", "gold_q1_raw": "符合（条件(三)通过股权融资分支满足；营收1000万整的临界语义须披露）", "gold_q2": "?", "gold_q2_raw": "可申报（融资路径）"}
+{"scenario_id": "S13", "case_type": "信息不足", "difficulty": "hard", "gold_q1": "INSUFFICIENT_INFO", "gold_q1_raw": "信息不足（缺高企有效资质确认——第四条前置硬条件）", "gold_q2": "?", "gold_q2_raw": "先确认高企资质，其余材料可并行准备"}
+{"scenario_id": "S14", "case_type": "明确不符合", "difficulty": "medium", "gold_q1": "NOT_ELIGIBLE", "gold_q1_raw": "不符合", "gold_q2": "?", "gold_q2_raw": "不满足当年申报；可规划增员"}
+{"scenario_id": "S15", "case_type": "边界案例", "difficulty": "hard", "gold_q1": "NOT_ELIGIBLE", "gold_q1_raw": "不符合'科技小巨人企业'档（9800万<1亿）；但符合'科技小巨人培育企业'档全部条件", "gold_q2": "?", "gold_q2_raw": "建议按培育企业档申报"}
+{"scenario_id": "S16", "case_type": "幻觉陷阱", "difficulty": "hard", "gold_q1": "ELIGIBLE", "gold_q1_raw": "符合专精特新认定条件；但'高企=直接是专精特新'的说法错误——须先经创新型中小企业（高企可直通创新型）再申请专精特新", "gold_q2": "?", "gold_q2_raw": "路径明确，材料基础好"}

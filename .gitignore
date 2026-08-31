@@ -63,3 +63,7 @@ service-account*.json
 
 # Build artifacts
 tsconfig.tsbuildinfo
+
+# benchmark runtime raw outputs / probe (regenerate via scripts)
+benchmark/results/v21/raw/
+benchmark/results/v21/probe/
