@@ -113,7 +113,9 @@ def normalize_facts(profile: dict) -> dict:
     lower = {str(k).lower(): v for k, v in profile.items()}
 
     def pick(std: str):
-        for alias in _FIELD_ALIASES.get(std, [std]):
+        # 始终把规范键本身加入候选，避免「规范键漏写进 alias 列表」导致字段丢失
+        aliases = list(_FIELD_ALIASES.get(std, [])) + [std]
+        for alias in aliases:
             if alias in profile:
                 return profile[alias]
             if alias.lower() in lower:
@@ -163,12 +165,15 @@ def normalize_facts(profile: dict) -> dict:
 
 _FIELD_PATTERNS: list[tuple[str, list[str]]] = [
     # (标准字段, 触发关键词)
-    ("employee_count", ["职工总数", "从业人员", "员工总数", "员工人数", "职工人数"]),
-    ("tech_staff_ratio", ["科技人员占比", "科技人员.*比例", "研发人员.*比例", "科技人员占", "研发人员占"]),
+    # 注意顺序：越具体的字段越靠前（_detect_field 取首个匹配）。
+    #   tech_staff_ratio 的「科技人员占…职工总数」同时含 employee_count 的「职工总数」，
+    #   故必须排在 employee_count 之前，否则高企研发人员占比门槛会被误判为职工总数→错判 PASS。
+    ("tech_staff_ratio", ["科技人员占比", "科技人员.*比例", "研发人员.*比例", "科技人员占", "研发人员占", "科技人员占.*职工总数"]),
     ("rd_ratio_3y", ["近.{0,2}3?.{0,2}会计年度.{0,10}研究开发费用", "近三个会计年度.{0,12}研发", "研发费用总额占.{0,8}收入"]),
     ("rd_ratio_last_year", ["上年度研发费用", "研发费用总额不低于"]),
     ("hitech_product_revenue_ratio", ["高新技术产品.{0,6}收入占", "高新收入占比"]),
     ("domestic_rd_ratio", ["境内.{0,10}研究开发费用", "境内研发"]),
+    ("employee_count", ["职工总数", "从业人员", "员工总数", "员工人数", "职工人数"]),
     ("revenue_last_year", ["上年度.{0,8}营业收入总额", "上年度.{0,8}销售收入", "上年度主营业务收入", "营业收入总额在", "销售收入在", "销售收入不超过", "销售收入总额", "营业收入总额"]),
     ("total_assets", ["资产总额", "总资产"]),
     ("founded_years", ["注册成立", "成立.{0,4}年", "注册登记满"]),

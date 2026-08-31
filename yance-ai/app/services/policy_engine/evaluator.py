@@ -33,6 +33,42 @@ ENGINE_VERSION = "policy-engine-v2.1"
 PROMPT_VERSION = "PE-PROMPT-v2.1"
 
 
+def _loads_json(text: str) -> dict:
+    """鲁棒解析 LLM 输出 JSON（修复 D-codeblock）：
+    剥离 ```json 代码块、前后自然语言，截取首个完整 {...} 或 [...] 对象。
+    解析失败抛异常，交给上层 fallback（绝不在本函数内静默吞错）。
+    """
+    if not text:
+        raise ValueError("empty LLM content")
+    t = text.strip()
+    # 1) 剥离 markdown 代码块（```json ... ``` 或 ``` ... ```）
+    if "```" in t:
+        segs = t.split("```")
+        for seg in segs[1:]:
+            seg = seg.strip()
+            if seg.lower().startswith("json"):
+                seg = seg[4:].strip()
+            if seg[:1] in ("{", "["):
+                t = seg
+                break
+        else:
+            t = t.replace("```", "")
+    # 2) 截取首个平衡的 {…} / […]
+    for open_c, close_c in (("{", "}"), ("[", "]")):
+        s = t.find(open_c)
+        if s != -1:
+            depth = 0
+            for i in range(s, len(t)):
+                if t[i] == open_c:
+                    depth += 1
+                elif t[i] == close_c:
+                    depth -= 1
+                    if depth == 0:
+                        return json.loads(t[s:i + 1])
+    # 3) 兜底：整串直解（可能含前后空格/回车）
+    return json.loads(t.strip())
+
+
 def _usage_of(resp) -> dict:
     u = getattr(resp, "usage", None) or {}
     return {
@@ -68,7 +104,7 @@ async def extract_criteria(policy_content: str, provider: str = "deepseek") -> l
             ), provider=provider),
             timeout=60,
         )
-        parsed = json.loads(response.content)
+        parsed = _loads_json(response.content)
         return parsed.get("criteria", [])
     except Exception:
         # Fallback: 关键词句子提取（保守，只提取不判定）
@@ -132,7 +168,7 @@ async def evaluate_criteria(
             telemetry["input_tokens"] = u["input_tokens"]
             telemetry["output_tokens"] = u["output_tokens"]
             telemetry["cached_tokens"] = u["cached_tokens"]
-        parsed = json.loads(response.content)
+        parsed = _loads_json(response.content)
         criteria_results = []
         by_criterion = {}
         for c in parsed.get("criteria", []):
