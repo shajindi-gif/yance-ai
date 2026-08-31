@@ -1,0 +1,21 @@
+name: Feature request
+description: Propose a product capability tied to an outcome
+title: "[Feature]: "
+labels: ["feature", "product"]
+body:
+  - type: textarea
+    id: problem
+    attributes: {label: User problem, description: Who has what problem and how do we know?}
+    validations: {required: true}
+  - type: textarea
+    id: outcome
+    attributes: {label: Desired outcome and metric}
+    validations: {required: true}
+  - type: textarea
+    id: scope
+    attributes: {label: Proposed scope and non-goals}
+    validations: {required: true}
+  - type: input
+    id: prd
+    attributes: {label: PRD link, placeholder: docs/product/requirements/...}
+

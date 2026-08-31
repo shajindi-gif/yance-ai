@@ -1,0 +1,65 @@
+# Secrets
+.env
+.env.*
+*.env
+env.prod
+**/.env
+**/.env.*
+**/env.prod
+
+# Private keys
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+coverage/
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
+
+# Runtime
+logs/
+*.log
+tmp/
+temp/
+.pid
+
+# Database / dumps
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.sql.gz
+
+# Backups
+*.tar
+*.tar.gz
+*.zip
+backup/
+backups/
+
+# Certificates / credentials
+credentials.json
+service-account*.json
+
+# Build artifacts
+tsconfig.tsbuildinfo

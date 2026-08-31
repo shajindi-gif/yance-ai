@@ -1,0 +1,16 @@
+from app.models.models import (  # noqa: F401
+    AgentRun,
+    AnalyticsEvent,
+    Application,
+    AuditLog,
+    Company,
+    Document,
+    Invoice,
+    Opportunity,
+    Order,
+    Payment,
+    Policy,
+    PolicyRule,
+    Tenant,
+    User,
+)

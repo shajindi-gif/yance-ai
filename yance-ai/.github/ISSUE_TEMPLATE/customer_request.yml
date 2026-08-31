@@ -1,0 +1,21 @@
+name: Customer request
+description: Record a sanitized customer need
+title: "[Customer]: "
+labels: ["customer-request", "product"]
+body:
+  - type: input
+    id: account
+    attributes: {label: Customer code, description: Use an internal code, not personal data.}
+    validations: {required: true}
+  - type: textarea
+    id: need
+    attributes: {label: Need and current workaround}
+    validations: {required: true}
+  - type: input
+    id: value
+    attributes: {label: Commercial value or affected plan}
+  - type: textarea
+    id: acceptance
+    attributes: {label: Acceptance evidence}
+    validations: {required: true}
+

@@ -1,0 +1,48 @@
+name: yance-dev
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-yance_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-yance}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-yance_dev_password}
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - yance_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-yance} -d ${POSTGRES_DB:-yance_dev}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build: .
+    env_file: ${ENV_FILE:-.env}
+    command: ["alembic", "upgrade", "head"]
+    volumes:
+      - ./alembic:/app/alembic
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build: .
+    env_file: ${ENV_FILE:-.env}
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    ports:
+      - "${API_HOST_PORT:-8000}:8000"
+    volumes:
+      - ./app:/app/app
+      - ./alembic:/app/alembic
+      - ./frontend:/app/frontend
+      - yance_invoices:/app/invoices
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  yance_pgdata:
+  yance_invoices:

@@ -1,0 +1,51 @@
+[project]
+name = "yance-ai-backend"
+version = "0.1.0"
+description = "API-first multi-tenant backend for yance.ai"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "fastapi>=0.115,<1.0",
+  "uvicorn[standard]>=0.34,<1.0",
+  "sqlalchemy>=2.0,<3.0",
+  "psycopg[binary]>=3.2,<4.0",
+  "alembic>=1.14,<2.0",
+  "pydantic-settings>=2.7,<3.0",
+  "pyjwt[crypto]>=2.10,<3.0",
+  "pwdlib[argon2]>=0.2,<1.0",
+  "python-multipart>=0.0.20,<1.0",
+  "oss2>=2.19,<3.0",
+  "pgvector>=0.3,<1.0",
+  "httpx>=0.28,<1.0",
+  "structlog>=25.1,<26.0",
+  "email-validator>=2.2,<3.0",
+  "stripe>=11.0,<12.0",
+  "pycryptodome>=3.21,<4.0",
+  "weasyprint>=63.0,<64.0",
+]
+
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+exclude = ["alembic*", "evals*", "nginx*", "ops*", "tests*"]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9.0",
+  "pytest-cov>=6.0,<7.0",
+  "ruff>=0.9,<1.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["B008"]  # FastAPI dependency injection intentionally uses Depends in defaults.
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

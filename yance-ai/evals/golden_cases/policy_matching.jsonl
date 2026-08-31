@@ -1,0 +1,3 @@
+{"id":"policy-match-001","input":{"company":{"province":"浙江","industry":"软件和信息技术服务业","employees":35},"policy":"科技型中小企业研发补助"},"expected":{"eligible":true,"required_evidence":["研发费用","企业资质"]},"tags":["eligibility","zhejiang"]}
+{"id":"policy-match-002","input":{"company":{"province":"上海","industry":"餐饮业","employees":8},"policy":"浙江省软件企业专项补助"},"expected":{"eligible":false,"required_evidence":["注册地"]},"tags":["negative","jurisdiction"]}
+

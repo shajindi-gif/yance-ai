@@ -1,0 +1,18 @@
+name: Technical debt
+description: Track reliability, maintainability, or security debt
+title: "[Debt]: "
+labels: ["technical-debt"]
+body:
+  - type: textarea
+    id: debt
+    attributes: {label: Debt and evidence}
+    validations: {required: true}
+  - type: textarea
+    id: risk
+    attributes: {label: Risk if deferred}
+    validations: {required: true}
+  - type: textarea
+    id: done
+    attributes: {label: Definition of done}
+    validations: {required: true}
+

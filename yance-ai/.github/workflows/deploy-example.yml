@@ -1,0 +1,41 @@
+name: Deploy production (example)
+
+on:
+  workflow_dispatch:
+    inputs:
+      git_ref:
+        description: Tag or commit SHA to deploy
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.ECS_SSH_PRIVATE_KEY }}
+          ECS_KNOWN_HOSTS: ${{ secrets.ECS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s' "$ECS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Deploy requested immutable ref
+        env:
+          ECS_HOST: ${{ secrets.ECS_HOST }}
+          ECS_USER: ${{ secrets.ECS_USER }}
+          GIT_REF: ${{ inputs.git_ref }}
+        run: |
+          if [[ ! "$GIT_REF" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+            echo "Invalid git_ref" >&2
+            exit 1
+          fi
+          ssh "$ECS_USER@$ECS_HOST" "cd /opt/yance-ai && git fetch --tags origin && git checkout --detach '$GIT_REF' && docker compose -f docker-compose.prod.yml up -d --build && sh scripts/smoke_test.sh http://localhost"

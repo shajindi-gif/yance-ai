@@ -1,0 +1,251 @@
+from datetime import datetime
+from typing import Any
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+from app.models.models import UserRole
+
+
+class ORMModel(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+
+class Message(BaseModel):
+    message: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class BootstrapRequest(BaseModel):
+    tenant_name: str = Field(min_length=2, max_length=160)
+    tenant_slug: str = Field(pattern=r"^[a-z0-9][a-z0-9-]{1,78}[a-z0-9]$")
+    owner_email: EmailStr
+    owner_name: str = Field(min_length=2, max_length=160)
+    owner_password: str = Field(min_length=12, max_length=128)
+
+
+class RegisterRequest(BaseModel):
+    """Public self-service registration: tenant + owner + default company."""
+    company_name: str = Field(min_length=2, max_length=160)
+    industry: str | None = Field(default=None, max_length=120)
+    province: str | None = Field(default=None, max_length=60)
+    city: str | None = Field(default=None, max_length=60)
+    owner_email: EmailStr
+    owner_name: str = Field(min_length=2, max_length=160)
+    owner_password: str = Field(min_length=8, max_length=128)
+
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    full_name: str = Field(min_length=2, max_length=160)
+    password: str = Field(min_length=12, max_length=128)
+    role: UserRole = UserRole.member
+
+
+class UserOut(ORMModel):
+    id: UUID
+    tenant_id: UUID
+    email: EmailStr
+    full_name: str
+    role: UserRole
+    is_active: bool
+
+
+class TenantOut(ORMModel):
+    id: UUID
+    name: str
+    slug: str
+    is_active: bool
+
+
+class CompanyCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=240)
+    unified_credit_code: str | None = None
+    province: str | None = None
+    city: str | None = None
+    industry: str | None = None
+    metadata_json: dict[str, Any] = Field(default_factory=dict)
+
+
+class CompanyOut(CompanyCreate, ORMModel):
+    id: UUID
+    tenant_id: UUID
+    created_at: datetime
+
+
+class DocumentCreate(BaseModel):
+    filename: str = Field(min_length=1, max_length=255)
+    content_type: str = Field(min_length=1, max_length=120)
+    company_id: UUID | None = None
+    size_bytes: int | None = Field(default=None, ge=0)
+    checksum_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+    metadata_json: dict[str, Any] = Field(default_factory=dict)
+
+
+class DocumentOut(ORMModel):
+    id: UUID
+    tenant_id: UUID
+    company_id: UUID | None
+    filename: str
+    content_type: str
+    object_key: str
+    status: str
+    size_bytes: int | None
+    created_at: datetime
+
+
+class PresignedUploadOut(BaseModel):
+    document: DocumentOut
+    upload_url: str
+    method: str = "PUT"
+    expires_in: int
+    required_headers: dict[str, str]
+
+
+class DocumentComplete(BaseModel):
+    checksum_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+
+
+class PolicyCreate(BaseModel):
+    title: str = Field(min_length=2, max_length=500)
+    source_url: str | None = None
+    jurisdiction: str | None = None
+    published_at: datetime | None = None
+    effective_at: datetime | None = None
+    content: str | None = None
+    status: str = "draft"
+
+
+class PolicyOut(PolicyCreate, ORMModel):
+    id: UUID
+    tenant_id: UUID
+    created_at: datetime
+    embedding: list[float] | None = None
+
+
+class PolicyRuleCreate(BaseModel):
+    policy_id: UUID
+    name: str = Field(min_length=2, max_length=300)
+    rule_type: str = Field(min_length=2, max_length=80)
+    rule_json: dict[str, Any] = Field(default_factory=dict)
+    explanation: str | None = None
+
+
+class PolicyRuleOut(PolicyRuleCreate, ORMModel):
+    id: UUID
+    tenant_id: UUID
+    created_at: datetime
+
+
+class OpportunityCreate(BaseModel):
+    company_id: UUID
+    policy_id: UUID | None = None
+    title: str = Field(min_length=2, max_length=500)
+    score: float | None = Field(default=None, ge=0, le=1)
+    status: str = "identified"
+    evidence_json: dict[str, Any] = Field(default_factory=dict)
+
+
+class OpportunityOut(OpportunityCreate, ORMModel):
+    id: UUID
+    tenant_id: UUID
+    created_at: datetime
+
+
+class ApplicationCreate(BaseModel):
+    company_id: UUID
+    opportunity_id: UUID | None = None
+    title: str = Field(min_length=2, max_length=500)
+    status: str = "draft"
+    form_data: dict[str, Any] = Field(default_factory=dict)
+
+
+class ApplicationOut(ApplicationCreate, ORMModel):
+    id: UUID
+    tenant_id: UUID
+    created_at: datetime
+
+
+class OrderCreate(BaseModel):
+    product_code: str
+    amount: float = Field(gt=0)
+    currency: str = "CNY"
+
+
+class PaymentCreate(BaseModel):
+    order_id: UUID
+    provider: str = "alipay"
+    amount: float = Field(gt=0)
+
+
+class InvoiceCreate(BaseModel):
+    order_id: UUID
+    title: str = Field(min_length=2, max_length=240, description="发票抬头（购买方名称）")
+    tax_number: str = Field(min_length=15, max_length=64, description="购买方纳税人识别号")
+    address_phone: str | None = None
+    bank_account: str | None = None
+    seller_name: str = ""
+    seller_tax_number: str = ""
+    items: list[dict] | None = None       # 发票明细，为空则自动从订单生成
+    invoice_type: str = "vat_normal"      # vat_normal / vat_special / vat_electronic
+
+
+class InvoiceOut(ORMModel):
+    id: UUID
+    order_id: UUID
+    tenant_id: UUID
+    invoice_no: str | None = None
+    invoice_code: str | None = None
+    title: str
+    tax_number: str
+    amount: float
+    tax_amount: float
+    total_amount: float
+    invoice_type: str
+    pdf_path: str | None = None
+    status: str
+    created_at: datetime
+
+
+class CommerceOut(ORMModel):
+    id: UUID
+    tenant_id: UUID
+    status: str
+    amount: float | None = None
+    created_at: datetime
+
+
+class OrderOut(ORMModel):
+    id: UUID
+    tenant_id: UUID
+    order_no: str
+    product_code: str
+    amount: float
+    currency: str
+    status: str
+    created_at: datetime
+
+
+class AnalyticsEventCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    session_id: str | None = None
+    properties: dict[str, Any] = Field(default_factory=dict)
+
+
+class AgentRunCreate(BaseModel):
+    agent_name: str
+    provider: str
+    model: str
+    metadata_json: dict[str, Any] = Field(default_factory=dict)
+
+
+class AgentRunFinish(BaseModel):
+    status: str = "completed"
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    latency_ms: int | None = None
+    error_code: str | None = None
