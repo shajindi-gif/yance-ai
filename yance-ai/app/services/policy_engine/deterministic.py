@@ -7,7 +7,7 @@
 """
 from __future__ import annotations
 import re
-from datetime import date, datetime
+from datetime import date
 from typing import Any, Optional
 
 # ────────────────────────── Fact Normalization ──────────────────────────
@@ -414,12 +414,13 @@ def final_gate(criteria_results: list[str], blocking: Optional[list[bool]] = Non
 # —— 软性/主观条件识别（V2.2）：这类条件不阻断资格，仅作提示 ——
 _SOFT_PAT = re.compile(
     r"评价得分|得分|创新能力评价|成长性指标|专业化指标|创新能力指标|荣誉|奖励|大赛|排名"
-    r"|未发生.*事故|安全.*事故|环境违法|社会信用|应达到相应要求|综合评分|加分")
+    r"|应达到相应要求|综合评分|加分")
 
 
 def _is_blocking(text: str, kind: Optional[str] = None) -> bool:
     """判断某条件是否『阻断性硬门槛』。
-    - 主观/复合评分/荣誉奖励/安全事故类 → 软性（不阻断）
+    - 主观/复合评分/荣誉奖励类 → 软性（不阻断）
+    - 安全事故、环境违法、社会信用条件始终按硬门槛处理
     - 含须/必须/应当/不得/应 等强制语 → 阻断
     - 数字硬门槛（kind=numeric）→ 阻断
     - 其它语义条件 → 默认阻断（保守）

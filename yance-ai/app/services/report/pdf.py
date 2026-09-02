@@ -5,11 +5,11 @@ Master task section 7: 报告必须包含 10 个章节。
 
 from datetime import datetime
 from io import BytesIO
-from uuid import UUID
 
 from weasyprint import HTML
 
 from app.models.models import Company, Opportunity, Policy
+from app.services.safe_rendering import deny_external_url_fetcher, escape_html
 
 
 # ── CSS 样式 ─────────────────────────────────────────────────
@@ -111,7 +111,8 @@ def generate_match_report_pdf(
         ("融资阶段", meta.get("funding_stage", "—")),
     ]
     profile_html = "<table>" + "".join(
-        f'<tr><td style="width:30%;font-weight:600;background:#f8fafc">{k}</td><td>{v}</td></tr>'
+        f'<tr><td style="width:30%;font-weight:600;background:#f8fafc">'
+        f"{escape_html(k)}</td><td>{escape_html(v)}</td></tr>"
         for k, v in profile_items
     ) + "</table>"
 
@@ -140,10 +141,10 @@ def generate_match_report_pdf(
         grade = "★★★★★" if pct >= 80 else ("★★★★" if pct >= 70 else ("★★★" if pct >= 50 else "★★"))
         top_rows.append(f"""<tr>
           <td>{i}</td>
-          <td>{p.title[:40]}{'...' if len(p.title) > 40 else ''}</td>
-          <td>{_level_cn(p.level)}</td>
-          <td>{p.province or '全国'}</td>
-          <td>{p.support_amount or '—'}</td>
+          <td>{escape_html(p.title[:40])}{'...' if len(p.title) > 40 else ''}</td>
+          <td>{escape_html(_level_cn(p.level))}</td>
+          <td>{escape_html(p.province or '全国')}</td>
+          <td>{escape_html(p.support_amount or '—')}</td>
           <td class="{_score_class(pct)}">{pct}%</td>
           <td>{grade}</td>
         </tr>""")
@@ -161,10 +162,10 @@ def generate_match_report_pdf(
         bd = ev.get("score_breakdown", {})
         why_html += f"""
         <div class="priority-box priority-p1">
-          <div class="priority-label">{p.title[:35]}</div>
+          <div class="priority-label">{escape_html(p.title[:35])}</div>
           <div style="font-size:10px;color:#475569">
-            评分构成：地区 {bd.get('region',0)}/20 · 行业 {bd.get('industry',0)}/15 · 规模 {bd.get('scale',0)}/10 ·
-            资质 {bd.get('qualification',0)}/20 · 技术 {bd.get('tech',0)}/15 · 财务 {bd.get('finance',0)}/10 · 语义 {bd.get('semantic',0)}/10
+            评分构成：地区 {escape_html(bd.get('region',0))}/20 · 行业 {escape_html(bd.get('industry',0))}/15 · 规模 {escape_html(bd.get('scale',0))}/10 ·
+            资质 {escape_html(bd.get('qualification',0))}/20 · 技术 {escape_html(bd.get('tech',0))}/15 · 财务 {escape_html(bd.get('finance',0))}/10 · 语义 {escape_html(bd.get('semantic',0))}/10
           </div>
           <div style="font-size:10px;margin-top:4px">
             <span class="tag tag-green">✓ 地区匹配</span>
@@ -188,7 +189,9 @@ def generate_match_report_pdf(
         ("营业收入", meta.get("annual_revenue", "—"), "营收门槛"),
     ]
     matrix_rows = "".join(
-        f'<tr><td style="font-weight:600">{c[0]}</td><td>{c[1]}</td><td>{c[2]}</td><td><span class="tag tag-gray">待系统判断</span></td></tr>'
+        f'<tr><td style="font-weight:600">{escape_html(c[0])}</td>'
+        f"<td>{escape_html(c[1])}</td><td>{escape_html(c[2])}</td>"
+        '<td><span class="tag tag-gray">待系统判断</span></td></tr>'
         for c in matrix_conditions
     )
     matrix_html = f"""<table>
@@ -202,7 +205,11 @@ def generate_match_report_pdf(
         ev = opp.evidence_json or {}
         for m in ev.get("missing_materials", []):
             all_missing.add(m)
-    gaps_html = "<ul>" + "".join(f"<li>{m}</li>" for m in sorted(all_missing)) + "</ul>"
+    gaps_html = (
+        "<ul>"
+        + "".join(f"<li>{escape_html(m)}</li>" for m in sorted(all_missing, key=str))
+        + "</ul>"
+    )
     if not all_missing:
         gaps_html = "<p>基于当前企业画像，暂未发现明显差距。建议完善企业画像以获取更精准的分析。</p>"
 
@@ -212,7 +219,7 @@ def generate_match_report_pdf(
         p = policy_map.get(opp.policy_id)
         if not p: continue
         pct = round(opp.score * 100)
-        item = f"{p.title[:30]}（{pct}%）"
+        item = f"{escape_html(p.title[:30])}（{pct}%）"
         if p.deadline:
             days_left = (p.deadline - now).days
             if days_left <= 30: p0.append(item)
@@ -246,7 +253,7 @@ def generate_match_report_pdf(
         deadline_str = p.deadline.strftime("%Y-%m-%d") if p.deadline else "长期有效"
         start_str = p.start_date.strftime("%Y-%m-%d") if p.start_date else "—"
         calendar_rows.append(f"""<tr>
-          <td>{p.title[:30]}</td>
+          <td>{escape_html(p.title[:30])}</td>
           <td>{start_str}</td>
           <td>{deadline_str}</td>
           <td>建议提前30天启动</td>
@@ -301,7 +308,7 @@ def generate_match_report_pdf(
   <div class="brand">YANCE ENGINE AI</div>
   <h1>企业政策机会分析报告</h1>
   <div class="subtitle">Enterprise Policy Intelligence Report</div>
-  <div class="company">{company.name}</div>
+  <div class="company">{escape_html(company.name)}</div>
   <div class="meta">
     报告编号：YR-{now.strftime('%Y%m%d')}-{company.id.hex[:8].upper()}<br>
     生成时间：{now.strftime('%Y-%m-%d %H:%M')}<br>
@@ -365,8 +372,8 @@ def generate_match_report_pdf(
 
 <!-- 页脚 -->
 <div class="footer">
-  <strong>衍策引擎AI</strong> · 上海衍策引擎人工智能科技有限公司<br>
-  服务部署于中国香港 · 企业数据加密存储<br>
+  <strong>衍策引擎AI</strong><br>
+  数据处理与存储位置以实际部署配置和客户协议为准<br>
   © 2026 Yance Engine AI. 本报告版权归用户所有，未经许可不得用于商业传播。
 </div>
 
@@ -374,5 +381,5 @@ def generate_match_report_pdf(
 </html>"""
 
     pdf_bytes = BytesIO()
-    HTML(string=html_content).write_pdf(pdf_bytes)
+    HTML(string=html_content, url_fetcher=deny_external_url_fetcher).write_pdf(pdf_bytes)
     return pdf_bytes.getvalue()

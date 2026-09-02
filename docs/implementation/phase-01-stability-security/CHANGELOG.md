@@ -36,3 +36,25 @@ Status: implemented and unit-tested; Phase 1 remains open.
 - PDF/invoice HTML escaping and network/file fetch denial.
 - Eligibility hard-gate regression and mandatory review.
 - External claim corrections, root CI, dependency remediation and full migration smoke.
+
+## Slice 2 — Safe document rendering and eligibility hard gates
+
+Status: implemented and tested; Phase 1 remains open.
+
+### Changed
+
+- Added a shared HTML escaping boundary and a fail-closed WeasyPrint URL fetcher.
+- Escaped company, policy, evidence, invoice and line-item content before HTML rendering.
+- Removed temporary HTML files and the subprocess fallback that bypassed the URL policy.
+- Replaced the broken invoice `str.format()` template with `string.Template`; tests proved the
+  previous implementation failed on CSS braces before producing a PDF.
+- Invoice output filenames now use server-generated UUIDs rather than invoice content.
+- Removed unsupported deployment/encryption claims from generated report footers.
+- Safety accidents, environmental violations and social-credit requirements are blocking
+  eligibility criteria and cannot be softened into an eligible result.
+
+### Verification
+
+- Added renderer payload tests for `<script>`, remote image and `file://` inputs.
+- Added hard-gate tests for safety, environment, credit and insufficient evidence.
+- Full backend suite: 13 passed; coverage increased from 45% to 49%.
