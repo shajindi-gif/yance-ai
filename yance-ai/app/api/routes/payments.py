@@ -7,7 +7,7 @@ from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -306,14 +306,24 @@ bank_router = APIRouter(prefix="/bank", tags=["bank-transfer"])
 
 
 @bank_router.get("/info")
-def get_bank_info():
+def get_bank_info(
+    principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin)),
+):
     """返回公司对公账户信息，供客户端展示银行转账方式。"""
+    if not all(
+        (
+            settings.company_name,
+            settings.company_tax_id,
+            settings.company_bank_name,
+            settings.company_bank_account,
+        )
+    ):
+        raise HTTPException(status_code=503, detail="Bank transfer is not configured")
     return {
         "company_name": settings.company_name,
         "tax_id": settings.company_tax_id,
         "bank_name": settings.company_bank_name,
         "bank_account": settings.company_bank_account,
-        "bank_card": settings.company_bank_card,
     }
 
 
@@ -329,31 +339,7 @@ def upload_bank_receipt(
     principal: Principal = Depends(get_principal),
 ):
     """客户提交银行转账凭证，创建待核实的 Payment 记录。"""
-    order = db.scalar(select(Order).where(Order.id == order_id, Order.user_id == principal.user_id))
-    if not order:
-        raise HTTPException(status_code=404, detail="订单不存在")
-    if order.status not in ("created",):
-        raise HTTPException(status_code=400, detail="订单状态不允许提交凭证")
-
-    payment = db.scalar(
-        select(Payment).where(Payment.order_id == order_id, Payment.method == "bank_transfer")
-    )
-    if payment:
-        payment.bank_receipt_url = body.receipt_url
-        payment.status = "submitted"
-    else:
-        payment = Payment(
-            order_id=order_id,
-            method="bank_transfer",
-            amount=order.total_amount * 100 if order.total_amount else 0,
-            currency=order.currency or "cny",
-            bank_receipt_url=body.receipt_url,
-            status="submitted",
-        )
-        db.add(payment)
-    db.commit()
-    db.refresh(payment)
-    return {"payment_id": payment.id, "status": payment.status}
+    raise HTTPException(status_code=501, detail="Bank transfer verification is not available")
 
 
 @bank_router.post("/payments/{payment_id}/verify")
@@ -363,18 +349,4 @@ def verify_bank_transfer(
     principal: Principal = Depends(get_principal),
 ):
     """管理端核实银行转账到账，将订单标记为已支付。"""
-    payment = db.scalar(
-        select(Payment).where(Payment.id == payment_id, Payment.method == "bank_transfer")
-    )
-    if not payment:
-        raise HTTPException(status_code=404, detail="凭证不存在")
-    if payment.status == "verified":
-        raise HTTPException(status_code=400, detail="该凭证已核实")
-
-    payment.status = "verified"
-    payment.bank_verified_at = datetime.now(timezone.utc)
-    order = db.scalar(select(Order).where(Order.id == payment.order_id))
-    if order:
-        order.status = "paid"
-    db.commit()
-    return {"payment_id": payment.id, "status": "verified", "order_status": order.status if order else None}
+    raise HTTPException(status_code=501, detail="Bank transfer verification is not available")

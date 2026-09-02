@@ -8,8 +8,15 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, get_principal, require_roles
 from app.core.db import get_db
-from app.models.models import Invoice, Order, Payment, UserRole
-from app.schemas.schemas import CommerceOut, InvoiceCreate, InvoiceOut, OrderCreate, OrderOut, PaymentCreate
+from app.models.models import Invoice, Order, Payment, Product, UserRole
+from app.schemas.schemas import (
+    CommerceOut,
+    InvoiceCreate,
+    InvoiceOut,
+    OrderCreate,
+    OrderOut,
+    PaymentCreate,
+)
 from app.services.invoice.generator import generate_invoice_pdf
 
 router = APIRouter(tags=["orders", "payments", "invoices"])
@@ -35,10 +42,18 @@ def create_order(
     principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
     db: Session = Depends(get_db),
 ) -> Order:
+    product = db.scalar(
+        select(Product).where(Product.code == payload.product_code, Product.active.is_(True))
+    )
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
     order = Order(
         tenant_id=principal.tenant_id,
         order_no=f"Y{secrets.token_hex(8).upper()}",
-        **payload.model_dump(),
+        product_code=product.code,
+        amount=product.promotional_price or product.price,
+        currency="CNY",
+        status="created",
     )
     db.add(order)
     db.commit()
@@ -52,16 +67,10 @@ def create_payment_skeleton(
     principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin)),
     db: Session = Depends(get_db),
 ) -> Payment:
-    order = db.scalar(
-        select(Order).where(Order.id == payload.order_id, Order.tenant_id == principal.tenant_id)
+    raise HTTPException(
+        status_code=501,
+        detail="Payments can only be created by a configured checkout provider",
     )
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
-    payment = Payment(tenant_id=principal.tenant_id, **payload.model_dump())
-    db.add(payment)
-    db.commit()
-    db.refresh(payment)
-    return payment
 
 
 @router.post("/invoices", response_model=InvoiceOut, status_code=202)
@@ -109,7 +118,7 @@ def create_invoice(
         invoice_type=payload.invoice_type or "vat_normal",
         status="generated",
     )
-    db.add(order)
+    db.add(invoice)
     db.commit()
     db.refresh(invoice)
     return invoice

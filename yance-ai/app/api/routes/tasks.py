@@ -1,8 +1,7 @@
 """Outcome-based Agent Task API — Async + Progress + DOCX + Next Best Action"""
-import asyncio
 import secrets
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import quote
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response
@@ -11,10 +10,18 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, require_roles
-from app.core.db import get_db, SessionLocal
+from app.core.config import settings
+from app.core.db import SessionLocal, get_db
 from app.models.models import (
-    AgentRun, Company, Deliverable, Opportunity, Order, Policy,
-    Product, RevisionRequest, Task, UserRole,
+    AgentRun,
+    Company,
+    Deliverable,
+    Opportunity,
+    Order,
+    Policy,
+    RevisionRequest,
+    Task,
+    UserRole,
 )
 from app.services.report.matcher import match_policies_for_company
 from app.services.report.pdf import generate_match_report_pdf
@@ -67,18 +74,18 @@ def _run_task_background(task_id: uuid.UUID):
             return
 
         task.status = "running"
-        task.started_at = datetime.now(timezone.utc)
+        task.started_at = datetime.now(UTC)
         db.commit()
 
         # Stage 1: Read company profile (10%)
         _update_progress(task_id, 10, "正在读取企业画像")
         run1 = AgentRun(tenant_id=task.tenant_id, task_id=task.id, user_id=task.user_id,
                         agent_name="profile_reader", provider="internal", model="n/a",
-                        status="running", started_at=datetime.now(timezone.utc))
+                        status="running", started_at=datetime.now(UTC))
         db.add(run1)
         db.commit()
         run1.status = "completed"
-        run1.finished_at = datetime.now(timezone.utc)
+        run1.finished_at = datetime.now(UTC)
         run1.latency_ms = 50
         db.commit()
 
@@ -86,7 +93,7 @@ def _run_task_background(task_id: uuid.UUID):
         _update_progress(task_id, 30, "正在检索政策库并匹配")
         run2 = AgentRun(tenant_id=task.tenant_id, task_id=task.id, user_id=task.user_id,
                         agent_name="policy_match_agent", provider=task.model_provider or "qwen",
-                        model="qwen-plus", status="running", started_at=datetime.now(timezone.utc))
+                        model="qwen-plus", status="running", started_at=datetime.now(UTC))
         db.add(run2)
         db.commit()
 
@@ -96,7 +103,7 @@ def _run_task_background(task_id: uuid.UUID):
         loop.close()
 
         run2.status = "completed"
-        run2.finished_at = datetime.now(timezone.utc)
+        run2.finished_at = datetime.now(UTC)
         run2.latency_ms = int((run2.finished_at - run2.started_at).total_seconds() * 1000)
         db.commit()
 
@@ -109,12 +116,12 @@ def _run_task_background(task_id: uuid.UUID):
         _update_progress(task_id, 80, "正在生成报告文件")
         run3 = AgentRun(tenant_id=task.tenant_id, task_id=task.id, user_id=task.user_id,
                         agent_name="report_generator", provider="internal", model="weasyprint",
-                        status="running", started_at=datetime.now(timezone.utc))
+                        status="running", started_at=datetime.now(UTC))
         db.add(run3)
         db.commit()
         pdf_bytes = generate_match_report_pdf(company, opportunities, policies)
         run3.status = "completed"
-        run3.finished_at = datetime.now(timezone.utc)
+        run3.finished_at = datetime.now(UTC)
         run3.latency_ms = int((run3.finished_at - run3.started_at).total_seconds() * 1000)
         db.commit()
 
@@ -129,12 +136,12 @@ def _run_task_background(task_id: uuid.UUID):
             content_markdown=f"# {company.name} 政策分析报告\n\n匹配政策数: {len(opportunities)}",
             pdf_url=f"/api/v1/tasks/{task.id}/download",
             version=1, status="generated", quality_score=88,
-            generated_at=datetime.now(timezone.utc),
+            generated_at=datetime.now(UTC),
         )
         db.add(deliverable)
         task.status = "delivered"
         task.delivery_status = "delivered"
-        task.completed_at = datetime.now(timezone.utc)
+        task.completed_at = datetime.now(UTC)
         _update_progress(task_id, 100, "已完成")
         db.commit()
         db.refresh(deliverable)
@@ -231,6 +238,9 @@ async def execute_task(task_id: uuid.UUID, background_tasks: BackgroundTasks,
 
 @router.post("/{task_id}/pay")
 async def pay_task(task_id: uuid.UUID, principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)), db: Session = Depends(get_db)):
+    if settings.app_env == "production" or not settings.demo_features_enabled:
+        raise HTTPException(status_code=404, detail="Not found")
+
     task = db.scalar(select(Task).where(Task.id == task_id, Task.tenant_id == principal.tenant_id))
     if not task or task.payment_status != "unpaid":
         raise HTTPException(400, "任务不存在或已支付")
@@ -270,7 +280,7 @@ async def accept_task(task_id: uuid.UUID, principal: Principal = Depends(require
     deliverable = db.scalar(select(Deliverable).where(Deliverable.task_id == task_id).order_by(Deliverable.version.desc()))
     if deliverable:
         deliverable.status = "accepted"
-        deliverable.accepted_at = datetime.now(timezone.utc)
+        deliverable.accepted_at = datetime.now(UTC)
     task.status = "accepted"
     task.delivery_status = "accepted"
     db.commit()
@@ -321,8 +331,13 @@ async def next_best_actions(task_id: uuid.UUID, principal: Principal = Depends(r
 
 @router.get("/admin/all")
 async def admin_tasks(principal: Principal = Depends(require_roles(UserRole.owner)), db: Session = Depends(get_db)):
-    tasks = db.scalars(select(Task).order_by(Task.created_at.desc()).limit(100)).all()
-    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0)
+    tasks = db.scalars(
+        select(Task)
+        .where(Task.tenant_id == principal.tenant_id)
+        .order_by(Task.created_at.desc())
+        .limit(100)
+    ).all()
+    today = datetime.now(UTC).replace(hour=0, minute=0, second=0)
     today_tasks = [t for t in tasks if t.created_at >= today]
     return {
         "metrics": {

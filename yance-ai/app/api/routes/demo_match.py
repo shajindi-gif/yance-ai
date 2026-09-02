@@ -3,22 +3,30 @@
 import asyncio
 import secrets
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, require_roles
+from app.core.config import settings
 from app.core.db import get_db
 from app.models.models import (
-    AnalyticsEvent, Company, Entitlement, Invoice, Opportunity, Order,
-    Payment, Policy, Product, UserRole,
+    AnalyticsEvent,
+    Company,
+    Entitlement,
+    Invoice,
+    Opportunity,
+    Order,
+    Payment,
+    Policy,
+    Product,
+    UserRole,
 )
-from app.services.llm.registry import embed_texts
-from app.services.llm.router import LLMRouter
 from app.services.llm.base import LLMRequest
+from app.services.llm.router import LLMRouter
 from app.services.report.matcher import match_policies_for_company
 from app.services.report.pdf import generate_match_report_pdf
 
@@ -250,6 +258,9 @@ async def demo_payment(
     principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
     db: Session = Depends(get_db),
 ):
+    if settings.app_env == "production" or not settings.demo_features_enabled:
+        raise HTTPException(status_code=404, detail="Not found")
+
     # 从 Product 表获取真实价格
     product = db.scalar(select(Product).where(Product.code == req.product_code, Product.active.is_(True)))
     if not product:
@@ -363,7 +374,7 @@ async def get_analytics_stats(
     principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin)),
     db: Session = Depends(get_db),
 ):
-    seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
+    seven_days_ago = datetime.now(UTC) - timedelta(days=7)
     events = db.scalars(
         select(AnalyticsEvent).where(
             AnalyticsEvent.tenant_id == principal.tenant_id,

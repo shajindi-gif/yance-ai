@@ -191,7 +191,7 @@ async def generate_invoice_pdf(invoice: Invoice) -> str:
         total_cn=_number_to_cn(invoice.total_amount),
         total_amount=f"{invoice.total_amount:.2f}",
         seller_name=invoice.seller_name or "上海衍策引擎人工智能科技有限公司",
-        seller_tax_number=invoice.seller_tax_number or "91310104MAKDCJH00L",
+        seller_tax_number=invoice.seller_tax_number or "",
         date=datetime.now().strftime("%Y年%m月%d日"),
         year=datetime.now().year,
     )

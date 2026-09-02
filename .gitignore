@@ -6,6 +6,8 @@ env.prod
 **/.env
 **/.env.*
 **/env.prod
+!.env.example
+!**/.env.example
 
 # Private keys
 *.pem

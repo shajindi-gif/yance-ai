@@ -1,14 +1,12 @@
 """Policy Evaluation Engine API — Evidence-Grounded assessment"""
 import uuid
-from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, require_roles
-from app.core.config import settings
 from app.core.db import get_db
 from app.models.models import AnalyticsEvent, Company, Policy, UserRole
 from app.services.policy_engine.evaluator import evaluate_policy
@@ -29,7 +27,12 @@ async def evaluate(
     db: Session = Depends(get_db),
 ):
     """Evidence-Grounded 政策资格评估：PASS / FAIL / INSUFFICIENT 逐条件判定"""
-    policy = db.scalar(select(Policy).where(Policy.id == uuid.UUID(req.policy_id)))
+    policy = db.scalar(
+        select(Policy).where(
+            Policy.id == uuid.UUID(req.policy_id),
+            or_(Policy.tenant_id.is_(None), Policy.tenant_id == principal.tenant_id),
+        )
+    )
     if not policy:
         raise HTTPException(404, "政策不存在")
     company = db.scalar(select(Company).where(Company.id == uuid.UUID(req.company_id), Company.tenant_id == principal.tenant_id))

@@ -56,6 +56,8 @@ class Settings(BaseSettings):
     stripe_webhook_secret: str = ""
     stripe_price_id: str = ""
 
+    demo_features_enabled: bool = False
+
     # Alipay 电脑网站支付
     alipay_app_id: str = ""
     alipay_private_key: str = ""       # 应用私钥（PEM格式，一行，\n替换为真实换行）
@@ -66,11 +68,10 @@ class Settings(BaseSettings):
     alipay_sandbox: bool = False       # True=沙箱环境
 
     # 公司对公账户（银行转账）
-    company_name: str = "上海衍策引擎人工智能科技有限公司"
-    company_tax_id: str = "91310104MAKDCJH00L"
-    company_bank_name: str = "上海浦东发展银行"
-    company_bank_account: str = "96530078801800000264"
-    company_bank_card: str = "6232500101935514"
+    company_name: str = ""
+    company_tax_id: str = ""
+    company_bank_name: str = ""
+    company_bank_account: str = ""
 
     log_level: str = "INFO"
     agent_log_prompts: bool = False
@@ -91,6 +92,8 @@ class Settings(BaseSettings):
             invalid = [name for name, value in bad.items() if value]
             if invalid:
                 raise ValueError(f"Production secrets must be replaced: {', '.join(invalid)}")
+            if self.demo_features_enabled:
+                raise ValueError("Demo features must be disabled in production")
         return self
 
 
