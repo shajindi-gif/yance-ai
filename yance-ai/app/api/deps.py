@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.db import get_db
 from app.core.security import decode_access_token
-from app.models.models import User, UserRole
+from app.models.models import Tenant, User, UserRole
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.api_v1_prefix}/auth/login")
 
@@ -35,8 +35,13 @@ def get_principal(token: str = Depends(oauth2_scheme), db: Session = Depends(get
     except (jwt.PyJWTError, KeyError, ValueError) as exc:
         raise credentials_error from exc
     user = db.scalar(
-        select(User).where(
-            User.id == user_id, User.tenant_id == tenant_id, User.is_active.is_(True)
+        select(User)
+        .join(Tenant, Tenant.id == User.tenant_id)
+        .where(
+            User.id == user_id,
+            User.tenant_id == tenant_id,
+            User.is_active.is_(True),
+            Tenant.is_active.is_(True),
         )
     )
     if not user:

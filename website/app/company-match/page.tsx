@@ -202,8 +202,8 @@ export default function CompanyMatchPage() {
       <section className="section section-alt">
         <div className="container">
           <div className="section-header">
-            <span className="section-label">输出样例</span>
-            <h2 className="section-title">企业政策匹配报告样例</h2>
+            <span className="section-label">DEMO / 虚构数据</span>
+            <h2 className="section-title">企业政策匹配报告界面样例</h2>
           </div>
 
           <div className="dashboard-preview">
@@ -287,7 +287,7 @@ export default function CompanyMatchPage() {
         <div className="container">
           <h2 className="cta-title">为你的企业生成政策匹配报告</h2>
           <p className="cta-subtitle">
-            注册后立即可用：输入企业画像，5 分钟拿到包含补贴金额与截止日期的匹配报告。
+            注册后创建企业画像并运行扫描；结果数量、耗时、金额与截止日期均以真实来源和运行记录为准。
           </p>
           <div className="cta-actions">
             <Link

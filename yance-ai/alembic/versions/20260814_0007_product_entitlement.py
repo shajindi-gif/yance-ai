@@ -5,8 +5,8 @@ for all pricing. Entitlement tracks what each tenant has purchased.
 """
 
 import sqlalchemy as sa
+
 from alembic import op
-from sqlalchemy.dialects.postgresql import UUID
 
 revision = "20260814_0007"
 down_revision = "20260814_0006_global_policy_kb"
@@ -29,23 +29,51 @@ def upgrade() -> None:
         sa.Column("entitlement_type", sa.String(40), nullable=False, server_default="report"),
         sa.Column("active", sa.Boolean, nullable=False, server_default=sa.text("true")),
         sa.Column("sort_order", sa.Integer, nullable=False, server_default=sa.text("0")),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
     )
 
     # 2. Create entitlements table
     op.create_table(
         "entitlements",
         sa.Column("id", sa.UUID(), primary_key=True),
-        sa.Column("tenant_id", sa.UUID(), sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True),
+        sa.Column(
+            "tenant_id",
+            sa.UUID(),
+            sa.ForeignKey("tenants.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        ),
         sa.Column("user_id", sa.UUID(), nullable=True),
-        sa.Column("product_id", sa.UUID(), sa.ForeignKey("products.id"), nullable=False, index=True),
+        sa.Column(
+            "product_id", sa.UUID(), sa.ForeignKey("products.id"), nullable=False, index=True
+        ),
         sa.Column("order_id", sa.UUID(), sa.ForeignKey("orders.id"), nullable=False, index=True),
         sa.Column("resource_type", sa.String(40), nullable=False),
         sa.Column("resource_id", sa.UUID(), nullable=True),
         sa.Column("status", sa.String(40), nullable=False, server_default="active"),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
     )
 
     # 3. Seed 4 SKUs

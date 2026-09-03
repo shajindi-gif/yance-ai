@@ -2,14 +2,15 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import api, { API_BASE } from '@/lib/api';
+import api, { Company, ProductCatalogItem } from '@/lib/api';
 
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const productCode = searchParams.get('product') || 'POLICY_REPORT';
-  const [product, setProduct] = useState<any>(null);
-  const [companies, setCompanies] = useState<any[]>([]);
+  const requestedCompany = searchParams.get('company') || '';
+  const [product, setProduct] = useState<ProductCatalogItem | null>(null);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<string>('');
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState('');
@@ -17,27 +18,47 @@ function CheckoutContent() {
 
   useEffect(() => {
     if (!api.isAuthenticated()) { router.push('/login?register=1'); return; }
+    let cancelled = false;
     Promise.all([
-      fetch(`${API_BASE}/products`).then(r => r.json()),
+      api.getProducts(),
       api.getCompanies(),
     ]).then(([products, comps]) => {
-      const p = products.find((x: any) => x.code === productCode);
+      if (cancelled) return;
+      const p = products.find((item) => item.code === productCode) ?? null;
       setProduct(p);
       setCompanies(comps);
-      if (comps.length > 0) setSelectedCompany(comps[0].id);
+      if (comps.length > 0) {
+        const selected = comps.some((company) => company.id === requestedCompany)
+          ? requestedCompany
+          : comps[0].id;
+        setSelectedCompany(selected);
+      }
       setLoading(false);
-    }).catch(() => { setLoading(false); setError('加载失败'); });
-  }, [router, productCode]);
+    }).catch(() => {
+      if (!cancelled) {
+        setLoading(false);
+        setError('加载失败');
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [requestedCompany, router, productCode]);
 
   const handlePay = async () => {
     if (!selectedCompany || !product) return;
     setPaying(true);
     setError('');
     try {
-      const result = await api.demoPay(product.code, selectedCompany);
-      if (result.order_id) {
-        router.push('/reports?purchased=1');
+      if (product.entitlement_type !== 'report') {
+        throw new Error('该产品需要从具体机会或申报工作区创建订单');
       }
+      const order = await api.createOrder({
+        product_code: product.code,
+        resource_id: selectedCompany,
+      });
+      const checkout = await api.createCheckout(order.id);
+      window.location.assign(checkout.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : '支付失败，请重试');
     } finally {
@@ -62,7 +83,7 @@ function CheckoutContent() {
     </div>
   );
 
-  const price = product.promotional_price || product.price;
+  const price = product.promotional_price ?? product.price;
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', paddingTop: '100px' }}>
@@ -103,6 +124,12 @@ function CheckoutContent() {
               </div>
             )}
 
+            {companies.length === 0 && (
+              <div role="status" style={{ padding: '12px 14px', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '8px', color: '#9a3412', fontSize: '13px', marginTop: '12px' }}>
+                请先在工作区创建企业档案，再为该企业购买报告。
+              </div>
+            )}
+
             {error && (
               <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#dc2626', fontSize: '13px', marginTop: '12px' }}>{error}</div>
             )}
@@ -122,16 +149,15 @@ function CheckoutContent() {
               {paying ? '处理中...' : `确认支付 ¥${price}`}
             </button>
             <p style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'center', marginTop: '12px' }}>
-              当前为演示支付模式 · 接入支付宝/微信后将启用真实支付
+              仅在服务端已配置并通过验证的支付供应商可用时创建结算页面。
             </p>
           </div>
         </div>
 
         {/* Trust signals */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginTop: '24px', fontSize: '12px', color: '#94a3b8' }}>
-          <span>🔒 数据加密</span>
-          <span>📄 可开发票</span>
-          <span>♾️ 永久下载</span>
+          <span>金额由服务端产品目录确定</span>
+          <span>支付回调校验金额与币种</span>
         </div>
       </div>
     </div>

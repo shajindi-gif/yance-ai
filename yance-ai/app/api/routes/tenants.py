@@ -24,7 +24,8 @@ def current_tenant(
 
 @router.get("/users", response_model=list[UserOut])
 def list_users(
-    principal: Principal = Depends(get_principal), db: Session = Depends(get_db)
+    principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin)),
+    db: Session = Depends(get_db),
 ) -> list[User]:
     return list(db.scalars(select(User).where(User.tenant_id == principal.tenant_id)).all())
 
@@ -35,6 +36,8 @@ def create_user(
     principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin)),
     db: Session = Depends(get_db),
 ) -> User:
+    if payload.role == UserRole.owner and principal.role != UserRole.owner:
+        raise HTTPException(status_code=403, detail="Only an owner can add another owner")
     user = User(
         tenant_id=principal.tenant_id,
         email=str(payload.email).lower(),

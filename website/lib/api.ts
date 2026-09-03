@@ -53,6 +53,8 @@ export interface Order {
   product_code: string;
   amount: number;
   currency: string;
+  resource_type?: string;
+  resource_id?: string;
   status: string;
   created_at: string;
 }
@@ -62,6 +64,28 @@ export interface Report {
   company_id: string;
   content: string;
   model?: string;
+  status: string;
+  created_at: string;
+}
+
+export interface ProductCatalogItem {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  product_type: string;
+  price: number;
+  original_price: number | null;
+  promotional_price: number | null;
+  entitlement_type: string;
+}
+
+export interface Entitlement {
+  id: string;
+  product_code: string;
+  product_name: string;
+  resource_type: string;
+  resource_id: string | null;
   status: string;
   created_at: string;
 }
@@ -259,23 +283,31 @@ class ApiClient {
     return this.request<Order[]>('/orders');
   }
 
+  async getProducts(): Promise<ProductCatalogItem[]> {
+    return this.request<ProductCatalogItem[]>('/products');
+  }
+
+  async getEntitlements(): Promise<Entitlement[]> {
+    return this.request<Entitlement[]>('/entitlements');
+  }
+
   async createOrder(data: {
     product_code: string;
-    amount: number;
-    currency?: string;
+    resource_id: string;
   }): Promise<Order> {
     return this.request<Order>('/orders', {
       method: 'POST',
-      body: JSON.stringify({ currency: 'CNY', ...data }),
+      body: JSON.stringify(data),
     });
   }
 
-  // Alipay
-  async createAlipayPayment(orderId: string): Promise<{ pay_url: string }> {
-    return this.request<{ pay_url: string }>(`/payments/alipay/page-pay`, {
-      method: 'POST',
-      body: JSON.stringify({ order_id: orderId }),
-    });
+  async createCheckout(orderId: string): Promise<{ url: string }> {
+    return this.request<{ url: string }>(
+      `/payments/checkout?order_id=${encodeURIComponent(orderId)}`,
+      {
+        method: 'POST',
+      },
+    );
   }
 
   // Demo: Match Report (with multi-model)

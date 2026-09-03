@@ -30,13 +30,14 @@ class BootstrapRequest(BaseModel):
 
 class RegisterRequest(BaseModel):
     """Public self-service registration: tenant + owner + default company."""
+
     company_name: str = Field(min_length=2, max_length=160)
     industry: str | None = Field(default=None, max_length=120)
     province: str | None = Field(default=None, max_length=60)
     city: str | None = Field(default=None, max_length=60)
     owner_email: EmailStr
     owner_name: str = Field(min_length=2, max_length=160)
-    owner_password: str = Field(min_length=8, max_length=128)
+    owner_password: str = Field(min_length=12, max_length=128)
 
 
 class UserCreate(BaseModel):
@@ -81,8 +82,8 @@ class DocumentCreate(BaseModel):
     filename: str = Field(min_length=1, max_length=255)
     content_type: str = Field(min_length=1, max_length=120)
     company_id: UUID | None = None
-    size_bytes: int | None = Field(default=None, ge=0)
-    checksum_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+    size_bytes: int = Field(gt=0)
+    checksum_sha256: str | None = Field(default=None, pattern=r"^[a-fA-F0-9]{64}$")
     metadata_json: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -107,7 +108,7 @@ class PresignedUploadOut(BaseModel):
 
 
 class DocumentComplete(BaseModel):
-    checksum_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+    checksum_sha256: str | None = Field(default=None, pattern=r"^[a-fA-F0-9]{64}$")
 
 
 class PolicyCreate(BaseModel):
@@ -122,7 +123,7 @@ class PolicyCreate(BaseModel):
 
 class PolicyOut(PolicyCreate, ORMModel):
     id: UUID
-    tenant_id: UUID
+    tenant_id: UUID | None
     created_at: datetime
     embedding: list[float] | None = None
 
@@ -172,8 +173,7 @@ class ApplicationOut(ApplicationCreate, ORMModel):
 
 class OrderCreate(BaseModel):
     product_code: str
-    amount: float = Field(gt=0)
-    currency: str = "CNY"
+    resource_id: UUID | None = None
 
 
 class PaymentCreate(BaseModel):
@@ -190,8 +190,8 @@ class InvoiceCreate(BaseModel):
     bank_account: str | None = None
     seller_name: str = ""
     seller_tax_number: str = ""
-    items: list[dict] | None = None       # 发票明细，为空则自动从订单生成
-    invoice_type: str = "vat_normal"      # vat_normal / vat_special / vat_electronic
+    items: list[dict] | None = None  # 发票明细，为空则自动从订单生成
+    invoice_type: str = "vat_normal"  # vat_normal / vat_special / vat_electronic
 
 
 class InvoiceOut(ORMModel):
@@ -226,6 +226,8 @@ class OrderOut(ORMModel):
     product_code: str
     amount: float
     currency: str
+    resource_type: str | None
+    resource_id: UUID | None
     status: str
     created_at: datetime
 

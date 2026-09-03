@@ -3,47 +3,35 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import api, { API_BASE } from '@/lib/api';
-
-interface Entitlement {
-  id: string;
-  product_code: string;
-  product_name: string;
-  resource_type: string;
-  resource_id: string | null;
-  status: string;
-  created_at: string;
-}
-
-interface Company {
-  id: string;
-  name: string;
-  industry?: string;
-  province?: string;
-}
+import api, { Entitlement } from '@/lib/api';
 
 const UPSSELL = [
-  { code: 'POLICY_DIAGNOSIS', name: '单项目申报诊断', price: 299, original: 399, desc: '针对一项政策深度判断：能不能申报、缺什么、怎么准备', cta: '深度诊断 ¥299' },
-  { code: 'APPLICATION_PLAN', name: 'AI 申报方案包', price: 699, original: 999, desc: '申报策略、材料目录、实施计划、信息缺口分析', cta: '生成方案 ¥699' },
+  { code: 'POLICY_DIAGNOSIS', name: '单项目申报诊断', desc: '针对一项政策深度判断：能不能申报、缺什么、怎么准备' },
+  { code: 'APPLICATION_PLAN', name: 'AI 申报方案包', desc: '申报策略、材料目录、实施计划、信息缺口分析' },
 ];
 
 export default function ReportsPage() {
   const router = useRouter();
   const [entitlements, setEntitlements] = useState<Entitlement[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!api.isAuthenticated()) { router.push('/login'); return; }
-    Promise.all([
-      fetch(`${API_BASE}/entitlements`, { headers: { Authorization: `Bearer ${api.getToken()}` } }).then(r => r.json()),
-      api.getCompanies(),
-    ]).then(([ents, comps]) => {
-      setEntitlements(ents);
-      setCompanies(comps);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    let cancelled = false;
+    api.getEntitlements()
+      .then((ents) => {
+        if (!cancelled) setEntitlements(ents);
+      })
+      .catch(() => {
+        if (!cancelled) setEntitlements([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   const handleDownload = async (companyId: string) => {
@@ -58,18 +46,6 @@ export default function ReportsPage() {
       URL.revokeObjectURL(url);
     } catch { /* ignore */ }
     setDownloading(null);
-  };
-
-  const handleUpsell = async (productCode: string) => {
-    if (!companies.length) return;
-    try {
-      const result = await api.demoPay(productCode, companies[0].id);
-      if (result.order_id) {
-        // Refresh entitlements
-        const ents = await fetch(`${API_BASE}/entitlements`, { headers: { Authorization: `Bearer ${api.getToken()}` } }).then(r => r.json());
-        setEntitlements(ents);
-      }
-    } catch { /* ignore */ }
   };
 
   if (loading) return (
@@ -128,15 +104,11 @@ export default function ReportsPage() {
                   <div key={item.code} style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '24px' }}>
                     <div style={{ fontSize: '15px', fontWeight: 600, color: '#0d1b2a', marginBottom: '8px' }}>{item.name}</div>
                     <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px', lineHeight: 1.6 }}>{item.desc}</div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '16px' }}>
-                      <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '13px' }}>¥{item.original}</span>
-                      <span style={{ fontSize: '22px', fontWeight: 700, color: '#f97316' }}>¥{item.price}</span>
-                    </div>
                     <button
-                      onClick={() => handleUpsell(item.code)}
-                      style={{ width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: '#f97316', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+                      disabled
+                      style={{ width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: '#cbd5e1', color: '#475569', fontSize: '13px', fontWeight: 600 }}
                     >
-                      {item.cta}
+                      从具体机会工作区创建（建设中）
                     </button>
                   </div>
                 ))}

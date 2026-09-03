@@ -11,20 +11,32 @@ V2.1 变更（benchmark/V21_AUDIT.md）：
   D7 Enterprise Fact Normalization
   D8 条件结构化（field/operator/value）
 """
+# ruff: noqa: E501 -- domain prompts preserve policy wording and JSON examples.
+
 import asyncio
 import json
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from app.services.llm.router import LLMRouter
 from app.services.llm.base import LLMRequest
-from app.services.policy_engine.schemas import (
-    CriteriaExtraction, EligibilityJudgment, PolicyEvaluationResult,
-    CriterionResult, OverallResult, CriterionEvaluation,
-    EvidenceItem, MissingMaterial, RiskItem, NextBestAction,
-)
+from app.services.llm.router import LLMRouter
 from app.services.policy_engine.deterministic import (
-    normalize_facts, normalize_criteria, evaluate_deterministic, final_gate, _is_blocking,
+    _is_blocking,
+    evaluate_deterministic,
+    final_gate,
+    normalize_criteria,
+    normalize_facts,
+)
+from app.services.policy_engine.schemas import (
+    CriterionEvaluation,
+    CriterionResult,
+    EligibilityJudgment,
+    EvidenceItem,
+    MissingMaterial,
+    NextBestAction,
+    OverallResult,
+    PolicyEvaluationResult,
+    RiskItem,
 )
 
 _llm = LLMRouter()
@@ -64,7 +76,7 @@ def _loads_json(text: str) -> dict:
                 elif t[i] == close_c:
                     depth -= 1
                     if depth == 0:
-                        return json.loads(t[s:i + 1])
+                        return json.loads(t[s : i + 1])
     # 3) 兜底：整串直解（可能含前后空格/回车）
     return json.loads(t.strip())
 
@@ -74,8 +86,11 @@ def _usage_of(resp) -> dict:
     return {
         "input_tokens": u.get("prompt_tokens", "NOT_AVAILABLE"),
         "output_tokens": u.get("completion_tokens", "NOT_AVAILABLE"),
-        "cached_tokens": (u.get("prompt_cache_hit_tokens", "NOT_AVAILABLE")
-                          if isinstance(u, dict) else "NOT_AVAILABLE"),
+        "cached_tokens": (
+            u.get("prompt_cache_hit_tokens", "NOT_AVAILABLE")
+            if isinstance(u, dict)
+            else "NOT_AVAILABLE"
+        ),
     }
 
 
@@ -97,21 +112,43 @@ async def extract_criteria(policy_content: str, provider: str = "deepseek") -> l
 
     try:
         response = await asyncio.wait_for(
-            _llm.complete(LLMRequest(
-                messages=[{"role": "user", "content": prompt}],
-                model="deepseek-chat" if provider == "deepseek" else "qwen-plus",
-                temperature=0, max_tokens=3000,
-            ), provider=provider),
+            _llm.complete(
+                LLMRequest(
+                    messages=[{"role": "user", "content": prompt}],
+                    model="deepseek-chat" if provider == "deepseek" else "qwen-plus",
+                    temperature=0,
+                    max_tokens=3000,
+                ),
+                provider=provider,
+            ),
             timeout=60,
         )
         parsed = _loads_json(response.content)
         return parsed.get("criteria", [])
     except Exception:
         # Fallback: 关键词句子提取（保守，只提取不判定）
-        sentences = re.split(r'[。；！？\n]', policy_content)
+        sentences = re.split(r"[。；！？\n]", policy_content)
         criteria = []
-        keywords = ["注册", "成立", "资本", "知识产权", "专利", "软著", "研发", "收入", "营收",
-                    "规模", "人员", "比例", "占比", "认定", "资质", "行业", "领域", "细分市场"]
+        keywords = [
+            "注册",
+            "成立",
+            "资本",
+            "知识产权",
+            "专利",
+            "软著",
+            "研发",
+            "收入",
+            "营收",
+            "规模",
+            "人员",
+            "比例",
+            "占比",
+            "认定",
+            "资质",
+            "行业",
+            "领域",
+            "细分市场",
+        ]
         for s in sentences:
             s = s.strip()
             if len(s) > 10 and any(kw in s for kw in keywords):
@@ -150,15 +187,24 @@ async def evaluate_criteria(
 输出 JSON：
 {{"criteria": [{{"criterion": "", "enterprise_fact": "", "policy_requirement": "", "result": "PASS|FAIL|INSUFFICIENT", "reason": "", "missing_information": "", "confidence": 0.8}}], "summary": ""}}"""
 
-    telemetry = {"llm_call_count": 0, "input_tokens": 0, "output_tokens": 0,
-                 "cached_tokens": 0, "tokens_available": False}
+    telemetry = {
+        "llm_call_count": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cached_tokens": 0,
+        "tokens_available": False,
+    }
     try:
         response = await asyncio.wait_for(
-            _llm.complete(LLMRequest(
-                messages=[{"role": "user", "content": prompt}],
-                model="deepseek-chat" if provider == "deepseek" else "qwen-plus",
-                temperature=0, max_tokens=4000,
-            ), provider=provider),
+            _llm.complete(
+                LLMRequest(
+                    messages=[{"role": "user", "content": prompt}],
+                    model="deepseek-chat" if provider == "deepseek" else "qwen-plus",
+                    temperature=0,
+                    max_tokens=4000,
+                ),
+                provider=provider,
+            ),
             timeout=90,
         )
         telemetry["llm_call_count"] = 1
@@ -188,24 +234,37 @@ async def evaluate_criteria(
             )
             criteria_results.append(ce)
             by_criterion[ce.criterion] = ce
-        return EligibilityJudgment(criteria=criteria_results, overall_result=OverallResult.INSUFFICIENT_INFO,
-                                   summary=parsed.get("summary", "")), telemetry
+        return EligibilityJudgment(
+            criteria=criteria_results,
+            overall_result=OverallResult.INSUFFICIENT_INFO,
+            summary=parsed.get("summary", ""),
+        ), telemetry
     except Exception as e:
         # D6: fallback 保守化 —— 永不输出 PASS
         results = []
         for c in criteria:
-            results.append(CriterionEvaluation(
-                criterion=c.get("criterion", ""),
-                enterprise_fact="数据不足", policy_requirement=c.get("policy_quote", ""),
-                result=CriterionResult.INSUFFICIENT,
-                reason="引擎判定通道异常，保守标记为信息不足", missing_information="需人工复核",
-                confidence=0.1))
-        return EligibilityJudgment(criteria=results, overall_result=OverallResult.INSUFFICIENT_INFO,
-                                   summary="fallback保守判定"), {**telemetry, "error": str(e)[:200]}
+            results.append(
+                CriterionEvaluation(
+                    criterion=c.get("criterion", ""),
+                    enterprise_fact="数据不足",
+                    policy_requirement=c.get("policy_quote", ""),
+                    result=CriterionResult.INSUFFICIENT,
+                    reason="引擎判定通道异常，保守标记为信息不足",
+                    missing_information="需人工复核",
+                    confidence=0.1,
+                )
+            )
+        return EligibilityJudgment(
+            criteria=results,
+            overall_result=OverallResult.INSUFFICIENT_INFO,
+            summary="fallback保守判定",
+        ), {**telemetry, "error": str(e)[:200]}
 
 
 # ── Step 3: Evidence Gate（V2.1 精准化）────────────────────────
-def validate_evidence(result: EligibilityJudgment, policy_content: str) -> tuple[EligibilityJudgment, list[str]]:
+def validate_evidence(
+    result: EligibilityJudgment, policy_content: str
+) -> tuple[EligibilityJudgment, list[str]]:
     """只校验「政策门槛断言」：policy_requirement / policy_quote 中出现、且不在 frozen policy
     全文中的比例/金额/分数类数字 → 记幻觉并降级为 INSUFFICIENT。
     enterprise_fact / reason 中的企业自身数字一律豁免（V2.1 修复 D2）。
@@ -216,7 +275,9 @@ def validate_evidence(result: EligibilityJudgment, policy_content: str) -> tuple
     full = policy_content[:12000]
     full_norm = re.sub(r",(?=\d)", "", full)  # 去千分位逗号
     # 政策中合法出现的数字形态
-    policy_numbers = set(re.findall(r'\d+(?:\.\d+)?(?:%|％|万|亿|年|个月|天|人|项|件|分)', full_norm))
+    policy_numbers = set(
+        re.findall(r"\d+(?:\.\d+)?(?:%|％|万|亿|年|个月|天|人|项|件|分)", full_norm)
+    )
 
     def _norm_field(s: str) -> str:
         return re.sub(r",(?=\d)", "", s or "")
@@ -225,13 +286,18 @@ def validate_evidence(result: EligibilityJudgment, policy_content: str) -> tuple
         checked_fields = [criterion.policy_requirement or "", criterion.evidence_quote or ""]
         for field in checked_fields:
             fn = _norm_field(field)
-            nums = set(re.findall(r'\d+(?:\.\d+)?(?:%|％|万|亿|分)', fn))
-            unsupported = {n for n in nums if n not in policy_numbers and n.rstrip('%％') not in full_norm}
+            nums = set(re.findall(r"\d+(?:\.\d+)?(?:%|％|万|亿|分)", fn))
+            unsupported = {
+                n for n in nums if n not in policy_numbers and n.rstrip("%％") not in full_norm
+            }
             if unsupported:
                 hallucinations.append(
-                    f"条件 [{criterion.criterion[:30]}] 的要求引用了政策原文中不存在的数值: {sorted(unsupported)}")
+                    f"条件 [{criterion.criterion[:30]}] 的要求引用了政策原文中不存在的数值: {sorted(unsupported)}"
+                )
                 criterion.result = CriterionResult.INSUFFICIENT
-                criterion.reason = (criterion.reason or "") + "｜[Evidence Gate] 政策要求含未经原文支持的数值，降级为信息不足"
+                criterion.reason = (
+                    criterion.reason or ""
+                ) + "｜[Evidence Gate] 政策要求含未经原文支持的数值，降级为信息不足"
                 criterion.confidence = min(criterion.confidence, 0.3)
     return result, hallucinations
 
@@ -243,28 +309,57 @@ def logic_validate(judgment: EligibilityJudgment) -> list[str]:
     has_fail = any(c.result == CriterionResult.FAIL for c in judgment.criteria)
     has_insuff = any(c.result == CriterionResult.INSUFFICIENT for c in judgment.criteria)
     if has_fail and judgment.overall_result == OverallResult.ELIGIBLE:
-        failures.append("LOGIC_CONFLICT: criteria 存在 FAIL 但 overall=ELIGIBLE（已由 Final Gate 纠正）")
+        failures.append(
+            "LOGIC_CONFLICT: criteria 存在 FAIL 但 overall=ELIGIBLE（已由 Final Gate 纠正）"
+        )
     if has_insuff and judgment.overall_result == OverallResult.ELIGIBLE and not has_fail:
-        failures.append("LOGIC_CONFLICT: criteria 存在 INSUFFICIENT 但 overall=ELIGIBLE（已由 Final Gate 纠正）")
+        failures.append(
+            "LOGIC_CONFLICT: criteria 存在 INSUFFICIENT 但 overall=ELIGIBLE（已由 Final Gate 纠正）"
+        )
     return failures
 
 
 # ── Step 4: recommendations ──────────────────────────────────
-def generate_recommendations(result: EligibilityJudgment, policy_title: str) -> tuple[list, list, list]:
+def generate_recommendations(
+    result: EligibilityJudgment, policy_title: str
+) -> tuple[list, list, list]:
     missing_materials, risks, next_actions = [], [], []
     for c in result.criteria:
         if c.result == CriterionResult.INSUFFICIENT and c.missing_information:
-            missing_materials.append(MissingMaterial(material=c.missing_information, reason=c.reason))
+            missing_materials.append(
+                MissingMaterial(material=c.missing_information, reason=c.reason)
+            )
         if c.result == CriterionResult.FAIL:
-            risks.append(RiskItem(risk=f"不满足条件: {c.criterion[:50]}", severity="high",
-                                  mitigation=f"需补齐: {c.missing_information or c.reason}"))
+            risks.append(
+                RiskItem(
+                    risk=f"不满足条件: {c.criterion[:50]}",
+                    severity="high",
+                    mitigation=f"需补齐: {c.missing_information or c.reason}",
+                )
+            )
     if result.overall_result == OverallResult.INSUFFICIENT_INFO:
-        next_actions.append(NextBestAction(action="完善企业画像", description="补充缺失信息以获得准确判定", cta="更新画像"))
+        next_actions.append(
+            NextBestAction(
+                action="完善企业画像", description="补充缺失信息以获得准确判定", cta="更新画像"
+            )
+        )
     if result.overall_result == OverallResult.ELIGIBLE:
-        next_actions.append(NextBestAction(action="生成申报材料", description=f"企业符合 {policy_title} 申报条件，建议启动申报",
-                                           product_code="APPLICATION_PLAN", cta="生成方案 ¥699"))
+        next_actions.append(
+            NextBestAction(
+                action="生成申报材料",
+                description=f"企业符合 {policy_title} 申报条件，建议启动申报",
+                product_code="APPLICATION_PLAN",
+                cta="查看申报方案",
+            )
+        )
     if missing_materials:
-        next_actions.append(NextBestAction(action="生成材料清单", description=f"共 {len(missing_materials)} 项材料需要准备", cta="查看清单"))
+        next_actions.append(
+            NextBestAction(
+                action="生成材料清单",
+                description=f"共 {len(missing_materials)} 项材料需要准备",
+                cta="查看清单",
+            )
+        )
     return missing_materials, risks, next_actions
 
 
@@ -278,10 +373,16 @@ async def evaluate_policy(
     company_profile: dict,
     provider: str = "deepseek",
 ) -> PolicyEvaluationResult:
-    start = datetime.now(timezone.utc)
-    telemetry: dict = {"llm_call_count": 0, "input_tokens": 0, "output_tokens": 0,
-                       "tokens_available": False, "validation_failure_count": 0,
-                       "retry_count": 0, "retrieval_count": 0}
+    start = datetime.now(UTC)
+    telemetry: dict = {
+        "llm_call_count": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "tokens_available": False,
+        "validation_failure_count": 0,
+        "retry_count": 0,
+        "retrieval_count": 0,
+    }
 
     # Step 0: Fact normalization（D7）
     facts = normalize_facts(company_profile)
@@ -291,7 +392,8 @@ async def evaluate_policy(
     if not criteria_raw:
         return PolicyEvaluationResult(
             overall_result=OverallResult.INSUFFICIENT_INFO,
-            matched_policy_id=policy_id, matched_policy_title=policy_title,
+            matched_policy_id=policy_id,
+            matched_policy_title=policy_title,
             summary="政策内容为空或过短，无法提取申报条件。",
             model_metadata={"engine_version": ENGINE_VERSION, "provider": provider},
         )
@@ -300,7 +402,9 @@ async def evaluate_policy(
     criteria_norm = normalize_criteria(criteria_raw)
 
     # Step 2: LLM 判定 semantic 条件（numeric 条件不再让 LLM 心算）
-    judgment, llm_tel = await evaluate_criteria(criteria_norm, company_name, company_profile, provider)
+    judgment, llm_tel = await evaluate_criteria(
+        criteria_norm, company_name, company_profile, provider
+    )
     telemetry.update(llm_tel)
 
     # Step 2.5: deterministic 交叉验证（D1）—— 程序优先
@@ -313,29 +417,42 @@ async def evaluate_policy(
         if det is not None:
             det_results.append({"criterion": cn["criterion"], **det})
             prog = CriterionResult(det["result"])
-            audit_note = (f"[deterministic] enterprise_value={det['enterprise_value']} "
-                          f"{det['operator']} threshold={det['threshold']} {det.get('note','')}")
+            audit_note = (
+                f"[deterministic] enterprise_value={det['enterprise_value']} "
+                f"{det['operator']} threshold={det['threshold']} {det.get('note', '')}"
+            )
             if llm_ce is not None and llm_ce.result != prog:
                 audit_note += f"｜[交叉验证] LLM原判{llm_ce.result.value}与程序冲突，以程序为准"
                 telemetry["validation_failure_count"] += 1
-            merged.append(CriterionEvaluation(
-                criterion=cn["criterion"],
-                enterprise_fact=(llm_ce.enterprise_fact if llm_ce else "由程序计算"),
-                policy_requirement=cn["policy_quote"],
-                evidence_quote=cn["policy_quote"], evidence_source="政策原文",
-                result=prog,
-                reason=((llm_ce.reason + "｜" if llm_ce else "") + audit_note),
-                missing_information=(llm_ce.missing_information if llm_ce else ""),
-                confidence=0.95 if (llm_ce is None or llm_ce.result == prog) else 0.85,
-            ))
+            merged.append(
+                CriterionEvaluation(
+                    criterion=cn["criterion"],
+                    enterprise_fact=(llm_ce.enterprise_fact if llm_ce else "由程序计算"),
+                    policy_requirement=cn["policy_quote"],
+                    evidence_quote=cn["policy_quote"],
+                    evidence_source="政策原文",
+                    result=prog,
+                    reason=((llm_ce.reason + "｜" if llm_ce else "") + audit_note),
+                    missing_information=(llm_ce.missing_information if llm_ce else ""),
+                    confidence=0.95 if (llm_ce is None or llm_ce.result == prog) else 0.85,
+                )
+            )
         elif llm_ce is not None:
             merged.append(llm_ce)
         else:
-            merged.append(CriterionEvaluation(
-                criterion=cn["criterion"], enterprise_fact="数据不足",
-                policy_requirement=cn["policy_quote"], evidence_quote=cn["policy_quote"],
-                evidence_source="政策原文", result=CriterionResult.INSUFFICIENT,
-                reason="LLM 未返回该条件的判定", missing_information="需补充相关企业信息", confidence=0.2))
+            merged.append(
+                CriterionEvaluation(
+                    criterion=cn["criterion"],
+                    enterprise_fact="数据不足",
+                    policy_requirement=cn["policy_quote"],
+                    evidence_quote=cn["policy_quote"],
+                    evidence_source="政策原文",
+                    result=CriterionResult.INSUFFICIENT,
+                    reason="LLM 未返回该条件的判定",
+                    missing_information="需补充相关企业信息",
+                    confidence=0.2,
+                )
+            )
     judgment.criteria = merged
 
     # Step 3: Evidence Gate（精准化）
@@ -351,17 +468,25 @@ async def evaluate_policy(
     # Step 4: recommendations
     missing_materials, risks, next_actions = generate_recommendations(judgment, policy_title)
 
-    evidence = [EvidenceItem(
-        source_title=policy_title, publisher="政府发布",
-        quote=c.get("policy_quote", "")[:200], confidence=0.9,
-    ) for c in criteria_raw[:6]]
+    evidence = [
+        EvidenceItem(
+            source_title=policy_title,
+            publisher="政府发布",
+            quote=c.get("policy_quote", "")[:200],
+            confidence=0.9,
+        )
+        for c in criteria_raw[:6]
+    ]
 
-    end = datetime.now(timezone.utc)
+    end = datetime.now(UTC)
     latency = int((end - start).total_seconds() * 1000)
 
     hard_failures = [c.criterion for c in judgment.criteria if c.result == CriterionResult.FAIL]
-    missing_info = [c.missing_information for c in judgment.criteria
-                    if c.result == CriterionResult.INSUFFICIENT and c.missing_information]
+    missing_info = [
+        c.missing_information
+        for c in judgment.criteria
+        if c.result == CriterionResult.INSUFFICIENT and c.missing_information
+    ]
 
     return PolicyEvaluationResult(
         overall_result=judgment.overall_result,
@@ -374,7 +499,8 @@ async def evaluate_policy(
         risks=risks,
         next_best_actions=next_actions,
         evidence=evidence,
-        summary=judgment.summary or f"针对 {policy_title} 的资格判定结果：{judgment.overall_result.value}",
+        summary=judgment.summary
+        or f"针对 {policy_title} 的资格判定结果：{judgment.overall_result.value}",
         model_metadata={
             "engine_version": ENGINE_VERSION,
             "prompt_version": PROMPT_VERSION,

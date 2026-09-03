@@ -11,7 +11,6 @@ from weasyprint import HTML
 from app.models.models import Company, Opportunity, Policy
 from app.services.safe_rendering import deny_external_url_fetcher, escape_html
 
-
 # ── CSS 样式 ─────────────────────────────────────────────────
 REPORT_CSS = """
   @page { size: A4; margin: 15mm; @bottom-center { content: counter(page) " / " counter(pages); font-size: 9px; color: #999; } }
@@ -57,13 +56,20 @@ REPORT_CSS = """
 
 
 def _score_class(pct: int) -> str:
-    if pct >= 70: return "score-high"
-    if pct >= 50: return "score-mid"
+    if pct >= 70:
+        return "score-high"
+    if pct >= 50:
+        return "score-mid"
     return "score-low"
 
 
 def _level_cn(level: str) -> str:
-    return {"national": "国家级", "provincial": "省级", "municipal": "市级", "district": "区级"}.get(level, level or "—")
+    return {
+        "national": "国家级",
+        "provincial": "省级",
+        "municipal": "市级",
+        "district": "区级",
+    }.get(level, level or "—")
 
 
 def generate_match_report_pdf(
@@ -110,11 +116,15 @@ def generate_match_report_pdf(
         ("知识产权", meta.get("ip_count", "—")),
         ("融资阶段", meta.get("funding_stage", "—")),
     ]
-    profile_html = "<table>" + "".join(
-        f'<tr><td style="width:30%;font-weight:600;background:#f8fafc">'
-        f"{escape_html(k)}</td><td>{escape_html(v)}</td></tr>"
-        for k, v in profile_items
-    ) + "</table>"
+    profile_html = (
+        "<table>"
+        + "".join(
+            f'<tr><td style="width:30%;font-weight:600;background:#f8fafc">'
+            f"{escape_html(k)}</td><td>{escape_html(v)}</td></tr>"
+            for k, v in profile_items
+        )
+        + "</table>"
+    )
 
     # ── 02 政策机会总览 ──
     overview_html = f"""
@@ -126,7 +136,7 @@ def generate_match_report_pdf(
         <div class="stat"><div class="stat-value" style="color:#dc2626">{low}</div><div class="stat-label">低度匹配</div></div>
       </div>
       <div style="text-align:center;margin-top:12px;font-size:10px;color:#64748b">
-        国家级 {level_counts['national']} · 省级 {level_counts['provincial']} · 市级 {level_counts['municipal']} · 区级 {level_counts['district']}
+        国家级 {level_counts["national"]} · 省级 {level_counts["provincial"]} · 市级 {level_counts["municipal"]} · 区级 {level_counts["district"]}
         &nbsp;|&nbsp; 平均匹配度 {avg_score}% · 最高 {max_score}%
       </div>
     </div>"""
@@ -135,42 +145,44 @@ def generate_match_report_pdf(
     top_rows = []
     for i, opp in enumerate(opportunities[:10], 1):
         p = policy_map.get(opp.policy_id)
-        if not p: continue
+        if not p:
+            continue
         pct = round(opp.score * 100)
         ev = opp.evidence_json or {}
         grade = "★★★★★" if pct >= 80 else ("★★★★" if pct >= 70 else ("★★★" if pct >= 50 else "★★"))
         top_rows.append(f"""<tr>
           <td>{i}</td>
-          <td>{escape_html(p.title[:40])}{'...' if len(p.title) > 40 else ''}</td>
+          <td>{escape_html(p.title[:40])}{"..." if len(p.title) > 40 else ""}</td>
           <td>{escape_html(_level_cn(p.level))}</td>
-          <td>{escape_html(p.province or '全国')}</td>
-          <td>{escape_html(p.support_amount or '—')}</td>
+          <td>{escape_html(p.province or "全国")}</td>
+          <td>{escape_html(p.support_amount or "—")}</td>
           <td class="{_score_class(pct)}">{pct}%</td>
           <td>{grade}</td>
         </tr>""")
     top_table = f"""<table>
       <thead><tr><th>#</th><th>政策名称</th><th>层级</th><th>地区</th><th>支持金额</th><th>匹配度</th><th>推荐</th></tr></thead>
-      <tbody>{''.join(top_rows)}</tbody>
+      <tbody>{"".join(top_rows)}</tbody>
     </table>"""
 
     # ── 04 企业为什么匹配（Top 3 政策的条件分析）──
     why_html = ""
     for opp in opportunities[:3]:
         p = policy_map.get(opp.policy_id)
-        if not p: continue
+        if not p:
+            continue
         ev = opp.evidence_json or {}
         bd = ev.get("score_breakdown", {})
         why_html += f"""
         <div class="priority-box priority-p1">
           <div class="priority-label">{escape_html(p.title[:35])}</div>
           <div style="font-size:10px;color:#475569">
-            评分构成：地区 {escape_html(bd.get('region',0))}/20 · 行业 {escape_html(bd.get('industry',0))}/15 · 规模 {escape_html(bd.get('scale',0))}/10 ·
-            资质 {escape_html(bd.get('qualification',0))}/20 · 技术 {escape_html(bd.get('tech',0))}/15 · 财务 {escape_html(bd.get('finance',0))}/10 · 语义 {escape_html(bd.get('semantic',0))}/10
+            评分构成：地区 {escape_html(bd.get("region", 0))}/20 · 行业 {escape_html(bd.get("industry", 0))}/15 · 规模 {escape_html(bd.get("scale", 0))}/10 ·
+            资质 {escape_html(bd.get("qualification", 0))}/20 · 技术 {escape_html(bd.get("tech", 0))}/15 · 财务 {escape_html(bd.get("finance", 0))}/10 · 语义 {escape_html(bd.get("semantic", 0))}/10
           </div>
           <div style="font-size:10px;margin-top:4px">
             <span class="tag tag-green">✓ 地区匹配</span>
             <span class="tag tag-green">✓ 行业匹配</span>
-            {'<span class="tag tag-yellow">△ 资质待获取</span>' if bd.get('qualification',0) < 15 else '<span class="tag tag-green">✓ 资质满足</span>'}
+            {'<span class="tag tag-yellow">△ 资质待获取</span>' if bd.get("qualification", 0) < 15 else '<span class="tag tag-green">✓ 资质满足</span>'}
           </div>
         </div>"""
 
@@ -211,25 +223,35 @@ def generate_match_report_pdf(
         + "</ul>"
     )
     if not all_missing:
-        gaps_html = "<p>基于当前企业画像，暂未发现明显差距。建议完善企业画像以获取更精准的分析。</p>"
+        gaps_html = (
+            "<p>基于当前企业画像，暂未发现明显差距。建议完善企业画像以获取更精准的分析。</p>"
+        )
 
     # ── 07 政策行动路线图 ──
     p0, p1, p2, p3 = [], [], [], []
     for opp in opportunities:
         p = policy_map.get(opp.policy_id)
-        if not p: continue
+        if not p:
+            continue
         pct = round(opp.score * 100)
         item = f"{escape_html(p.title[:30])}（{pct}%）"
         if p.deadline:
             days_left = (p.deadline - now).days
-            if days_left <= 30: p0.append(item)
-            elif days_left <= 90: p1.append(item)
-            elif days_left <= 180: p2.append(item)
-            else: p3.append(item)
+            if days_left <= 30:
+                p0.append(item)
+            elif days_left <= 90:
+                p1.append(item)
+            elif days_left <= 180:
+                p2.append(item)
+            else:
+                p3.append(item)
         else:
-            if pct >= 70: p1.append(item)
-            elif pct >= 50: p2.append(item)
-            else: p3.append(item)
+            if pct >= 70:
+                p1.append(item)
+            elif pct >= 50:
+                p2.append(item)
+            else:
+                p3.append(item)
 
     roadmap_html = ""
     for label, items, cls, desc in [
@@ -249,7 +271,8 @@ def generate_match_report_pdf(
     calendar_rows = []
     for opp in opportunities[:8]:
         p = policy_map.get(opp.policy_id)
-        if not p: continue
+        if not p:
+            continue
         deadline_str = p.deadline.strftime("%Y-%m-%d") if p.deadline else "长期有效"
         start_str = p.start_date.strftime("%Y-%m-%d") if p.start_date else "—"
         calendar_rows.append(f"""<tr>
@@ -260,7 +283,7 @@ def generate_match_report_pdf(
         </tr>""")
     calendar_html = f"""<table>
       <thead><tr><th>政策名称</th><th>开放时间</th><th>截止时间</th><th>建议启动</th></tr></thead>
-      <tbody>{''.join(calendar_rows)}</tbody>
+      <tbody>{"".join(calendar_rows)}</tbody>
     </table>"""
 
     # ── 09 材料准备建议 ──
@@ -310,9 +333,9 @@ def generate_match_report_pdf(
   <div class="subtitle">Enterprise Policy Intelligence Report</div>
   <div class="company">{escape_html(company.name)}</div>
   <div class="meta">
-    报告编号：YR-{now.strftime('%Y%m%d')}-{company.id.hex[:8].upper()}<br>
-    生成时间：{now.strftime('%Y-%m-%d %H:%M')}<br>
-    政策库版本：{now.strftime('%Y.%m')}<br>
+    报告编号：YR-{now.strftime("%Y%m%d")}-{company.id.hex[:8].upper()}<br>
+    生成时间：{now.strftime("%Y-%m-%d %H:%M")}<br>
+    政策库版本：{now.strftime("%Y.%m")}<br>
     匹配政策数：{total} 项
   </div>
   <div class="disclaimer">

@@ -137,8 +137,11 @@ export default function BriefMakerPage() {
       <section className="section">
         <div className="container">
           <div className="section-header">
-            <span className="section-label">输出样例</span>
+            <span className="section-label">DEMO / 虚构输出样例</span>
             <h2 className="section-title">申报材料清单样例</h2>
+            <p className="section-subtitle">
+              下列企业状态、材料数量和门槛数字仅用于演示界面结构，不是当前政策建议；真实结果必须附政策原文和有效期。
+            </p>
           </div>
 
           <div className="dashboard-preview">

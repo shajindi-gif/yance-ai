@@ -83,9 +83,6 @@ export default function DashboardPage() {
   // Report
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
   const [generating, setGenerating] = useState(false);
-  const [paid, setPaid] = useState(false);
-  const [paying, setPaying] = useState(false);
-  const [downloading, setDownloading] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState('qwen');
   const [stats, setStats] = useState<any>(null);
 
@@ -131,40 +128,11 @@ export default function DashboardPage() {
     try {
       const result = await api.matchReport(companies[0].id, selectedProvider);
       setMatchResult(result);
-      setPaid(false);
       // Refresh stats after report generation
       api.getStats().then(setStats).catch(() => {});
     } catch (err) {
       setError(err instanceof Error ? err.message : '生成失败');
     } finally { setGenerating(false); }
-  };
-
-  const handleDemoPay = async () => {
-    setPaying(true); setError('');
-    try {
-      await api.demoPay('POLICY_REPORT', companies[0].id);
-      setPaid(true);
-      const o = await api.getOrders();
-      setOrders(o);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '支付失败');
-    } finally { setPaying(false); }
-  };
-
-  const handleDownload = async () => {
-    if (companies.length === 0) return;
-    setDownloading(true);
-    try {
-      const blob = await api.downloadReport(companies[0].id);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${companies[0].name}_政策匹配报告.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '下载失败');
-    } finally { setDownloading(false); }
   };
 
   if (loading) {
@@ -288,9 +256,13 @@ export default function DashboardPage() {
         <div className="yc-dash-section">
           <h2>政策匹配报告 — {matchResult.company_name}</h2>
           <p className="yc-dash-match-summary">
-            匹配到 <strong>{matchResult.total_matches}</strong> 项政策，
-            平均匹配度 <strong>{Math.round(matchResult.full.reduce((s, m) => s + m.score_pct, 0) / matchResult.full.length)}%</strong>，
-            最高 <strong>{Math.max(...matchResult.full.map(m => m.score_pct))}%</strong>
+            {matchResult.full.length > 0 ? (
+              <>
+                匹配到 <strong>{matchResult.total_matches}</strong> 项政策，平均匹配度{' '}
+                <strong>{Math.round(matchResult.full.reduce((s, m) => s + m.score_pct, 0) / matchResult.full.length)}%</strong>，
+                最高 <strong>{Math.max(...matchResult.full.map(m => m.score_pct))}%</strong>
+              </>
+            ) : '未发现带来源的匹配机会。'}
             {matchResult.provider_used && <span className="yc-dash-provider-tag">AI: {matchResult.provider_used}</span>}
           </p>
 
@@ -301,7 +273,7 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Preview table (top 2) */}
+          {/* Scan results */}
           <div className="yc-dash-table">
             <table>
               <thead>
@@ -314,7 +286,7 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {matchResult.preview.map((m, i) => (
+                {matchResult.full.map((m, i) => (
                   <tr key={m.opportunity_id}>
                     <td>{i + 1}</td>
                     <td>{m.policy_title}</td>
@@ -327,52 +299,15 @@ export default function DashboardPage() {
             </table>
           </div>
 
-          {/* Blurred rest + pay button */}
-          {!paid ? (
-            <div className="yc-dash-paywall">
-              <div className="yc-dash-paywall-blur">
-                <div className="yc-dash-blur-row">高新技术企业认定管理办法 — 88% — 国家级 — 知识产权证明</div>
-                <div className="yc-dash-blur-row">专精特新"小巨人" — 82% — 国家级 — 研发投入审计</div>
-                <div className="yc-dash-blur-row">研发费用加计扣除 — 79% — 国家级 — 研发辅助账</div>
-              </div>
-              <div className="yc-dash-paywall-cta">
-                <p>购买完整报告，解锁全部 {matchResult.total_matches} 项政策 + PDF 下载</p>
-                <button className="yc-dash-btn-primary" onClick={handleDemoPay} disabled={paying}>
-                  {paying ? '支付中...' : '¥29 购买完整报告'}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="yc-dash-unlocked">
-              <div className="yc-dash-table">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>政策名称</th>
-                      <th>匹配度</th>
-                      <th>管辖范围</th>
-                      <th>缺失材料</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {matchResult.full.map((m, i) => (
-                      <tr key={m.opportunity_id}>
-                        <td>{i + 1}</td>
-                        <td>{m.policy_title}</td>
-                        <td><ScoreBadge score={m.score_pct} /></td>
-                        <td>{m.jurisdiction || '全国'}</td>
-                        <td className="yc-dash-missing">{(m.missing_materials || []).join('、')}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <button className="yc-dash-btn-primary" onClick={handleDownload} disabled={downloading}>
-                {downloading ? '下载中...' : '下载 PDF 报告'}
-              </button>
-            </div>
-          )}
+          <div className="yc-dash-unlocked">
+            <p>扫描结果可直接查看；PDF 导出需通过服务端产品目录创建订单并完成支付。</p>
+            <Link
+              className="yc-dash-btn-primary"
+              href={`/checkout?product=POLICY_REPORT&company=${companies[0].id}`}
+            >
+              查看 PDF 导出价格
+            </Link>
+          </div>
         </div>
       )}
 

@@ -23,12 +23,12 @@ const WORKFLOW = [
 
 /* --- Tech Specs --- */
 const TECH_SPECS = [
-  { label: 'Manifest 版本', value: 'Manifest V3' },
-  { label: '权限', value: 'activeTab, sidePanel, storage, clipboardWrite' },
-  { label: '数据处理', value: '本地处理，不上传至第三方' },
-  { label: '兼容浏览器', value: 'Chrome 90+, Edge 90+, Arc, Brave' },
-  { label: '框架', value: 'React 18 + TypeScript' },
-  { label: '包大小', value: '侧边栏 ~295KB, 内容脚本 ~14KB' },
+  { label: '产品状态', value: 'Concept Demo / 未发布' },
+  { label: 'Manifest 目标', value: 'Manifest V3（待实现）' },
+  { label: '权限范围', value: '发布前按最小权限重新评审' },
+  { label: '数据处理', value: '发布前完成隐私与安全验收' },
+  { label: '兼容性', value: '尚未建立真实兼容性测试矩阵' },
+  { label: '安装包', value: 'No artifact available yet' },
 ];
 
 /* --- Side Panel Mockup Component --- */
@@ -40,14 +40,14 @@ function SidePanelMockup() {
           <span /><span /><span />
         </div>
         <div className="yc-ext-mockup-url">
-          https://www.shstc.gov.cn/policy/2026-ai-special
+          https://example.invalid/demo-policy
         </div>
       </div>
       <div className="yc-ext-mockup-body">
         {/* Main content area */}
         <div className="yc-ext-mockup-content">
           <div className="yc-ext-mockup-page-title">
-            上海市科学技术委员会关于 2026 年度人工智能专项资金项目申报的通知
+            DEMO：人工智能专项资金项目申报通知（虚构示例）
           </div>
           <div className="yc-ext-mockup-page-text">
             <p>各有关单位：</p>
@@ -97,7 +97,7 @@ function SidePanelMockup() {
               <span className="yc-ext-field-val">项目申报书、财务审计报告、知识产权证明...</span>
             </div>
           </div>
-          <button className="yc-ext-sidebar-btn">保存到 衍策引擎AI</button>
+          <button className="yc-ext-sidebar-btn" disabled>DEMO：保存到工作区</button>
         </div>
       </div>
     </div>
@@ -113,14 +113,14 @@ export default function ChromeExtensionPage() {
       {/* Hero */}
       <div className="yc-ext-hero">
         <div className="container">
-          <span className="yc-ext-hero-badge">Chrome Extension · Manifest V3</span>
+          <span className="yc-ext-hero-badge">CONCEPT DEMO · 未发布</span>
           <h1 className="yc-ext-hero-title">衍策引擎AI 政策助手</h1>
           <p className="yc-ext-hero-subtitle">
-            在任意政策页面上直接使用 衍策引擎AI 的 AI 政策匹配与企业画像能力。侧边栏实时查询，网页内容智能采集，让政策研究效率提升 10 倍。
+            展示浏览器侧边栏采集与核对政策信息的产品设想；当前没有可下载扩展，也没有经验证的效率数据。
           </p>
           <div className="yc-ext-hero-ctas">
             <Link href="/downloads" className="yc-btn-primary">
-              前往下载
+              查看发布状态
             </Link>
             <a href="#features" className="yc-btn-outline-white">
               了解功能
@@ -134,9 +134,9 @@ export default function ChromeExtensionPage() {
         <div className="container">
           <div className="section-header">
             <span className="section-label">核心功能</span>
-            <h2 className="section-title">网页内容智能采集</h2>
+            <h2 className="section-title">交互概念演示</h2>
             <p className="section-subtitle">
-              浏览政策文件时，插件自动识别并提取关键信息，高亮标注在页面上，一键保存到您的 衍策引擎AI 账户。
+              下方界面和政策内容均为 DEMO，用于讨论未来采集、确认和保存流程，不代表已上线能力。
             </p>
           </div>
           <SidePanelMockup />
@@ -246,7 +246,7 @@ export default function ChromeExtensionPage() {
                 </tbody>
               </table>
               <div className="yc-ext-security-note">
-                <strong>数据安全：</strong>所有政策数据采集和处理均在本地完成。插件不会将您浏览的网页内容上传至任何第三方服务器。仅当您主动点击"保存到 衍策引擎AI"时，提取结果才会通过加密通道同步到您的账户。
+                <strong>设计目标：</strong>尽量本地处理并在上传前取得用户确认。具体权限、数据流与传输控制须在实现后通过安全评审，本页面不作既成能力承诺。
               </div>
             </div>
           )}
@@ -257,29 +257,29 @@ export default function ChromeExtensionPage() {
                 <div className="yc-ext-install-step">
                   <span className="yc-ext-install-num">1</span>
                   <div>
-                    <h4>下载插件</h4>
-                    <p>前往 <Link href="/downloads">下载页面</Link> 获取 Chrome 插件压缩包并解压到本地文件夹。</p>
+                    <h4>当前不可安装</h4>
+                    <p>尚未生成或发布扩展安装包，请在 <Link href="/downloads">发布状态页</Link> 查看真实进度。</p>
                   </div>
                 </div>
                 <div className="yc-ext-install-step">
                   <span className="yc-ext-install-num">2</span>
                   <div>
-                    <h4>打开扩展管理</h4>
-                    <p>在 Chrome 浏览器中访问 <code>chrome://extensions/</code></p>
+                    <h4>完成实现</h4>
+                    <p>实现最小权限、来源校验、租户认证和明确的数据上传确认。</p>
                   </div>
                 </div>
                 <div className="yc-ext-install-step">
                   <span className="yc-ext-install-num">3</span>
                   <div>
-                    <h4>启用开发者模式</h4>
-                    <p>打开页面右上角的"开发者模式"开关。</p>
+                    <h4>安全验收</h4>
+                    <p>完成代码审查、权限审查、隐私披露和兼容性测试。</p>
                   </div>
                 </div>
                 <div className="yc-ext-install-step">
                   <span className="yc-ext-install-num">4</span>
                   <div>
-                    <h4>加载插件</h4>
-                    <p>点击"加载已解压的扩展程序"，选择解压后的 <code>dist</code> 文件夹。安装完成！</p>
+                    <h4>签名发布</h4>
+                    <p>仅在真实商店或签名构件可用后提供安装说明。</p>
                   </div>
                 </div>
               </div>
@@ -291,13 +291,13 @@ export default function ChromeExtensionPage() {
       {/* CTA */}
       <div className="yc-cta-section">
         <div className="container" style={{ textAlign: 'center' }}>
-          <h2 className="yc-cta-title">开始使用 衍策引擎AI 政策助手</h2>
+          <h2 className="yc-cta-title">先使用 Web 工作区</h2>
           <p style={{ color: 'var(--text-inverse-secondary)', marginBottom: 24, maxWidth: 520, marginLeft: 'auto', marginRight: 'auto' }}>
-            安装浏览器插件，在任何政策页面上获得 AI 驱动的政策匹配与采集能力。
+            浏览器扩展仍在路线图中；当前请使用已部署的 Web 功能。
           </p>
           <div className="yc-cta-actions" style={{ justifyContent: 'center' }}>
-            <Link href="/downloads" className="yc-btn-primary">下载插件</Link>
-            <Link href="/login?register=1" className="yc-btn-outline-white">体验 Demo</Link>
+            <Link href="/downloads" className="yc-btn-primary">查看发布状态</Link>
+            <Link href="/login?register=1" className="yc-btn-outline-white">打开 Web 工作区</Link>
           </div>
         </div>
       </div>

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, get_principal, require_roles
 from app.core.db import get_db
-from app.models.models import Company, UserRole
+from app.models.models import AnalyticsEvent, Company, UserRole
 from app.schemas.schemas import CompanyCreate, CompanyOut
 
 router = APIRouter(prefix="/companies", tags=["company"])
@@ -27,6 +27,15 @@ def create_company(
 ) -> Company:
     company = Company(tenant_id=principal.tenant_id, **payload.model_dump())
     db.add(company)
+    db.flush()
+    db.add(
+        AnalyticsEvent(
+            tenant_id=principal.tenant_id,
+            user_id=principal.user.id,
+            name="company_created",
+            properties={"company_id": str(company.id)},
+        )
+    )
     db.commit()
     db.refresh(company)
     return company

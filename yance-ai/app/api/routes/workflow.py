@@ -13,6 +13,7 @@ from app.schemas.schemas import (
     OpportunityCreate,
     OpportunityOut,
 )
+from app.services.policies.visibility import visible_policy_clause
 
 router = APIRouter(tags=["opportunity", "application"])
 write_principal = require_roles(UserRole.owner, UserRole.admin, UserRole.member)
@@ -42,7 +43,14 @@ def create_opportunity(
 ) -> Opportunity:
     require_tenant_resource(db, Company, payload.company_id, principal.tenant_id, "Company")
     if payload.policy_id:
-        require_tenant_resource(db, Policy, payload.policy_id, principal.tenant_id, "Policy")
+        policy = db.scalar(
+            select(Policy).where(
+                Policy.id == payload.policy_id,
+                visible_policy_clause(principal.tenant_id),
+            )
+        )
+        if not policy:
+            raise HTTPException(status_code=404, detail="Policy not found")
     opportunity = Opportunity(tenant_id=principal.tenant_id, **payload.model_dump())
     db.add(opportunity)
     db.commit()

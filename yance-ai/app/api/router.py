@@ -1,8 +1,6 @@
 from fastapi import APIRouter
 
 from app.api.routes import (
-    policy_engine,
-    tasks,
     auth,
     commerce,
     companies,
@@ -10,7 +8,9 @@ from app.api.routes import (
     documents,
     payments,
     policies,
+    policy_engine,
     reports,
+    tasks,
     telemetry,
     tenants,
     workflow,

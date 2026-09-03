@@ -5,16 +5,32 @@
 - evaluate_deterministic(): 数字/比例/年限/布尔条件由 Python 计算，禁止 LLM 心算
 - 红线：不做 case_id 级特判；只实现通用 evaluator。
 """
+
 from __future__ import annotations
+
 import re
 from datetime import date
-from typing import Any, Optional
+from typing import Any
 
 # ────────────────────────── Fact Normalization ──────────────────────────
 
 _FIELD_ALIASES: dict[str, list[str]] = {
-    "founded_date": ["registration_date", "注册日期", "成立日期", "founded", "成立时间", "founding_date"],
-    "employee_count": ["employees_total", "员工总数", "职工总数", "employees", "员工数", "total_staff"],
+    "founded_date": [
+        "registration_date",
+        "注册日期",
+        "成立日期",
+        "founded",
+        "成立时间",
+        "founding_date",
+    ],
+    "employee_count": [
+        "employees_total",
+        "员工总数",
+        "职工总数",
+        "employees",
+        "员工数",
+        "total_staff",
+    ],
     "tech_staff": ["tech_staff", "科技人员", "tech_staff_rd_staff", "rd_staff", "研发人员"],
     "rd_staff_ratio": ["rd_staff_ratio", "研发人员占比", "科技人员占比"],
     "rd_expense_3y": ["rd_expense_recent_3y_total_wan", "近三年研发费用", "rd_expense_3y_wan"],
@@ -23,7 +39,11 @@ _FIELD_ALIASES: dict[str, list[str]] = {
     "rd_expense_last_year": ["rd_expense_last_year_wan", "上年度研发费用"],
     "rd_ratio_3y": ["rd_expense_ratio_3y"],
     "rd_ratio_last_year": ["rd_expense_ratio_last_year", "研发费用占比"],
-    "hitech_product_revenue_ratio": ["hitech_product_revenue_ratio", "高新收入占比", "高新技术产品收入占比"],
+    "hitech_product_revenue_ratio": [
+        "hitech_product_revenue_ratio",
+        "高新收入占比",
+        "高新技术产品收入占比",
+    ],
     "domestic_rd_ratio": ["domestic_rd_ratio", "境内研发占比"],
     "has_ip": ["core_ip", "知识产权", "has_ip"],
     "ip_count": ["ip_count", "专利数量", "知识产权数量"],
@@ -44,7 +64,7 @@ _FIELD_ALIASES: dict[str, list[str]] = {
 _NUM = r"(-?\d+(?:\.\d+)?)"
 
 
-def _parse_number(v: Any) -> Optional[float]:
+def _parse_number(v: Any) -> float | None:
     if v is None:
         return None
     if isinstance(v, (int, float)):
@@ -62,7 +82,7 @@ def _parse_number(v: Any) -> Optional[float]:
     return n
 
 
-def _parse_date(v: Any) -> Optional[date]:
+def _parse_date(v: Any) -> date | None:
     if v is None:
         return None
     s = str(v)
@@ -78,7 +98,7 @@ def _parse_date(v: Any) -> Optional[date]:
         return None
 
 
-def _to_ratio(v: Any) -> Optional[float]:
+def _to_ratio(v: Any) -> float | None:
     """归一为小数比例。'12%' → 0.12；0.124 → 0.124；'12.4%'→0.124"""
     if v is None:
         return None
@@ -94,7 +114,7 @@ def _to_ratio(v: Any) -> Optional[float]:
     return n
 
 
-def _parse_bool(v: Any) -> Optional[bool]:
+def _parse_bool(v: Any) -> bool | None:
     if v is None:
         return None
     s = str(v).strip()
@@ -129,14 +149,25 @@ def normalize_facts(profile: dict) -> dict:
             continue
         if std in ("founded_date",):
             facts[std] = _parse_date(raw)
-        elif std in ("rd_staff_ratio", "rd_ratio_last_year", "rd_ratio_3y", "hitech_product_revenue_ratio",
-                     "domestic_rd_ratio", "revenue_cagr_3y", "net_profit_margin"):
+        elif std in (
+            "rd_staff_ratio",
+            "rd_ratio_last_year",
+            "rd_ratio_3y",
+            "hitech_product_revenue_ratio",
+            "domestic_rd_ratio",
+            "revenue_cagr_3y",
+            "net_profit_margin",
+        ):
             facts[std] = _to_ratio(raw)
         elif std in ("has_ip", "hognqi_status", "listed"):
             facts[std] = _parse_bool(raw)
         elif std in ("safety_violations",):
             s = str(raw)
-            facts[std] = None if re.search(r"未提供|null", s, re.I) else not bool(re.search(r"无|未发生|没有", s))
+            facts[std] = (
+                None
+                if re.search(r"未提供|null", s, re.I)
+                else not bool(re.search(r"无|未发生|没有", s))
+            )
         elif std in ("employee_count", "tech_staff", "ip_count"):
             facts[std] = _parse_number(raw)
         elif std in ("market_segment_years",):
@@ -168,13 +199,42 @@ _FIELD_PATTERNS: list[tuple[str, list[str]]] = [
     # 注意顺序：越具体的字段越靠前（_detect_field 取首个匹配）。
     #   tech_staff_ratio 的「科技人员占…职工总数」同时含 employee_count 的「职工总数」，
     #   故必须排在 employee_count 之前，否则高企研发人员占比门槛会被误判为职工总数→错判 PASS。
-    ("tech_staff_ratio", ["科技人员占比", "科技人员.*比例", "研发人员.*比例", "科技人员占", "研发人员占", "科技人员占.*职工总数"]),
-    ("rd_ratio_3y", ["近.{0,2}3?.{0,2}会计年度.{0,10}研究开发费用", "近三个会计年度.{0,12}研发", "研发费用总额占.{0,8}收入"]),
+    (
+        "tech_staff_ratio",
+        [
+            "科技人员占比",
+            "科技人员.*比例",
+            "研发人员.*比例",
+            "科技人员占",
+            "研发人员占",
+            "科技人员占.*职工总数",
+        ],
+    ),
+    (
+        "rd_ratio_3y",
+        [
+            "近.{0,2}3?.{0,2}会计年度.{0,10}研究开发费用",
+            "近三个会计年度.{0,12}研发",
+            "研发费用总额占.{0,8}收入",
+        ],
+    ),
     ("rd_ratio_last_year", ["上年度研发费用", "研发费用总额不低于"]),
     ("hitech_product_revenue_ratio", ["高新技术产品.{0,6}收入占", "高新收入占比"]),
     ("domestic_rd_ratio", ["境内.{0,10}研究开发费用", "境内研发"]),
     ("employee_count", ["职工总数", "从业人员", "员工总数", "员工人数", "职工人数"]),
-    ("revenue_last_year", ["上年度.{0,8}营业收入总额", "上年度.{0,8}销售收入", "上年度主营业务收入", "营业收入总额在", "销售收入在", "销售收入不超过", "销售收入总额", "营业收入总额"]),
+    (
+        "revenue_last_year",
+        [
+            "上年度.{0,8}营业收入总额",
+            "上年度.{0,8}销售收入",
+            "上年度主营业务收入",
+            "营业收入总额在",
+            "销售收入在",
+            "销售收入不超过",
+            "销售收入总额",
+            "营业收入总额",
+        ],
+    ),
     ("total_assets", ["资产总额", "总资产"]),
     ("founded_years", ["注册成立", "成立.{0,4}年", "注册登记满"]),
     ("has_ip", ["知识产权", "专利", "软著", "软件著作权"]),
@@ -190,15 +250,25 @@ _FIELD_PATTERNS: list[tuple[str, list[str]]] = [
 
 _OPS: list[tuple[str, str]] = [
     # 长词/否定形式优先，避免子串污染（"不超过"含"超过"，"不低于"含"低于"）
-    ("不低于", ">="), ("不少于", ">="), ("不高于", "<="), ("不超过", "<="), ("未满", "<"),
-    ("达到", ">="), ("以上", ">="), ("超过", ">"), ("至少", ">="),
-    ("以下", "<="), ("以内", "<="), ("低于", "<"), ("之间", "between"),
+    ("不低于", ">="),
+    ("不少于", ">="),
+    ("不高于", "<="),
+    ("不超过", "<="),
+    ("未满", "<"),
+    ("达到", ">="),
+    ("以上", ">="),
+    ("超过", ">"),
+    ("至少", ">="),
+    ("以下", "<="),
+    ("以内", "<="),
+    ("低于", "<"),
+    ("之间", "between"),
 ]
 
 _UNIT_PAT = r"(万元|亿元|%|人|年|项|件)"
 
 
-def _detect_field(cond: str) -> Optional[str]:
+def _detect_field(cond: str) -> str | None:
     for field, pats in _FIELD_PATTERNS:
         for p in pats:
             if re.search(p, cond):
@@ -206,14 +276,14 @@ def _detect_field(cond: str) -> Optional[str]:
     return None
 
 
-def _detect_op(cond: str) -> Optional[str]:
+def _detect_op(cond: str) -> str | None:
     for word, op in _OPS:
         if word in cond:
             return op
     return None
 
 
-def _detect_value(cond: str, field: str) -> Optional[tuple[float, Optional[str]]]:
+def _detect_value(cond: str, field: str) -> tuple[float, str | None] | None:
     """返回 (数值, 单位)。金额类返回“万”口径。"""
     m = re.findall(r"(\d[\d,\.]*)\s*(万元|亿元|%|％|人|年|项|件)", cond)
     if not m:
@@ -224,9 +294,15 @@ def _detect_value(cond: str, field: str) -> Optional[tuple[float, Optional[str]]
     if unit == "亿元":
         n *= 10000.0
         unit = "万元"
-    if unit in ("%", "％") and field in ("rd_ratio_3y", "rd_ratio_last_year", "hitech_product_revenue_ratio",
-                                        "domestic_rd_ratio", "tech_staff_ratio", "revenue_cagr_3y",
-                                        "net_profit_margin"):
+    if unit in ("%", "％") and field in (
+        "rd_ratio_3y",
+        "rd_ratio_last_year",
+        "hitech_product_revenue_ratio",
+        "domestic_rd_ratio",
+        "tech_staff_ratio",
+        "revenue_cagr_3y",
+        "net_profit_margin",
+    ):
         return (n / 100.0, "ratio")
     return (n, unit)
 
@@ -255,7 +331,10 @@ def normalize_criteria(criteria: list[dict]) -> list[dict]:
             item = {
                 "criterion": piece,
                 "policy_quote": quote,
-                "field": None, "operator": None, "value": None, "unit": None,
+                "field": None,
+                "operator": None,
+                "value": None,
+                "unit": None,
                 "kind": "semantic",
             }
             field = _detect_field(piece)
@@ -264,14 +343,23 @@ def normalize_criteria(criteria: list[dict]) -> list[dict]:
                 val = _detect_value(piece, field)
                 if val is not None:
                     v, unit = val
-                    item.update({"field": field, "operator": op, "value": v, "unit": unit, "kind": "numeric"})
+                    item.update(
+                        {
+                            "field": field,
+                            "operator": op,
+                            "value": v,
+                            "unit": unit,
+                            "kind": "numeric",
+                        }
+                    )
             out.append(item)
     return out
 
 
 # ────────────────────────── Deterministic Evaluation ──────────────────────────
 
-def _cmp(value: float, op: str, threshold: float, threshold2: Optional[float] = None) -> bool:
+
+def _cmp(value: float, op: str, threshold: float, threshold2: float | None = None) -> bool:
     if op == ">=":
         return value >= threshold
     if op == ">":
@@ -287,7 +375,7 @@ def _cmp(value: float, op: str, threshold: float, threshold2: Optional[float] = 
     return False
 
 
-def _hnte_rd_ratio_threshold(revenue_wan: Optional[float]) -> Optional[tuple[float, str]]:
+def _hnte_rd_ratio_threshold(revenue_wan: float | None) -> tuple[float, str] | None:
     """高企研发费用占比分档：收入<5000万→5%；5000万-2亿→4%；>2亿→3%（32号文第十一条(五)）。"""
     if revenue_wan is None:
         return None
@@ -298,7 +386,7 @@ def _hnte_rd_ratio_threshold(revenue_wan: Optional[float]) -> Optional[tuple[flo
     return (0.03, ">2亿档")
 
 
-def evaluate_deterministic(criterion: dict, facts: dict) -> Optional[dict]:
+def evaluate_deterministic(criterion: dict, facts: dict) -> dict | None:
     """对 numeric 类条件做程序判定。返回 None 表示无法程序判定（交 LLM）。
     结果含审计五元组：enterprise_value / operator / threshold / calculated_value / result。
     """
@@ -309,8 +397,11 @@ def evaluate_deterministic(criterion: dict, facts: dict) -> Optional[dict]:
     def res(v, op_, th, note=""):
         return {
             "result": "PASS" if _cmp(v, op_, th) else "FAIL",
-            "enterprise_value": v, "operator": op_, "threshold": th,
-            "calculated_value": v, "note": note,
+            "enterprise_value": v,
+            "operator": op_,
+            "threshold": th,
+            "calculated_value": v,
+            "note": note,
         }
 
     # —— 高企研发占比分档（需要收入定档） ——
@@ -392,7 +483,8 @@ def evaluate_deterministic(criterion: dict, facts: dict) -> Optional[dict]:
 
 # ────────────────────────── Final Eligibility Gate ──────────────────────────
 
-def final_gate(criteria_results: list[str], blocking: Optional[list[bool]] = None) -> str:
+
+def final_gate(criteria_results: list[str], blocking: list[bool] | None = None) -> str:
     """程序化聚合（对齐 V21_AUDIT D3）：LLM 无权绕过。
     V2.2：仅『阻断性』条件参与否决。
       - 任一阻断性 FAIL → NOT_ELIGIBLE
@@ -404,9 +496,12 @@ def final_gate(criteria_results: list[str], blocking: Optional[list[bool]] = Non
         return "INSUFFICIENT_INFO"
     if blocking is None:
         blocking = [True] * len(criteria_results)
-    if any(r == "FAIL" and b for r, b in zip(criteria_results, blocking)):
+    if any(r == "FAIL" and b for r, b in zip(criteria_results, blocking, strict=False)):
         return "NOT_ELIGIBLE"
-    if any(r == "INSUFFICIENT" and b for r, b in zip(criteria_results, blocking)):
+    if any(
+        r == "INSUFFICIENT" and b
+        for r, b in zip(criteria_results, blocking, strict=False)
+    ):
         return "INSUFFICIENT_INFO"
     return "ELIGIBLE"
 
@@ -414,10 +509,11 @@ def final_gate(criteria_results: list[str], blocking: Optional[list[bool]] = Non
 # —— 软性/主观条件识别（V2.2）：这类条件不阻断资格，仅作提示 ——
 _SOFT_PAT = re.compile(
     r"评价得分|得分|创新能力评价|成长性指标|专业化指标|创新能力指标|荣誉|奖励|大赛|排名"
-    r"|应达到相应要求|综合评分|加分")
+    r"|应达到相应要求|综合评分|加分"
+)
 
 
-def _is_blocking(text: str, kind: Optional[str] = None) -> bool:
+def _is_blocking(text: str, kind: str | None = None) -> bool:
     """判断某条件是否『阻断性硬门槛』。
     - 主观/复合评分/荣誉奖励类 → 软性（不阻断）
     - 安全事故、环境违法、社会信用条件始终按硬门槛处理

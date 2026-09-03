@@ -1,4 +1,5 @@
 """Policy Evaluation Engine API — Evidence-Grounded assessment"""
+
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -35,7 +36,11 @@ async def evaluate(
     )
     if not policy:
         raise HTTPException(404, "政策不存在")
-    company = db.scalar(select(Company).where(Company.id == uuid.UUID(req.company_id), Company.tenant_id == principal.tenant_id))
+    company = db.scalar(
+        select(Company).where(
+            Company.id == uuid.UUID(req.company_id), Company.tenant_id == principal.tenant_id
+        )
+    )
     if not company:
         raise HTTPException(404, "企业不存在")
 
@@ -59,10 +64,14 @@ async def evaluate(
 
     # Track event
     event = AnalyticsEvent(
-        tenant_id=principal.tenant_id, user_id=principal.user.id,
-        name="policy_evaluation", properties={
-            "policy_id": req.policy_id, "company_id": req.company_id,
-            "result": result.overall_result.value, "provider": req.provider,
+        tenant_id=principal.tenant_id,
+        user_id=principal.user.id,
+        name="policy_evaluation",
+        properties={
+            "policy_id": req.policy_id,
+            "company_id": req.company_id,
+            "result": result.overall_result.value,
+            "provider": req.provider,
         },
     )
     db.add(event)

@@ -46,7 +46,7 @@ export default function ParksPage() {
               </div>
               <h3 className="card-title">精准服务</h3>
               <p className="card-desc">
-                基于企业画像和政策匹配引擎，为每家企业推荐最适用的政策资源，服务精准度提升 3 倍以上。
+                基于企业画像和政策条件形成可复核的匹配结果；准确率需在真实试点数据上评测。
               </p>
             </div>
             <div className="card" style={{ borderTop: '3px solid #0ea5e9' }}>
@@ -55,7 +55,7 @@ export default function ParksPage() {
               </div>
               <h3 className="card-title">效率提升</h3>
               <p className="card-desc">
-                从政策解读到材料生成全流程自动化，单次企业服务时间从平均 4 小时缩短至 30 分钟。
+                将政策检索、资格判断、材料缺口和文档任务放入同一工作流，减少重复搬运信息。
               </p>
             </div>
             <div className="card" style={{ borderTop: '3px solid #16a34a' }}>
@@ -121,7 +121,7 @@ export default function ParksPage() {
                   <div>
                     <h4 className="feature-item-title">政策数据库</h4>
                     <p className="feature-item-desc">
-                      覆盖国家级、省级、市级和区级政策，实时更新，结构化存储。
+                      对已导入政策保存来源、地区、日期和状态；覆盖范围以后台真实数据为准。
                     </p>
                   </div>
                 </div>
@@ -201,16 +201,17 @@ export default function ParksPage() {
       <section className="section section-alt">
         <div className="container">
           <div className="section-header">
-            <span className="section-label">部署流程</span>
-            <h2 className="section-title">从接入到上线，4 周完成</h2>
+            <span className="section-label">示例实施方案</span>
+            <h2 className="section-title">分阶段试点路线</h2>
+            <p className="section-subtitle">以下为方案模板，不代表已签约项目或固定交付周期。</p>
           </div>
 
           <div className="grid grid-4" style={{ gap: '20px' }}>
             {[
-              { week: '第 1 周', title: '需求对接', desc: '了解园区业务需求、数据现状和服务目标', badge: 'badge-primary' },
-              { week: '第 2 周', title: '数据接入', desc: '对接园区企业数据源，初始化政策知识库', badge: 'badge-green' },
-              { week: '第 3 周', title: '系统部署', desc: '部署核心模块，配置匹配规则和权限体系', badge: 'badge-orange' },
-              { week: '第 4 周', title: '培训上线', desc: '园区团队培训，试运行并正式上线', badge: 'badge-success' },
+              { week: '阶段 1', title: '需求对接', desc: '确认业务需求、数据边界和验收目标', badge: 'badge-primary' },
+              { week: '阶段 2', title: '数据接入', desc: '在获得授权后导入企业资料与政策来源', badge: 'badge-green' },
+              { week: '阶段 3', title: '受控试点', desc: '配置规则、权限和人工复核流程', badge: 'badge-orange' },
+              { week: '阶段 4', title: '评测验收', desc: '使用真实结果评估质量、成本和时延', badge: 'badge-success' },
             ].map((step) => (
               <div key={step.week} className="card" style={{ textAlign: 'center' }}>
                 <div className={step.badge} style={{ marginBottom: '16px', display: 'inline-block' }}>
@@ -228,22 +229,13 @@ export default function ParksPage() {
       <section className="section">
         <div className="container">
           <div className="section-header">
-            <span className="section-label">客户成效</span>
-            <h2 className="section-title">实际运营数据</h2>
+            <span className="section-label">真实数据原则</span>
+            <h2 className="section-title">尚无可公开的客户成效数据</h2>
+            <p className="section-subtitle">试点完成后，指标将从真实事件和评测结果中生成；当前不展示模拟提升率。</p>
           </div>
 
-          <div className="grid grid-4" style={{ gap: '20px' }}>
-            {[
-              { value: '3x', label: '服务精准度提升' },
-              { value: '87%', label: '企业政策覆盖率' },
-              { value: '30min', label: '单次服务耗时' },
-              { value: '95%', label: '园区团队满意度' },
-            ].map((stat) => (
-              <div key={stat.label} className="stat-card">
-                <div className="stat-value">{stat.value}</div>
-                <div className="stat-label">{stat.label}</div>
-              </div>
-            ))}
+          <div className="card-flat" style={{ padding: '28px', textAlign: 'center' }}>
+            No customer outcome data yet.
           </div>
         </div>
       </section>
@@ -253,14 +245,12 @@ export default function ParksPage() {
         <div className="container">
           <div className="container-narrow">
             <div className="quote-card">
-              <p className="quote-text">
-                部署 Policy Agent 之后，我们的企业服务团队从每天只能服务 5 家企业，提升到可以同时服务 20 家企业。更重要的是，每一项服务建议都有据可查。
-              </p>
+              <p className="quote-text">示例验收目标：每一项服务建议都能回到政策来源、企业事实和人工复核记录。</p>
               <div className="quote-author">
                 <div className="quote-author-avatar">YD</div>
                 <div>
-                  <div className="quote-author-name">某园区运营总监</div>
-                  <div className="quote-author-role">上海市徐汇区产业园区</div>
+                  <div className="quote-author-name">DEMO / 非客户评价</div>
+                  <div className="quote-author-role">产品工作流示例</div>
                 </div>
               </div>
             </div>
@@ -278,7 +268,7 @@ export default function ParksPage() {
         <div className="container">
           <h2 className="cta-title">让你的园区服务更智能</h2>
           <p className="cta-subtitle">
-            注册即享 3 次免费政策匹配报告，30 秒开通，无需信用卡。
+            注册后可创建企业工作区；可用额度与付费能力以账户中的真实配置为准。
           </p>
           <div className="cta-actions">
             <Link

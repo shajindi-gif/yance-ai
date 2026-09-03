@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     oss_access_key_id: str = ""
     oss_access_key_secret: str = ""
     oss_presign_expire_seconds: int = 900
+    document_upload_max_bytes: int = 25 * 1024 * 1024
 
     llm_default_provider: str = "mock"
     qwen_api_key: str = ""
@@ -48,7 +49,9 @@ class Settings(BaseSettings):
 
     # Workers AI Embedding
     workers_ai_api_key: str = ""
-    workers_ai_base_url: str = "https://api.cloudflare.com/client/v4/accounts/9620a910f114a4ee7a5c45ef2d2b3bbd/ai/v1"
+    workers_ai_base_url: str = (
+        "https://api.cloudflare.com/client/v4/accounts/9620a910f114a4ee7a5c45ef2d2b3bbd/ai/v1"
+    )
     embedding_model: str = "@cf/baai/bge-large-en-v1.5"
 
     # Stripe (legacy)
@@ -61,12 +64,12 @@ class Settings(BaseSettings):
     # Alipay 电脑网站支付
     alipay_app_id: str = ""
     alipay_seller_id: str = ""
-    alipay_private_key: str = ""       # 应用私钥（PEM格式，一行，\n替换为真实换行）
-    alipay_public_key: str = ""        # 支付宝公钥
+    alipay_private_key: str = ""  # 应用私钥（PEM格式，一行，\n替换为真实换行）
+    alipay_public_key: str = ""  # 支付宝公钥
     alipay_notify_url: str = "https://yance.ai/api/v1/payments/alipay/notify"
     alipay_return_url: str = "https://yance.ai/success"
     alipay_gateway: str = "https://openapi.alipay.com/gateway.do"
-    alipay_sandbox: bool = False       # True=沙箱环境
+    alipay_sandbox: bool = False  # True=沙箱环境
 
     # 公司对公账户（银行转账）
     company_name: str = ""

@@ -84,7 +84,9 @@ async def generate_match_report(
     db: Session = Depends(get_db),
 ):
     company = db.scalar(
-        select(Company).where(Company.id == req.company_id, Company.tenant_id == principal.tenant_id)
+        select(Company).where(
+            Company.id == req.company_id, Company.tenant_id == principal.tenant_id
+        )
     )
     if not company:
         raise HTTPException(status_code=404, detail="企业不存在")
@@ -151,13 +153,18 @@ async def generate_match_report(
         provider_used = f"{model_info['name']} (fallback)"
 
     # ── 埋点 ──
-    track_event(db, principal.tenant_id, principal.user.id, "report_generated", {
-        "company_id": str(company.id),
-        "company_name": company.name,
-        "total_matches": len(opportunities),
-        "provider": provider_key,
-        "max_score": max((o.score for o in opportunities), default=0),
-    })
+    track_event(
+        db,
+        principal.tenant_id,
+        principal.user.id,
+        "report_generated",
+        {
+            "company_id": str(company.id),
+            "total_matches": len(opportunities),
+            "provider": provider_key,
+            "max_score": max((o.score for o in opportunities), default=0),
+        },
+    )
 
     return MatchResponse(
         company_name=company.name,
@@ -192,15 +199,12 @@ async def download_match_report_pdf(
         )
     )
     if not entitlement:
-        # 兜底：检查旧的 paid order（兼容迁移前数据）
-        paid_order = db.scalar(
-            select(Order).where(Order.tenant_id == principal.tenant_id, Order.status == "paid")
-        )
-        if not paid_order:
-            raise HTTPException(status_code=403, detail="请先购买报告")
+        raise HTTPException(status_code=403, detail="请先购买该企业的报告")
 
     opportunities = db.scalars(
-        select(Opportunity).where(Opportunity.company_id == company_id).order_by(Opportunity.score.desc())
+        select(Opportunity)
+        .where(Opportunity.company_id == company_id)
+        .order_by(Opportunity.score.desc())
     ).all()
     if not opportunities:
         raise HTTPException(status_code=404, detail="未找到匹配记录")
@@ -209,11 +213,18 @@ async def download_match_report_pdf(
     policies = db.scalars(select(Policy).where(Policy.id.in_(policy_ids))).all()
     pdf_bytes = generate_match_report_pdf(company, opportunities, policies)
 
-    track_event(db, principal.tenant_id, principal.user.id, "report_downloaded", {
-        "company_id": str(company.id),
-    })
+    track_event(
+        db,
+        principal.tenant_id,
+        principal.user.id,
+        "report_downloaded",
+        {
+            "company_id": str(company.id),
+        },
+    )
 
     from urllib.parse import quote
+
     filename = f"{company.name}_政策匹配报告_{datetime.now().strftime('%Y%m%d')}.pdf"
     return Response(
         content=pdf_bytes,
@@ -262,9 +273,21 @@ async def demo_payment(
         raise HTTPException(status_code=404, detail="Not found")
 
     # 从 Product 表获取真实价格
-    product = db.scalar(select(Product).where(Product.code == req.product_code, Product.active.is_(True)))
+    product = db.scalar(
+        select(Product).where(Product.code == req.product_code, Product.active.is_(True))
+    )
     if not product:
         raise HTTPException(status_code=404, detail=f"产品不存在: {req.product_code}")
+
+    resource_id = req.company_id if product.entitlement_type == "report" else req.opportunity_id
+    resource_model = Company if product.entitlement_type == "report" else Opportunity
+    if not resource_id or not db.scalar(
+        select(resource_model.id).where(
+            resource_model.id == resource_id,
+            resource_model.tenant_id == principal.tenant_id,
+        )
+    ):
+        raise HTTPException(status_code=404, detail="产品关联资源不存在")
 
     # 使用 Product 价格
     amount = float(product.promotional_price or product.price)
@@ -275,6 +298,8 @@ async def demo_payment(
         product_code=req.product_code,
         amount=amount,
         currency="CNY",
+        resource_type=product.entitlement_type,
+        resource_id=resource_id,
         status="created",
     )
     db.add(order)
@@ -300,7 +325,7 @@ async def demo_payment(
         product_id=product.id,
         order_id=order.id,
         resource_type=product.entitlement_type,
-        resource_id=req.company_id or req.opportunity_id,
+        resource_id=resource_id,
         status="active",
     )
     db.add(entitlement)
@@ -321,12 +346,18 @@ async def demo_payment(
     db.commit()
     db.refresh(invoice)
 
-    track_event(db, principal.tenant_id, principal.user.id, "payment_completed", {
-        "order_no": order.order_no,
-        "amount": amount,
-        "product_code": req.product_code,
-        "product_name": product.name,
-    })
+    track_event(
+        db,
+        principal.tenant_id,
+        principal.user.id,
+        "demo_payment_completed",
+        {
+            "order_no": order.order_no,
+            "amount": amount,
+            "product_code": req.product_code,
+            "product_name": product.name,
+        },
+    )
 
     return {
         "order_id": str(order.id),
@@ -356,15 +387,17 @@ async def get_entitlements(
     result = []
     for e in entitlements:
         product = db.scalar(select(Product).where(Product.id == e.product_id))
-        result.append({
-            "id": str(e.id),
-            "product_code": product.code if product else "",
-            "product_name": product.name if product else "",
-            "resource_type": e.resource_type,
-            "resource_id": str(e.resource_id) if e.resource_id else None,
-            "status": e.status,
-            "created_at": e.created_at.isoformat(),
-        })
+        result.append(
+            {
+                "id": str(e.id),
+                "product_code": product.code if product else "",
+                "product_name": product.name if product else "",
+                "resource_type": e.resource_type,
+                "resource_id": str(e.resource_id) if e.resource_id else None,
+                "status": e.status,
+                "created_at": e.created_at.isoformat(),
+            }
+        )
     return result
 
 

@@ -160,13 +160,13 @@ export default function AboutPage() {
               </div>
               <h3 className="card-title">政策语义理解引擎</h3>
               <p className="card-desc" style={{ marginBottom: '20px' }}>
-                基于大语言模型和领域微调，深度理解政策文本的语义结构，精确提取适用条件、申报要求、资金标准等关键信息。
+                基于可配置大语言模型与规则校验提取政策条件；未使用“领域微调”作为当前能力声明。
               </p>
               <ul className="module-card-features">
                 <li>政策文本结构化解析</li>
-                <li>条件要素精确提取</li>
+                <li>条件要素结构化提取</li>
                 <li>多政策语义关联分析</li>
-                <li>时效性自动追踪</li>
+                <li>政策日期与状态元数据</li>
               </ul>
             </div>
             <div className="card" style={{ padding: '32px', borderTop: '3px solid #16a34a' }}>
@@ -175,7 +175,7 @@ export default function AboutPage() {
               </div>
               <h3 className="card-title">企业-政策匹配算法</h3>
               <p className="card-desc" style={{ marginBottom: '20px' }}>
-                融合规则引擎和机器学习模型，将企业画像与政策条件进行多维度匹配，计算精准适配度评分。
+                融合规则评分、向量检索与证据门禁，将企业画像与政策条件进行多维度匹配；准确率由评测集衡量。
               </p>
               <ul className="module-card-features">
                 <li>多维度条件匹配</li>
@@ -192,10 +192,10 @@ export default function AboutPage() {
       <section className="section section-alt">
         <div className="container">
           <div className="section-header">
-            <span className="section-label">团队</span>
-            <h2 className="section-title">我们的团队</h2>
+            <span className="section-label">责任域</span>
+            <h2 className="section-title">产品建设所需的职责</h2>
             <p className="section-subtitle">
-              来自 AI、企业服务、产业园区运营等领域的资深从业者，兼具技术深度和行业理解。
+              以下是产品交付需要覆盖的能力域，不代表未经披露或无法验证的团队规模与履历。
             </p>
           </div>
 
@@ -204,21 +204,21 @@ export default function AboutPage() {
               {
                 initials: 'AI',
                 title: 'AI 与算法团队',
-                desc: '自然语言处理、知识图谱和推荐系统领域的研发工程师，负责核心算法和产品智能化能力。',
+                desc: '负责模型接入、检索、证据、评测和成本边界。',
                 bg: '#f0f9ff',
                 color: '#0ea5e9',
               },
               {
                 initials: 'PD',
                 title: '产品与设计团队',
-                desc: '深耕企业服务和 SaaS 产品领域的产品经理和设计师，以用户场景驱动产品设计。',
+                desc: '负责企业工作流、交互、可用性和真实数据原则。',
                 bg: '#f0fdf4',
                 color: '#16a34a',
               },
               {
                 initials: 'BD',
                 title: '行业与客户团队',
-                desc: '来自产业园区运营和政策服务领域的行业专家，深入理解客户需求并推动落地实施。',
+                desc: '负责政策规则复核、试点验收和客户实施边界。',
                 bg: '#fff7ed',
                 color: '#f97316',
               },
@@ -253,17 +253,17 @@ export default function AboutPage() {
       <section className="section">
         <div className="container">
           <div className="section-header">
-            <span className="section-label">发展历程</span>
-            <h2 className="section-title">关键里程碑</h2>
+            <span className="section-label">建设状态</span>
+            <h2 className="section-title">可验证的产品阶段</h2>
           </div>
 
           <div className="container-narrow">
             <div className="timeline">
               {[
-                { title: '公司成立', desc: '上海衍策引擎人工智能科技有限公司在上海注册成立，确定园区智能政策服务方向。' },
-                { title: '产品 V1.0 发布', desc: 'Policy Agent 核心模块开发完成，包括 PolicyCopilot 和 CompanyProfile。' },
-                { title: '徐汇试点启动', desc: '与上海徐汇区产业园区签约首批试点合作，开始在真实场景中验证产品价值。' },
-                { title: '全模块上线', desc: '五大核心模块全部上线，形成完整的园区智能政策服务产品体系。' },
+                { title: '当前代码基线', desc: '具备租户、企业、政策、匹配、报告、订单与基础任务模型。' },
+                { title: '安全加固进行中', desc: '支付、租户边界、文件入口、文档渲染和真实性声明已进入自动化验证。' },
+                { title: 'Agent 工作闭环建设中', desc: 'Harness、证据优先检索、Application Workspace 和人工复核仍在分阶段实现。' },
+                { title: '试点状态', desc: '尚无可在本网站公开验证的签约园区或客户成效数据。' },
               ].map((milestone) => (
                 <div key={milestone.title} className="timeline-item">
                   <h3 className="timeline-item-title">{milestone.title}</h3>

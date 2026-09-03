@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.models.models import Company, Opportunity, Policy
 from app.services.llm.registry import embed_texts
-
+from app.services.policies.visibility import visible_policy_clause
 
 # 行业关键词映射
 INDUSTRY_KEYWORDS = {
@@ -43,18 +43,20 @@ async def match_policies_for_company(
     使用 Rule Engine + Semantic Retrieval 混合评分。
     """
     # 1. 构建企业画像向量
-    profile_text = f"{company.name} {company.industry or ''} {company.province or ''} {company.city or ''}"
+    profile_text = (
+        f"{company.name} {company.industry or ''} {company.province or ''} {company.city or ''}"
+    )
     embeddings = await embed_texts([profile_text])
     company_vector = embeddings[0]
 
-    # 2. SQL 查询全局政策库（tenant_id IS NULL）+ 余弦相似度
+    # 2. SQL 查询全局政策库 + 当前租户私有政策 + 余弦相似度
     results = db.execute(
         select(
             Policy,
             (1 - Policy.embedding.cosine_distance(company_vector)).label("similarity"),
         )
         .where(
-            Policy.tenant_id.is_(None),
+            visible_policy_clause(tenant_id),
             Policy.embedding.isnot(None),
             Policy.status == "published",
         )
@@ -67,7 +69,7 @@ async def match_policies_for_company(
 
     # 3. 企业画像提取（从 metadata_json）
     meta = company.metadata_json or {}
-    company_scale = meta.get("scale", "")         # 如 "小型", "中型", "大型"
+    company_scale = meta.get("scale", "")  # 如 "小型", "中型", "大型"
     company_qualifications = meta.get("qualifications", [])  # 如 ["高企", "专精特新"]
     try:
         company_rd_expense = float(meta.get("rd_expense_ratio", 0) or 0)
@@ -77,12 +79,8 @@ async def match_policies_for_company(
         company_revenue = float(meta.get("annual_revenue", 0) or 0)
     except (ValueError, TypeError):
         company_revenue = 0.0
-    try:
-        company_age_years = int(meta.get("age_years", 0) or 0)
-    except (ValueError, TypeError):
-        company_age_years = 0
-    company_tech_keywords = (company.industry or "").lower() + " " + " ".join(
-        meta.get("tech_stack", [])
+    company_tech_keywords = (
+        (company.industry or "").lower() + " " + " ".join(meta.get("tech_stack", []))
     )
 
     # 4. 逐条政策评分
@@ -185,8 +183,6 @@ async def match_policies_for_company(
         # ── 总分 ──
         final_score = sum(score_breakdown.values())
         final_score = max(0, min(100, final_score))
-        final_score_pct = round(final_score)
-
         # ── 生成 evidence ──
         evidence = {
             "score_breakdown": score_breakdown,

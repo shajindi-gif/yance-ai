@@ -21,6 +21,8 @@ def _records() -> tuple[Order, Payment, Product]:
         product_code="POLICY_REPORT",
         amount=Decimal("299.00"),
         currency="CNY",
+        resource_type="report",
+        resource_id=uuid.uuid4(),
         status="pending",
     )
     payment = Payment(
@@ -67,12 +69,15 @@ class FakeSession:
 
 def test_validate_settlement_requires_exact_amount_currency_and_tenant():
     order, payment, _ = _records()
-    assert validate_settlement(
-        order=order,
-        payment=payment,
-        paid_amount="299.00",
-        currency="cny",
-    ) is None
+    assert (
+        validate_settlement(
+            order=order,
+            payment=payment,
+            paid_amount="299.00",
+            currency="cny",
+        )
+        is None
+    )
     assert (
         validate_settlement(
             order=order,
@@ -124,6 +129,8 @@ def test_settlement_creates_one_entitlement_and_real_analytics_event():
     assert db.commits == 1
     assert len([item for item in db.added if isinstance(item, PaymentEvent)]) == 1
     assert len([item for item in db.added if isinstance(item, Entitlement)]) == 1
+    entitlement = next(item for item in db.added if isinstance(item, Entitlement))
+    assert entitlement.resource_id == order.resource_id
     analytics = [item for item in db.added if isinstance(item, AnalyticsEvent)]
     assert len(analytics) == 1
     assert analytics[0].name == "payment_completed"

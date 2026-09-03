@@ -81,6 +81,7 @@ class Document(Base, TimestampMixin, TenantOwnedMixin):
 
 class Policy(Base, TimestampMixin):
     """Global Policy Knowledge Base — platform-level, shared by all tenants."""
+
     __tablename__ = "policies"
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -88,27 +89,29 @@ class Policy(Base, TimestampMixin):
     )
     title: Mapped[str] = mapped_column(String(500))
     issuing_authority: Mapped[str | None] = mapped_column(String(240))  # 发文机关
-    level: Mapped[str | None] = mapped_column(String(40))  # national/provincial/municipal/district
-    province: Mapped[str | None] = mapped_column(String(80))
+    level: Mapped[str | None] = mapped_column(
+        String(40), index=True
+    )  # national/provincial/municipal/district
+    province: Mapped[str | None] = mapped_column(String(80), index=True)
     city: Mapped[str | None] = mapped_column(String(80))
     district: Mapped[str | None] = mapped_column(String(80))
-    industry: Mapped[str | None] = mapped_column(String(160))
+    industry: Mapped[str | None] = mapped_column(String(160), index=True)
     policy_type: Mapped[str | None] = mapped_column(String(80))  # subsidy/tax_break/qualification
     source_url: Mapped[str | None] = mapped_column(String(1000))
     jurisdiction: Mapped[str | None] = mapped_column(String(160))
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     effective_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     start_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     content: Mapped[str | None] = mapped_column(Text)
     original_text: Mapped[str | None] = mapped_column(Text)
     summary: Mapped[str | None] = mapped_column(Text)
     source: Mapped[str | None] = mapped_column(String(160))
     crawled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     support_amount: Mapped[str | None] = mapped_column(String(120))  # e.g. "最高500万"
-    support_type: Mapped[str | None] = mapped_column(String(120))    # 资金补贴/税收优惠/资质认定
+    support_type: Mapped[str | None] = mapped_column(String(120))  # 资金补贴/税收优惠/资质认定
     embedding: Mapped[list[float] | None] = mapped_column(Vector(1024))
-    status: Mapped[str] = mapped_column(String(40), default="draft")
+    status: Mapped[str] = mapped_column(String(40), default="draft", index=True)
 
 
 class PolicyRule(Base, TimestampMixin, TenantOwnedMixin):
@@ -154,11 +157,16 @@ class Application(Base, TimestampMixin, TenantOwnedMixin):
 
 class Order(Base, TimestampMixin, TenantOwnedMixin):
     __tablename__ = "orders"
+    __table_args__ = (
+        Index("ix_orders_tenant_resource", "tenant_id", "resource_type", "resource_id"),
+    )
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     order_no: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     product_code: Mapped[str] = mapped_column(String(80))
     amount: Mapped[float] = mapped_column(Numeric(12, 2))
     currency: Mapped[str] = mapped_column(String(8), default="CNY")
+    resource_type: Mapped[str | None] = mapped_column(String(40))
+    resource_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     status: Mapped[str] = mapped_column(String(40), default="pending")
 
 
@@ -171,11 +179,13 @@ class Payment(Base, TimestampMixin, TenantOwnedMixin):
     amount: Mapped[float] = mapped_column(Numeric(12, 2))
     currency: Mapped[str] = mapped_column(String(8), default="CNY")
     stripe_session_id: Mapped[str | None] = mapped_column(String(128), index=True)
-    alipay_trade_no: Mapped[str | None] = mapped_column(String(64), index=True)    # 支付宝交易号
-    alipay_buyer_logon_id: Mapped[str | None] = mapped_column(String(160))         # 买家支付宝账号
-    alipay_buyer_user_id: Mapped[str | None] = mapped_column(String(32))           # 买家支付宝用户ID
-    bank_receipt_url: Mapped[str | None] = mapped_column(String(700))              # 银行转账凭证URL
-    bank_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))  # 银行转账核实时间
+    alipay_trade_no: Mapped[str | None] = mapped_column(String(64), index=True)  # 支付宝交易号
+    alipay_buyer_logon_id: Mapped[str | None] = mapped_column(String(160))  # 买家支付宝账号
+    alipay_buyer_user_id: Mapped[str | None] = mapped_column(String(32))  # 买家支付宝用户ID
+    bank_receipt_url: Mapped[str | None] = mapped_column(String(700))  # 银行转账凭证URL
+    bank_verified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )  # 银行转账核实时间
     status: Mapped[str] = mapped_column(String(40), default="created")
     raw_response: Mapped[dict] = mapped_column(JSON, default=dict)
 
@@ -204,19 +214,23 @@ class Invoice(Base, TimestampMixin, TenantOwnedMixin):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     order_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("orders.id"))
     invoice_no: Mapped[str | None] = mapped_column(String(64), unique=True, index=True)  # 发票号码
-    invoice_code: Mapped[str | None] = mapped_column(String(32))                         # 发票代码
-    title: Mapped[str] = mapped_column(String(240))           # 发票抬头（购买方名称）
-    tax_number: Mapped[str] = mapped_column(String(64))       # 购买方纳税人识别号
+    invoice_code: Mapped[str | None] = mapped_column(String(32))  # 发票代码
+    title: Mapped[str] = mapped_column(String(240))  # 发票抬头（购买方名称）
+    tax_number: Mapped[str] = mapped_column(String(64))  # 购买方纳税人识别号
     address_phone: Mapped[str | None] = mapped_column(String(300))  # 购买方地址电话
-    bank_account: Mapped[str | None] = mapped_column(String(200))    # 购买方开户行及账号
-    seller_name: Mapped[str] = mapped_column(String(240), default="")   # 销售方名称
+    bank_account: Mapped[str | None] = mapped_column(String(200))  # 购买方开户行及账号
+    seller_name: Mapped[str] = mapped_column(String(240), default="")  # 销售方名称
     seller_tax_number: Mapped[str] = mapped_column(String(64), default="")  # 销售方纳税人识别号
-    items_json: Mapped[dict] = mapped_column(JSON, default=list)    # 发票明细 [{"name":"","spec":"","unit":"","qty":1,"price":0,"amount":0,"tax_rate":0}]
-    amount: Mapped[float] = mapped_column(Numeric(12, 2))          # 合计金额（不含税）
+    items_json: Mapped[dict] = mapped_column(
+        JSON, default=list
+    )  # 发票明细 [{"name":"","spec":"","unit":"","qty":1,"price":0,"amount":0,"tax_rate":0}]
+    amount: Mapped[float] = mapped_column(Numeric(12, 2))  # 合计金额（不含税）
     tax_amount: Mapped[float] = mapped_column(Numeric(12, 2), default=0)  # 税额
-    total_amount: Mapped[float] = mapped_column(Numeric(12, 2))    # 价税合计
-    invoice_type: Mapped[str] = mapped_column(String(40), default="vat_normal")  # vat_normal/vat_special
-    pdf_path: Mapped[str | None] = mapped_column(String(700))      # 生成的PDF文件路径
+    total_amount: Mapped[float] = mapped_column(Numeric(12, 2))  # 价税合计
+    invoice_type: Mapped[str] = mapped_column(
+        String(40), default="vat_normal"
+    )  # vat_normal/vat_special
+    pdf_path: Mapped[str | None] = mapped_column(String(700))  # 生成的PDF文件路径
     status: Mapped[str] = mapped_column(String(40), default="requested")  # requested/generated/sent
 
 
@@ -235,22 +249,28 @@ class AnalyticsEvent(Base, TenantOwnedMixin):
 
 class Product(Base, TimestampMixin):
     """Unified Product SKU — single source of truth for pricing."""
+
     __tablename__ = "products"
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    code: Mapped[str] = mapped_column(String(80), unique=True, index=True)  # POLICY_REPORT, POLICY_DIAGNOSIS, etc.
+    code: Mapped[str] = mapped_column(
+        String(80), unique=True, index=True
+    )  # POLICY_REPORT, POLICY_DIAGNOSIS, etc.
     name: Mapped[str] = mapped_column(String(240))
     description: Mapped[str | None] = mapped_column(Text)
     product_type: Mapped[str] = mapped_column(String(40))  # report / diagnosis / plan / draft
     price: Mapped[float] = mapped_column(Numeric(12, 2))  # current selling price
     original_price: Mapped[float | None] = mapped_column(Numeric(12, 2))  # strikethrough price
     promotional_price: Mapped[float | None] = mapped_column(Numeric(12, 2))  # limited-time price
-    entitlement_type: Mapped[str] = mapped_column(String(40), default="report")  # report / diagnosis / plan
+    entitlement_type: Mapped[str] = mapped_column(
+        String(40), default="report"
+    )  # report / diagnosis / plan
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     sort_order: Mapped[int] = mapped_column(default=0)  # display order
 
 
 class Entitlement(Base, TimestampMixin, TenantOwnedMixin):
     """Tracks what a tenant has purchased and can access."""
+
     __tablename__ = "entitlements"
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
@@ -261,13 +281,15 @@ class Entitlement(Base, TimestampMixin, TenantOwnedMixin):
         UUID(as_uuid=True), ForeignKey("orders.id"), index=True
     )
     resource_type: Mapped[str] = mapped_column(String(40))  # report / diagnosis / plan
-    resource_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))  # link to specific report/opportunity
+    resource_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True)
+    )  # link to specific report/opportunity
     status: Mapped[str] = mapped_column(String(40), default="active")  # active / revoked / expired
 
 
 class AgentRun(Base, TenantOwnedMixin):
     __tablename__ = "agent_runs"
-    task_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
+    task_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     agent_name: Mapped[str] = mapped_column(String(120))
@@ -297,16 +319,20 @@ class AuditLog(Base, TenantOwnedMixin):
 
 class Task(Base, TimestampMixin, TenantOwnedMixin):
     """Outcome-based Agent Task — core business object."""
+
     __tablename__ = "tasks"
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
-    company_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("companies.id", ondelete="SET NULL"))
+    company_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("companies.id", ondelete="SET NULL"), index=True
+    )
     task_type: Mapped[str] = mapped_column(String(80))
     title: Mapped[str] = mapped_column(String(500))
     description: Mapped[str | None] = mapped_column(Text)
     input_data: Mapped[dict] = mapped_column(JSON, default=dict)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
     requirements: Mapped[str | None] = mapped_column(Text)
-    status: Mapped[str] = mapped_column(String(40), default="draft")
+    status: Mapped[str] = mapped_column(String(40), default="draft", index=True)
     priority: Mapped[str] = mapped_column(String(20), default="normal")
     agent_type: Mapped[str | None] = mapped_column(String(80))
     workflow_version: Mapped[str] = mapped_column(String(20), default="v1")
@@ -318,7 +344,9 @@ class Task(Base, TimestampMixin, TenantOwnedMixin):
     review_status: Mapped[str | None] = mapped_column(String(40))
     delivery_status: Mapped[str | None] = mapped_column(String(40))
     failure_reason: Mapped[str | None] = mapped_column(Text)
-    order_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("orders.id", ondelete="SET NULL"))
+    order_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("orders.id", ondelete="SET NULL")
+    )
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     progress: Mapped[int] = mapped_column(default=0)
@@ -327,14 +355,18 @@ class Task(Base, TimestampMixin, TenantOwnedMixin):
 
 class Deliverable(Base, TimestampMixin, TenantOwnedMixin):
     """Formal output artifact produced by an Agent task."""
+
     __tablename__ = "deliverables"
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    task_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tasks.id", ondelete="CASCADE"), index=True)
+    task_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tasks.id", ondelete="CASCADE"), index=True
+    )
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     company_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     deliverable_type: Mapped[str] = mapped_column(String(80))
     title: Mapped[str] = mapped_column(String(500))
     content_json: Mapped[dict | None] = mapped_column(JSON)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
     content_markdown: Mapped[str | None] = mapped_column(Text)
     file_url: Mapped[str | None] = mapped_column(String(700))
     pdf_url: Mapped[str | None] = mapped_column(String(700))
@@ -349,11 +381,23 @@ class Deliverable(Base, TimestampMixin, TenantOwnedMixin):
 
 class RevisionRequest(Base, TenantOwnedMixin):
     """User-requested modification to a deliverable."""
+
     __tablename__ = "revision_requests"
+    __table_args__ = (
+        Index("ix_rev_req_task_id", "task_id"),
+        Index("ix_rev_req_tenant_id", "tenant_id"),
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    task_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tasks.id", ondelete="CASCADE"), index=True)
-    deliverable_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("deliverables.id", ondelete="CASCADE"))
+    task_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tasks.id", ondelete="CASCADE")
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE")
+    )
+    deliverable_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("deliverables.id", ondelete="CASCADE")
+    )
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     request: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(40), default="pending")

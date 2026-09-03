@@ -21,9 +21,9 @@ export default function RoadshowPage() {
           >
             路演与试点
           </span>
-          <h1>徐汇试点与路演计划</h1>
+          <h1>园区试点方案</h1>
           <p>
-            了解 Policy Agent 的推广路线和试点合作机会，成为智能园区服务的先行者。
+            以下内容是可讨论的试点模板，不代表已签约客户、政府合作或已开放活动。
           </p>
         </div>
       </section>
@@ -33,13 +33,13 @@ export default function RoadshowPage() {
         <div className="container">
           <div className="split">
             <div className="split-content">
-              <span className="section-label">徐汇试点</span>
-              <h2 className="section-title mb-4">徐汇园区试点合作</h2>
+              <span className="section-label">试点提案</span>
+              <h2 className="section-title mb-4">园区 Policy Agent 验证方案</h2>
               <p>
-                我们正在与上海市徐汇区的产业园区合作，开展 Policy Agent 的首批试点部署。试点园区将享受优先部署、定制支持和优惠价格。
+                面向产业园区、孵化器和专业服务机构，围绕真实企业资料、政策证据、资格判断与材料工作流设计受控验证。
               </p>
               <p>
-                试点合作面向徐汇区各类产业园区、孵化器和产业服务机构，通过真实业务场景验证产品价值，共同推动园区服务智能化升级。
+                试点范围、数据处理位置、交付周期、服务团队和价格均需在双方确认后写入协议。
               </p>
               <div className="mt-8">
                 <Link
@@ -47,7 +47,7 @@ export default function RoadshowPage() {
                   className="btn btn-primary"
                   style={{ background: '#f97316', borderColor: '#f97316', borderRadius: '12px' }}
                 >
-                  申请试点合作
+                  提交试点需求
                 </Link>
               </div>
             </div>
@@ -56,9 +56,9 @@ export default function RoadshowPage() {
                 <h3>试点权益</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
                   {[
-                    { icon: '\u{26A1}', title: '优先部署', desc: '试点园区优先安排部署，最快 2 周上线' },
-                    { icon: '\u{1F464}', title: '专属支持', desc: '配备专属实施团队和客户成功经理' },
-                    { icon: '\u{1F4B0}', title: '优惠价格', desc: '试点期间享受特别优惠价格方案' },
+                    { icon: '\u{26A1}', title: '范围确认', desc: '共同确认数据、流程、权限和验收边界' },
+                    { icon: '\u{1F464}', title: '人工复核', desc: '为关键资格结论和材料设置复核责任人' },
+                    { icon: '\u{1F4B0}', title: '成本测量', desc: '记录真实模型成本、时延和任务完成率' },
                     { icon: '\u{1F91D}', title: '产品共建', desc: '深度参与产品需求定义和功能迭代' },
                   ].map((benefit) => (
                     <div
@@ -132,16 +132,16 @@ export default function RoadshowPage() {
       <section className="section">
         <div className="container">
           <div className="section-header">
-            <span className="section-label">试点目标</span>
-            <h2 className="section-title">试点 KPI 目标</h2>
+            <span className="section-label">验收框架</span>
+            <h2 className="section-title">指标必须来自真实试点</h2>
           </div>
 
           <div className="grid grid-4" style={{ gap: '20px' }}>
             {[
-              { value: '200+', label: '覆盖企业数', desc: '试点园区核心企业' },
-              { value: '85%+', label: '匹配准确率', desc: '政策匹配精确度' },
-              { value: '<30min', label: '服务响应时间', desc: '单次企业服务耗时' },
-              { value: '3x', label: '效率提升倍数', desc: '对比人工服务效率' },
+              { value: '待测量', label: '覆盖企业数', desc: '数据库真实企业记录' },
+              { value: '待评测', label: '匹配准确率', desc: '冻结评测集结果' },
+              { value: '待测量', label: '服务响应时间', desc: '真实工作流时延' },
+              { value: '待测量', label: '效率变化', desc: '与试点基线对比' },
             ].map((kpi) => (
               <div key={kpi.label} className="stat-card" style={{ padding: '32px 20px' }}>
                 <div className="stat-value" style={{ color: '#0ea5e9' }}>
@@ -163,21 +163,21 @@ export default function RoadshowPage() {
       <section className="section section-alt">
         <div className="container">
           <div className="section-header">
-            <span className="section-label">路演路线</span>
-            <h2 className="section-title">2025 路演计划</h2>
+            <span className="section-label">DEMO</span>
+            <h2 className="section-title">示例路演主题</h2>
             <p className="section-subtitle">
-              我们将在全国多个城市开展园区智能服务路演活动，欢迎预约参加。
+              下列城市与议题仅用于展示可能的行业场景，目前没有公开活动日程。
             </p>
           </div>
 
           <div className="container-narrow">
             <div className="timeline">
               {[
-                { city: '上海站 - 徐汇区', desc: '徐汇区产业园区专场，面向漕河泾、徐汇滨江等园区运营团队。重点演示政策问答和企业画像模块。', status: '已开放报名', badge: 'badge-success' },
-                { city: '上海站 - 张江', desc: '张江科学城专场，面向生物医药、集成电路等高科技产业园区。重点演示行业政策匹配和材料生成。', status: '即将开放', badge: 'badge-primary' },
-                { city: '杭州站', desc: '杭州高新区和数字经济产业园专场。聚焦互联网和数字经济领域政策服务。', status: '规划中', badge: 'badge-orange' },
-                { city: '深圳站', desc: '深圳南山和前海片区专场。面向科技创新型园区和深港合作区。', status: '规划中', badge: 'badge-orange' },
-                { city: '北京站', desc: '中关村和亦庄开发区专场。面向国家级高新区和经开区。', status: '规划中', badge: 'badge-orange' },
+                { city: '上海 - 综合场景', desc: '展示政策问答、企业画像和证据工作流。', status: 'DEMO', badge: 'badge-primary' },
+                { city: '上海 - 科技产业', desc: '展示生物医药、集成电路等行业的资料与政策匹配流程。', status: 'DEMO', badge: 'badge-primary' },
+                { city: '杭州 - 数字经济', desc: '展示数字经济企业资料解析与机会扫描。', status: 'DEMO', badge: 'badge-primary' },
+                { city: '深圳 - 科技创新', desc: '展示跨区域政策元数据和证据核对。', status: 'DEMO', badge: 'badge-primary' },
+                { city: '北京 - 园区服务', desc: '展示多企业工作区与任务执行设计。', status: 'DEMO', badge: 'badge-primary' },
               ].map((event) => (
                 <div key={event.city} className="timeline-item">
                   <h3 className="timeline-item-title">{event.city}</h3>

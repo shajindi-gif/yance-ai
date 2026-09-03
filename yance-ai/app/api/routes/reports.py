@@ -2,14 +2,14 @@
 
 from fastapi import APIRouter, Depends, Form, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import Principal, get_principal, require_roles
+from app.api.deps import Principal, require_roles
 from app.core.db import get_db
 from app.models.models import Policy, UserRole
 from app.services.llm.registry import embed_texts
 from app.services.llm.router import LLMRouter
+from app.services.policies.visibility import visible_policy_clause
 
 router = APIRouter(tags=["reports"])
 
@@ -39,7 +39,7 @@ async def generate_report(
     results = (
         db.query(Policy)
         .filter(
-            Policy.tenant_id == principal.tenant_id,
+            visible_policy_clause(principal.tenant_id),
             Policy.embedding.isnot(None),
         )
         .order_by(Policy.embedding.cosine_distance(query_vector))
@@ -86,8 +86,7 @@ async def generate_report(
     return {
         "query": query,
         "matched_policies": [
-            {"title": p.title, "id": str(p.id), "status": p.status or "draft"}
-            for p in results
+            {"title": p.title, "id": str(p.id), "status": p.status or "draft"} for p in results
         ],
         "report": response.content,
         "model": response.model,

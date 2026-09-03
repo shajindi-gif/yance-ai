@@ -1,8 +1,8 @@
 """Add Task, Deliverable, RevisionRequest tables for Outcome-based Agent SaaS."""
 
 import sqlalchemy as sa
+
 from alembic import op
-from sqlalchemy.dialects.postgresql import UUID
 
 revision = "20260817_0008"
 down_revision = "20260814_0007"
@@ -14,9 +14,16 @@ def upgrade() -> None:
     op.create_table(
         "tasks",
         sa.Column("id", sa.UUID(), primary_key=True),
-        sa.Column("tenant_id", sa.UUID(), sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "tenant_id", sa.UUID(), sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column("user_id", sa.UUID(), nullable=True),
-        sa.Column("company_id", sa.UUID(), sa.ForeignKey("companies.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "company_id",
+            sa.UUID(),
+            sa.ForeignKey("companies.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("task_type", sa.String(80), nullable=False),
         sa.Column("title", sa.String(500), nullable=False),
         sa.Column("description", sa.Text, nullable=True),
@@ -34,7 +41,9 @@ def upgrade() -> None:
         sa.Column("review_status", sa.String(40), nullable=True),
         sa.Column("delivery_status", sa.String(40), nullable=True),
         sa.Column("failure_reason", sa.Text, nullable=True),
-        sa.Column("order_id", sa.UUID(), sa.ForeignKey("orders.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "order_id", sa.UUID(), sa.ForeignKey("orders.id", ondelete="SET NULL"), nullable=True
+        ),
         sa.Column("metadata", sa.JSON, default=dict),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()")),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()")),
@@ -48,8 +57,12 @@ def upgrade() -> None:
     op.create_table(
         "deliverables",
         sa.Column("id", sa.UUID(), primary_key=True),
-        sa.Column("task_id", sa.UUID(), sa.ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("tenant_id", sa.UUID(), sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "task_id", sa.UUID(), sa.ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False
+        ),
+        sa.Column(
+            "tenant_id", sa.UUID(), sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column("user_id", sa.UUID(), nullable=True),
         sa.Column("company_id", sa.UUID(), nullable=True),
         sa.Column("deliverable_type", sa.String(80), nullable=False),
@@ -73,9 +86,18 @@ def upgrade() -> None:
     op.create_table(
         "revision_requests",
         sa.Column("id", sa.UUID(), primary_key=True),
-        sa.Column("task_id", sa.UUID(), sa.ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("deliverable_id", sa.UUID(), sa.ForeignKey("deliverables.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("tenant_id", sa.UUID(), sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "task_id", sa.UUID(), sa.ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False
+        ),
+        sa.Column(
+            "deliverable_id",
+            sa.UUID(),
+            sa.ForeignKey("deliverables.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "tenant_id", sa.UUID(), sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column("user_id", sa.UUID(), nullable=True),
         sa.Column("request", sa.Text, nullable=False),
         sa.Column("status", sa.String(40), server_default="pending"),

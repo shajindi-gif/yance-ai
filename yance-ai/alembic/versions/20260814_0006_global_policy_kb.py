@@ -4,8 +4,8 @@ Per master task: Policy should be platform-level, shared by all tenants.
 """
 
 import sqlalchemy as sa
+
 from alembic import op
-from sqlalchemy.dialects.postgresql import UUID
 
 revision = "20260814_0006_global_policy_kb"
 down_revision = "20260809_0005"
@@ -25,20 +25,28 @@ def upgrade() -> None:
 
     # 2. Add Global Policy KB fields
     op.add_column("policies", sa.Column("issuing_authority", sa.String(240), nullable=True))
-    op.add_column("policies", sa.Column("level", sa.String(40), nullable=True))  # national/provincial/municipal/district
+    op.add_column(
+        "policies", sa.Column("level", sa.String(40), nullable=True)
+    )  # national/provincial/municipal/district
     op.add_column("policies", sa.Column("province", sa.String(80), nullable=True))
     op.add_column("policies", sa.Column("city", sa.String(80), nullable=True))
     op.add_column("policies", sa.Column("district", sa.String(80), nullable=True))
     op.add_column("policies", sa.Column("industry", sa.String(160), nullable=True))
-    op.add_column("policies", sa.Column("policy_type", sa.String(80), nullable=True))  # subsidy/tax_break/qualification/...
+    op.add_column(
+        "policies", sa.Column("policy_type", sa.String(80), nullable=True)
+    )  # subsidy/tax_break/qualification/...
     op.add_column("policies", sa.Column("start_date", sa.DateTime(timezone=True), nullable=True))
     op.add_column("policies", sa.Column("deadline", sa.DateTime(timezone=True), nullable=True))
     op.add_column("policies", sa.Column("original_text", sa.Text, nullable=True))
     op.add_column("policies", sa.Column("summary", sa.Text, nullable=True))
     op.add_column("policies", sa.Column("source", sa.String(160), nullable=True))
     op.add_column("policies", sa.Column("crawled_at", sa.DateTime(timezone=True), nullable=True))
-    op.add_column("policies", sa.Column("support_amount", sa.String(120), nullable=True))  # e.g. "最高500万"
-    op.add_column("policies", sa.Column("support_type", sa.String(120), nullable=True))   # 资金补贴/税收优惠/资质认定
+    op.add_column(
+        "policies", sa.Column("support_amount", sa.String(120), nullable=True)
+    )  # e.g. "最高500万"
+    op.add_column(
+        "policies", sa.Column("support_type", sa.String(120), nullable=True)
+    )  # 资金补贴/税收优惠/资质认定
 
     # 3. Index for global policy queries
     op.create_index("ix_policies_level", "policies", ["level"])

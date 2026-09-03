@@ -10,9 +10,9 @@ Revises: 20260809_0004
 Create Date: 2026-08-09
 """
 
-from alembic import op
 from pgvector.sqlalchemy import Vector
-import sqlalchemy as sa
+
+from alembic import op
 
 revision = "20260809_0005"
 down_revision = "20260809_0004"

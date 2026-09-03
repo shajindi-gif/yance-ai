@@ -1,16 +1,18 @@
 """Policy Evaluation Engine — Schemas (Pydantic structured output)"""
-from enum import Enum
-from typing import Any, Optional
+
+from enum import StrEnum
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
-class CriterionResult(str, Enum):
+class CriterionResult(StrEnum):
     PASS = "PASS"
     FAIL = "FAIL"
     INSUFFICIENT = "INSUFFICIENT"
 
 
-class OverallResult(str, Enum):
+class OverallResult(StrEnum):
     ELIGIBLE = "ELIGIBLE"
     NOT_ELIGIBLE = "NOT_ELIGIBLE"
     INSUFFICIENT_INFO = "INSUFFICIENT_INFO"
@@ -53,12 +55,13 @@ class RiskItem(BaseModel):
 class NextBestAction(BaseModel):
     action: str
     description: str = ""
-    product_code: Optional[str] = None
+    product_code: str | None = None
     cta: str = ""
 
 
 class PolicyEvaluationResult(BaseModel):
     """Policy Evaluation Engine 统一输出"""
+
     overall_result: OverallResult
     matched_policy_id: str = ""
     matched_policy_title: str = ""
@@ -75,11 +78,15 @@ class PolicyEvaluationResult(BaseModel):
 
 class CriteriaExtraction(BaseModel):
     """LLM Step 1: 从政策原文提取硬性条件"""
-    criteria: list[dict[str, str]] = Field(default_factory=list, description="每项 {criterion: 条件描述, policy_quote: 原文引用}")
+
+    criteria: list[dict[str, str]] = Field(
+        default_factory=list, description="每项 {criterion: 条件描述, policy_quote: 原文引用}"
+    )
 
 
 class EligibilityJudgment(BaseModel):
     """LLM Step 2: 逐项判定"""
+
     criteria: list[CriterionEvaluation]
     overall_result: OverallResult
     summary: str = ""

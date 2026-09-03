@@ -173,7 +173,7 @@ export default function Footer() {
             &copy; {year} 上海衍策引擎人工智能科技有限公司 | 衍策引擎AI
           </p>
           <div className="footer-legal">
-            <span className="footer-deploy-tag">服务部署于中国香港</span>
+            <span className="footer-deploy-tag">部署地域以实际环境为准</span>
             <Link href="/privacy">隐私政策</Link>
             <Link href="/terms">服务条款</Link>
             <Link href="/security">安全合规</Link>

@@ -33,6 +33,9 @@ class OSSStorage:
     def exists(self, object_key: str) -> bool:
         return self.internal_bucket.object_exists(object_key)
 
+    def object_size(self, object_key: str) -> int:
+        return int(self.internal_bucket.get_object_meta(object_key).content_length)
+
 
 @lru_cache
 def get_oss_storage() -> OSSStorage:

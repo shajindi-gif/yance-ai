@@ -5,9 +5,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, get_principal, require_roles
+from app.core.config import settings
 from app.core.db import get_db
 from app.models.models import Policy, PolicyRule, UserRole
 from app.schemas.schemas import PolicyCreate, PolicyOut, PolicyRuleCreate, PolicyRuleOut
+from app.services.policies.visibility import visible_policy_clause
 
 router = APIRouter(tags=["policy", "policy_rule"])
 
@@ -16,7 +18,7 @@ router = APIRouter(tags=["policy", "policy_rule"])
 def list_policies(
     principal: Principal = Depends(get_principal), db: Session = Depends(get_db)
 ) -> list[Policy]:
-    return list(db.scalars(select(Policy).where(Policy.tenant_id == principal.tenant_id)).all())
+    return list(db.scalars(select(Policy).where(visible_policy_clause(principal.tenant_id))).all())
 
 
 @router.post("/policies", response_model=PolicyOut, status_code=201)
@@ -45,7 +47,10 @@ def get_policy(
     db: Session = Depends(get_db),
 ) -> Policy:
     policy = db.scalar(
-        select(Policy).where(Policy.id == policy_id, Policy.tenant_id == principal.tenant_id)
+        select(Policy).where(
+            Policy.id == policy_id,
+            visible_policy_clause(principal.tenant_id),
+        )
     )
     if not policy:
         raise HTTPException(status_code=404, detail="Policy not found")
@@ -82,7 +87,12 @@ async def update_policy(
 
 
 @router.post("/test-embed")
-async def test_embed(text: str = Form(...)):
+async def test_embed(
+    text: str = Form(...),
+    principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin)),
+):
+    if settings.app_env == "production" or not settings.demo_features_enabled:
+        raise HTTPException(status_code=404, detail="Not found")
     from app.services.llm.registry import embed_texts
 
     vecs = await embed_texts([text])
@@ -105,7 +115,7 @@ async def search_policies(
     results = (
         db.query(Policy)
         .filter(
-            Policy.tenant_id == principal.tenant_id,
+            visible_policy_clause(principal.tenant_id),
             Policy.embedding.isnot(None),
         )
         .order_by(Policy.embedding.cosine_distance(query_vector))
@@ -132,7 +142,8 @@ def create_policy_rule(
 ) -> PolicyRule:
     policy_exists = db.scalar(
         select(Policy.id).where(
-            Policy.id == payload.policy_id, Policy.tenant_id == principal.tenant_id
+            Policy.id == payload.policy_id,
+            visible_policy_clause(principal.tenant_id),
         )
     )
     if not policy_exists:

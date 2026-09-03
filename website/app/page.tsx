@@ -13,7 +13,7 @@ const FAQ_ITEMS = [
   },
   {
     q: '衍策引擎AI 和传统咨询公司有什么区别？',
-    a: '传统咨询公司按人天收费、交付周期长、覆盖面有限。衍策引擎AI 通过 AI 引擎实现政策语义理解、企业画像自动构建、智能匹配和材料生成，将原本数周的工作压缩到分钟级，同时保持专业级输出质量和全流程可追溯。',
+    a: '衍策引擎AI 将企业信息、政策来源、资格条件、证据和任务保存在持续工作区中，并用结构化流程执行匹配与生成。实际节省时间和输出质量必须通过真实项目与评测验证，本网站不发布未经验证的效率数字。',
   },
   {
     q: '支持哪些行业和地区的政策？',
@@ -21,19 +21,19 @@ const FAQ_ITEMS = [
   },
   {
     q: '数据安全如何保障？',
-    a: '所有企业数据加密存储，严格的权限控制体系。系统支持操作审计日志和人工复核机制。企业版提供私有化部署选项，数据完全在客户环境中运行。',
+    a: '当前代码已实现密码哈希、令牌有效期、租户与角色校验、受限文件上传、支付回调校验和隔离的文档渲染。TLS、备份、存储加密、私有化部署与第三方认证必须在具体部署环境中单独配置和验收。',
   },
   {
     q: '能否与企业现有系统集成？',
-    a: '专业版和企业版提供 API 集成能力，可与企业现有的 OA、CRM、ERP 等系统对接。企业版支持深度定制集成。',
+    a: '当前产品提供内部 API，但面向客户的 API Key、Webhook、OA/CRM/ERP 标准连接器尚在路线图中。企业集成需要先进行数据与安全范围评估。',
   },
   {
     q: 'AI 输出的结果可信吗？',
-    a: '每条建议都附带政策原文引用和来源溯源，支持精确到条款级别。系统内置 10 项可追溯字段，并支持人工复核和结果修正流程。我们不承诺申报一定成功，具体条件以主管部门和政策文件为准。',
+    a: '资格引擎会在硬门槛失败或证据不足时降级结论，但现阶段仍需人工核对政策原文。完整的条款级引用、人工审批工作流和质量评测正在建设；我们不承诺申报一定成功。',
   },
   {
     q: '园区和孵化器如何使用？',
-    a: '园区和孵化器可以通过我们的 Knowledge Bot（政策知识库 Bot）和 Park Entry（园区入驻匹配）功能，为在园企业提供批量政策服务。企业版支持多园区统一管理和跨园区数据对比。',
+    a: '现阶段可通过企业画像、政策匹配和报告流程开展试点。批量园区管理、Knowledge Bot 和跨园区数据对比属于后续产品范围，不应视为已上线能力。',
   },
   {
     q: '如何开始使用？',
@@ -102,8 +102,8 @@ const PRODUCTS = [
     name: 'Knowledge Bot',
     subtitle: '园区政策知识库 Bot',
     icon: '\u{1F916}',
-    desc: '基于园区政策文件训练的问答 Bot，可嵌入园区官网或企微，为在园企业提供 7x24 政策咨询服务。',
-    tags: ['知识问答', '官网嵌入', '7x24 服务'],
+    desc: '路线图能力：基于园区政策文件构建可追溯问答，并在完成权限和数据边界验收后接入企业渠道。',
+    tags: ['路线图', '知识问答', '来源追溯'],
   },
 ];
 
@@ -152,7 +152,6 @@ const SOLUTIONS = [
 export default function HomePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [searchInput, setSearchInput] = useState('');
-  const [annual, setAnnual] = useState(false);
 
   return (
     <>
@@ -192,27 +191,27 @@ export default function HomePage() {
       {/* ===== PLATFORM ENTRY STRIP ===== */}
       <section className="yc-platform-strip">
         <div className="container">
-          <div className="yc-platform-label">衍策引擎AI 全平台覆盖</div>
+          <div className="yc-platform-label">Web 工作区与渠道路线图</div>
           <div className="yc-platform-grid">
             <Link href="/chrome-extension" className="yc-platform-card">
               <span className="yc-platform-icon">{'\u{1F310}'}</span>
               <span className="yc-platform-name">浏览器插件</span>
-              <span className="yc-platform-desc">政策页面实时决策注入</span>
+              <span className="yc-platform-desc">概念演示 · 尚未发布</span>
             </Link>
             <Link href="/downloads" className="yc-platform-card">
               <span className="yc-platform-icon">{'\u{1F4F1}'}</span>
               <span className="yc-platform-name">微信小程序</span>
-              <span className="yc-platform-desc">30秒政策快查</span>
+              <span className="yc-platform-desc">路线图 · 尚未发布</span>
             </Link>
             <Link href="/downloads" className="yc-platform-card">
               <span className="yc-platform-icon">{'\u{1F4AC}'}</span>
               <span className="yc-platform-name">钉钉 / 飞书 Bot</span>
-              <span className="yc-platform-desc">群内 @ 即查政策</span>
+              <span className="yc-platform-desc">路线图 · 尚未发布</span>
             </Link>
             <Link href="/downloads" className="yc-platform-card">
               <span className="yc-platform-icon">{'\u{1F4BB}'}</span>
               <span className="yc-platform-name">桌面客户端</span>
-              <span className="yc-platform-desc">Mac / Windows 原生</span>
+              <span className="yc-platform-desc">路线图 · 尚未发布</span>
             </Link>
           </div>
         </div>
@@ -277,8 +276,8 @@ export default function HomePage() {
                 <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', marginLeft: '12px' }}>Policy Intelligence Report</span>
               </div>
               <div className="yc-report-meta">
-                <span>报告编号：YC-2026-0627</span>
-                <span>生成时间：2026.06.27</span>
+                <span>DEMO / 虚构企业样例</span>
+                <span>报告编号：DEMO-SAMPLE-001</span>
               </div>
             </div>
 
@@ -329,7 +328,7 @@ export default function HomePage() {
             {/* Report Footer */}
             <div className="yc-report-footer">
               <span className="yc-report-disclaimer">
-                * 以上为示例报告，实际内容以企业真实数据和最新政策文件为准。补贴金额为预估区间，具体以主管部门审核结果为准。
+                * DEMO：以上企业、匹配数量、园区、时间线和金额均为虚构展示数据，不代表真实政策结论或客户结果。
               </span>
               <Link href="/login?register=1" className="yc-btn-primary-sm">
                 生成你的报告 &rarr;
@@ -516,117 +515,19 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== PRICING SECTION ===== */}
+      {/* ===== COMMERCIAL CATALOG SECTION ===== */}
       <section className="section">
         <div className="container">
           <div className="section-header">
-            <span className="section-label">价格方案</span>
-            <h2 className="section-title">灵活的定价，匹配不同阶段的企业</h2>
+            <span className="section-label">产品目录</span>
+            <h2 className="section-title">价格与交付范围以服务端目录为准</h2>
             <p className="section-subtitle">
-              从初创科技企业到大型园区集团，找到适合你的方案。
+              当前购买流程按资源绑定订单，服务端校验产品、价格、企业或机会归属；未在目录中启用的订阅与企业能力不会作为已上线功能销售。
             </p>
-
-            {/* Annual toggle */}
-            <div className="yc-pricing-toggle">
-              <button
-                onClick={() => setAnnual(false)}
-                className={`yc-toggle-btn${!annual ? ' yc-toggle-active' : ''}`}
-              >
-                月付
-              </button>
-              <button
-                onClick={() => setAnnual(true)}
-                className={`yc-toggle-btn${annual ? ' yc-toggle-active' : ''}`}
-              >
-                年付
-                <span className="yc-toggle-badge">省 20%</span>
-              </button>
-            </div>
           </div>
-
-          <div className="grid grid-3" style={{ gap: '24px' }}>
-            {[
-              {
-                name: '初创版',
-                desc: '适合科技型中小企业和初创公司',
-                monthly: 1999,
-                features: [
-                  'Policy Match 政策匹配引擎',
-                  'Company Profile 企业画像',
-                  '基础政策库（市级政策）',
-                  '每月 10 次报告生成',
-                  '邮件支持',
-                ],
-                featured: false,
-              },
-              {
-                name: '成长版',
-                desc: '适合高新技术企业和专精特新企业',
-                monthly: 5999,
-                features: [
-                  '全部 7 个产品模块',
-                  '完整政策库（国家+省+市级）',
-                  'Grant Copilot 申报助手',
-                  'Report Studio 报告生成器',
-                  '不限报告生成次数',
-                  '专属客户成功经理',
-                  'API 集成支持',
-                ],
-                featured: true,
-              },
-              {
-                name: '机构版',
-                desc: '适合园区、孵化器和产业服务机构',
-                monthly: 19999,
-                features: [
-                  '成长版全部功能',
-                  'Knowledge Bot 知识库 Bot',
-                  'Park Entry 园区匹配系统',
-                  '私有化部署选项',
-                  '多园区管理',
-                  '定制政策库接入',
-                  'SLA 保障',
-                  '专属技术支持团队',
-                ],
-                featured: false,
-              },
-            ].map((tier) => {
-              const price = annual ? Math.round(tier.monthly * 0.8) : tier.monthly;
-              return (
-                <div key={tier.name} className={`yc-pricing-card${tier.featured ? ' yc-pricing-featured' : ''}`}>
-                  {tier.featured && <div className="yc-pricing-badge">最受欢迎</div>}
-                  <div className="yc-pricing-name">{tier.name}</div>
-                  <div className="yc-pricing-desc">{tier.desc}</div>
-                  <div className="yc-pricing-price">
-                    &yen;{price.toLocaleString()}
-                    <span className="yc-pricing-unit"> 元/月</span>
-                  </div>
-                  <div className="yc-pricing-period">{annual ? '按年付费' : '按月付费'}</div>
-                  <div className="yc-pricing-divider" />
-                  <ul className="yc-pricing-features">
-                    {tier.features.map((f) => (
-                      <li key={f}>
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                          <path d="M3 8.5L6.5 12L13 4" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    href="/login?register=1"
-                    className={`yc-btn-pricing${tier.featured ? ' yc-btn-pricing-primary' : ''}`}
-                  >
-                    {tier.name === '机构版' ? '联系销售' : '开始使用'}
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
-
           <div style={{ textAlign: 'center', marginTop: '32px' }}>
-            <Link href="/pricing" className="btn btn-ghost">
-              查看完整功能对比表 &rarr;
+            <Link href="/pricing" className="yc-btn-primary">
+              查看当前产品目录与价格 &rarr;
             </Link>
           </div>
         </div>
@@ -684,7 +585,7 @@ export default function HomePage() {
             <div>
               <h3 className="yc-dash-cta-title">登录查看全部政策红利</h3>
               <p className="yc-dash-cta-desc">
-                你的企业已有 <strong>23</strong> 项可匹配政策，<strong>5</strong> 项正在申报中，预计红利 <strong>¥380万</strong>
+                登录后仅显示来自你工作区的真实机会、申报进度与证据；没有数据时显示空状态。
               </p>
             </div>
             <Link href="/dashboard" className="yc-btn-primary">

@@ -20,7 +20,7 @@ dependencies = [
   "email-validator>=2.2,<3.0",
   "stripe>=11.0,<12.0",
   "pycryptodome>=3.21,<4.0",
-  "weasyprint>=63.0,<64.0",
+  "weasyprint>=69.0,<70.0",
 ]
 
 [build-system]
@@ -33,7 +33,7 @@ exclude = ["alembic*", "evals*", "nginx*", "ops*", "tests*"]
 
 [project.optional-dependencies]
 dev = [
-  "pytest>=8.3,<9.0",
+  "pytest>=9.0.3,<10.0",
   "pytest-cov>=6.0,<7.0",
   "ruff>=0.9,<1.0",
 ]
@@ -44,7 +44,10 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
-ignore = ["B008"]  # FastAPI dependency injection intentionally uses Depends in defaults.
+ignore = [
+  "B008",  # FastAPI dependency injection intentionally uses Depends in defaults.
+  "E501",  # Ruff formatter does not wrap embedded HTML/CSS or migration SQL safely.
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

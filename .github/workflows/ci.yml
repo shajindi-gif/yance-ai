@@ -1,0 +1,159 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend quality, migration, and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: yance
+          POSTGRES_PASSWORD: ci_password
+          POSTGRES_DB: yance_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U yance -d yance_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      APP_ENV: test
+      DATABASE_URL: postgresql+psycopg://yance:ci_password@localhost:5432/yance_ci
+      JWT_SECRET: ci-only-secret-at-least-32-characters
+      BOOTSTRAP_TOKEN: ci-only-bootstrap-token
+      TENANT_PROVISIONING_TOKEN: ci-only-tenant-provisioning-token
+    defaults:
+      run:
+        working-directory: yance-ai
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: yance-ai/pyproject.toml
+
+      - name: Install backend and test dependencies
+        run: python -m pip install --disable-pip-version-check -e ".[dev]"
+
+      - name: Lint
+        run: ruff check app tests alembic
+
+      - name: Compile
+        run: python -m compileall -q app
+
+      - name: Apply all migrations
+        run: alembic upgrade head
+
+      - name: Check model and migration alignment
+        run: alembic check
+
+      - name: Run backend tests with coverage floor
+        run: pytest --cov=app --cov-report=term-missing --cov-fail-under=50
+
+  frontend:
+    name: Frontend audit, typecheck, and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Build production application
+        run: npm run build
+
+      - name: Verify standalone runtime artifact
+        run: test -f .next/standalone/server.js
+
+  python-dependency-audit:
+    name: Python dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: yance-ai
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: yance-ai/pyproject.toml
+
+      - name: Install application and auditor
+        run: python -m pip install --disable-pip-version-check -e . "pip-audit>=2.9,<3"
+
+      - name: Audit installed dependencies
+        run: pip-audit --local --skip-editable
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out full repository history
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Scan committed history for secrets
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  containers:
+    name: Container builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: [backend, frontend]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: backend
+            context: yance-ai
+          - name: frontend
+            context: website
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Build ${{ matrix.name }} image
+        run: docker build --tag "yance-${{ matrix.name }}:ci" "${{ matrix.context }}"

@@ -41,11 +41,13 @@ def _alipay_gateway_url() -> str:
         return "https://openapi-sandbox.dl.alipaydev.com/gateway.do"
     return settings.alipay_gateway
 
+
 def _build_alipay_sign(params: dict) -> str:
     """Build RSA-SHA256 sign for Alipay request."""
     # Sort keys alphabetically, remove sign/sign_type, concat with &
     sorted_items = sorted(
-        (k, v) for k, v in params.items()
+        (k, v)
+        for k, v in params.items()
         if v != "" and v is not None and k not in ("sign", "sign_type")
     )
     raw_string = "&".join(f"{k}={v}" for k, v in sorted_items)
@@ -55,20 +57,22 @@ def _build_alipay_sign(params: dict) -> str:
         private_key = private_key.replace("\\n", "\n")
     if not private_key.startswith("-----BEGIN"):
         private_key = (
-            f"-----BEGIN RSA PRIVATE KEY-----\n{private_key}\n"
-            "-----END RSA PRIVATE KEY-----"
+            f"-----BEGIN RSA PRIVATE KEY-----\n{private_key}\n-----END RSA PRIVATE KEY-----"
         )
     rsa_key = RSA.import_key(private_key)
     signer = PKCS1_v1_5.new(rsa_key)
     h = SHA256.new(raw_string.encode("utf-8"))
     signature = signer.sign(h)
     from base64 import b64encode
+
     return b64encode(signature).decode("utf-8")
+
 
 def _verify_alipay_sign(params: dict, signature: str) -> bool:
     """Verify Alipay async notify signature."""
     sorted_items = sorted(
-        (k, v) for k, v in params.items()
+        (k, v)
+        for k, v in params.items()
         if v != "" and v is not None and k not in ("sign", "sign_type")
     )
     raw_string = "&".join(f"{k}={v}" for k, v in sorted_items)
@@ -81,6 +85,7 @@ def _verify_alipay_sign(params: dict, signature: str) -> bool:
     verifier = PKCS1_v1_5.new(rsa_key)
     h = SHA256.new(raw_string.encode("utf-8"))
     from base64 import b64decode
+
     return verifier.verify(h, b64decode(signature, validate=True))
 
 
@@ -95,9 +100,7 @@ def alipay_page_pay(
         raise HTTPException(status_code=503, detail="Alipay not configured")
 
     order = db.scalar(
-        select(Order).where(
-            Order.id == order_id, Order.tenant_id == principal.tenant_id
-        )
+        select(Order).where(Order.id == order_id, Order.tenant_id == principal.tenant_id)
     )
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -270,12 +273,11 @@ def create_checkout_session(
         raise HTTPException(status_code=503, detail="No payment provider configured")
 
     import stripe
+
     stripe.api_key = settings.stripe_secret_key
 
     order = db.scalar(
-        select(Order).where(
-            Order.id == order_id, Order.tenant_id == principal.tenant_id
-        )
+        select(Order).where(Order.id == order_id, Order.tenant_id == principal.tenant_id)
     )
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -284,14 +286,16 @@ def create_checkout_session(
     session = stripe.checkout.Session.create(
         mode="payment",
         currency=order.currency.lower(),
-        line_items=[{
-            "price_data": {
-                "currency": order.currency.lower(),
-                "product_data": {"name": order.product_code},
-                "unit_amount": unit_amount,
-            },
-            "quantity": 1,
-        }],
+        line_items=[
+            {
+                "price_data": {
+                    "currency": order.currency.lower(),
+                    "product_data": {"name": order.product_code},
+                    "unit_amount": unit_amount,
+                },
+                "quantity": 1,
+            }
+        ],
         success_url="https://yance.ai/success?session_id={CHECKOUT_SESSION_ID}",
         cancel_url="https://yance.ai/cancel",
         metadata={"order_id": str(order.id), "tenant_id": str(principal.tenant_id)},
@@ -317,6 +321,7 @@ def create_checkout_session(
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)) -> dict:
     """Stripe webhook handler (legacy)."""
     import stripe
+
     stripe.api_key = settings.stripe_secret_key
 
     payload = await request.body()
@@ -342,9 +347,8 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)) -> dic
         if not payment:
             raise HTTPException(status_code=400, detail="Payment not found")
         metadata = session.get("metadata") or {}
-        if (
-            metadata.get("order_id") != str(payment.order_id)
-            or metadata.get("tenant_id") != str(payment.tenant_id)
+        if metadata.get("order_id") != str(payment.order_id) or metadata.get("tenant_id") != str(
+            payment.tenant_id
         ):
             raise HTTPException(status_code=400, detail="Payment metadata mismatch")
         if session.get("payment_status") != "paid":

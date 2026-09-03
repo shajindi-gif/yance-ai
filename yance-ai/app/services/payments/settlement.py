@@ -25,9 +25,7 @@ class SettlementResult:
     error_code: str | None = None
 
 
-def _commit_or_resolve_replay(
-    db: Session, *, event: PaymentEvent
-) -> SettlementResult | None:
+def _commit_or_resolve_replay(db: Session, *, event: PaymentEvent) -> SettlementResult | None:
     """Commit once; resolve a concurrent duplicate provider event as a replay."""
     try:
         db.commit()
@@ -158,7 +156,7 @@ def settle_payment(
                 product_id=product.id,
                 order_id=order.id,
                 resource_type=product.entitlement_type,
-                resource_id=None,
+                resource_id=order.resource_id,
                 status="active",
             )
         )

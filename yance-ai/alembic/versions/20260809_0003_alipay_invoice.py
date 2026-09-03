@@ -4,26 +4,32 @@ Revision ID: 0003
 Revises: 0002
 Create Date: 2026-08-09
 """
-from typing import Sequence, Union
 
-from alembic import op
+from collections.abc import Sequence
+
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
+
 # revision identifiers, used by Alembic.
 revision: str = "20260809_0003"
-down_revision: Union[str, None] = "20260809_0002"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "20260809_0002"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
     # Payment: add alipay fields + currency
-    op.add_column("payments", sa.Column("currency", sa.String(8), nullable=True, server_default="CNY"))
+    op.add_column(
+        "payments", sa.Column("currency", sa.String(8), nullable=True, server_default="CNY")
+    )
     op.add_column("payments", sa.Column("alipay_trade_no", sa.String(64), nullable=True))
     op.add_column("payments", sa.Column("alipay_buyer_logon_id", sa.String(160), nullable=True))
     op.add_column("payments", sa.Column("alipay_buyer_user_id", sa.String(32), nullable=True))
-    op.create_index(op.f("ix_payments_alipay_trade_no"), "payments", ["alipay_trade_no"], unique=False)
+    op.create_index(
+        op.f("ix_payments_alipay_trade_no"), "payments", ["alipay_trade_no"], unique=False
+    )
 
     # Invoice: rebuild with new columns
     op.execute("ALTER TABLE invoices DROP COLUMN IF EXISTS amount")
@@ -33,11 +39,21 @@ def upgrade() -> None:
     op.add_column("invoices", sa.Column("bank_account", sa.String(200), nullable=True))
     op.add_column("invoices", sa.Column("seller_name", sa.String(240), nullable=True))
     op.add_column("invoices", sa.Column("seller_tax_number", sa.String(64), nullable=True))
-    op.add_column("invoices", sa.Column("items_json", postgresql.JSON(astext_type=sa.Text()), nullable=True, server_default="[]"))
+    op.add_column(
+        "invoices",
+        sa.Column(
+            "items_json", postgresql.JSON(astext_type=sa.Text()), nullable=True, server_default="[]"
+        ),
+    )
     op.add_column("invoices", sa.Column("amount", sa.Numeric(12, 2), nullable=True))
-    op.add_column("invoices", sa.Column("tax_amount", sa.Numeric(12, 2), nullable=True, server_default="0"))
+    op.add_column(
+        "invoices", sa.Column("tax_amount", sa.Numeric(12, 2), nullable=True, server_default="0")
+    )
     op.add_column("invoices", sa.Column("total_amount", sa.Numeric(12, 2), nullable=True))
-    op.add_column("invoices", sa.Column("invoice_type", sa.String(40), nullable=True, server_default="vat_normal"))
+    op.add_column(
+        "invoices",
+        sa.Column("invoice_type", sa.String(40), nullable=True, server_default="vat_normal"),
+    )
     op.add_column("invoices", sa.Column("pdf_path", sa.String(700), nullable=True))
     op.create_index(op.f("ix_invoices_invoice_no"), "invoices", ["invoice_no"], unique=True)
 

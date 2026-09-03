@@ -32,19 +32,19 @@ export default function PolicyKnowledgeBasePage() {
       <section className="section">
         <div className="container">
           <div className="section-header">
-            <span className="section-label">数据规模</span>
-            <h2 className="section-title">智能政策知识引擎</h2>
+            <span className="section-label">真实数据原则</span>
+            <h2 className="section-title">数据规模尚未公开</h2>
             <p className="section-subtitle">
-              覆盖国家级、省级、市级和区级政策文件，通过结构化处理和语义索引，让每一条政策都可搜索、可问答、可引用。
+              政策数量、覆盖城市、更新频率和结构化率必须由数据库与评测系统计算；当前不展示占位数字。
             </p>
           </div>
 
           <div className="grid grid-4" style={{ gap: '20px' }}>
             {[
-              { value: '10,000+', label: '政策文件总数', color: '' },
-              { value: '50+', label: '覆盖城市', color: 'green' },
-              { value: '每日', label: '更新频率', color: 'orange' },
-              { value: '98%', label: '结构化覆盖率', color: '' },
+              { value: '待统计', label: '政策文件总数', color: '' },
+              { value: '待统计', label: '覆盖城市', color: 'green' },
+              { value: '待统计', label: '更新频率', color: 'orange' },
+              { value: '待评测', label: '结构化覆盖率', color: '' },
             ].map((stat) => (
               <div key={stat.label} className="stat-card">
                 <div
@@ -123,8 +123,8 @@ export default function PolicyKnowledgeBasePage() {
 
           <div className="dashboard-preview">
             <div className="dashboard-header">
-              <span className="dashboard-header-title">政策结构化示例</span>
-              <span className="badge badge-success">已结构化</span>
+              <span className="dashboard-header-title">DEMO：政策结构化数据模型</span>
+              <span className="badge badge-success">虚构示例</span>
             </div>
 
             <div className="grid grid-2" style={{ gap: '24px' }}>
@@ -137,12 +137,10 @@ export default function PolicyKnowledgeBasePage() {
                   style={{ background: 'var(--bg-alt)', fontSize: '0.875rem', lineHeight: 1.8 }}
                 >
                   <p style={{ color: 'var(--text)', fontWeight: 600 }}>
-                    关于组织开展2024年度高新技术企业认定工作的通知
+                    示例政策 A（非真实政策文件）
                   </p>
                   <p style={{ marginTop: '12px', color: 'var(--text-secondary)' }}>
-                    各区科技行政部门、各有关单位：根据《高新技术企业认定管理办法》(国科发火〔2016〕32号)...
-                    申报企业须是在本市行政区域内注册一年以上的居民企业...
-                    企业近三个会计年度的研究开发费用总额占同期销售收入总额的比例符合要求...
+                    本段仅用于演示标题、发布机构、适用条件、日期与权益字段如何被结构化。
                   </p>
                 </div>
               </div>
@@ -152,11 +150,11 @@ export default function PolicyKnowledgeBasePage() {
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {[
-                    { label: '政策名称', value: '2024年度高新技术企业认定' },
-                    { label: '发布机构', value: '上海市科学技术委员会' },
-                    { label: '适用条件', value: '注册1年以上 / 研发费用占比达标 / IP数量要求' },
-                    { label: '申报截止', value: '2025-06-30' },
-                    { label: '补贴标准', value: '首次认定奖励 20 万元' },
+                    { label: '政策名称', value: '示例政策 A' },
+                    { label: '发布机构', value: '示例发布机构' },
+                    { label: '适用条件', value: '示例条件 1 / 示例条件 2' },
+                    { label: '申报截止', value: '待来源解析' },
+                    { label: '补贴标准', value: '待来源解析' },
                   ].map((field) => (
                     <div key={field.label} className="card-flat" style={{ padding: '10px 16px' }}>
                       <span
@@ -193,19 +191,19 @@ export default function PolicyKnowledgeBasePage() {
           <div className="grid grid-2" style={{ gap: '32px' }}>
             <div className="card" style={{ padding: '32px' }}>
               <h3 className="card-title" style={{ marginBottom: '24px' }}>
-                示例问答
+                DEMO：无真实来源时的回答边界
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {[
                   {
-                    q: '高新技术企业认定需要多少项知识产权？',
-                    a: '根据《高新技术企业认定管理工作指引》，企业通过自主研发、受让、受赠、并购等方式获得知识产权。I类知识产权1项以上或II类知识产权5项以上。',
-                    src: '《高新技术企业认定管理工作指引》第三章',
+                    q: '某项认定需要多少项知识产权？',
+                    a: '当前示例没有政策原文，系统必须返回 Need More Information，而不是猜测数量。',
+                    src: 'No source in demo',
                   },
                   {
-                    q: '上海市对专精特新企业有哪些补贴？',
-                    a: '上海市对专精特新企业主要支持政策包括：1) 专项资金奖励；2) 融资支持；3) 人才引进；4) 市场开拓等。',
-                    src: '《上海市专精特新企业发展条例》第四章',
+                    q: '某地区有哪些企业补贴？',
+                    a: '系统需要先检索有效期和适用地区匹配的来源，再显示条款、发布日期与置信度。',
+                    src: 'No source in demo',
                   },
                 ].map((qa) => (
                   <div

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, get_principal, require_roles
 from app.core.db import get_db
-from app.models.models import Invoice, Order, Payment, Product, UserRole
+from app.models.models import Company, Invoice, Opportunity, Order, Payment, Product, UserRole
 from app.schemas.schemas import (
     CommerceOut,
     InvoiceCreate,
@@ -47,12 +47,25 @@ def create_order(
     )
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+    if not payload.resource_id:
+        raise HTTPException(status_code=400, detail="A product resource is required")
+    resource_model = Company if product.entitlement_type == "report" else Opportunity
+    resource = db.scalar(
+        select(resource_model).where(
+            resource_model.id == payload.resource_id,
+            resource_model.tenant_id == principal.tenant_id,
+        )
+    )
+    if not resource:
+        raise HTTPException(status_code=404, detail="Product resource not found")
     order = Order(
         tenant_id=principal.tenant_id,
         order_no=f"Y{secrets.token_hex(8).upper()}",
         product_code=product.code,
         amount=product.promotional_price or product.price,
         currency="CNY",
+        resource_type=product.entitlement_type,
+        resource_id=payload.resource_id,
         status="created",
     )
     db.add(order)
@@ -100,7 +113,8 @@ def create_invoice(
         bank_account=payload.bank_account,
         seller_name=payload.seller_name or "",
         seller_tax_number=payload.seller_tax_number or "",
-        items_json=payload.items or [
+        items_json=payload.items
+        or [
             {
                 "name": order.product_code,
                 "spec": "",
@@ -132,6 +146,7 @@ async def generate_invoice(
 ) -> dict:
     """Generate PDF for an existing invoice."""
     from uuid import UUID
+
     invoice = db.scalar(
         select(Invoice).where(
             Invoice.id == UUID(invoice_id),
@@ -157,6 +172,7 @@ async def download_invoice(
 ):
     """Download invoice PDF."""
     from uuid import UUID
+
     invoice = db.scalar(
         select(Invoice).where(
             Invoice.id == UUID(invoice_id),

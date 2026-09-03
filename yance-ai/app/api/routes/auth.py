@@ -13,7 +13,7 @@ from app.api.deps import Principal, get_principal
 from app.core.config import settings
 from app.core.db import get_db
 from app.core.security import create_access_token, hash_password, verify_password
-from app.models.models import Company, Tenant, User, UserRole
+from app.models.models import AnalyticsEvent, Company, Tenant, User, UserRole
 from app.schemas.schemas import BootstrapRequest, RegisterRequest, Token, UserOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -104,9 +104,7 @@ def register(
     _check_rate_limit(client_ip)
 
     # Check email uniqueness across all users
-    existing_user = db.scalar(
-        select(User).where(User.email == str(payload.owner_email).lower())
-    )
+    existing_user = db.scalar(select(User).where(User.email == str(payload.owner_email).lower()))
     if existing_user:
         raise HTTPException(status_code=409, detail="该邮箱已注册，请直接登录")
 
@@ -136,6 +134,23 @@ def register(
         city=payload.city,
     )
     db.add(company)
+    db.flush()
+    db.add_all(
+        [
+            AnalyticsEvent(
+                tenant_id=tenant.id,
+                user_id=owner.id,
+                name="signup_completed",
+                properties={},
+            ),
+            AnalyticsEvent(
+                tenant_id=tenant.id,
+                user_id=owner.id,
+                name="company_created",
+                properties={"company_id": str(company.id)},
+            ),
+        ]
+    )
 
     try:
         db.commit()
@@ -159,7 +174,11 @@ def login(
     query = (
         select(User)
         .join(Tenant, Tenant.id == User.tenant_id)
-        .where(User.email == form.username.lower(), User.is_active.is_(True))
+        .where(
+            User.email == form.username.lower(),
+            User.is_active.is_(True),
+            Tenant.is_active.is_(True),
+        )
     )
     if x_tenant_slug:
         query = query.where(Tenant.slug == x_tenant_slug)
