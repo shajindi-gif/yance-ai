@@ -90,6 +90,49 @@ export interface Entitlement {
   created_at: string;
 }
 
+export interface TaskSummary {
+  id: string;
+  task_type?: string;
+  title: string;
+  status: string;
+  progress?: number | null;
+  current_stage?: string | null;
+  created_at: string;
+}
+
+export interface TaskDeliverable {
+  id: string;
+  type: string;
+  title: string;
+  version: number;
+  status: string;
+  quality_score: number | null;
+  pdf_url?: string | null;
+  generated_at: string | null;
+}
+
+export interface TaskRunSummary {
+  agent: string;
+  status: string;
+  latency_ms?: number | null;
+}
+
+export interface TaskDetail extends TaskSummary {
+  company_name: string;
+  description?: string | null;
+  payment_status?: string | null;
+  deliverables: TaskDeliverable[];
+  agent_runs: TaskRunSummary[];
+}
+
+export interface NextAction {
+  action: string;
+  desc: string;
+  product_code: string | null;
+  price: number;
+  cta: string;
+}
+
 class ApiClient {
   private token: string | null = null;
 
@@ -154,6 +197,23 @@ class ApiClient {
     }
 
     return response.json();
+  }
+
+  private async requestBlob(path: string): Promise<Blob> {
+    const headers: Record<string, string> = {};
+    if (this.token) {
+      headers.Authorization = `Bearer ${this.token}`;
+    }
+    const response = await fetch(`${API_BASE}${path}`, { headers });
+    if (response.status === 401) {
+      this.clearToken();
+      throw new Error('认证已过期，请重新登录');
+    }
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: '下载失败' }));
+      throw new Error(error.detail || '下载失败');
+    }
+    return response.blob();
   }
 
   // Auth
@@ -325,38 +385,40 @@ class ApiClient {
     });
   }
 
-  // Demo: Payment
-  async demoPay(productCode: string = 'POLICY_REPORT', companyId?: string, opportunityId?: string): Promise<{
-    order_id: string;
-    order_no: string;
-    payment_status: string;
-    invoice_id: string;
-    invoice_no: string;
-    product_name: string;
-    amount: number;
-    message: string;
-  }> {
-    const body: any = { product_code: productCode };
-    if (companyId) body.company_id = companyId;
-    if (opportunityId) body.opportunity_id = opportunityId;
-    return this.request('/payments/demo-pay', {
-      method: 'POST',
-      body: JSON.stringify(body),
-    });
+  // Authorized report download
+  async downloadReport(companyId: string): Promise<Blob> {
+    return this.requestBlob(`/reports/${companyId}/download`);
   }
 
-  // Demo: Download PDF
-  async downloadReport(companyId: string): Promise<Blob> {
-    const headers: Record<string, string> = {};
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
-    }
-    const response = await fetch(`${API_BASE}/reports/${companyId}/download`, { headers });
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: '下载失败' }));
-      throw new Error(error.detail || '下载失败');
-    }
-    return response.blob();
+  // Tasks
+  async getTasks(): Promise<TaskSummary[]> {
+    return this.request<TaskSummary[]>('/tasks');
+  }
+
+  async getTask(taskId: string): Promise<TaskDetail> {
+    return this.request<TaskDetail>(`/tasks/${encodeURIComponent(taskId)}`);
+  }
+
+  async getNextActions(taskId: string): Promise<NextAction[]> {
+    const result = await this.request<{ actions: NextAction[] }>(
+      `/tasks/${encodeURIComponent(taskId)}/next-actions`,
+    );
+    return result.actions;
+  }
+
+  async downloadTask(taskId: string): Promise<Blob> {
+    return this.requestBlob(`/tasks/${encodeURIComponent(taskId)}/download`);
+  }
+
+  async acceptTask(taskId: string): Promise<void> {
+    await this.request(`/tasks/${encodeURIComponent(taskId)}/accept`, { method: 'POST' });
+  }
+
+  async requestTaskRevision(taskId: string, deliverableId: string, request: string): Promise<void> {
+    await this.request(`/tasks/${encodeURIComponent(taskId)}/revision`, {
+      method: 'POST',
+      body: JSON.stringify({ deliverable_id: deliverableId, request }),
+    });
   }
 
   // Analytics: Stats (data flywheel)

@@ -1,0 +1,379 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.listCard {
+  display: block;
+  border: 1px solid #dde3eb;
+  border-radius: 11px;
+  background: #ffffff;
+  padding: 17px 19px;
+  color: inherit;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.025);
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.listCard:hover {
+  border-color: #aab8c7;
+  color: inherit;
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.05);
+}
+
+.listCardHeader,
+.rowBetween {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.itemTitle {
+  color: #202c3d;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.meta,
+.subtle {
+  color: #667085;
+  font-size: 11px;
+}
+
+.meta {
+  margin-top: 7px;
+}
+
+.progressBlock {
+  margin-top: 12px;
+}
+
+.progressTrack {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e9eef4;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: inherit;
+  background: #2386b8;
+  transition: width 300ms ease;
+}
+
+.progressMeta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  color: #667085;
+  font-size: 10px;
+}
+
+.tableSurface {
+  overflow: hidden;
+  border: 1px solid #dde3eb;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+}
+
+.table th {
+  border-bottom: 1px solid #dde3eb;
+  background: #f8fafc;
+  padding: 11px 14px;
+  color: #667085;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.table td {
+  border-bottom: 1px solid #eef1f5;
+  padding: 13px 14px;
+  color: #344054;
+  font-size: 12px;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr:hover td {
+  background: #fbfcfd;
+}
+
+.alignRight {
+  text-align: right !important;
+}
+
+.alignCenter {
+  text-align: center !important;
+}
+
+.mono {
+  color: #253247;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.amount {
+  color: #172033;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.section {
+  margin-top: 26px;
+}
+
+.sectionHeading {
+  margin-bottom: 12px;
+}
+
+.sectionHeading h2,
+.card h2 {
+  margin: 0;
+  color: #253247;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.sectionHeading p,
+.cardIntro {
+  margin: 4px 0 0;
+  color: #667085;
+  font-size: 11px;
+}
+
+.upsellGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.upsellCard h3 {
+  margin: 0;
+  color: #253247;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.upsellCard p {
+  margin: 7px 0 14px;
+  color: #667085;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.card {
+  border: 1px solid #dde3eb;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 20px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.025);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.cardHeader h1 {
+  margin: 0 0 4px;
+  color: #172033;
+  font-size: 19px;
+  font-weight: 680;
+}
+
+.detailMeta {
+  color: #667085;
+  font-size: 11px;
+}
+
+.detailMeta span + span::before {
+  margin: 0 7px;
+  color: #c3cad4;
+  content: "·";
+}
+
+.stageList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.stage {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #98a2b3;
+  font-size: 11px;
+}
+
+.stageDone,
+.stageActive {
+  color: #344054;
+  font-weight: 600;
+}
+
+.stageActive {
+  color: #075985;
+}
+
+.stageDot {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 50%;
+  background: #edf1f5;
+  color: #98a2b3;
+  font-size: 9px;
+}
+
+.stageDone .stageDot {
+  background: #079455;
+  color: #ffffff;
+}
+
+.stageActive .stageDot {
+  background: #0b78a8;
+  color: #ffffff;
+}
+
+.deliverableRow,
+.nextAction,
+.activityRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid #eef1f5;
+  padding: 12px 0;
+}
+
+.deliverableRow:last-child,
+.activityRow:last-child {
+  border-bottom: 0;
+}
+
+.deliverableRow strong,
+.nextAction strong {
+  display: block;
+  color: #253247;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.deliverableRow small,
+.nextAction small {
+  display: block;
+  margin-top: 3px;
+  color: #596579;
+  font-size: 10px;
+}
+
+.actionRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.nextAction {
+  margin-top: 9px;
+  border: 1px solid #e4e9ef;
+  border-radius: 9px;
+  background: #f9fafb;
+  padding: 11px 12px;
+}
+
+.activityRow {
+  justify-content: flex-start;
+  padding: 8px 0;
+  color: #475467;
+  font-size: 11px;
+}
+
+.activityStatus {
+  color: #079455;
+}
+
+.activityLatency {
+  margin-left: auto;
+  color: #667085;
+  font-variant-numeric: tabular-nums;
+}
+
+.revisionForm {
+  margin-top: 12px;
+  border-top: 1px solid #eef1f5;
+  padding-top: 14px;
+}
+
+.revisionForm label {
+  display: block;
+  margin-bottom: 6px;
+  color: #344054;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.revisionForm textarea {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  border: 1px solid #ccd5df;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px 11px;
+  color: #253247;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.revisionForm textarea:focus {
+  border-color: #2386b8;
+  outline: 3px solid rgba(35, 134, 184, 0.12);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+@media (max-width: 700px) {
+  .upsellGrid,
+  .actionRow {
+    grid-template-columns: 1fr;
+  }
+
+  .deliverableRow,
+  .nextAction {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .listCard,
+  .progressFill {
+    transition: none;
+  }
+}

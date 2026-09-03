@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
+import AppShell from '@/components/workspace/AppShell';
+import { InlineAlert } from '@/components/ui/InlineAlert';
+import { LoadingState } from '@/components/ui/LoadingState';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 /* --- Types --- */
 interface TenantInfo {
@@ -137,32 +141,24 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="yc-dash-loading">
-        <div className="yc-dash-spinner"></div>
-        <p>加载中...</p>
-      </div>
+      <AppShell>
+        <LoadingState label="正在加载企业工作台" />
+      </AppShell>
     );
   }
 
   if (!authenticated) return null;
 
   return (
-    <div className="yc-dashboard">
-      {/* Header */}
-      <div className="yc-dash-header">
-        <div>
-          <h1>工作台</h1>
-          <p className="yc-dash-tenant">{tenant?.name} <span className="yc-dash-slug">({tenant?.slug})</span></p>
-        </div>
-        <div className="yc-dash-header-right">
-          <Link href="/orders" style={{ fontSize: '13px', color: '#0ea5e9', textDecoration: 'none', marginRight: '12px' }}>订单</Link>
-          <Link href="/reports" style={{ fontSize: '13px', color: '#0ea5e9', textDecoration: 'none', marginRight: '12px' }}>报告</Link>
-          <Link href="/" className="yc-dash-back">← 返回首页</Link>
-          <button className="yc-dash-logout" onClick={() => { api.clearToken(); router.push('/login'); }}>退出登录</button>
-        </div>
-      </div>
+    <AppShell workspaceName={tenant?.name}>
+      <div className="yc-dashboard">
+        <PageHeader
+          eyebrow="Home"
+          title="工作台"
+          description={`${tenant?.name || '企业工作区'}${tenant?.slug ? ` · ${tenant.slug}` : ''}。这里仅展示数据库返回的企业、机会与交易数据。`}
+        />
 
-      {error && <div className="yc-dash-error">{error}</div>}
+        {error && <InlineAlert>{error}</InlineAlert>}
 
       {/* Metrics */}
       <div className="yc-dash-metrics">
@@ -236,6 +232,7 @@ export default function DashboardPage() {
             <div className="yc-dash-company-actions">
               <select
                 className="yc-dash-model-select"
+                aria-label="选择政策匹配模型提供方"
                 value={selectedProvider}
                 onChange={e => setSelectedProvider(e.target.value)}
               >
@@ -371,27 +368,15 @@ export default function DashboardPage() {
       </div>
 
       <style jsx>{`
-        .yc-dash-loading { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; color:#64748b; }
-        .yc-dash-spinner { width:40px; height:40px; border:3px solid #e2e8f0; border-top-color:#0ea5e9; border-radius:50%; animation:spin .8s linear infinite; }
-        @keyframes spin { to { transform:rotate(360deg); } }
-        .yc-dashboard { max-width:1200px; margin:0 auto; padding:100px 24px 60px; }
-        .yc-dash-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px; }
-        .yc-dash-header h1 { font-size:28px; font-weight:700; color:#0d1b2a; margin:0 0 8px; }
-        .yc-dash-tenant { color:#64748b; font-size:14px; margin:0; }
-        .yc-dash-slug { color:#94a3b8; font-size:12px; }
-        .yc-dash-header-right { display:flex; gap:12px; align-items:center; }
-        .yc-dash-back { color:#0ea5e9; text-decoration:none; font-size:14px; }
-        .yc-dash-logout { padding:8px 16px; border:1px solid #e2e8f0; border-radius:8px; background:#fff; color:#64748b; font-size:13px; cursor:pointer; }
-        .yc-dash-logout:hover { border-color:#ef4444; color:#ef4444; }
-        .yc-dash-error { background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:12px 16px; border-radius:10px; font-size:13px; margin-bottom:24px; }
+        .yc-dashboard { max-width:1200px; margin:0 auto; }
         .yc-dash-metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
         .yc-dash-metric-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:24px; text-align:center; }
         .yc-dash-metric-value { font-size:32px; font-weight:700; color:#0d1b2a; margin-bottom:4px; }
         .yc-dash-metric-label { font-size:13px; color:#64748b; }
         .yc-dash-section { background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:28px; margin-bottom:24px; }
         .yc-dash-section h2 { font-size:18px; font-weight:600; color:#0d1b2a; margin:0 0 20px; }
-        .yc-dash-btn-primary { padding:12px 24px; background:#0ea5e9; color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:500; cursor:pointer; }
-        .yc-dash-btn-primary:hover { background:#0284c7; }
+        .yc-dash-btn-primary { padding:12px 24px; background:#126a9a; color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; }
+        .yc-dash-btn-primary:hover { background:#0d567e; }
         .yc-dash-btn-primary:disabled { opacity:.6; cursor:not-allowed; }
         .yc-dash-company-form { display:flex; flex-direction:column; gap:16px; }
         .yc-dash-form-row { display:flex; flex-direction:column; gap:6px; }
@@ -434,10 +419,14 @@ export default function DashboardPage() {
         .yc-dash-provider-usage { text-align:center; font-size:12px; color:#64748b; margin-top:8px; }
         @media (max-width:768px) {
           .yc-dash-metrics { grid-template-columns:repeat(2,1fr); }
-          .yc-dash-header { flex-direction:column; gap:16px; }
           .yc-dash-company-info { flex-direction:column; align-items:flex-start; gap:16px; }
+          .yc-dash-company-actions { width:100%; flex-direction:column; align-items:stretch; }
+          .yc-dash-flywheel { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+          .yc-dash-flywheel-item { min-width:0; padding:14px 8px; }
+          .yc-dash-flywheel-arrow { display:none; }
         }
       `}</style>
-    </div>
+      </div>
+    </AppShell>
   );
 }
