@@ -16,11 +16,13 @@ from app.core.config import settings
 from app.core.db import SessionLocal, get_db
 from app.models.models import (
     AgentRun,
+    AnalyticsEvent,
     Company,
     Deliverable,
     Opportunity,
     Order,
     Policy,
+    PolicyScan,
     Product,
     RevisionRequest,
     Task,
@@ -90,6 +92,17 @@ def _run_task_background(task_id: uuid.UUID):
 
         task.status = "running"
         task.started_at = datetime.now(UTC)
+        scan = None
+        if task.scan_id:
+            scan = db.scalar(
+                select(PolicyScan).where(
+                    PolicyScan.id == task.scan_id,
+                    PolicyScan.tenant_id == task.tenant_id,
+                )
+            )
+            if scan:
+                scan.status = "running"
+                scan.started_at = task.started_at
         db.commit()
 
         # Stage 1: Read company profile (10%). This is a workflow step, not an Agent run.
@@ -115,7 +128,13 @@ def _run_task_background(task_id: uuid.UUID):
 
         loop = asyncio.new_event_loop()
         opportunities = loop.run_until_complete(
-            match_policies_for_company(db, company, task.tenant_id)
+            match_policies_for_company(
+                db,
+                company,
+                task.tenant_id,
+                scan_id=scan.id if scan else None,
+                profile_version_id=scan.profile_version_id if scan else None,
+            )
         )
         loop.close()
 
@@ -186,6 +205,22 @@ def _run_task_background(task_id: uuid.UUID):
         task.status = "delivered"
         task.delivery_status = "delivered"
         task.completed_at = datetime.now(UTC)
+        if scan:
+            scan.status = "completed"
+            scan.total_opportunities = len(opportunities)
+            scan.completed_at = task.completed_at
+            db.add(
+                AnalyticsEvent(
+                    tenant_id=task.tenant_id,
+                    user_id=task.user_id,
+                    name="policy_scan_completed",
+                    properties={
+                        "scan_id": str(scan.id),
+                        "company_id": str(task.company_id),
+                        "total_opportunities": len(opportunities),
+                    },
+                )
+            )
         _update_progress(task_id, 100, "已完成")
         db.commit()
         db.refresh(deliverable)
@@ -197,6 +232,17 @@ def _run_task_background(task_id: uuid.UUID):
             if task:
                 task.status = "failed"
                 task.failure_reason = "task_execution_failed"
+                if task.scan_id:
+                    scan = db.scalar(
+                        select(PolicyScan).where(
+                            PolicyScan.id == task.scan_id,
+                            PolicyScan.tenant_id == task.tenant_id,
+                        )
+                    )
+                    if scan:
+                        scan.status = "failed"
+                        scan.error_code = "scan_execution_failed"
+                        scan.completed_at = datetime.now(UTC)
                 db.commit()
         except Exception:
             pass
@@ -211,53 +257,15 @@ async def create_task(
     principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
     db: Session = Depends(get_db),
 ):
-    company = db.scalar(
-        select(Company).where(
-            Company.id == req.company_id, Company.tenant_id == principal.tenant_id
+    if req.task_type == "policy_scan":
+        raise HTTPException(
+            status_code=409,
+            detail="请通过 /policy-scans 创建可追溯的政策扫描",
         )
+    raise HTTPException(
+        status_code=501,
+        detail="该任务类型尚未接入可验证的 Agent 工作流",
     )
-    if not company:
-        raise HTTPException(404, "企业不存在")
-    type_title, product_code = TASK_TYPES[req.task_type]
-    product = None
-    if product_code:
-        product = db.scalar(
-            select(Product).where(Product.code == product_code, Product.active.is_(True))
-        )
-        if not product:
-            raise HTTPException(status_code=503, detail="Product is not configured")
-    price = product.promotional_price or product.price if product else 0
-    task = Task(
-        tenant_id=principal.tenant_id,
-        user_id=principal.user.id,
-        company_id=req.company_id,
-        task_type=req.task_type,
-        title=req.title or f"{company.name} - {type_title}",
-        description=req.description,
-        requirements=req.requirements,
-        status="submitted",
-        agent_type="policy_agent",
-        estimated_price=price,
-        payment_status="free" if price == 0 else "unpaid",
-        progress=0,
-        current_stage="待执行",
-    )
-    db.add(task)
-    db.commit()
-    db.refresh(task)
-    if price > 0:
-        task.status = "awaiting_payment"
-        db.commit()
-    return {
-        "id": str(task.id),
-        "task_type": task.task_type,
-        "title": task.title,
-        "status": task.status,
-        "payment_status": task.payment_status,
-        "estimated_price": float(task.estimated_price or 0),
-        "company_name": company.name,
-        "created_at": task.created_at.isoformat(),
-    }
 
 
 @router.get("")
@@ -365,6 +373,11 @@ async def execute_task(
     task = db.scalar(select(Task).where(Task.id == task_id, Task.tenant_id == principal.tenant_id))
     if not task:
         raise HTTPException(404, "任务不存在")
+    if task.task_type != "policy_scan" or not task.scan_id:
+        raise HTTPException(
+            status_code=501,
+            detail="该历史任务尚未迁移到可验证的 Agent 工作流",
+        )
     if task.status not in ("submitted", "awaiting_payment", "paid", "revision_requested"):
         raise HTTPException(400, f"状态 {task.status} 不允许执行")
     if task.payment_status == "unpaid":
@@ -554,25 +567,15 @@ async def next_best_actions(
     for o in opportunities:
         for m in (o.evidence_json or {}).get("missing_materials", []):
             all_missing.add(m)
-    products = {
-        product.code: product
-        for product in db.scalars(
-            select(Product).where(
-                Product.code.in_(["POLICY_DIAGNOSIS", "APPLICATION_PLAN"]),
-                Product.active.is_(True),
-            )
-        ).all()
-    }
-    diagnosis = products.get("POLICY_DIAGNOSIS")
-    if task.task_type == "policy_scan" and high_matches and diagnosis:
-        diagnosis_price = diagnosis.promotional_price or diagnosis.price
+    if task.task_type == "policy_scan" and high_matches:
         actions.append(
             {
-                "action": "升级深度诊断",
-                "desc": f"发现 {len(high_matches)} 项高匹配政策，建议深度分析申报条件",
-                "product_code": diagnosis.code,
-                "price": float(diagnosis_price),
-                "cta": f"深度诊断 ¥{diagnosis_price}",
+                "action": "复核高相关性机会",
+                "desc": f"发现 {len(high_matches)} 项高相关性政策，下一步应核验资格与原文依据",
+                "product_code": None,
+                "price": 0,
+                "cta": "查看政策机会",
+                "href": "/opportunities",
             }
         )
     if all_missing:
@@ -583,28 +586,7 @@ async def next_best_actions(
                 "product_code": None,
                 "price": 0,
                 "cta": "查看材料清单",
-            }
-        )
-    application_plan = products.get("APPLICATION_PLAN")
-    if high_matches and application_plan:
-        plan_price = application_plan.promotional_price or application_plan.price
-        actions.append(
-            {
-                "action": "生成申报方案",
-                "desc": "为最优政策生成完整申报方案",
-                "product_code": application_plan.code,
-                "price": float(plan_price),
-                "cta": f"生成方案 ¥{plan_price}",
-            }
-        )
-    if task.task_type == "policy_scan":
-        actions.append(
-            {
-                "action": "开启持续监控",
-                "desc": "新政策发布时自动通知",
-                "product_code": None,
-                "price": 0,
-                "cta": "即将开放",
+                "href": "/applications",
             }
         )
     return {"task_id": str(task_id), "actions": actions[:4]}

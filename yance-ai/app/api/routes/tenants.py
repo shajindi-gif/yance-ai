@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import Principal, get_principal, require_roles
 from app.core.db import get_db
 from app.core.security import hash_password
-from app.models.models import Tenant, User, UserRole
+from app.models.models import Membership, Tenant, User, UserRole
 from app.schemas.schemas import TenantOut, UserCreate, UserOut
 
 router = APIRouter(tags=["tenant", "users"])
@@ -46,6 +46,15 @@ def create_user(
         role=payload.role,
     )
     db.add(user)
+    db.flush()
+    db.add(
+        Membership(
+            tenant_id=principal.tenant_id,
+            user_id=user.id,
+            role=payload.role,
+            status="active",
+        )
+    )
     try:
         db.commit()
     except IntegrityError as exc:

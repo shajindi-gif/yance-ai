@@ -13,8 +13,9 @@ from app.api.deps import Principal, get_principal
 from app.core.config import settings
 from app.core.db import get_db
 from app.core.security import create_access_token, hash_password, verify_password
-from app.models.models import AnalyticsEvent, Company, Tenant, User, UserRole
+from app.models.models import AnalyticsEvent, Company, Membership, Tenant, User, UserRole
 from app.schemas.schemas import BootstrapRequest, RegisterRequest, Token, UserOut
+from app.services.company_profiles import create_company_profile
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -54,6 +55,15 @@ def create_tenant_and_owner(payload: BootstrapRequest, db: Session) -> Token:
         role=UserRole.owner,
     )
     db.add(owner)
+    db.flush()
+    db.add(
+        Membership(
+            tenant_id=tenant.id,
+            user_id=owner.id,
+            role=UserRole.owner,
+            status="active",
+        )
+    )
     try:
         db.commit()
     except IntegrityError as exc:
@@ -124,6 +134,14 @@ def register(
     )
     db.add(owner)
     db.flush()
+    db.add(
+        Membership(
+            tenant_id=tenant.id,
+            user_id=owner.id,
+            role=UserRole.owner,
+            status="active",
+        )
+    )
 
     # Create default company so the user can immediately generate a match report
     company = Company(
@@ -135,6 +153,7 @@ def register(
     )
     db.add(company)
     db.flush()
+    create_company_profile(db, company)
     db.add_all(
         [
             AnalyticsEvent(

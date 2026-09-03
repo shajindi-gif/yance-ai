@@ -6,7 +6,12 @@ from app.core.config import Settings
 
 def test_production_rejects_default_secrets():
     with pytest.raises(ValidationError):
-        Settings(app_env="production")
+        Settings(
+            app_env="production",
+            jwt_secret="change-me-in-production-at-least-32-characters",
+            bootstrap_token="change-bootstrap-token",
+            tenant_provisioning_token="change-tenant-provisioning-token",
+        )
 
 
 def test_cors_origins_are_split():

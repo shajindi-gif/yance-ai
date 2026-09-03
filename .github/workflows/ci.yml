@@ -60,6 +60,9 @@ jobs:
       - name: Compile
         run: python -m compileall -q app
 
+      - name: Check OpenAPI contract snapshot
+        run: python scripts/export_openapi.py --check
+
       - name: Apply all migrations
         run: alembic upgrade head
 

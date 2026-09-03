@@ -24,6 +24,29 @@ function NavigationIcon({ icon }: Pick<WorkspaceNavItem, "icon">) {
         <path d="M8 8h8M8 12h8M8 16h5" />
       </>
     ),
+    opportunities: (
+      <>
+        <circle cx="12" cy="12" r="8" />
+        <path d="m12 7 1.5 3.5L17 12l-3.5 1.5L12 17l-1.5-3.5L7 12l3.5-1.5z" />
+      </>
+    ),
+    companies: (
+      <>
+        <path d="M4 21V5l8-3v19M12 8h8v13M8 7v2M8 12v2M8 17v2M16 12v2M16 17v2M2 21h20" />
+      </>
+    ),
+    tasks: (
+      <>
+        <rect x="4" y="3" width="16" height="18" rx="2" />
+        <path d="m8 8 1.5 1.5L12 7M8 14l1.5 1.5L12 13M14 9h2M14 15h2" />
+      </>
+    ),
+    documents: (
+      <>
+        <path d="M5 3h10l4 4v14H5z" />
+        <path d="M15 3v5h4M8 13h8M8 17h6" />
+      </>
+    ),
     reports: (
       <>
         <path d="M5 3h10l4 4v14H5z" />
@@ -125,7 +148,7 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
         <div className={styles.sidebarFooter}>
           <div className={styles.phaseNote}>
             <span>产品升级中</span>
-            <p>机会、企业、文档与 Agent 将在对应阶段接入真实工作流。</p>
+            <p>Agent、知识库与管理后台将在对应阶段接入真实工作流。</p>
           </div>
           <Link href="/" className={styles.secondaryAction}>
             返回产品官网

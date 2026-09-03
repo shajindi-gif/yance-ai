@@ -1,0 +1,340 @@
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.metric {
+  border: 1px solid #dde3eb;
+  border-radius: 11px;
+  background: #ffffff;
+  padding: 16px;
+}
+
+.metric strong {
+  display: block;
+  color: #172033;
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 680;
+}
+
+.metric span {
+  display: block;
+  margin-top: 3px;
+  color: #667085;
+  font-size: 11px;
+}
+
+.gridTwo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.field,
+.fieldWide {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldWide {
+  grid-column: 1 / -1;
+}
+
+.field label,
+.fieldWide label {
+  color: #344054;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.field input,
+.field select,
+.fieldWide input,
+.fieldWide textarea,
+.toolbar select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #ccd5df;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 8px 10px;
+  color: #253247;
+  font: inherit;
+  font-size: 12px;
+}
+
+.fieldWide textarea {
+  min-height: 90px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.field input:focus,
+.field select:focus,
+.fieldWide input:focus,
+.fieldWide textarea:focus,
+.toolbar select:focus {
+  border-color: #2386b8;
+  outline: 3px solid rgba(35, 134, 184, 0.12);
+}
+
+.helper {
+  color: #667085;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.toolbar,
+.toolbarActions,
+.inlineMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+}
+
+.toolbar {
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.toolbar select {
+  width: auto;
+  min-width: 220px;
+}
+
+.summaryBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  border: 1px solid #dfe5ec;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 13px 15px;
+}
+
+.summaryBar strong {
+  color: #253247;
+  font-size: 12px;
+}
+
+.summaryBar span {
+  color: #667085;
+  font-size: 11px;
+}
+
+.progress {
+  width: 180px;
+  max-width: 35vw;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7ecf2;
+}
+
+.progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #126a9a;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(260px, 0.8fr);
+  gap: 12px;
+}
+
+.definitionList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 20px;
+  margin: 14px 0 0;
+}
+
+.definitionList div {
+  min-width: 0;
+}
+
+.definitionList dt {
+  color: #667085;
+  font-size: 10px;
+}
+
+.definitionList dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  color: #253247;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.link {
+  color: #075985;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.requirement {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #eef1f5;
+  padding: 12px 0;
+}
+
+.requirement:last-child {
+  border-bottom: 0;
+}
+
+.requirement strong {
+  display: block;
+  color: #253247;
+  font-size: 12px;
+}
+
+.requirement p {
+  margin: 3px 0 0;
+  color: #667085;
+  font-size: 10px;
+}
+
+.requirement select {
+  min-height: 36px;
+  border: 1px solid #ccd5df;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 7px 9px;
+  color: #344054;
+  font: inherit;
+  font-size: 11px;
+}
+
+.requirement select:focus {
+  border-color: #2386b8;
+  outline: 3px solid rgba(35, 134, 184, 0.12);
+}
+
+.activity {
+  position: relative;
+  margin-left: 5px;
+  border-left: 1px solid #dfe5ec;
+  padding: 0 0 16px 17px;
+}
+
+.activity::before {
+  position: absolute;
+  top: 3px;
+  left: -4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #126a9a;
+  content: "";
+}
+
+.activity strong {
+  display: block;
+  color: #344054;
+  font-size: 11px;
+}
+
+.activity time {
+  color: #667085;
+  font-size: 10px;
+}
+
+.fileInput {
+  border: 1px dashed #aebbc9;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 18px;
+}
+
+.fileInput input {
+  width: 100%;
+  font-size: 12px;
+}
+
+.tabs {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #dfe5ec;
+}
+
+.tab {
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 10px 12px;
+  color: #667085;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: #253247;
+}
+
+.tabActive {
+  border-bottom-color: #126a9a;
+  color: #075985;
+}
+
+.tab:focus-visible {
+  border-radius: 5px;
+  outline: 3px solid rgba(35, 134, 184, 0.2);
+}
+
+@media (max-width: 900px) {
+  .metricGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .metricGrid,
+  .gridTwo,
+  .formGrid,
+  .definitionList {
+    grid-template-columns: 1fr;
+  }
+
+  .fieldWide {
+    grid-column: auto;
+  }
+
+  .summaryBar,
+  .requirement {
+    align-items: flex-start;
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .progress {
+    width: 100%;
+    max-width: none;
+  }
+}

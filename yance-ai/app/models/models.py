@@ -3,7 +3,18 @@ import uuid
 from datetime import UTC, datetime
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, Index, Numeric, String, Text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -53,6 +64,19 @@ class User(Base, TimestampMixin, TenantOwnedMixin):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
+class Membership(Base, TimestampMixin, TenantOwnedMixin):
+    """Compatibility layer for future multi-workspace identity."""
+
+    __tablename__ = "memberships"
+    __table_args__ = (UniqueConstraint("tenant_id", "user_id", name="uq_membership_tenant_user"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    role: Mapped[UserRole] = mapped_column(Enum(UserRole))
+    status: Mapped[str] = mapped_column(String(40), default="active")
+
+
 class Company(Base, TimestampMixin, TenantOwnedMixin):
     __tablename__ = "companies"
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -62,6 +86,69 @@ class Company(Base, TimestampMixin, TenantOwnedMixin):
     city: Mapped[str | None] = mapped_column(String(80))
     industry: Mapped[str | None] = mapped_column(String(160))
     metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class CompanyProfile(Base, TimestampMixin, TenantOwnedMixin):
+    """Mutable draft and pointer metadata for immutable company profile versions."""
+
+    __tablename__ = "company_profiles"
+    __table_args__ = (UniqueConstraint("company_id", name="uq_company_profile_company"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), index=True
+    )
+    status: Mapped[str] = mapped_column(String(40), default="draft")
+    draft_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    completeness_score: Mapped[int] = mapped_column(default=0)
+    published_version: Mapped[int | None]
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class CompanyProfileVersion(Base, TenantOwnedMixin):
+    """Immutable profile snapshot pinned by scans and later decision records."""
+
+    __tablename__ = "company_profile_versions"
+    __table_args__ = (
+        UniqueConstraint("profile_id", "version", name="uq_company_profile_version"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("company_profiles.id", ondelete="CASCADE"), index=True
+    )
+    company_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), index=True
+    )
+    version: Mapped[int]
+    snapshot_json: Mapped[dict] = mapped_column(JSON)
+    completeness_score: Mapped[int]
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class CompanyFact(Base, TimestampMixin, TenantOwnedMixin):
+    """Typed fact projection for a published profile version."""
+
+    __tablename__ = "company_facts"
+    __table_args__ = (
+        UniqueConstraint("profile_version_id", "fact_key", name="uq_company_fact_version_key"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    profile_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("company_profile_versions.id", ondelete="CASCADE"),
+        index=True,
+    )
+    fact_key: Mapped[str] = mapped_column(String(120))
+    value_json: Mapped[dict] = mapped_column(JSON)
+    unit: Mapped[str | None] = mapped_column(String(40))
+    source_document_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="SET NULL")
+    )
+    confidence: Mapped[float | None] = mapped_column(Numeric(4, 3))
+    extraction_method: Mapped[str] = mapped_column(String(40), default="user_asserted")
+    verification_status: Mapped[str] = mapped_column(String(40), default="unverified")
 
 
 class Document(Base, TimestampMixin, TenantOwnedMixin):
@@ -77,6 +164,10 @@ class Document(Base, TimestampMixin, TenantOwnedMixin):
     size_bytes: Mapped[int | None]
     checksum_sha256: Mapped[str | None] = mapped_column(String(64))
     metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    source_type: Mapped[str] = mapped_column(String(40), default="file")
+    ingestion_status: Mapped[str] = mapped_column(String(40), default="not_requested", index=True)
+    ingestion_error: Mapped[str | None] = mapped_column(String(240))
+    ingested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class Policy(Base, TimestampMixin):
@@ -126,8 +217,38 @@ class PolicyRule(Base, TimestampMixin, TenantOwnedMixin):
     explanation: Mapped[str | None] = mapped_column(Text)
 
 
+class PolicyScan(Base, TimestampMixin, TenantOwnedMixin):
+    """Persistent request/snapshot boundary for one company opportunity scan."""
+
+    __tablename__ = "policy_scans"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "idempotency_key", name="uq_policy_scan_idempotency"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    company_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), index=True
+    )
+    profile_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("company_profile_versions.id", ondelete="RESTRICT"),
+        index=True,
+    )
+    requested_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    task_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=True)
+    idempotency_key: Mapped[str | None] = mapped_column(String(128))
+    status: Mapped[str] = mapped_column(String(40), default="queued", index=True)
+    provider: Mapped[str | None] = mapped_column(String(40))
+    total_opportunities: Mapped[int] = mapped_column(default=0)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(120))
+
+
 class Opportunity(Base, TimestampMixin, TenantOwnedMixin):
     __tablename__ = "opportunities"
+    __table_args__ = (UniqueConstraint("scan_id", "policy_id", name="uq_opportunity_scan_policy"),)
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     company_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), index=True
@@ -139,6 +260,17 @@ class Opportunity(Base, TimestampMixin, TenantOwnedMixin):
     score: Mapped[float | None]
     status: Mapped[str] = mapped_column(String(40), default="identified")
     evidence_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    scan_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policy_scans.id", ondelete="CASCADE"), index=True
+    )
+    profile_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("company_profile_versions.id", ondelete="SET NULL")
+    )
+    policy_snapshot_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    eligibility_status: Mapped[str] = mapped_column(
+        String(40), default="NEED_MORE_INFORMATION", index=True
+    )
+    eligibility_confidence: Mapped[float | None] = mapped_column(Numeric(4, 3))
 
 
 class Application(Base, TimestampMixin, TenantOwnedMixin):
@@ -153,6 +285,42 @@ class Application(Base, TimestampMixin, TenantOwnedMixin):
     title: Mapped[str] = mapped_column(String(500))
     status: Mapped[str] = mapped_column(String(40), default="draft")
     form_data: Mapped[dict] = mapped_column(JSON, default=dict)
+    owner_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    progress: Mapped[int] = mapped_column(default=0)
+    review_status: Mapped[str] = mapped_column(String(40), default="not_requested")
+
+
+class ApplicationRequirement(Base, TimestampMixin, TenantOwnedMixin):
+    __tablename__ = "application_requirements"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    application_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("applications.id", ondelete="CASCADE"), index=True
+    )
+    title: Mapped[str] = mapped_column(String(300))
+    description: Mapped[str | None] = mapped_column(Text)
+    category: Mapped[str] = mapped_column(String(80), default="material")
+    status: Mapped[str] = mapped_column(String(40), default="missing")
+    is_hard_gate: Mapped[bool] = mapped_column(Boolean, default=False)
+    source_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    sort_order: Mapped[int] = mapped_column(default=0)
+
+
+class ApplicationActivity(Base, TenantOwnedMixin):
+    __tablename__ = "application_activities"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    application_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("applications.id", ondelete="CASCADE"), index=True
+    )
+    actor_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    action: Mapped[str] = mapped_column(String(120))
+    summary: Mapped[str] = mapped_column(String(500))
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
 
 class Order(Base, TimestampMixin, TenantOwnedMixin):
@@ -325,6 +493,12 @@ class Task(Base, TimestampMixin, TenantOwnedMixin):
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     company_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("companies.id", ondelete="SET NULL"), index=True
+    )
+    application_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("applications.id", ondelete="SET NULL"), index=True
+    )
+    scan_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policy_scans.id", ondelete="SET NULL"), index=True
     )
     task_type: Mapped[str] = mapped_column(String(80))
     title: Mapped[str] = mapped_column(String(500))

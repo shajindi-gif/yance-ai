@@ -320,7 +320,11 @@ export default function TaskDetailPage() {
                   </strong>
                   <small>{action.desc}</small>
                 </div>
-                {action.product_code ? (
+                {action.href ? (
+                  <ButtonLink href={action.href} variant="secondary">
+                    {action.cta}
+                  </ButtonLink>
+                ) : action.product_code ? (
                   <ButtonLink href="/pricing" variant="secondary">
                     查看服务范围
                   </ButtonLink>

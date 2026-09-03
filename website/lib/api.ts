@@ -37,13 +37,174 @@ export interface Company {
 
 export interface Policy {
   id: string;
-  tenant_id: string;
+  tenant_id: string | null;
   title: string;
   source_url?: string;
   jurisdiction?: string;
   content: string;
   status: string;
   created_at: string;
+}
+
+export interface CompanyProfileData {
+  industry: string | null;
+  province: string | null;
+  city: string | null;
+  registered_address: string | null;
+  founded_date: string | null;
+  company_scale: string | null;
+  employee_count: number | null;
+  revenue_stage: string | null;
+  annual_revenue: number | null;
+  funding_stage: string | null;
+  high_tech_status: string | null;
+  tech_sme_status: string | null;
+  specialized_sme_status: string | null;
+  intellectual_property: string[];
+  core_products: string[];
+  rd_summary: string | null;
+  rd_expense_ratio: number | null;
+  talent_summary: string | null;
+  projects: string[];
+  current_needs: string[];
+}
+
+export interface CompanyProfile {
+  id: string;
+  tenant_id: string;
+  company_id: string;
+  status: string;
+  draft_json: CompanyProfileData;
+  completeness_score: number;
+  published_version: number | null;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CompanyProfileVersion {
+  id: string;
+  tenant_id: string;
+  profile_id: string;
+  company_id: string;
+  version: number;
+  snapshot_json: CompanyProfileData;
+  completeness_score: number;
+  created_by: string | null;
+  published_at: string;
+}
+
+export interface DocumentRecord {
+  id: string;
+  tenant_id: string;
+  company_id: string | null;
+  filename: string;
+  content_type: string;
+  object_key: string;
+  status: string;
+  size_bytes: number | null;
+  source_type: string;
+  ingestion_status: string;
+  ingestion_error: string | null;
+  ingested_at: string | null;
+  created_at: string;
+}
+
+export interface PolicyScan {
+  id: string;
+  company_id: string;
+  profile_version_id: string;
+  task_id: string | null;
+  status: string;
+  total_opportunities: number;
+  created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  error_code: string | null;
+}
+
+export type EligibilityStatus =
+  | 'ELIGIBLE'
+  | 'POTENTIALLY_ELIGIBLE'
+  | 'NOT_ELIGIBLE'
+  | 'NEED_MORE_INFORMATION';
+
+export interface Opportunity {
+  id: string;
+  tenant_id: string;
+  company_id: string;
+  policy_id: string | null;
+  scan_id: string | null;
+  profile_version_id: string | null;
+  title: string;
+  score: number | null;
+  status: string;
+  evidence_json: {
+    score_breakdown?: Record<string, number>;
+    missing_materials?: string[];
+    gap_analysis_status?: string;
+    [key: string]: unknown;
+  };
+  policy_snapshot_json: {
+    title?: string;
+    issuing_authority?: string | null;
+    jurisdiction?: string | null;
+    level?: string | null;
+    province?: string | null;
+    city?: string | null;
+    district?: string | null;
+    industry?: string | null;
+    policy_type?: string | null;
+    source_url?: string | null;
+    published_at?: string | null;
+    effective_at?: string | null;
+    deadline?: string | null;
+    support_amount?: string | null;
+    support_type?: string | null;
+  };
+  eligibility_status: EligibilityStatus;
+  eligibility_confidence: number | null;
+  created_at: string;
+  policy_content_available?: boolean;
+}
+
+export interface ApplicationSummary {
+  id: string;
+  tenant_id: string;
+  company_id: string;
+  opportunity_id: string | null;
+  title: string;
+  status: string;
+  form_data: Record<string, unknown>;
+  owner_user_id: string | null;
+  due_at: string | null;
+  progress: number;
+  review_status: string;
+  created_at: string;
+}
+
+export interface ApplicationRequirement {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  status: string;
+  is_hard_gate: boolean;
+  sort_order: number;
+}
+
+export interface ApplicationActivity {
+  id: string;
+  action: string;
+  summary: string;
+  occurred_at: string;
+}
+
+export interface ApplicationDetail extends ApplicationSummary {
+  company_name: string;
+  opportunity: Opportunity | null;
+  requirements: ApplicationRequirement[];
+  activities: ApplicationActivity[];
 }
 
 export interface Order {
@@ -131,6 +292,7 @@ export interface NextAction {
   product_code: string | null;
   price: number;
   cta: string;
+  href?: string | null;
 }
 
 class ApiClient {
@@ -196,6 +358,7 @@ class ApiClient {
       throw new Error(error.detail || `HTTP ${response.status}`);
     }
 
+    if (response.status === 204) return undefined as T;
     return response.json();
   }
 
@@ -275,6 +438,10 @@ class ApiClient {
     return this.request<Company[]>('/companies');
   }
 
+  async getCompany(companyId: string): Promise<Company> {
+    return this.request<Company>(`/companies/${encodeURIComponent(companyId)}`);
+  }
+
   async createCompany(data: Partial<Company>): Promise<Company> {
     return this.request<Company>('/companies', {
       method: 'POST',
@@ -283,10 +450,153 @@ class ApiClient {
   }
 
   async updateCompany(companyId: string, data: Partial<Company>): Promise<Company> {
-    return this.request<Company>(`/companies/${companyId}`, {
+    return this.request<Company>(`/companies/${encodeURIComponent(companyId)}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+  }
+
+  async getCompanyProfile(companyId: string): Promise<CompanyProfile> {
+    return this.request<CompanyProfile>(
+      `/companies/${encodeURIComponent(companyId)}/profile`,
+    );
+  }
+
+  async updateCompanyProfile(
+    companyId: string,
+    data: CompanyProfileData,
+  ): Promise<CompanyProfile> {
+    return this.request<CompanyProfile>(
+      `/companies/${encodeURIComponent(companyId)}/profile`,
+      { method: 'PUT', body: JSON.stringify(data) },
+    );
+  }
+
+  async publishCompanyProfile(companyId: string): Promise<CompanyProfileVersion> {
+    return this.request<CompanyProfileVersion>(
+      `/companies/${encodeURIComponent(companyId)}/profile/publish`,
+      { method: 'POST' },
+    );
+  }
+
+  async getCompanyProfileVersions(companyId: string): Promise<CompanyProfileVersion[]> {
+    return this.request<CompanyProfileVersion[]>(
+      `/companies/${encodeURIComponent(companyId)}/profile/versions`,
+    );
+  }
+
+  // Documents
+  async getDocuments(): Promise<DocumentRecord[]> {
+    return this.request<DocumentRecord[]>('/documents');
+  }
+
+  async presignDocumentUpload(data: {
+    filename: string;
+    content_type: string;
+    company_id: string;
+    size_bytes: number;
+  }): Promise<{
+    document: DocumentRecord;
+    upload_url: string;
+    method: string;
+    expires_in: number;
+    required_headers: Record<string, string>;
+  }> {
+    return this.request('/documents/presign-upload', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async completeDocumentUpload(documentId: string): Promise<DocumentRecord> {
+    return this.request<DocumentRecord>(
+      `/documents/${encodeURIComponent(documentId)}/complete`,
+      { method: 'POST', body: JSON.stringify({}) },
+    );
+  }
+
+  async uploadDocument(companyId: string, file: File): Promise<DocumentRecord> {
+    const presigned = await this.presignDocumentUpload({
+      filename: file.name,
+      content_type: file.type,
+      company_id: companyId,
+      size_bytes: file.size,
+    });
+    const upload = await fetch(presigned.upload_url, {
+      method: presigned.method,
+      headers: presigned.required_headers,
+      body: file,
+    });
+    if (!upload.ok) throw new Error(`对象存储上传失败（HTTP ${upload.status}）`);
+    return this.completeDocumentUpload(presigned.document.id);
+  }
+
+  // Core workflow
+  async getPolicyScans(companyId?: string): Promise<PolicyScan[]> {
+    const query = companyId ? `?company_id=${encodeURIComponent(companyId)}` : '';
+    return this.request<PolicyScan[]>(`/policy-scans${query}`);
+  }
+
+  async createPolicyScan(companyId: string, idempotencyKey: string): Promise<PolicyScan> {
+    return this.request<PolicyScan>('/policy-scans', {
+      method: 'POST',
+      headers: { 'Idempotency-Key': idempotencyKey },
+      body: JSON.stringify({ company_id: companyId }),
+    });
+  }
+
+  async getOpportunities(filters?: {
+    companyId?: string;
+    scanId?: string;
+  }): Promise<Opportunity[]> {
+    const params = new URLSearchParams();
+    if (filters?.companyId) params.set('company_id', filters.companyId);
+    if (filters?.scanId) params.set('scan_id', filters.scanId);
+    const query = params.size ? `?${params.toString()}` : '';
+    return this.request<Opportunity[]>(`/opportunities${query}`);
+  }
+
+  async getOpportunity(opportunityId: string): Promise<Opportunity> {
+    return this.request<Opportunity>(`/opportunities/${encodeURIComponent(opportunityId)}`);
+  }
+
+  async getApplications(): Promise<ApplicationSummary[]> {
+    return this.request<ApplicationSummary[]>('/applications');
+  }
+
+  async createApplication(data: {
+    company_id: string;
+    opportunity_id: string;
+    title: string;
+  }): Promise<ApplicationSummary> {
+    return this.request<ApplicationSummary>('/applications', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getApplication(applicationId: string): Promise<ApplicationDetail> {
+    return this.request<ApplicationDetail>(
+      `/applications/${encodeURIComponent(applicationId)}`,
+    );
+  }
+
+  async updateApplicationStatus(applicationId: string, status: string): Promise<ApplicationSummary> {
+    return this.request<ApplicationSummary>(
+      `/applications/${encodeURIComponent(applicationId)}/status`,
+      { method: 'PATCH', body: JSON.stringify({ status }) },
+    );
+  }
+
+  async updateRequirementStatus(
+    applicationId: string,
+    requirementId: string,
+    status: string,
+  ): Promise<void> {
+    await this.request(
+      `/applications/${encodeURIComponent(applicationId)}/requirements/${encodeURIComponent(requirementId)}`,
+      { method: 'PATCH', body: JSON.stringify({ status }) },
+    );
   }
 
   // Policies

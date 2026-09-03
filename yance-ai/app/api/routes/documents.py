@@ -116,6 +116,8 @@ def complete_upload(
             detail="Client-authored checksums are not accepted as verified checksums",
         )
     document.status = "uploaded"
+    document.ingestion_status = "pending"
+    document.ingestion_error = None
     document.size_bytes = actual_size
     db.add(
         AnalyticsEvent(

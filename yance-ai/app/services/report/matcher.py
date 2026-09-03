@@ -16,7 +16,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.models import Company, Opportunity, Policy
+from app.models.models import Company, CompanyProfileVersion, Opportunity, Policy
 from app.services.llm.registry import embed_texts
 from app.services.policies.visibility import visible_policy_clause
 
@@ -37,14 +37,41 @@ async def match_policies_for_company(
     db: Session,
     company: Company,
     tenant_id: UUID,
+    *,
+    scan_id: UUID | None = None,
+    profile_version_id: UUID | None = None,
 ) -> list[Opportunity]:
     """
     为企业匹配全局政策库。
     使用 Rule Engine + Semantic Retrieval 混合评分。
     """
     # 1. 构建企业画像向量
-    profile_text = (
-        f"{company.name} {company.industry or ''} {company.province or ''} {company.city or ''}"
+    profile_version = None
+    if profile_version_id:
+        profile_version = db.scalar(
+            select(CompanyProfileVersion).where(
+                CompanyProfileVersion.id == profile_version_id,
+                CompanyProfileVersion.company_id == company.id,
+                CompanyProfileVersion.tenant_id == tenant_id,
+            )
+        )
+        if not profile_version:
+            raise ValueError("Company profile version is outside the scan scope")
+    meta = profile_version.snapshot_json if profile_version else (company.metadata_json or {})
+    def _string_list(value) -> list[str]:
+        return [str(item) for item in value] if isinstance(value, list) else []
+
+    profile_text = " ".join(
+        str(value)
+        for value in (
+            company.name,
+            meta.get("industry") or company.industry or "",
+            meta.get("province") or company.province or "",
+            meta.get("city") or company.city or "",
+            " ".join(_string_list(meta.get("core_products"))),
+            meta.get("rd_summary") or "",
+        )
+        if value
     )
     embeddings = await embed_texts([profile_text])
     company_vector = embeddings[0]
@@ -68,9 +95,17 @@ async def match_policies_for_company(
         return []
 
     # 3. 企业画像提取（从 metadata_json）
-    meta = company.metadata_json or {}
-    company_scale = meta.get("scale", "")  # 如 "小型", "中型", "大型"
-    company_qualifications = meta.get("qualifications", [])  # 如 ["高企", "专精特新"]
+    company_scale = meta.get("company_scale") or meta.get("scale", "")
+    raw_qualifications = meta.get("qualifications", [])
+    company_qualifications = (
+        list(raw_qualifications) if isinstance(raw_qualifications, list) else []
+    )
+    if meta.get("high_tech_status") == "已认定":
+        company_qualifications.append("高新技术企业")
+    if meta.get("tech_sme_status") == "已认定":
+        company_qualifications.append("科技型中小企业")
+    if meta.get("specialized_sme_status") == "已认定":
+        company_qualifications.append("专精特新")
     try:
         company_rd_expense = float(meta.get("rd_expense_ratio", 0) or 0)
     except (ValueError, TypeError):
@@ -79,8 +114,13 @@ async def match_policies_for_company(
         company_revenue = float(meta.get("annual_revenue", 0) or 0)
     except (ValueError, TypeError):
         company_revenue = 0.0
-    company_tech_keywords = (
-        (company.industry or "").lower() + " " + " ".join(meta.get("tech_stack", []))
+    company_tech_keywords = " ".join(
+        [
+            str(meta.get("industry") or company.industry or "").lower(),
+            " ".join(_string_list(meta.get("tech_stack"))),
+            " ".join(_string_list(meta.get("core_products"))),
+            str(meta.get("rd_summary") or ""),
+        ]
     )
 
     # 4. 逐条政策评分
@@ -193,6 +233,7 @@ async def match_policies_for_company(
             "support_type": policy.support_type or "",
             "deadline": policy.deadline.isoformat() if policy.deadline else None,
             "level": policy.level or "",
+            "gap_analysis_status": "not_verified_against_documents",
         }
 
         # ── 判断缺失材料 ──
@@ -211,15 +252,61 @@ async def match_policies_for_company(
             missing.append("基本申报材料（营业执照、企业简介）")
         evidence["missing_materials"] = missing
 
-        opp = Opportunity(
-            tenant_id=tenant_id,
-            company_id=company.id,
-            policy_id=policy.id,
-            title=f"{company.name} × {policy.title}",
-            score=final_score / 100.0,  # 归一化到 0-1 存储
-            status="identified",
-            evidence_json=evidence,
-        )
+        policy_snapshot = {
+            "title": policy.title,
+            "issuing_authority": policy.issuing_authority,
+            "jurisdiction": policy.jurisdiction,
+            "level": policy.level,
+            "province": policy.province,
+            "city": policy.city,
+            "district": policy.district,
+            "industry": policy.industry,
+            "policy_type": policy.policy_type,
+            "source_url": policy.source_url,
+            "published_at": policy.published_at.isoformat() if policy.published_at else None,
+            "effective_at": policy.effective_at.isoformat() if policy.effective_at else None,
+            "deadline": policy.deadline.isoformat() if policy.deadline else None,
+            "support_amount": policy.support_amount,
+            "support_type": policy.support_type,
+        }
+        opp = None
+        if scan_id:
+            opp = db.scalar(
+                select(Opportunity).where(
+                    Opportunity.tenant_id == tenant_id,
+                    Opportunity.scan_id == scan_id,
+                    Opportunity.policy_id == policy.id,
+                )
+            )
+        else:
+            opp = db.scalar(
+                select(Opportunity)
+                .where(
+                    Opportunity.tenant_id == tenant_id,
+                    Opportunity.company_id == company.id,
+                    Opportunity.policy_id == policy.id,
+                    Opportunity.scan_id.is_(None),
+                )
+                .order_by(Opportunity.created_at.desc())
+            )
+        if opp:
+            opp.score = final_score / 100.0
+            opp.evidence_json = evidence
+            opp.policy_snapshot_json = policy_snapshot
+        else:
+            opp = Opportunity(
+                tenant_id=tenant_id,
+                company_id=company.id,
+                policy_id=policy.id,
+                scan_id=scan_id,
+                profile_version_id=profile_version_id,
+                title=f"{company.name} × {policy.title}",
+                score=final_score / 100.0,
+                status="identified",
+                evidence_json=evidence,
+                policy_snapshot_json=policy_snapshot,
+                eligibility_status="NEED_MORE_INFORMATION",
+            )
         opportunities.append(opp)
 
     # 5. 按总分排序，存入数据库

@@ -1,5 +1,5 @@
-from datetime import datetime
-from typing import Any
+from datetime import date, datetime
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -78,6 +78,58 @@ class CompanyOut(CompanyCreate, ORMModel):
     created_at: datetime
 
 
+class CompanyProfileData(BaseModel):
+    """Validated draft facts; published versions are immutable copies of this contract."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    industry: str | None = Field(default=None, max_length=160)
+    province: str | None = Field(default=None, max_length=80)
+    city: str | None = Field(default=None, max_length=80)
+    registered_address: str | None = Field(default=None, max_length=500)
+    founded_date: date | None = None
+    company_scale: str | None = Field(default=None, max_length=80)
+    employee_count: int | None = Field(default=None, ge=0, le=10_000_000)
+    revenue_stage: str | None = Field(default=None, max_length=120)
+    annual_revenue: float | None = Field(default=None, ge=0)
+    funding_stage: str | None = Field(default=None, max_length=120)
+    high_tech_status: str | None = Field(default=None, max_length=120)
+    tech_sme_status: str | None = Field(default=None, max_length=120)
+    specialized_sme_status: str | None = Field(default=None, max_length=120)
+    intellectual_property: list[str] = Field(default_factory=list, max_length=200)
+    core_products: list[str] = Field(default_factory=list, max_length=100)
+    rd_summary: str | None = Field(default=None, max_length=4000)
+    rd_expense_ratio: float | None = Field(default=None, ge=0, le=100)
+    talent_summary: str | None = Field(default=None, max_length=4000)
+    projects: list[str] = Field(default_factory=list, max_length=100)
+    current_needs: list[str] = Field(default_factory=list, max_length=100)
+
+
+class CompanyProfileOut(ORMModel):
+    id: UUID
+    tenant_id: UUID
+    company_id: UUID
+    status: str
+    draft_json: dict[str, Any]
+    completeness_score: int
+    published_version: int | None
+    published_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class CompanyProfileVersionOut(ORMModel):
+    id: UUID
+    tenant_id: UUID
+    profile_id: UUID
+    company_id: UUID
+    version: int
+    snapshot_json: dict[str, Any]
+    completeness_score: int
+    created_by: UUID | None
+    published_at: datetime
+
+
 class DocumentCreate(BaseModel):
     filename: str = Field(min_length=1, max_length=255)
     content_type: str = Field(min_length=1, max_length=120)
@@ -96,6 +148,10 @@ class DocumentOut(ORMModel):
     object_key: str
     status: str
     size_bytes: int | None
+    source_type: str
+    ingestion_status: str
+    ingestion_error: str | None
+    ingested_at: datetime | None
     created_at: datetime
 
 
@@ -154,6 +210,13 @@ class OpportunityCreate(BaseModel):
 class OpportunityOut(OpportunityCreate, ORMModel):
     id: UUID
     tenant_id: UUID
+    scan_id: UUID | None
+    profile_version_id: UUID | None
+    policy_snapshot_json: dict[str, Any]
+    eligibility_status: Literal[
+        "ELIGIBLE", "POTENTIALLY_ELIGIBLE", "NOT_ELIGIBLE", "NEED_MORE_INFORMATION"
+    ]
+    eligibility_confidence: float | None
     created_at: datetime
 
 
@@ -168,6 +231,10 @@ class ApplicationCreate(BaseModel):
 class ApplicationOut(ApplicationCreate, ORMModel):
     id: UUID
     tenant_id: UUID
+    owner_user_id: UUID | None
+    due_at: datetime | None
+    progress: int
+    review_status: str
     created_at: datetime
 
 
