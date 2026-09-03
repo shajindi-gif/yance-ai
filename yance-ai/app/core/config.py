@@ -60,6 +60,7 @@ class Settings(BaseSettings):
 
     # Alipay 电脑网站支付
     alipay_app_id: str = ""
+    alipay_seller_id: str = ""
     alipay_private_key: str = ""       # 应用私钥（PEM格式，一行，\n替换为真实换行）
     alipay_public_key: str = ""        # 支付宝公钥
     alipay_notify_url: str = "https://yance.ai/api/v1/payments/alipay/notify"

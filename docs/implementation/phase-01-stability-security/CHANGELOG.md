@@ -58,3 +58,30 @@ Status: implemented and tested; Phase 1 remains open.
 - Added renderer payload tests for `<script>`, remote image and `file://` inputs.
 - Added hard-gate tests for safety, environment, credit and insufficient evidence.
 - Full backend suite: 13 passed; coverage increased from 45% to 49%.
+
+## Slice 3 — Validated, replay-safe provider settlement
+
+Status: implemented and tested; Phase 1 remains open.
+
+### Changed
+
+- Added an immutable `PaymentEvent` receipt ledger and additive migration
+  `20260902_0010` with a unique provider/event boundary.
+- Centralized payment settlement so an order is only marked paid after exact amount, currency,
+  order, tenant and product validation.
+- Serialized settlement on the order row, made provider event retries idempotent, and avoided
+  duplicate entitlements or analytics on an already-settled order.
+- Added Alipay application/seller verification, provider scoping, malformed-signature handling,
+  CNY enforcement and protection against downgrading a completed payment.
+- Added Stripe session payment-state, metadata, amount and currency validation before settlement.
+- Removed buyer identifiers and full signed callback bodies from persisted payment responses;
+  the receipt ledger stores a SHA-256 payload digest instead.
+- `payment_completed` analytics is emitted only by successful server-validated settlement.
+
+### Verification
+
+- Touched-file Ruff gate: pass.
+- Payment settlement and Phase 1 security regression subset: 15 passed.
+- Added negative coverage for underpayment, currency mismatch and tenant/order mismatch.
+- Added positive and replay coverage for one entitlement and one real analytics event.
+- Database base-to-head remains pending the Phase 1 PostgreSQL + pgvector smoke gate.

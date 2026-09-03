@@ -1,6 +1,8 @@
 import json
 import time
 import uuid
+from binascii import Error as BinasciiError
+from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode
 
 from Crypto.Hash import SHA256
@@ -15,6 +17,7 @@ from app.api.deps import Principal, get_principal, require_roles
 from app.core.config import settings
 from app.core.db import get_db
 from app.models.models import Order, Payment, UserRole
+from app.services.payments.settlement import settle_payment
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -27,6 +30,11 @@ def _stripe_checkout_available() -> bool:
 # ── Alipay helpers ────────────────────────────────────────────────────
 def _alipay_available() -> bool:
     return bool(settings.alipay_app_id and settings.alipay_private_key)
+
+
+def _alipay_notify_available() -> bool:
+    return bool(settings.alipay_app_id and settings.alipay_public_key)
+
 
 def _alipay_gateway_url() -> str:
     if settings.alipay_sandbox:
@@ -46,7 +54,10 @@ def _build_alipay_sign(params: dict) -> str:
     if "\\n" in private_key:
         private_key = private_key.replace("\\n", "\n")
     if not private_key.startswith("-----BEGIN"):
-        private_key = f"-----BEGIN RSA PRIVATE KEY-----\n{private_key}\n-----END RSA PRIVATE KEY-----"
+        private_key = (
+            f"-----BEGIN RSA PRIVATE KEY-----\n{private_key}\n"
+            "-----END RSA PRIVATE KEY-----"
+        )
     rsa_key = RSA.import_key(private_key)
     signer = PKCS1_v1_5.new(rsa_key)
     h = SHA256.new(raw_string.encode("utf-8"))
@@ -70,7 +81,7 @@ def _verify_alipay_sign(params: dict, signature: str) -> bool:
     verifier = PKCS1_v1_5.new(rsa_key)
     h = SHA256.new(raw_string.encode("utf-8"))
     from base64 import b64decode
-    return verifier.verify(h, b64decode(signature))
+    return verifier.verify(h, b64decode(signature, validate=True))
 
 
 @router.post("/alipay/page-pay")
@@ -92,6 +103,8 @@ def alipay_page_pay(
         raise HTTPException(status_code=404, detail="Order not found")
     if order.status == "paid":
         raise HTTPException(status_code=400, detail="Order already paid")
+    if order.currency.upper() != "CNY":
+        raise HTTPException(status_code=400, detail="Alipay checkout requires CNY")
 
     out_trade_no = f"{order.order_no}_{int(time.time())}"
     subject = f"yance.ai - {order.product_code}"
@@ -144,39 +157,63 @@ async def alipay_notify(request: Request, db: Session = Depends(get_db)) -> str:
     body = await request.body()
     form_data = dict(await request.form()) if body else {}
 
-    sign = form_data.pop("sign", "")
-    sign_type = form_data.pop("sign_type", "RSA2")
+    if not _alipay_notify_available():
+        return "fail"
 
-    if not _verify_alipay_sign(form_data, sign):
+    sign = form_data.pop("sign", "")
+    form_data.pop("sign_type", None)
+
+    try:
+        signature_valid = bool(sign) and _verify_alipay_sign(form_data, sign)
+    except (BinasciiError, IndexError, TypeError, ValueError):
+        signature_valid = False
+    if not signature_valid:
+        return "fail"
+    if form_data.get("app_id") != settings.alipay_app_id:
+        return "fail"
+    if settings.alipay_seller_id and form_data.get("seller_id") != settings.alipay_seller_id:
         return "fail"
 
     trade_status = form_data.get("trade_status", "")
     out_trade_no = form_data.get("out_trade_no", "")
     trade_no = form_data.get("trade_no", "")
-    buyer_logon_id = form_data.get("buyer_logon_id", "")
-    buyer_id = form_data.get("buyer_id", "")
 
     if not out_trade_no:
         return "fail"
 
     payment = db.scalar(
-        select(Payment).where(Payment.provider_trade_no == out_trade_no)
+        select(Payment).where(
+            Payment.provider == "alipay",
+            Payment.provider_trade_no == out_trade_no,
+        )
     )
     if not payment:
         return "fail"
 
     payment.alipay_trade_no = trade_no
-    payment.alipay_buyer_logon_id = buyer_logon_id
-    payment.alipay_buyer_user_id = buyer_id
-    payment.raw_response = {**form_data, "sign": sign}
+    payment.raw_response = {
+        "out_trade_no": out_trade_no,
+        "trade_no": trade_no,
+        "trade_status": trade_status,
+        "total_amount": form_data.get("total_amount"),
+    }
 
     if trade_status == "TRADE_SUCCESS":
-        payment.status = "completed"
-        order = db.scalar(select(Order).where(Order.id == payment.order_id))
-        if order:
-            order.status = "paid"
+        if not trade_no:
+            return "fail"
+        result = settle_payment(
+            db,
+            payment=payment,
+            provider_event_id=f"{trade_no}:{trade_status}",
+            event_type=trade_status,
+            paid_amount=form_data.get("total_amount"),
+            currency="CNY",
+            payload=body,
+        )
+        return "success" if result.accepted else "fail"
     elif trade_status == "TRADE_CLOSED":
-        payment.status = "expired"
+        if payment.status != "completed":
+            payment.status = "expired"
 
     db.commit()
     return "success"
@@ -186,17 +223,26 @@ async def alipay_notify(request: Request, db: Session = Depends(get_db)) -> str:
 async def alipay_return(request: Request, db: Session = Depends(get_db)) -> dict:
     """Alipay sync return (GET redirect). Verify and return order status."""
     params = dict(request.query_params)
+    if not _alipay_notify_available():
+        raise HTTPException(status_code=503, detail="Alipay verification is not configured")
     sign = params.pop("sign", "")
-    sign_type = params.pop("sign_type", "RSA2")
+    params.pop("sign_type", None)
 
-    if not _verify_alipay_sign(params, sign):
+    try:
+        signature_valid = bool(sign) and _verify_alipay_sign(params, sign)
+    except (BinasciiError, IndexError, TypeError, ValueError):
+        signature_valid = False
+    if not signature_valid:
         raise HTTPException(status_code=400, detail="Invalid signature")
 
     out_trade_no = params.get("out_trade_no", "")
     trade_no = params.get("trade_no", "")
 
     payment = db.scalar(
-        select(Payment).where(Payment.provider_trade_no == out_trade_no)
+        select(Payment).where(
+            Payment.provider == "alipay",
+            Payment.provider_trade_no == out_trade_no,
+        )
     )
     if not payment:
         raise HTTPException(status_code=404, detail="Payment not found")
@@ -281,23 +327,53 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)) -> dic
 
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, settings.stripe_webhook_secret)
-    except (ValueError, stripe.error.SignatureVerificationError):
-        raise HTTPException(status_code=400, detail="Invalid webhook signature")
+    except (TypeError, ValueError, stripe.error.SignatureVerificationError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid webhook signature") from exc
 
+    replayed = False
     if event["type"] == "checkout.session.completed":
         session = event["data"]["object"]
         payment = db.scalar(
-            select(Payment).where(Payment.stripe_session_id == session["id"])
+            select(Payment).where(
+                Payment.provider == "stripe",
+                Payment.stripe_session_id == session["id"],
+            )
         )
-        if payment:
-            payment.status = "completed"
-            payment.raw_response = event["data"]["object"]
-            order = db.scalar(select(Order).where(Order.id == payment.order_id))
-            if order:
-                order.status = "paid"
-            db.commit()
+        if not payment:
+            raise HTTPException(status_code=400, detail="Payment not found")
+        metadata = session.get("metadata") or {}
+        if (
+            metadata.get("order_id") != str(payment.order_id)
+            or metadata.get("tenant_id") != str(payment.tenant_id)
+        ):
+            raise HTTPException(status_code=400, detail="Payment metadata mismatch")
+        if session.get("payment_status") != "paid":
+            raise HTTPException(status_code=400, detail="Checkout session is not paid")
+        try:
+            paid_amount = Decimal(str(session["amount_total"])) / Decimal("100")
+        except (InvalidOperation, KeyError, TypeError, ValueError) as exc:
+            raise HTTPException(status_code=400, detail="Invalid payment amount") from exc
 
-    return {"received": True}
+        payment.raw_response = {
+            "id": session["id"],
+            "payment_status": session.get("payment_status"),
+            "amount_total": session.get("amount_total"),
+            "currency": session.get("currency"),
+        }
+        result = settle_payment(
+            db,
+            payment=payment,
+            provider_event_id=event["id"],
+            event_type=event["type"],
+            paid_amount=paid_amount,
+            currency=session.get("currency", ""),
+            payload=payload,
+        )
+        if not result.accepted:
+            raise HTTPException(status_code=400, detail=result.error_code or "Settlement rejected")
+        replayed = result.replayed
+
+    return {"received": True, "replayed": replayed}
 
 
 # ─── 银行对公转账 ─────────────────────────────────────────────

@@ -180,6 +180,25 @@ class Payment(Base, TimestampMixin, TenantOwnedMixin):
     raw_response: Mapped[dict] = mapped_column(JSON, default=dict)
 
 
+class PaymentEvent(Base, TimestampMixin, TenantOwnedMixin):
+    """Immutable provider event receipt used for replay-safe settlement."""
+
+    __tablename__ = "payment_events"
+    __table_args__ = (
+        Index("uq_payment_events_provider_event", "provider", "provider_event_id", unique=True),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    payment_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("payments.id", ondelete="CASCADE"), index=True
+    )
+    provider: Mapped[str] = mapped_column(String(40))
+    provider_event_id: Mapped[str] = mapped_column(String(255))
+    event_type: Mapped[str] = mapped_column(String(120))
+    payload_sha256: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(40), default="received")
+    error_code: Mapped[str | None] = mapped_column(String(120))
+
+
 class Invoice(Base, TimestampMixin, TenantOwnedMixin):
     __tablename__ = "invoices"
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

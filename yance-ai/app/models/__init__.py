@@ -9,6 +9,7 @@ from app.models.models import (  # noqa: F401
     Opportunity,
     Order,
     Payment,
+    PaymentEvent,
     Policy,
     PolicyRule,
     Tenant,
