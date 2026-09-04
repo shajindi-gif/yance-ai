@@ -2,7 +2,7 @@ export interface WorkspaceNavItem {
   href: string;
   label: string;
   description: string;
-  icon: "home" | "opportunities" | "companies" | "applications" | "tasks" | "documents" | "reports" | "billing";
+  icon: "home" | "opportunities" | "companies" | "applications" | "agents" | "tasks" | "documents" | "reports" | "billing";
   match: (pathname: string) => boolean;
 }
 
@@ -12,6 +12,7 @@ export const WORKSPACE_ROUTES = [
   "/companies",
   "/applications",
   "/documents",
+  "/agents",
   "/tasks",
   "/reports",
   "/orders",
@@ -45,6 +46,13 @@ export const WORKSPACE_NAVIGATION: WorkspaceNavItem[] = [
     description: "材料与执行进度",
     icon: "applications",
     match: (pathname) => pathname === "/applications" || pathname.startsWith("/applications/"),
+  },
+  {
+    href: "/agents",
+    label: "Agent 运行",
+    description: "执行轨迹与质量状态",
+    icon: "agents",
+    match: (pathname) => pathname === "/agents" || pathname.startsWith("/agents/"),
   },
   {
     href: "/documents",

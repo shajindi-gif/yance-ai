@@ -237,6 +237,9 @@ class PolicyScan(Base, TimestampMixin, TenantOwnedMixin):
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
     )
     task_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=True)
+    workflow_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("workflow_runs.id", ondelete="SET NULL"), index=True
+    )
     idempotency_key: Mapped[str | None] = mapped_column(String(128))
     status: Mapped[str] = mapped_column(String(40), default="queued", index=True)
     provider: Mapped[str | None] = mapped_column(String(40))
@@ -455,22 +458,205 @@ class Entitlement(Base, TimestampMixin, TenantOwnedMixin):
     status: Mapped[str] = mapped_column(String(40), default="active")  # active / revoked / expired
 
 
-class AgentRun(Base, TenantOwnedMixin):
+class Agent(Base, TimestampMixin):
+    """Versioned platform Agent definition with machine-readable contracts."""
+
+    __tablename__ = "agents"
+    __table_args__ = (UniqueConstraint("key", "version", name="uq_agent_key_version"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    key: Mapped[str] = mapped_column(String(120), index=True)
+    name: Mapped[str] = mapped_column(String(160))
+    description: Mapped[str] = mapped_column(Text)
+    version: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(40), default="inactive")
+    input_schema_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    output_schema_json: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class Workflow(Base, TimestampMixin):
+    """Versioned workflow definition executed by the Agent Harness."""
+
+    __tablename__ = "workflows"
+    __table_args__ = (UniqueConstraint("key", "version", name="uq_workflow_key_version"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    key: Mapped[str] = mapped_column(String(120), index=True)
+    name: Mapped[str] = mapped_column(String(200))
+    version: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(40), default="active")
+    definition_json: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class WorkflowRun(Base, TimestampMixin, TenantOwnedMixin):
+    """Tenant-owned execution of one immutable Workflow definition."""
+
+    __tablename__ = "workflow_runs"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    workflow_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("workflows.id", ondelete="RESTRICT"), index=True
+    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    company_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("companies.id", ondelete="SET NULL"), index=True
+    )
+    task_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=True)
+    status: Mapped[str] = mapped_column(String(40), default="queued", index=True)
+    current_step: Mapped[str | None] = mapped_column(String(40))
+    input_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    output_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    input_tokens: Mapped[int] = mapped_column(default=0)
+    output_tokens: Mapped[int] = mapped_column(default=0)
+    cost_usd: Mapped[float] = mapped_column(Numeric(14, 6), default=0)
+    latency_ms: Mapped[int | None]
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(120))
+
+
+class AgentRun(Base, TimestampMixin, TenantOwnedMixin):
     __tablename__ = "agent_runs"
+    __table_args__ = (
+        Index("ix_agent_runs_claimable", "status", "next_attempt_at", "lease_expires_at"),
+    )
     task_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("agents.id", ondelete="RESTRICT"), index=True
+    )
+    workflow_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("workflow_runs.id", ondelete="CASCADE"), index=True
+    )
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     agent_name: Mapped[str] = mapped_column(String(120))
     provider: Mapped[str] = mapped_column(String(40))
     model: Mapped[str] = mapped_column(String(120))
+    prompt_version: Mapped[str | None] = mapped_column(String(80))
     status: Mapped[str] = mapped_column(String(40), default="running")
-    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    input_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    output_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     input_tokens: Mapped[int | None]
     output_tokens: Mapped[int | None]
+    total_tokens: Mapped[int] = mapped_column(default=0)
+    cost_usd: Mapped[float] = mapped_column(Numeric(14, 6), default=0)
     latency_ms: Mapped[int | None]
     error_code: Mapped[str | None] = mapped_column(String(120))
+    error_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    retry_count: Mapped[int] = mapped_column(default=0)
+    max_retries: Mapped[int] = mapped_column(default=2)
+    queued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    next_attempt_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    lease_owner: Mapped[str | None] = mapped_column(String(160))
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_heartbeat_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class AgentStep(Base, TenantOwnedMixin):
+    __tablename__ = "agent_steps"
+    __table_args__ = (UniqueConstraint("agent_run_id", "sequence", name="uq_agent_step_sequence"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_run_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="CASCADE"), index=True
+    )
+    agent_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("agents.id", ondelete="RESTRICT")
+    )
+    sequence: Mapped[int]
+    step_type: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(40), default="queued")
+    input_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    output_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    verification_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    input_tokens: Mapped[int] = mapped_column(default=0)
+    output_tokens: Mapped[int] = mapped_column(default=0)
+    cost_usd: Mapped[float] = mapped_column(Numeric(14, 6), default=0)
+    latency_ms: Mapped[int | None]
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(120))
+
+
+class ToolCall(Base, TenantOwnedMixin):
+    __tablename__ = "tool_calls"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_run_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="CASCADE"), index=True
+    )
+    agent_step_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("agent_steps.id", ondelete="CASCADE"), index=True
+    )
+    tool_name: Mapped[str] = mapped_column(String(160))
+    idempotency_key: Mapped[str | None] = mapped_column(String(200))
+    status: Mapped[str] = mapped_column(String(40), default="running")
+    arguments_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    result_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    latency_ms: Mapped[int | None]
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(120))
+
+
+class AgentRunError(Base, TenantOwnedMixin):
+    __tablename__ = "agent_run_errors"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_run_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="CASCADE"), index=True
+    )
+    agent_step_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("agent_steps.id", ondelete="SET NULL")
+    )
+    code: Mapped[str] = mapped_column(String(120))
+    category: Mapped[str] = mapped_column(String(80))
+    safe_message: Mapped[str] = mapped_column(String(500))
+    details_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    retryable: Mapped[bool] = mapped_column(Boolean, default=False)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class AgentRetry(Base, TenantOwnedMixin):
+    __tablename__ = "agent_retries"
+    __table_args__ = (
+        UniqueConstraint("agent_run_id", "retry_number", name="uq_agent_retry_number"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_run_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="CASCADE"), index=True
+    )
+    retry_number: Mapped[int]
+    reason_code: Mapped[str] = mapped_column(String(120))
+    error_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    scheduled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Artifact(Base, TimestampMixin, TenantOwnedMixin):
+    __tablename__ = "artifacts"
+    __table_args__ = (
+        UniqueConstraint(
+            "agent_run_id", "artifact_type", "version", name="uq_artifact_run_type_version"
+        ),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_run_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="CASCADE"), index=True
+    )
+    task_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tasks.id", ondelete="SET NULL"), index=True
+    )
+    application_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("applications.id", ondelete="SET NULL"), index=True
+    )
+    artifact_type: Mapped[str] = mapped_column(String(80))
+    title: Mapped[str] = mapped_column(String(500))
+    version: Mapped[int] = mapped_column(default=1)
+    status: Mapped[str] = mapped_column(String(40), default="generated")
+    mime_type: Mapped[str | None] = mapped_column(String(160))
+    object_key: Mapped[str | None] = mapped_column(String(700))
+    checksum_sha256: Mapped[str | None] = mapped_column(String(64))
+    content_json: Mapped[dict] = mapped_column(JSON, default=dict)
 
 
 class AuditLog(Base, TenantOwnedMixin):

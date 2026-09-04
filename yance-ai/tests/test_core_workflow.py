@@ -1,3 +1,4 @@
+import asyncio
 import os
 import uuid
 
@@ -8,7 +9,17 @@ from sqlalchemy import func, select
 from app.api.routes import auth
 from app.core.db import SessionLocal
 from app.main import app
-from app.models.models import Membership, Opportunity, Policy, PolicyScan
+from app.models.models import (
+    AgentRun,
+    AgentStep,
+    Artifact,
+    Membership,
+    Opportunity,
+    Policy,
+    PolicyScan,
+    ToolCall,
+)
+from app.services.agents.harness import AgentHarness
 from app.services.oss import get_oss_storage
 
 pytestmark = pytest.mark.skipif(
@@ -94,9 +105,9 @@ def test_persisted_company_to_application_workflow(monkeypatch):
 
             with SessionLocal() as db:
                 membership_count = db.scalar(
-                    select(func.count()).select_from(Membership).where(
-                        Membership.tenant_id == uuid.UUID(companies.json()[0]["tenant_id"])
-                    )
+                    select(func.count())
+                    .select_from(Membership)
+                    .where(Membership.tenant_id == uuid.UUID(companies.json()[0]["tenant_id"]))
                 )
                 assert membership_count == 1
 
@@ -144,9 +155,7 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             )
             assert unsupported_draft.status_code == 501
 
-            manual_opportunity = client.post(
-                "/api/v1/opportunities", headers=headers, json={}
-            )
+            manual_opportunity = client.post("/api/v1/opportunities", headers=headers, json={})
             assert manual_opportunity.status_code == 501
 
             updated_profile = client.put(
@@ -192,6 +201,9 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             )
             assert scan_response.status_code == 202, scan_response.text
             scan_id = scan_response.json()["id"]
+            workflow_run_id = scan_response.json()["workflow_run_id"]
+            assert scan_response.json()["status"] == "queued"
+            assert workflow_run_id
 
             repeated = client.post(
                 "/api/v1/policy-scans",
@@ -201,14 +213,16 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             assert repeated.status_code == 202
             assert repeated.json()["id"] == scan_id
 
+            with SessionLocal() as db:
+                run_id = asyncio.run(AgentHarness().run_once(db, "integration-worker"))
+                assert run_id is not None
+
             scan_detail = client.get(f"/api/v1/policy-scans/{scan_id}", headers=headers)
             assert scan_detail.status_code == 200
             assert scan_detail.json()["status"] == "completed"
             assert scan_detail.json()["total_opportunities"] >= 1
 
-            opportunities = client.get(
-                f"/api/v1/opportunities?scan_id={scan_id}", headers=headers
-            )
+            opportunities = client.get(f"/api/v1/opportunities?scan_id={scan_id}", headers=headers)
             assert opportunities.status_code == 200
             assert len(opportunities.json()) == scan_detail.json()["total_opportunities"]
             assert len({item["policy_id"] for item in opportunities.json()}) == len(
@@ -218,22 +232,92 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             assert opportunity["eligibility_status"] == "NEED_MORE_INFORMATION"
             assert opportunity["policy_snapshot_json"]["source_url"].startswith("https://")
 
+            agent_runs = client.get("/api/v1/agent-runs", headers=headers)
+            assert agent_runs.status_code == 200, agent_runs.text
+            run_summary = next(item for item in agent_runs.json() if item["id"] == str(run_id))
+            assert run_summary["status"] == "completed"
+            assert run_summary["current_step"] == "finish"
+            assert run_summary["total_tokens"] == 0
+            assert float(run_summary["cost_usd"]) == 0
+
+            run_detail = client.get(f"/api/v1/agent-runs/{run_id}", headers=headers)
+            assert run_detail.status_code == 200, run_detail.text
+            assert run_detail.json()["workflow_run_id"] == workflow_run_id
+            assert [step["step_type"] for step in run_detail.json()["steps"]] == [
+                "plan",
+                "retrieve",
+                "reason",
+                "act",
+                "verify",
+                "finish",
+            ]
+            assert all(step["status"] == "completed" for step in run_detail.json()["steps"])
+            assert {tool["tool_name"] for tool in run_detail.json()["tool_calls"]} == {
+                "policy_match",
+                "render_policy_scan_report",
+            }
+            assert run_detail.json()["artifacts"][0]["artifact_type"] == "policy_scan_report"
+            assert run_detail.json()["errors"] == []
+
+            agent_registry = client.get("/api/v1/agents", headers=headers)
+            assert agent_registry.status_code == 200, agent_registry.text
+            orchestrator = next(
+                item for item in agent_registry.json() if item["key"] == "orchestrator"
+            )
+            assert orchestrator["run_count"] >= 1
+            assert orchestrator["success_rate"] == 1
+            policy_search_agent = next(
+                item for item in agent_registry.json() if item["key"] == "policy_search"
+            )
+            assert policy_search_agent["run_count"] >= 1
+            assert policy_search_agent["last_run_at"] is not None
+
             with SessionLocal() as db:
                 assert (
                     db.scalar(
-                        select(func.count()).select_from(PolicyScan).where(
-                            PolicyScan.idempotency_key == idempotency_key
-                        )
+                        select(func.count())
+                        .select_from(PolicyScan)
+                        .where(PolicyScan.idempotency_key == idempotency_key)
                     )
                     == 1
                 )
                 assert (
                     db.scalar(
-                        select(func.count()).select_from(Opportunity).where(
-                            Opportunity.scan_id == uuid.UUID(scan_id)
-                        )
+                        select(func.count())
+                        .select_from(Opportunity)
+                        .where(Opportunity.scan_id == uuid.UUID(scan_id))
                     )
                     == scan_detail.json()["total_opportunities"]
+                )
+                assert (
+                    db.scalar(
+                        select(func.count()).select_from(AgentRun).where(AgentRun.id == run_id)
+                    )
+                    == 1
+                )
+                assert (
+                    db.scalar(
+                        select(func.count())
+                        .select_from(AgentStep)
+                        .where(AgentStep.agent_run_id == run_id)
+                    )
+                    == 6
+                )
+                assert (
+                    db.scalar(
+                        select(func.count())
+                        .select_from(ToolCall)
+                        .where(ToolCall.agent_run_id == run_id)
+                    )
+                    == 2
+                )
+                assert (
+                    db.scalar(
+                        select(func.count())
+                        .select_from(Artifact)
+                        .where(Artifact.agent_run_id == run_id)
+                    )
+                    == 1
                 )
 
             application = client.post(
@@ -305,5 +389,7 @@ def test_persisted_company_to_application_workflow(monkeypatch):
                 f"/api/v1/opportunities/{opportunity['id']}", headers=other_headers
             )
             assert cross_tenant.status_code == 404
+            cross_tenant_run = client.get(f"/api/v1/agent-runs/{run_id}", headers=other_headers)
+            assert cross_tenant_run.status_code == 404
     finally:
         app.dependency_overrides.pop(get_oss_storage, None)

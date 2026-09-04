@@ -43,6 +43,20 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  agent-worker:
+    build: .
+    env_file: ${ENV_FILE:-.env}
+    command: ["python", "-m", "app.workers.agent_worker"]
+    volumes:
+      - ./app:/app/app
+      - ./alembic:/app/alembic
+      - ./frontend:/app/frontend
+      - yance_invoices:/app/invoices
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
 volumes:
   yance_pgdata:
   yance_invoices:

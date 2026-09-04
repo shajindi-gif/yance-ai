@@ -79,6 +79,9 @@ class Settings(BaseSettings):
 
     log_level: str = "INFO"
     agent_log_prompts: bool = False
+    agent_worker_poll_seconds: float = 1.0
+    agent_lease_seconds: int = 180
+    agent_max_retries: int = 2
     trusted_proxy_count: int = 1
 
     @property

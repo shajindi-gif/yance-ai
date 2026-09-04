@@ -14,12 +14,12 @@ import flow from "@/components/workspace/CoreWorkflow.module.css";
 import content from "@/components/workspace/WorkspaceContent.module.css";
 import api, {
   type ApplicationSummary,
+  type AgentRunSummary,
   type Company,
   type CompanyProfile,
   type DocumentRecord,
   type Opportunity,
   type PolicyScan,
-  type TaskSummary,
   type Tenant,
 } from "@/lib/api";
 
@@ -30,7 +30,7 @@ interface DashboardState {
   applications: ApplicationSummary[];
   documents: DocumentRecord[];
   scans: PolicyScan[];
-  tasks: TaskSummary[];
+  agentRuns: AgentRunSummary[];
   firstProfile: CompanyProfile | null;
 }
 
@@ -47,7 +47,7 @@ export default function DashboardPage() {
     }
     let active = true;
     const load = async () => {
-      const [tenant, companies, opportunities, applications, documents, scans, tasks] =
+      const [tenant, companies, opportunities, applications, documents, scans, agentRuns] =
         await Promise.all([
           api.getTenant(),
           api.getCompanies(),
@@ -55,7 +55,7 @@ export default function DashboardPage() {
           api.getApplications(),
           api.getDocuments(),
           api.getPolicyScans(),
-          api.getTasks(),
+          api.getAgentRuns(5),
         ]);
       const firstProfile = companies[0]
         ? await api.getCompanyProfile(companies[0].id)
@@ -67,7 +67,7 @@ export default function DashboardPage() {
         applications,
         documents,
         scans,
-        tasks,
+        agentRuns,
         firstProfile,
       };
     };
@@ -205,17 +205,17 @@ export default function DashboardPage() {
 
       <section className={content.section}>
         <div className={content.sectionHeading}>
-          <h2>最近执行任务</h2>
-          <p>这里只显示已持久化任务；Phase 4 会增加完整 Agent Run 轨迹。</p>
+          <h2>最近 Agent Runs</h2>
+          <p>显示持久化执行状态、步骤阶段与可复查运行轨迹。</p>
         </div>
-        {data.tasks.length === 0 ? (
-          <EmptyState icon="◎" title="暂无执行任务" description="创建政策扫描后，执行任务会出现在这里。" />
+        {data.agentRuns.length === 0 ? (
+          <EmptyState icon="◎" title="暂无 Agent Run" description="创建政策扫描后，后台执行轨迹会出现在这里。" />
         ) : (
           <div className={content.stack}>
-            {data.tasks.slice(0, 5).map((task) => (
-              <Link key={task.id} href={`/tasks/${task.id}`} className={content.listCard}>
-                <div className={content.listCardHeader}><span className={content.itemTitle}>{task.title}</span><Badge tone={task.status === "failed" ? "danger" : task.status === "delivered" || task.status === "accepted" ? "success" : "info"}>{task.status}</Badge></div>
-                <div className={content.meta}>{task.current_stage || "状态未记录"} · {new Date(task.created_at).toLocaleString("zh-CN")}</div>
+            {data.agentRuns.map((run) => (
+              <Link key={run.id} href={`/agents/${run.id}`} className={content.listCard}>
+                <div className={content.listCardHeader}><span className={content.itemTitle}>{run.agent_name} · {run.prompt_version || "未记录版本"}</span><Badge tone={run.status === "failed" ? "danger" : run.status === "completed" ? "success" : "info"}>{run.status}</Badge></div>
+                <div className={content.meta}>{run.current_step || "等待执行"} · {new Date(run.created_at).toLocaleString("zh-CN")}</div>
               </Link>
             ))}
           </div>

@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -25,6 +25,7 @@ from app.models.models import (
     UserRole,
 )
 from app.schemas.schemas import ApplicationCreate, ApplicationOut, OpportunityOut
+from app.services.agents.harness import AgentHarness
 from app.services.policies.visibility import visible_policy_clause
 
 router = APIRouter(tags=["policy-scan", "opportunity", "application"])
@@ -40,6 +41,7 @@ class PolicyScanOut(BaseModel):
     company_id: UUID
     profile_version_id: UUID
     task_id: UUID | None
+    workflow_run_id: UUID | None
     status: str
     total_opportunities: int
     created_at: datetime
@@ -104,7 +106,6 @@ def list_policy_scans(
 @router.post("/policy-scans", response_model=PolicyScanOut, status_code=202)
 def create_policy_scan(
     payload: PolicyScanCreate,
-    background_tasks: BackgroundTasks,
     principal: Principal = Depends(write_principal),
     db: Session = Depends(get_db),
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key", max_length=128),
@@ -168,6 +169,13 @@ def create_policy_scan(
     db.add(task)
     db.flush()
     scan.task_id = task.id
+    AgentHarness().enqueue_policy_scan(
+        db,
+        scan=scan,
+        task=task,
+        tenant_id=principal.tenant_id,
+        user_id=principal.user.id,
+    )
     db.add(
         AnalyticsEvent(
             tenant_id=principal.tenant_id,
@@ -195,11 +203,6 @@ def create_policy_scan(
                 return _scan_out(existing)
         raise
     db.refresh(scan)
-
-    # Phase 4 replaces this process-local runner with the durable Agent Harness.
-    from app.api.routes.tasks import _run_task_background
-
-    background_tasks.add_task(_run_task_background, task.id)
     return _scan_out(scan)
 
 

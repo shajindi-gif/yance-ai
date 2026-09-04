@@ -115,6 +115,7 @@ export interface PolicyScan {
   company_id: string;
   profile_version_id: string;
   task_id: string | null;
+  workflow_run_id: string | null;
   status: string;
   total_opportunities: number;
   created_at: string;
@@ -273,9 +274,115 @@ export interface TaskDeliverable {
 }
 
 export interface TaskRunSummary {
+  id: string;
   agent: string;
   status: string;
+  prompt_version?: string | null;
+  total_tokens: number;
+  cost_usd: number;
   latency_ms?: number | null;
+}
+
+export interface AgentDefinitionSummary {
+  id: string;
+  key: string;
+  name: string;
+  description: string;
+  version: string;
+  status: string;
+  run_count: number;
+  completed_runs: number;
+  failed_runs: number;
+  success_rate: number | null;
+  average_latency_ms: number | null;
+  tasks_completed: number;
+  last_run_at: string | null;
+}
+
+export interface AgentRunSummary {
+  id: string;
+  workflow_run_id: string | null;
+  task_id: string | null;
+  agent_key: string | null;
+  agent_name: string;
+  status: string;
+  current_step: string | null;
+  model: string;
+  prompt_version: string | null;
+  total_tokens: number;
+  cost_usd: number;
+  latency_ms: number | null;
+  retry_count: number;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  error_code: string | null;
+}
+
+export interface AgentStepTrace {
+  id: string;
+  sequence: number;
+  agent_id: string | null;
+  step_type: string;
+  status: string;
+  input: Record<string, unknown>;
+  output: Record<string, unknown>;
+  verification: Record<string, unknown>;
+  input_tokens: number;
+  output_tokens: number;
+  cost_usd: number;
+  latency_ms: number | null;
+  started_at: string | null;
+  finished_at: string | null;
+  error_code: string | null;
+}
+
+export interface AgentRunDetail extends AgentRunSummary {
+  workflow_key: string | null;
+  workflow_version: string | null;
+  input: Record<string, unknown>;
+  output: Record<string, unknown>;
+  steps: AgentStepTrace[];
+  tool_calls: Array<{
+    id: string;
+    agent_step_id: string;
+    tool_name: string;
+    status: string;
+    arguments: Record<string, unknown>;
+    result: Record<string, unknown>;
+    latency_ms: number | null;
+    started_at: string;
+    finished_at: string | null;
+    error_code: string | null;
+  }>;
+  errors: Array<{
+    id: string;
+    agent_step_id: string | null;
+    code: string;
+    category: string;
+    safe_message: string;
+    details: Record<string, unknown>;
+    retryable: boolean;
+    occurred_at: string;
+  }>;
+  retries: Array<{
+    id: string;
+    retry_number: number;
+    reason_code: string;
+    scheduled_at: string;
+    started_at: string | null;
+  }>;
+  artifacts: Array<{
+    id: string;
+    task_id: string | null;
+    application_id: string | null;
+    artifact_type: string;
+    title: string;
+    version: number;
+    status: string;
+    mime_type: string | null;
+    created_at: string;
+  }>;
 }
 
 export interface TaskDetail extends TaskSummary {
@@ -707,6 +814,19 @@ class ApiClient {
 
   async getTask(taskId: string): Promise<TaskDetail> {
     return this.request<TaskDetail>(`/tasks/${encodeURIComponent(taskId)}`);
+  }
+
+  // Agent operations
+  async getAgents(): Promise<AgentDefinitionSummary[]> {
+    return this.request<AgentDefinitionSummary[]>('/agents');
+  }
+
+  async getAgentRuns(limit: number = 50): Promise<AgentRunSummary[]> {
+    return this.request<AgentRunSummary[]>(`/agent-runs?limit=${limit}`);
+  }
+
+  async getAgentRun(runId: string): Promise<AgentRunDetail> {
+    return this.request<AgentRunDetail>(`/agent-runs/${encodeURIComponent(runId)}`);
   }
 
   async getNextActions(taskId: string): Promise<NextAction[]> {

@@ -41,6 +41,12 @@ function NavigationIcon({ icon }: Pick<WorkspaceNavItem, "icon">) {
         <path d="m8 8 1.5 1.5L12 7M8 14l1.5 1.5L12 13M14 9h2M14 15h2" />
       </>
     ),
+    agents: (
+      <>
+        <circle cx="12" cy="8" r="3" />
+        <path d="M6 21v-2a6 6 0 0 1 12 0v2M4 10h2M18 10h2M12 3V1" />
+      </>
+    ),
     documents: (
       <>
         <path d="M5 3h10l4 4v14H5z" />
@@ -148,7 +154,7 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
         <div className={styles.sidebarFooter}>
           <div className={styles.phaseNote}>
             <span>产品升级中</span>
-            <p>Agent、知识库与管理后台将在对应阶段接入真实工作流。</p>
+            <p>Agent 运行已接入持久化轨迹；知识库与管理后台将按阶段开放。</p>
           </div>
           <Link href="/" className={styles.secondaryAction}>
             返回产品官网
