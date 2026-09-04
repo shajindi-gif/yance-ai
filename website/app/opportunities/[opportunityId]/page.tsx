@@ -103,13 +103,17 @@ export default function OpportunityDetailPage() {
   const sourceUrl = safeSourceUrl(snapshot.source_url);
   const missingMaterials = opportunity.evidence_json.missing_materials || [];
   const scoreBreakdown = opportunity.evidence_json.score_breakdown || {};
+  const result = opportunity.eligibility_result;
+  const evidence = opportunity.evidence || [];
+  const requirements = opportunity.required_materials || [];
+  const benefits = opportunity.benefits || [];
 
   return (
     <AppShell>
       <PageHeader
         eyebrow="Opportunity"
         title={snapshot.title || opportunity.title}
-        description="此页面展示扫描时冻结的政策元数据。Phase 5 接入逐条资格判断与原文证据。"
+        description="政策元数据、企业画像版本、逐条资格判断与原文证据均已固化，可回溯本次判断。"
         actions={
           <div className={flow.toolbarActions}>
             <ButtonLink href="/opportunities" variant="secondary">返回列表</ButtonLink>
@@ -129,7 +133,13 @@ export default function OpportunityDetailPage() {
       </div>
 
       {opportunity.eligibility_status === "NEED_MORE_INFORMATION" && (
-        <InlineAlert tone="info">相关性命中不代表符合资格。当前没有已持久化的逐条证据判定，因此系统保持“需要更多信息”。</InlineAlert>
+        <InlineAlert tone="info">相关性命中不代表符合资格。{result?.summary || "当前缺少结构化规则或可核验证据。"}</InlineAlert>
+      )}
+      {result?.status === "POTENTIALLY_ELIGIBLE" && (
+        <InlineAlert tone="info">结构化硬门槛已通过并有原文证据；正式申报前仍需人工复核。</InlineAlert>
+      )}
+      {result?.status === "NOT_ELIGIBLE" && (
+        <InlineAlert tone="error">至少一项已核验硬门槛不满足。请查看逐条判断后再决定是否继续。</InlineAlert>
       )}
 
       <div className={flow.detailGrid}>
@@ -163,10 +173,72 @@ export default function OpportunityDetailPage() {
 
       <section className={content.section}>
         <div className={content.card}>
+          <div className={flow.sectionHeading}>
+            <div><h2>资格判断</h2><p className={content.cardIntro}>{result?.summary || "尚无资格判断记录。"}</p></div>
+            {result && <Badge tone="neutral">{result.engine_version}</Badge>}
+          </div>
+          {!result || result.criteria.length === 0 ? (
+            <p className={content.cardIntro}>暂无已审核的结构化资格规则，系统不会从相关性分数推断资格。</p>
+          ) : (
+            <div className={flow.criteriaList}>
+              {result.criteria.map((criterion) => (
+                <div className={flow.criterion} key={criterion.rule_id}>
+                  <div>
+                    <strong>{criterion.name}</strong>
+                    <p>企业事实：{criterion.actual == null || criterion.actual === "" ? "未提供" : String(criterion.actual)}</p>
+                    <p>政策要求：{String(criterion.expected ?? "存在该信息")}{criterion.article ? ` · ${criterion.article}` : ""}</p>
+                  </div>
+                  <div className={flow.inlineMeta}>
+                    {criterion.is_hard_gate && <Badge tone="warning">硬门槛</Badge>}
+                    <Badge tone={criterion.status === "PASS" ? "success" : criterion.status === "FAIL" ? "danger" : "neutral"}>{criterion.status}</Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {result && result.missing_information.length > 0 && (
+            <div className={flow.gapList}>
+              <strong>仍需补充</strong>
+              {result.missing_information.map((item) => <span key={item}>• {item}</span>)}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className={content.section}>
+        <div className={content.card}>
+          <div className={flow.sectionHeading}><div><h2>政策证据</h2><p className={content.cardIntro}>引用必须逐字存在于本次固定的政策版本中。</p></div><Badge tone={evidence.length ? "success" : "neutral"}>{evidence.length} 条</Badge></div>
+          {evidence.length === 0 ? (
+            <p className={content.cardIntro}>暂无可验证证据。系统不会展示无来源政策结论。</p>
+          ) : evidence.map((item) => (
+            <blockquote className={flow.evidenceQuote} key={item.id}>
+              <p>“{item.quote}”</p>
+              <footer>{[item.issuer, item.article].filter(Boolean).join(" · ") || item.source_title} · {Math.round(item.confidence * 100)}% 置信度 {item.verified && <Badge tone="success">原文已核验</Badge>}</footer>
+              {safeSourceUrl(item.source_url) && <a className={flow.link} href={safeSourceUrl(item.source_url) || undefined} target="_blank" rel="noreferrer">查看来源</a>}
+            </blockquote>
+          ))}
+        </div>
+      </section>
+
+      {(requirements.length > 0 || benefits.length > 0) && (
+        <div className={flow.gridTwo}>
+          <section className={content.card}>
+            <h2>申报材料</h2>
+            {requirements.length === 0 ? <p className={content.cardIntro}>暂无已审核材料清单。</p> : requirements.map((item) => <div className={content.activityRow} key={item.id}><span className={content.activityStatus}>○</span><span>{item.name}</span>{item.is_hard_gate && <Badge tone="warning">必需</Badge>}</div>)}
+          </section>
+          <section className={content.card}>
+            <h2>政策支持</h2>
+            {benefits.length === 0 ? <p className={content.cardIntro}>暂无已审核支持内容。</p> : benefits.map((item) => <div className={content.activityRow} key={item.id}><span className={content.activityStatus}>＋</span><span>{item.description}</span>{item.amount_text && <Badge tone="info">{item.amount_text}</Badge>}</div>)}
+          </section>
+        </div>
+      )}
+
+      <section className={content.section}>
+        <div className={content.card}>
           <h2>候选材料缺口</h2>
           <p className={content.cardIntro}>以下内容来自政策关键词，不代表已经核验企业现有资料，也不标记为硬门槛。</p>
           {missingMaterials.length === 0 ? (
-            <p className={content.cardIntro}>扫描未生成候选材料。Phase 5 会基于政策规则和企业文档建立证据化清单。</p>
+            <p className={content.cardIntro}>扫描未生成候选材料。只有经过来源核验的材料要求才会进入正式清单。</p>
           ) : (
             missingMaterials.map((material) => (
               <div className={content.activityRow} key={material}><span className={content.activityStatus}>○</span><span>{material}</span><Badge tone="neutral">待核验</Badge></div>

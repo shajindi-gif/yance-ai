@@ -11,7 +11,10 @@ from app.models.models import (
     AnalyticsEvent,
     Artifact,
     Company,
+    CompanyProfileVersion,
     Deliverable,
+    EligibilityResult,
+    Evidence,
     Opportunity,
     Policy,
     PolicyScan,
@@ -29,12 +32,14 @@ from app.services.agents.contracts import (
     VerificationResult,
 )
 from app.services.agents.definitions import (
+    ELIGIBILITY_AGENT_ID,
+    EVIDENCE_AGENT_ID,
     ORCHESTRATOR_AGENT_ID,
     POLICY_SCAN_STEPS,
     POLICY_SEARCH_AGENT_ID,
-    QA_AGENT_ID,
     REPORT_AGENT_ID,
 )
+from app.services.policies.eligibility import evaluate_opportunity
 from app.services.policies.visibility import visible_policy_clause
 from app.services.report.matcher import match_policies_for_company
 from app.services.report.pdf import generate_match_report_pdf
@@ -71,7 +76,7 @@ async def execute_policy_scan(db: Session, run: AgentRun, harness: "AgentHarness
         sequence=1,
         step_type="plan",
         agent_id=ORCHESTRATOR_AGENT_ID,
-        input_json={"workflow": "policy_scan", "version": "v1"},
+        input_json={"workflow": "policy_scan", "version": "v2"},
         output_json=plan.model_dump(mode="json"),
     )
 
@@ -134,22 +139,43 @@ async def execute_policy_scan(db: Session, run: AgentRun, harness: "AgentHarness
         )
         harness._finish_step(db, retrieve_step, retrieve.model_dump(mode="json"))
 
-    reason = ReasonOutput(
-        reason=(
-            "Phase 5 evidence verification has not run; all opportunities remain in the "
-            "safe NEED_MORE_INFORMATION state."
-        )
-    )
-    harness._complete_step(
+    reason_step = harness._start_step(
         db,
         run,
         workflow_run,
         sequence=3,
         step_type="reason",
-        agent_id=ORCHESTRATOR_AGENT_ID,
+        agent_id=ELIGIBILITY_AGENT_ID,
         input_json={"opportunity_count": len(opportunities)},
-        output_json=reason.model_dump(mode="json"),
     )
+    if reason_step.status == "completed":
+        reason = ReasonOutput.model_validate(reason_step.output_json)
+    else:
+        tool = harness._start_tool(
+            db,
+            run,
+            reason_step,
+            "evaluate_eligibility",
+            {"opportunity_ids": [str(item.id) for item in opportunities]},
+        )
+        tool_started = perf_counter()
+        states: dict[str, int] = {}
+        profile_snapshot = db.scalar(
+            select(CompanyProfileVersion.snapshot_json).where(
+                CompanyProfileVersion.id == payload.profile_version_id,
+                CompanyProfileVersion.tenant_id == payload.tenant_id,
+            )
+        ) or {}
+        for opportunity in opportunities:
+            result = evaluate_opportunity(db, opportunity, profile_snapshot)
+            states[result.status] = states.get(result.status, 0) + 1
+        db.commit()
+        reason = ReasonOutput(
+            states=states,
+            reason="资格由已审核结构化规则确定；缺失规则、事实或精确来源时保持需要更多信息。",
+        )
+        harness._finish_tool(db, tool, {"states": states}, tool_started)
+        harness._finish_step(db, reason_step, reason.model_dump(mode="json"))
 
     act_step = harness._start_step(
         db,
@@ -166,14 +192,14 @@ async def execute_policy_scan(db: Session, run: AgentRun, harness: "AgentHarness
         act = _create_report_artifact(db, run, task, company, opportunities, act_step, harness)
         harness._finish_step(db, act_step, act.model_dump(mode="json"))
 
-    verification = _verify(scan, payload, opportunities)
+    verification = _verify(db, scan, payload, opportunities)
     verify_step = harness._complete_step(
         db,
         run,
         workflow_run,
         sequence=5,
         step_type="verify",
-        agent_id=QA_AGENT_ID,
+        agent_id=EVIDENCE_AGENT_ID,
         input_json={"opportunity_count": len(opportunities)},
         output_json={"passed": verification.passed},
         verification_json=verification.model_dump(mode="json"),
@@ -324,6 +350,7 @@ def _create_report_artifact(
 
 
 def _verify(
+    db: Session,
     scan: PolicyScan,
     payload: PolicyScanWorkflowInput,
     opportunities: list[Opportunity],
@@ -363,8 +390,52 @@ def _verify(
             actual=len(opportunities),
         ),
         VerificationCheck(
+            code="policy_source_version_pinned",
+            passed=all(
+                item.policy_id is None
+                or (
+                    item.policy_version_id is not None
+                    and item.policy_snapshot_json.get("policy_version_id")
+                    == str(item.policy_version_id)
+                )
+                for item in opportunities
+            ),
+            actual=len(opportunities),
+        ),
+        VerificationCheck(
             code="eligibility_state_valid",
             passed=all(item.eligibility_status in allowed_eligibility for item in opportunities),
+            actual=len(opportunities),
+        ),
+        VerificationCheck(
+            code="eligibility_result_persisted",
+            passed=all(
+                db.scalar(
+                    select(EligibilityResult.id).where(
+                        EligibilityResult.opportunity_id == item.id,
+                        EligibilityResult.tenant_id == payload.tenant_id,
+                        EligibilityResult.policy_version_id == item.policy_version_id,
+                    )
+                )
+                is not None
+                for item in opportunities
+            ),
+            actual=len(opportunities),
+        ),
+        VerificationCheck(
+            code="positive_decisions_have_verified_evidence",
+            passed=all(
+                item.eligibility_status not in {"ELIGIBLE", "POTENTIALLY_ELIGIBLE"}
+                or db.scalar(
+                    select(Evidence.id).where(
+                        Evidence.opportunity_id == item.id,
+                        Evidence.tenant_id == payload.tenant_id,
+                        Evidence.verified.is_(True),
+                    )
+                )
+                is not None
+                for item in opportunities
+            ),
             actual=len(opportunities),
         ),
     ]

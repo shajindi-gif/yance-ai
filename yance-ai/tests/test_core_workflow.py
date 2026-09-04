@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import os
 import uuid
 
@@ -13,14 +14,20 @@ from app.models.models import (
     AgentRun,
     AgentStep,
     Artifact,
+    EligibilityResult,
+    EligibilityRule,
+    Evidence,
     Membership,
     Opportunity,
     Policy,
+    PolicyChunk,
     PolicyScan,
+    PolicyVersion,
     ToolCall,
 )
 from app.services.agents.harness import AgentHarness
 from app.services.oss import get_oss_storage
+from app.services.policies.eligibility import evaluate_opportunity
 
 pytestmark = pytest.mark.skipif(
     os.getenv("APP_ENV") != "test",
@@ -110,6 +117,7 @@ def test_persisted_company_to_application_workflow(monkeypatch):
                     .where(Membership.tenant_id == uuid.UUID(companies.json()[0]["tenant_id"]))
                 )
                 assert membership_count == 1
+                tenant_id = uuid.UUID(companies.json()[0]["tenant_id"])
 
                 policy = Policy(
                     title="上海市人工智能企业研发支持政策",
@@ -126,7 +134,138 @@ def test_persisted_company_to_application_workflow(monkeypatch):
                     embedding=[0.25] * 1024,
                 )
                 db.add(policy)
+                db.flush()
+                policy_text = policy.content or ""
+                policy_version = PolicyVersion(
+                    policy_id=policy.id,
+                    version=1,
+                    content_sha256=hashlib.sha256(policy_text.encode()).hexdigest(),
+                    title=policy.title,
+                    issuer=policy.issuing_authority,
+                    region=policy.jurisdiction,
+                    industry=policy.industry,
+                    policy_type=policy.policy_type,
+                    source_url=policy.source_url,
+                    content=policy_text,
+                    status="published",
+                )
+                db.add(policy_version)
+                db.flush()
+                quote = "支持人工智能企业研发费用投入"
+                chunk = PolicyChunk(
+                    policy_id=policy.id,
+                    policy_version_id=policy_version.id,
+                    chunk_index=0,
+                    content=policy_text,
+                    char_start=0,
+                    char_end=len(policy_text),
+                    content_sha256=hashlib.sha256(policy_text.encode()).hexdigest(),
+                    metadata_json={"source": policy.source_url},
+                    embedding=[0.25] * 1024,
+                )
+                db.add(chunk)
+                db.add(
+                    EligibilityRule(
+                        policy_id=policy.id,
+                        policy_version_id=policy_version.id,
+                        name="人工智能行业要求",
+                        fact_key="industry",
+                        operator="eq",
+                        expected_json={"value": "人工智能"},
+                        is_hard_gate=True,
+                        source_quote=quote,
+                        article="申报条件",
+                        status="active",
+                    )
+                )
+                private_text = "第一条 企业须在上海市依法注册。"
+                private_policy = Policy(
+                    tenant_id=tenant_id,
+                    title="租户私有政策规则测试",
+                    issuing_authority="测试发布机关",
+                    province="上海市",
+                    policy_type="subsidy",
+                    source_url="https://policy.example.invalid/private",
+                    content=private_text,
+                    status="draft",
+                )
+                db.add(private_policy)
+                db.flush()
+                private_version = PolicyVersion(
+                    policy_id=private_policy.id,
+                    tenant_id=tenant_id,
+                    version=1,
+                    content_sha256=hashlib.sha256(private_text.encode()).hexdigest(),
+                    title=private_policy.title,
+                    issuer=private_policy.issuing_authority,
+                    region=private_policy.jurisdiction,
+                    policy_type=private_policy.policy_type,
+                    source_url=private_policy.source_url,
+                    content=private_text,
+                    status="draft",
+                )
+                db.add(private_version)
+                db.flush()
+                db.add(
+                    PolicyChunk(
+                        policy_id=private_policy.id,
+                        policy_version_id=private_version.id,
+                        tenant_id=tenant_id,
+                        chunk_index=0,
+                        content=private_text,
+                        char_start=0,
+                        char_end=len(private_text),
+                        content_sha256=hashlib.sha256(private_text.encode()).hexdigest(),
+                        metadata_json={"source": private_policy.source_url},
+                    )
+                )
                 db.commit()
+                policy_id = policy.id
+                policy_version_id = policy_version.id
+                private_policy_id = private_policy.id
+                private_version_id = private_version.id
+
+            invalid_rule = client.post(
+                "/api/v1/eligibility-rules",
+                headers=headers,
+                json={
+                    "policy_id": str(private_policy_id),
+                    "policy_version_id": str(private_version_id),
+                    "name": "上海注册要求",
+                    "fact_key": "province",
+                    "operator": "eq",
+                    "expected_json": {"value": "上海市"},
+                    "source_quote": "不存在的政策原文",
+                },
+            )
+            assert invalid_rule.status_code == 422
+            valid_rule = client.post(
+                "/api/v1/eligibility-rules",
+                headers=headers,
+                json={
+                    "policy_id": str(private_policy_id),
+                    "policy_version_id": str(private_version_id),
+                    "name": "上海注册要求",
+                    "fact_key": "province",
+                    "operator": "eq",
+                    "expected_json": {"value": "上海市"},
+                    "source_quote": "企业须在上海市依法注册",
+                    "article": "第一条",
+                },
+            )
+            assert valid_rule.status_code == 201, valid_rule.text
+            listed_rules = client.get(
+                f"/api/v1/eligibility-rules?policy_id={private_policy_id}", headers=headers
+            )
+            assert listed_rules.status_code == 200
+            assert [item["id"] for item in listed_rules.json()] == [valid_rule.json()["id"]]
+
+            other_headers, _ = _register(client, f"other-{suffix}")
+            isolated_rules = client.get(
+                f"/api/v1/eligibility-rules?policy_id={private_policy_id}",
+                headers=other_headers,
+            )
+            assert isolated_rules.status_code == 404
 
             profile_response = client.get(
                 f"/api/v1/companies/{company_id}/profile", headers=headers
@@ -229,7 +368,11 @@ def test_persisted_company_to_application_workflow(monkeypatch):
                 opportunities.json()
             )
             opportunity = opportunities.json()[0]
-            assert opportunity["eligibility_status"] == "NEED_MORE_INFORMATION"
+            assert opportunity["eligibility_status"] == "POTENTIALLY_ELIGIBLE"
+            assert opportunity["policy_version_id"] == str(policy_version_id)
+            assert opportunity["policy_snapshot_json"]["policy_version_id"] == str(
+                policy_version_id
+            )
             assert opportunity["policy_snapshot_json"]["source_url"].startswith("https://")
 
             agent_runs = client.get("/api/v1/agent-runs", headers=headers)
@@ -243,6 +386,7 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             run_detail = client.get(f"/api/v1/agent-runs/{run_id}", headers=headers)
             assert run_detail.status_code == 200, run_detail.text
             assert run_detail.json()["workflow_run_id"] == workflow_run_id
+            assert run_detail.json()["workflow_version"] == "v2"
             assert [step["step_type"] for step in run_detail.json()["steps"]] == [
                 "plan",
                 "retrieve",
@@ -254,6 +398,7 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             assert all(step["status"] == "completed" for step in run_detail.json()["steps"])
             assert {tool["tool_name"] for tool in run_detail.json()["tool_calls"]} == {
                 "policy_match",
+                "evaluate_eligibility",
                 "render_policy_scan_report",
             }
             assert run_detail.json()["artifacts"][0]["artifact_type"] == "policy_scan_report"
@@ -271,6 +416,46 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             )
             assert policy_search_agent["run_count"] >= 1
             assert policy_search_agent["last_run_at"] is not None
+            eligibility_agent = next(
+                item for item in agent_registry.json() if item["key"] == "eligibility"
+            )
+            evidence_agent = next(item for item in agent_registry.json() if item["key"] == "evidence")
+            assert eligibility_agent["status"] == "active"
+            assert eligibility_agent["run_count"] >= 1
+            assert evidence_agent["status"] == "active"
+            assert evidence_agent["run_count"] >= 1
+
+            opportunity_detail = client.get(
+                f"/api/v1/opportunities/{opportunity['id']}", headers=headers
+            )
+            assert opportunity_detail.status_code == 200
+            assert opportunity_detail.json()["eligibility_result"]["criteria"][0]["status"] == "PASS"
+            assert opportunity_detail.json()["evidence"][0]["quote"] == quote
+            assert opportunity_detail.json()["evidence"][0]["verified"] is True
+
+            with SessionLocal() as db:
+                negative_opportunity = Opportunity(
+                    tenant_id=uuid.UUID(opportunity["tenant_id"]),
+                    company_id=uuid.UUID(company_id),
+                    policy_id=policy_id,
+                    policy_version_id=policy_version_id,
+                    profile_version_id=uuid.UUID(published.json()["id"]),
+                    title="结构化硬门槛反例",
+                    score=0.5,
+                    status="identified",
+                    evidence_json={},
+                    policy_snapshot_json={"title": "结构化硬门槛反例", "source_url": None},
+                )
+                db.add(negative_opportunity)
+                db.flush()
+                negative_result = evaluate_opportunity(
+                    db,
+                    negative_opportunity,
+                    {**_complete_profile(), "industry": "先进制造"},
+                )
+                assert negative_result.status == "NOT_ELIGIBLE"
+                assert negative_result.criteria_json[0]["status"] == "FAIL"
+                db.rollback()
 
             with SessionLocal() as db:
                 assert (
@@ -309,8 +494,18 @@ def test_persisted_company_to_application_workflow(monkeypatch):
                         .select_from(ToolCall)
                         .where(ToolCall.agent_run_id == run_id)
                     )
-                    == 2
+                    == 3
                 )
+                assert db.scalar(
+                    select(func.count())
+                    .select_from(EligibilityResult)
+                    .where(EligibilityResult.opportunity_id == uuid.UUID(opportunity["id"]))
+                ) == 1
+                assert db.scalar(
+                    select(func.count())
+                    .select_from(Evidence)
+                    .where(Evidence.opportunity_id == uuid.UUID(opportunity["id"]))
+                ) == 1
                 assert (
                     db.scalar(
                         select(func.count())
@@ -384,7 +579,6 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             )
             assert mismatch.status_code == 409
 
-            other_headers, _ = _register(client, f"other-{suffix}")
             cross_tenant = client.get(
                 f"/api/v1/opportunities/{opportunity['id']}", headers=other_headers
             )

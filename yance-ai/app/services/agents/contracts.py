@@ -43,7 +43,7 @@ class VerificationResult(BaseModel):
 
 class PlanOutput(BaseModel):
     workflow: Literal["policy_scan"] = "policy_scan"
-    version: Literal["v1"] = "v1"
+    version: Literal["v2"] = "v2"
     steps: list[StepType]
     verification_required: bool = True
 
@@ -55,7 +55,7 @@ class RetrieveOutput(BaseModel):
 
 
 class ReasonOutput(BaseModel):
-    eligibility_state: Literal["NEED_MORE_INFORMATION"] = "NEED_MORE_INFORMATION"
+    states: dict[str, int] = Field(default_factory=dict)
     reason: str
 
 

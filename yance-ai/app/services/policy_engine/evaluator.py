@@ -20,6 +20,7 @@ from datetime import UTC, datetime
 
 from app.services.llm.base import LLMRequest
 from app.services.llm.router import LLMRouter
+from app.services.policies.eligibility import exact_quote_span
 from app.services.policy_engine.deterministic import (
     _is_blocking,
     evaluate_deterministic,
@@ -274,11 +275,6 @@ def validate_evidence(
     hallucinations = []
     full = policy_content[:12000]
     full_norm = re.sub(r",(?=\d)", "", full)  # 去千分位逗号
-    # 政策中合法出现的数字形态
-    policy_numbers = set(
-        re.findall(r"\d+(?:\.\d+)?(?:%|％|万|亿|年|个月|天|人|项|件|分)", full_norm)
-    )
-
     def _norm_field(s: str) -> str:
         return re.sub(r",(?=\d)", "", s or "")
 
@@ -287,9 +283,7 @@ def validate_evidence(
         for field in checked_fields:
             fn = _norm_field(field)
             nums = set(re.findall(r"\d+(?:\.\d+)?(?:%|％|万|亿|分)", fn))
-            unsupported = {
-                n for n in nums if n not in policy_numbers and n.rstrip("%％") not in full_norm
-            }
+            unsupported = {n for n in nums if exact_quote_span(full_norm, n) is None}
             if unsupported:
                 hallucinations.append(
                     f"条件 [{criterion.criterion[:30]}] 的要求引用了政策原文中不存在的数值: {sorted(unsupported)}"

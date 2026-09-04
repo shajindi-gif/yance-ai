@@ -18,9 +18,13 @@ from app.models.models import (
     Company,
     CompanyProfile,
     CompanyProfileVersion,
+    EligibilityResult,
+    Evidence,
     Opportunity,
     Policy,
+    PolicyBenefit,
     PolicyScan,
+    RequiredMaterial,
     Task,
     UserRole,
 )
@@ -160,7 +164,7 @@ def create_policy_scan(
         title=f"{company.name} - 企业政策机会扫描",
         status="queued",
         agent_type="policy_agent",
-        workflow_version="core-scan-v1",
+        workflow_version="policy-scan-v2",
         estimated_price=0,
         payment_status="free",
         progress=0,
@@ -259,9 +263,75 @@ def get_opportunity(
                 visible_policy_clause(principal.tenant_id),
             )
         )
+    eligibility = db.scalar(
+        select(EligibilityResult).where(
+            EligibilityResult.opportunity_id == opportunity.id,
+            EligibilityResult.tenant_id == principal.tenant_id,
+        )
+    )
+    evidence = (
+        list(db.scalars(select(Evidence).where(
+            Evidence.eligibility_result_id == eligibility.id,
+            Evidence.tenant_id == principal.tenant_id,
+        ).order_by(Evidence.created_at)).all())
+        if eligibility else []
+    )
+    materials = (
+        list(db.scalars(select(RequiredMaterial).where(
+            RequiredMaterial.policy_version_id == eligibility.policy_version_id,
+            (RequiredMaterial.tenant_id.is_(None))
+            | (RequiredMaterial.tenant_id == principal.tenant_id),
+        )).all())
+        if eligibility and eligibility.policy_version_id else []
+    )
+    benefits = (
+        list(db.scalars(select(PolicyBenefit).where(
+            PolicyBenefit.policy_version_id == eligibility.policy_version_id,
+            (PolicyBenefit.tenant_id.is_(None))
+            | (PolicyBenefit.tenant_id == principal.tenant_id),
+        )).all())
+        if eligibility and eligibility.policy_version_id else []
+    )
     return {
         **OpportunityOut.model_validate(opportunity).model_dump(mode="json"),
         "policy_content_available": bool(policy and policy.content),
+        "eligibility_result": ({
+            "id": str(eligibility.id),
+            "policy_version_id": str(eligibility.policy_version_id) if eligibility.policy_version_id else None,
+            "status": eligibility.status,
+            "confidence": float(eligibility.confidence),
+            "summary": eligibility.summary,
+            "criteria": eligibility.criteria_json,
+            "missing_information": eligibility.missing_information_json,
+            "engine_version": eligibility.engine_version,
+            "review_status": eligibility.review_status,
+            "verified_at": eligibility.verified_at,
+        } if eligibility else None),
+        "evidence": [{
+            "id": str(item.id),
+            "source_title": item.source_title,
+            "source_url": item.source_url,
+            "issuer": item.issuer,
+            "article": item.article,
+            "quote": item.quote,
+            "confidence": float(item.confidence),
+            "verifier": item.verifier,
+            "verified": item.verified,
+        } for item in evidence],
+        "required_materials": [{
+            "id": str(item.id),
+            "name": item.name,
+            "description": item.description,
+            "is_hard_gate": item.is_hard_gate,
+            "article": item.article,
+        } for item in materials],
+        "benefits": [{
+            "id": str(item.id),
+            "benefit_type": item.benefit_type,
+            "description": item.description,
+            "amount_text": item.amount_text,
+            "article": item.article,
+        } for item in benefits],
     }
 
 
@@ -321,18 +391,55 @@ def create_application(
     db.add(application)
     db.flush()
     if opportunity:
-        materials = (opportunity.evidence_json or {}).get("missing_materials", [])
-        for position, material in enumerate(materials):
+        eligibility = db.scalar(
+            select(EligibilityResult).where(
+                EligibilityResult.opportunity_id == opportunity.id,
+                EligibilityResult.tenant_id == principal.tenant_id,
+            )
+        )
+        structured_materials = (
+            list(db.scalars(select(RequiredMaterial).where(
+                RequiredMaterial.policy_version_id == eligibility.policy_version_id,
+                (RequiredMaterial.tenant_id.is_(None))
+                | (RequiredMaterial.tenant_id == principal.tenant_id),
+            )).all())
+            if eligibility and eligibility.policy_version_id else []
+        )
+        material_rows = [
+            {
+                "title": item.name,
+                "description": item.description or "政策原文列明的申报材料。",
+                "is_hard_gate": item.is_hard_gate,
+                "source_json": {
+                    "opportunity_id": str(opportunity.id),
+                    "policy_version_id": str(item.policy_version_id),
+                    "article": item.article,
+                    "source_quote": item.source_quote,
+                },
+            }
+            for item in structured_materials
+        ]
+        if not material_rows:
+            material_rows = [
+                {
+                    "title": str(item),
+                    "description": "扫描阶段识别的候选材料；尚未与已导入资料完成核验。",
+                    "is_hard_gate": False,
+                    "source_json": {"opportunity_id": str(opportunity.id)},
+                }
+                for item in (opportunity.evidence_json or {}).get("missing_materials", [])
+            ]
+        for position, material in enumerate(material_rows):
             db.add(
                 ApplicationRequirement(
                     tenant_id=principal.tenant_id,
                     application_id=application.id,
-                    title=str(material)[:300],
-                    description="扫描阶段识别的候选材料；尚未与已导入资料完成核验。",
+                    title=material["title"][:300],
+                    description=material["description"],
                     category="material",
                     status="missing",
-                    is_hard_gate=False,
-                    source_json={"opportunity_id": str(opportunity.id)},
+                    is_hard_gate=material["is_hard_gate"],
+                    source_json=material["source_json"],
                     sort_order=position,
                 )
             )

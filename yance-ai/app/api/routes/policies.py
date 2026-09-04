@@ -7,8 +7,31 @@ from sqlalchemy.orm import Session
 from app.api.deps import Principal, get_principal, require_roles
 from app.core.config import settings
 from app.core.db import get_db
-from app.models.models import Policy, PolicyRule, UserRole
-from app.schemas.schemas import PolicyCreate, PolicyOut, PolicyRuleCreate, PolicyRuleOut
+from app.models.models import (
+    EligibilityRule,
+    Policy,
+    PolicyBenefit,
+    PolicyChunk,
+    PolicyRule,
+    PolicyVersion,
+    RequiredMaterial,
+    UserRole,
+)
+from app.schemas.schemas import (
+    EligibilityRuleCreate,
+    EligibilityRuleOut,
+    PolicyBenefitCreate,
+    PolicyBenefitOut,
+    PolicyCreate,
+    PolicyOut,
+    PolicyRuleCreate,
+    PolicyRuleOut,
+    RequiredMaterialCreate,
+    RequiredMaterialOut,
+)
+from app.services.policies.eligibility import exact_quote_span
+from app.services.policies.ingestion import latest_policy_version, version_and_chunk_policy
+from app.services.policies.retrieval import hybrid_policy_candidates
 from app.services.policies.visibility import visible_policy_clause
 
 router = APIRouter(tags=["policy", "policy_rule"])
@@ -27,14 +50,10 @@ async def create_policy(
     principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
     db: Session = Depends(get_db),
 ) -> Policy:
-    data = payload.model_dump()
-    if data.get("content"):
-        from app.services.llm.registry import embed_texts
-
-        embeddings = await embed_texts([data["content"]])
-        data["embedding"] = embeddings[0]
-    policy = Policy(tenant_id=principal.tenant_id, **data)
+    policy = Policy(tenant_id=principal.tenant_id, **payload.model_dump())
     db.add(policy)
+    db.flush()
+    await version_and_chunk_policy(db, policy)
     db.commit()
     db.refresh(policy)
     return policy
@@ -70,17 +89,9 @@ async def update_policy(
     if not policy:
         raise HTTPException(status_code=404, detail="Policy not found")
 
-    data = payload.model_dump()
-    if data.get("content"):
-        from app.services.llm.registry import embed_texts
-
-        embeddings = await embed_texts([data["content"]])
-        data["embedding"] = embeddings[0]
-    else:
-        data["embedding"] = None
-
-    for key, value in data.items():
+    for key, value in payload.model_dump().items():
         setattr(policy, key, value)
+    await version_and_chunk_policy(db, policy)
     db.commit()
     db.refresh(policy)
     return policy
@@ -106,23 +117,20 @@ async def search_policies(
     principal: Principal = Depends(get_principal),
     db: Session = Depends(get_db),
 ) -> list[Policy]:
-    """语义搜索策略：将查询文本向量化，用 PGVector cosine 近似度排序返回。"""
+    """段落级词法 + 向量混合检索；返回去重后的可见政策。"""
     from app.services.llm.registry import embed_texts
 
     embeddings = await embed_texts([query])
     query_vector = embeddings[0]
 
-    results = (
-        db.query(Policy)
-        .filter(
-            visible_policy_clause(principal.tenant_id),
-            Policy.embedding.isnot(None),
-        )
-        .order_by(Policy.embedding.cosine_distance(query_vector))
-        .limit(limit)
-        .all()
+    candidates = hybrid_policy_candidates(
+        db,
+        tenant_id=principal.tenant_id,
+        query=query,
+        query_vector=query_vector,
+        limit=max(1, min(limit, 50)),
     )
-    return results
+    return [item.policy for item in candidates]
 
 
 @router.get("/policy-rules", response_model=list[PolicyRuleOut])
@@ -153,3 +161,133 @@ def create_policy_rule(
     db.commit()
     db.refresh(rule)
     return rule
+
+
+@router.get("/eligibility-rules", response_model=list[EligibilityRuleOut])
+def list_eligibility_rules(
+    policy_id: UUID,
+    principal: Principal = Depends(get_principal),
+    db: Session = Depends(get_db),
+) -> list[EligibilityRule]:
+    policy = db.scalar(
+        select(Policy).where(Policy.id == policy_id, visible_policy_clause(principal.tenant_id))
+    )
+    if not policy:
+        raise HTTPException(status_code=404, detail="Policy not found")
+    return list(
+        db.scalars(
+            select(EligibilityRule)
+            .where(
+                EligibilityRule.policy_id == policy_id,
+                (EligibilityRule.tenant_id.is_(None))
+                | (EligibilityRule.tenant_id == principal.tenant_id),
+            )
+            .order_by(EligibilityRule.created_at)
+        ).all()
+    )
+
+
+@router.post("/eligibility-rules", response_model=EligibilityRuleOut, status_code=201)
+def create_eligibility_rule(
+    payload: EligibilityRuleCreate,
+    principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin)),
+    db: Session = Depends(get_db),
+) -> EligibilityRule:
+    version = _owned_policy_version(
+        db,
+        policy_id=payload.policy_id,
+        version_id=payload.policy_version_id,
+        tenant_id=principal.tenant_id,
+    )
+    _require_citable_quote(db, version, payload.source_quote)
+    data = payload.model_dump(exclude={"policy_version_id"})
+    rule = EligibilityRule(
+        tenant_id=principal.tenant_id,
+        policy_version_id=version.id,
+        **data,
+    )
+    db.add(rule)
+    db.commit()
+    db.refresh(rule)
+    return rule
+
+
+def _owned_policy_version(
+    db: Session, *, policy_id: UUID, version_id: UUID | None, tenant_id: UUID
+) -> PolicyVersion:
+    policy = db.scalar(
+        select(Policy).where(Policy.id == policy_id, Policy.tenant_id == tenant_id)
+    )
+    if not policy:
+        raise HTTPException(status_code=404, detail="Tenant policy not found")
+    version = (
+        db.scalar(select(PolicyVersion).where(
+            PolicyVersion.id == version_id,
+            PolicyVersion.policy_id == policy.id,
+            PolicyVersion.tenant_id == tenant_id,
+        ))
+        if version_id else latest_policy_version(db, policy.id)
+    )
+    if not version:
+        raise HTTPException(status_code=409, detail="Policy source version is required")
+    return version
+
+
+def _require_citable_quote(db: Session, version: PolicyVersion, quote: str) -> None:
+    source_span = exact_quote_span(version.content, quote)
+    chunks = db.scalars(
+        select(PolicyChunk.content).where(PolicyChunk.policy_version_id == version.id)
+    ).all()
+    if source_span is None or not any(exact_quote_span(content, quote) for content in chunks):
+        raise HTTPException(
+            status_code=422,
+            detail="source_quote must exactly match one indexed policy passage",
+        )
+
+
+@router.post("/required-materials", response_model=RequiredMaterialOut, status_code=201)
+def create_required_material(
+    payload: RequiredMaterialCreate,
+    principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin)),
+    db: Session = Depends(get_db),
+) -> RequiredMaterial:
+    version = _owned_policy_version(
+        db,
+        policy_id=payload.policy_id,
+        version_id=payload.policy_version_id,
+        tenant_id=principal.tenant_id,
+    )
+    _require_citable_quote(db, version, payload.source_quote)
+    item = RequiredMaterial(
+        tenant_id=principal.tenant_id,
+        policy_version_id=version.id,
+        **payload.model_dump(exclude={"policy_version_id"}),
+    )
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.post("/policy-benefits", response_model=PolicyBenefitOut, status_code=201)
+def create_policy_benefit(
+    payload: PolicyBenefitCreate,
+    principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin)),
+    db: Session = Depends(get_db),
+) -> PolicyBenefit:
+    version = _owned_policy_version(
+        db,
+        policy_id=payload.policy_id,
+        version_id=payload.policy_version_id,
+        tenant_id=principal.tenant_id,
+    )
+    _require_citable_quote(db, version, payload.source_quote)
+    item = PolicyBenefit(
+        tenant_id=principal.tenant_id,
+        policy_version_id=version.id,
+        **payload.model_dump(exclude={"policy_version_id"}),
+    )
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item

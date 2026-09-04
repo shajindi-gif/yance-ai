@@ -89,7 +89,7 @@ export default function OpportunitiesPage() {
       const key = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${companyId}`;
       const scan = await api.createPolicyScan(companyId, key);
       setScans((current) => [scan, ...current.filter((item) => item.id !== scan.id)]);
-      setMessage("扫描请求已创建。当前执行器为进程内任务，Phase 4 将替换为可恢复队列。 ");
+      setMessage("扫描请求已进入可恢复执行队列。完成后将生成结构化资格判断与可核验证据。");
       window.setTimeout(() => {
         load(companyId).catch(() => undefined);
       }, 3500);

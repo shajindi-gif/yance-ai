@@ -2042,6 +2042,192 @@
         "title": "DocumentOut",
         "type": "object"
       },
+      "EligibilityRuleCreate": {
+        "properties": {
+          "article": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Article"
+          },
+          "expected_json": {
+            "additionalProperties": true,
+            "title": "Expected Json",
+            "type": "object"
+          },
+          "fact_key": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Fact Key",
+            "type": "string"
+          },
+          "is_hard_gate": {
+            "default": true,
+            "title": "Is Hard Gate",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 300,
+            "minLength": 2,
+            "title": "Name",
+            "type": "string"
+          },
+          "operator": {
+            "enum": [
+              "eq",
+              "in",
+              "contains",
+              "gte",
+              "lte",
+              "exists"
+            ],
+            "title": "Operator",
+            "type": "string"
+          },
+          "policy_id": {
+            "format": "uuid",
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "policy_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Version Id"
+          },
+          "source_quote": {
+            "minLength": 1,
+            "title": "Source Quote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "policy_id",
+          "name",
+          "fact_key",
+          "operator",
+          "source_quote"
+        ],
+        "title": "EligibilityRuleCreate",
+        "type": "object"
+      },
+      "EligibilityRuleOut": {
+        "properties": {
+          "article": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Article"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expected_json": {
+            "additionalProperties": true,
+            "title": "Expected Json",
+            "type": "object"
+          },
+          "fact_key": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Fact Key",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_hard_gate": {
+            "default": true,
+            "title": "Is Hard Gate",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 300,
+            "minLength": 2,
+            "title": "Name",
+            "type": "string"
+          },
+          "operator": {
+            "enum": [
+              "eq",
+              "in",
+              "contains",
+              "gte",
+              "lte",
+              "exists"
+            ],
+            "title": "Operator",
+            "type": "string"
+          },
+          "policy_id": {
+            "format": "uuid",
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "policy_version_id": {
+            "format": "uuid",
+            "title": "Policy Version Id",
+            "type": "string"
+          },
+          "source_quote": {
+            "minLength": 1,
+            "title": "Source Quote",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "tenant_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tenant Id"
+          }
+        },
+        "required": [
+          "policy_id",
+          "policy_version_id",
+          "name",
+          "fact_key",
+          "operator",
+          "source_quote",
+          "id",
+          "tenant_id",
+          "status",
+          "created_at"
+        ],
+        "title": "EligibilityRuleOut",
+        "type": "object"
+      },
       "EvaluateRequest": {
         "properties": {
           "company_id": {
@@ -2399,6 +2585,18 @@
             "title": "Policy Snapshot Json",
             "type": "object"
           },
+          "policy_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Version Id"
+          },
           "profile_version_id": {
             "anyOf": [
               {
@@ -2460,6 +2658,7 @@
           "tenant_id",
           "scan_id",
           "profile_version_id",
+          "policy_version_id",
           "policy_snapshot_json",
           "eligibility_status",
           "eligibility_confidence",
@@ -2594,8 +2793,177 @@
         "title": "PaymentCreate",
         "type": "object"
       },
+      "PolicyBenefitCreate": {
+        "properties": {
+          "amount_text": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount Text"
+          },
+          "article": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Article"
+          },
+          "benefit_type": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Benefit Type",
+            "type": "string"
+          },
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "policy_id": {
+            "format": "uuid",
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "policy_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Version Id"
+          },
+          "source_quote": {
+            "minLength": 1,
+            "title": "Source Quote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "policy_id",
+          "benefit_type",
+          "description",
+          "source_quote"
+        ],
+        "title": "PolicyBenefitCreate",
+        "type": "object"
+      },
+      "PolicyBenefitOut": {
+        "properties": {
+          "amount_text": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount Text"
+          },
+          "article": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Article"
+          },
+          "benefit_type": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Benefit Type",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "policy_id": {
+            "format": "uuid",
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "policy_version_id": {
+            "format": "uuid",
+            "title": "Policy Version Id",
+            "type": "string"
+          },
+          "source_quote": {
+            "minLength": 1,
+            "title": "Source Quote",
+            "type": "string"
+          },
+          "tenant_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tenant Id"
+          }
+        },
+        "required": [
+          "policy_id",
+          "policy_version_id",
+          "benefit_type",
+          "description",
+          "source_quote",
+          "id",
+          "tenant_id",
+          "created_at"
+        ],
+        "title": "PolicyBenefitOut",
+        "type": "object"
+      },
       "PolicyCreate": {
         "properties": {
+          "city": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
           "content": {
             "anyOf": [
               {
@@ -2606,6 +2974,30 @@
               }
             ],
             "title": "Content"
+          },
+          "deadline": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadline"
+          },
+          "district": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District"
           },
           "effective_at": {
             "anyOf": [
@@ -2619,6 +3011,30 @@
             ],
             "title": "Effective At"
           },
+          "industry": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Industry"
+          },
+          "issuing_authority": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issuing Authority"
+          },
           "jurisdiction": {
             "anyOf": [
               {
@@ -2629,6 +3045,42 @@
               }
             ],
             "title": "Jurisdiction"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "policy_type": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Type"
+          },
+          "province": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Province"
           },
           "published_at": {
             "anyOf": [
@@ -2641,6 +3093,18 @@
               }
             ],
             "title": "Published At"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
           },
           "source_url": {
             "anyOf": [
@@ -2658,6 +3122,30 @@
             "title": "Status",
             "type": "string"
           },
+          "support_amount": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Support Amount"
+          },
+          "support_type": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Support Type"
+          },
           "title": {
             "maxLength": 500,
             "minLength": 2,
@@ -2673,6 +3161,18 @@
       },
       "PolicyOut": {
         "properties": {
+          "city": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
           "content": {
             "anyOf": [
               {
@@ -2688,6 +3188,30 @@
             "format": "date-time",
             "title": "Created At",
             "type": "string"
+          },
+          "deadline": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadline"
+          },
+          "district": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District"
           },
           "effective_at": {
             "anyOf": [
@@ -2720,6 +3244,30 @@
             "title": "Id",
             "type": "string"
           },
+          "industry": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Industry"
+          },
+          "issuing_authority": {
+            "anyOf": [
+              {
+                "maxLength": 240,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issuing Authority"
+          },
           "jurisdiction": {
             "anyOf": [
               {
@@ -2730,6 +3278,42 @@
               }
             ],
             "title": "Jurisdiction"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "policy_type": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Type"
+          },
+          "province": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Province"
           },
           "published_at": {
             "anyOf": [
@@ -2742,6 +3326,18 @@
               }
             ],
             "title": "Published At"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
           },
           "source_url": {
             "anyOf": [
@@ -2758,6 +3354,30 @@
             "default": "draft",
             "title": "Status",
             "type": "string"
+          },
+          "support_amount": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Support Amount"
+          },
+          "support_type": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Support Type"
           },
           "tenant_id": {
             "anyOf": [
@@ -3118,6 +3738,159 @@
           "owner_password"
         ],
         "title": "RegisterRequest",
+        "type": "object"
+      },
+      "RequiredMaterialCreate": {
+        "properties": {
+          "article": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Article"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "is_hard_gate": {
+            "default": false,
+            "title": "Is Hard Gate",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "policy_id": {
+            "format": "uuid",
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "policy_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Version Id"
+          },
+          "source_quote": {
+            "minLength": 1,
+            "title": "Source Quote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "policy_id",
+          "name",
+          "source_quote"
+        ],
+        "title": "RequiredMaterialCreate",
+        "type": "object"
+      },
+      "RequiredMaterialOut": {
+        "properties": {
+          "article": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Article"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_hard_gate": {
+            "default": false,
+            "title": "Is Hard Gate",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "policy_id": {
+            "format": "uuid",
+            "title": "Policy Id",
+            "type": "string"
+          },
+          "policy_version_id": {
+            "format": "uuid",
+            "title": "Policy Version Id",
+            "type": "string"
+          },
+          "source_quote": {
+            "minLength": 1,
+            "title": "Source Quote",
+            "type": "string"
+          },
+          "tenant_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tenant Id"
+          }
+        },
+        "required": [
+          "policy_id",
+          "policy_version_id",
+          "name",
+          "source_quote",
+          "id",
+          "tenant_id",
+          "created_at"
+        ],
+        "title": "RequiredMaterialOut",
         "type": "object"
       },
       "RequirementStatusUpdate": {
@@ -4985,6 +5758,104 @@
         ]
       }
     },
+    "/api/v1/eligibility-rules": {
+      "get": {
+        "operationId": "list_eligibility_rules_api_v1_eligibility_rules_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Policy Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EligibilityRuleOut"
+                  },
+                  "title": "Response List Eligibility Rules Api V1 Eligibility Rules Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Eligibility Rules",
+        "tags": [
+          "policy",
+          "policy_rule"
+        ]
+      },
+      "post": {
+        "operationId": "create_eligibility_rule_api_v1_eligibility_rules_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EligibilityRuleCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EligibilityRuleOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Eligibility Rule",
+        "tags": [
+          "policy",
+          "policy_rule"
+        ]
+      }
+    },
     "/api/v1/entitlements": {
       "get": {
         "description": "获取当前租户已购买的所有产品授权",
@@ -5760,7 +6631,7 @@
     },
     "/api/v1/policies/search": {
       "post": {
-        "description": "语义搜索策略：将查询文本向量化，用 PGVector cosine 近似度排序返回。",
+        "description": "段落级词法 + 向量混合检索；返回去重后的可见政策。",
         "operationId": "search_policies_api_v1_policies_search_post",
         "requestBody": {
           "content": {
@@ -5910,6 +6781,53 @@
           }
         ],
         "summary": "Update Policy",
+        "tags": [
+          "policy",
+          "policy_rule"
+        ]
+      }
+    },
+    "/api/v1/policy-benefits": {
+      "post": {
+        "operationId": "create_policy_benefit_api_v1_policy_benefits_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyBenefitCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyBenefitOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Policy Benefit",
         "tags": [
           "policy",
           "policy_rule"
@@ -6367,6 +7285,53 @@
         "summary": "Download Match Report Pdf",
         "tags": [
           "demo-match"
+        ]
+      }
+    },
+    "/api/v1/required-materials": {
+      "post": {
+        "operationId": "create_required_material_api_v1_required_materials_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequiredMaterialCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequiredMaterialOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Required Material",
+        "tags": [
+          "policy",
+          "policy_rule"
         ]
       }
     },

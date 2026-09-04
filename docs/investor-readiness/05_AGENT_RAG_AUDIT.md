@@ -167,3 +167,23 @@ Task Command
 ### P3
 
 - 多 Agent 扩展、自动模型选择和跨 vertical 复用；只有在单一 Golden Journey 指标稳定后推进。
+
+## Phase 5 remediation status — 2026-09-04
+
+Implemented and verified:
+
+- policy source versions, exact-span chunks, checksums, metadata, and opportunity-level source pinning;
+- tenant-aware lexical/vector reciprocal-rank fusion with a clearly identified legacy fallback;
+- typed eligibility rules and a deterministic four-state engine;
+- exact citation persistence and a verifier gate inside the durable Agent Harness;
+- criterion/evidence/material/benefit APIs and an inspectable opportunity UI;
+- additive migration, PostgreSQL tests, OpenAPI refresh, production frontend build, and browser checks.
+
+Still open by design:
+
+- document-format ingestion and company-document RAG;
+- learned reranking and automated policy-change re-evaluation;
+- reviewed human approval state for final `ELIGIBLE`;
+- real benchmark execution and Admin Eval reporting.
+
+The original benchmark warning remains active. This remediation improves provenance and fail-closed behavior; it does not establish production accuracy by itself.

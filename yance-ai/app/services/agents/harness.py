@@ -71,11 +71,11 @@ class AgentHarness:
             agent_id=ORCHESTRATOR_AGENT_ID,
             agent_name="orchestrator",
             provider="internal",
-            model="policy-scan-v1",
-            prompt_version="policy-scan-v1",
+            model="policy-scan-v2",
+            prompt_version="policy-scan-v2",
             status="queued",
             input_json=payload.model_dump(mode="json"),
-            metadata_json={"workflow_key": "policy_scan", "workflow_version": "v1"},
+            metadata_json={"workflow_key": "policy_scan", "workflow_version": "v2"},
             max_retries=settings.agent_max_retries,
         )
         db.add(run)

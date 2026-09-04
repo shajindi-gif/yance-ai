@@ -18,6 +18,8 @@ from sqlalchemy.orm import Session
 
 from app.models.models import Company, CompanyProfileVersion, Opportunity, Policy
 from app.services.llm.registry import embed_texts
+from app.services.policies.ingestion import latest_policy_version
+from app.services.policies.retrieval import hybrid_policy_candidates
 from app.services.policies.visibility import visible_policy_clause
 
 # 行业关键词映射
@@ -76,20 +78,32 @@ async def match_policies_for_company(
     embeddings = await embed_texts([profile_text])
     company_vector = embeddings[0]
 
-    # 2. SQL 查询全局政策库 + 当前租户私有政策 + 余弦相似度
-    results = db.execute(
-        select(
-            Policy,
-            (1 - Policy.embedding.cosine_distance(company_vector)).label("similarity"),
-        )
-        .where(
-            visible_policy_clause(tenant_id),
-            Policy.embedding.isnot(None),
-            Policy.status == "published",
-        )
-        .order_by(Policy.embedding.cosine_distance(company_vector))
-        .limit(50)  # 取 top 50 语义相关
-    ).all()
+    # 2. 优先使用段落级词法 + 向量 RRF；为未迁移的旧记录保留整篇向量回退。
+    candidates = hybrid_policy_candidates(
+        db,
+        tenant_id=tenant_id,
+        query=profile_text,
+        query_vector=company_vector,
+        limit=50,
+    )
+    retrieval_chunks = {item.policy.id: item.chunk_ids for item in candidates}
+    results = [(item.policy, item.similarity) for item in candidates]
+    retrieval_mode = "hybrid_chunk_rrf"
+    if not results:
+        retrieval_mode = "legacy_document_vector"
+        results = db.execute(
+            select(
+                Policy,
+                (1 - Policy.embedding.cosine_distance(company_vector)).label("similarity"),
+            )
+            .where(
+                visible_policy_clause(tenant_id),
+                Policy.embedding.isnot(None),
+                Policy.status == "published",
+            )
+            .order_by(Policy.embedding.cosine_distance(company_vector))
+            .limit(50)
+        ).all()
 
     if not results:
         return []
@@ -126,6 +140,7 @@ async def match_policies_for_company(
     # 4. 逐条政策评分
     opportunities = []
     for policy, semantic_sim in results:
+        source_version = latest_policy_version(db, policy.id)
         score_breakdown = {}
 
         # ── 地区匹配 (20分) ──
@@ -234,6 +249,11 @@ async def match_policies_for_company(
             "deadline": policy.deadline.isoformat() if policy.deadline else None,
             "level": policy.level or "",
             "gap_analysis_status": "not_verified_against_documents",
+            "retrieval": {
+                "mode": retrieval_mode,
+                "policy_version_id": str(source_version.id) if source_version else None,
+                "chunk_ids": [str(item) for item in retrieval_chunks.get(policy.id, ())],
+            },
         }
 
         # ── 判断缺失材料 ──
@@ -268,6 +288,7 @@ async def match_policies_for_company(
             "deadline": policy.deadline.isoformat() if policy.deadline else None,
             "support_amount": policy.support_amount,
             "support_type": policy.support_type,
+            "policy_version_id": str(source_version.id) if source_version else None,
         }
         opp = None
         if scan_id:
@@ -293,11 +314,13 @@ async def match_policies_for_company(
             opp.score = final_score / 100.0
             opp.evidence_json = evidence
             opp.policy_snapshot_json = policy_snapshot
+            opp.policy_version_id = source_version.id if source_version else None
         else:
             opp = Opportunity(
                 tenant_id=tenant_id,
                 company_id=company.id,
                 policy_id=policy.id,
+                policy_version_id=source_version.id if source_version else None,
                 scan_id=scan_id,
                 profile_version_id=profile_version_id,
                 title=f"{company.name} × {policy.title}",

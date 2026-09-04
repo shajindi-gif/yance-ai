@@ -217,6 +217,123 @@ class PolicyRule(Base, TimestampMixin, TenantOwnedMixin):
     explanation: Mapped[str | None] = mapped_column(Text)
 
 
+class PolicyVersion(Base, TimestampMixin):
+    """Immutable, checksum-addressed policy source snapshot."""
+
+    __tablename__ = "policy_versions"
+    __table_args__ = (UniqueConstraint("policy_id", "version", name="uq_policy_version"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    policy_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policies.id", ondelete="CASCADE"), index=True
+    )
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), index=True, nullable=True
+    )
+    version: Mapped[int]
+    content_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    title: Mapped[str] = mapped_column(String(500))
+    issuer: Mapped[str | None] = mapped_column(String(240))
+    region: Mapped[str | None] = mapped_column(String(160))
+    industry: Mapped[str | None] = mapped_column(String(160))
+    policy_type: Mapped[str | None] = mapped_column(String(80))
+    publish_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    effective_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expiry_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    source_url: Mapped[str | None] = mapped_column(String(1000))
+    source_name: Mapped[str | None] = mapped_column(String(160))
+    content: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(40), default="published", index=True)
+
+
+class PolicyChunk(Base, TimestampMixin):
+    """Paragraph-level retrieval unit with an exact span in a policy version."""
+
+    __tablename__ = "policy_chunks"
+    __table_args__ = (
+        UniqueConstraint("policy_version_id", "chunk_index", name="uq_policy_chunk_index"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    policy_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policies.id", ondelete="CASCADE"), index=True
+    )
+    policy_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policy_versions.id", ondelete="CASCADE"), index=True
+    )
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), index=True, nullable=True
+    )
+    chunk_index: Mapped[int]
+    article: Mapped[str | None] = mapped_column(String(160))
+    content: Mapped[str] = mapped_column(Text)
+    char_start: Mapped[int]
+    char_end: Mapped[int]
+    content_sha256: Mapped[str] = mapped_column(String(64))
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(1024))
+
+
+class EligibilityRule(Base, TimestampMixin):
+    """Typed deterministic condition pinned to one immutable policy version."""
+
+    __tablename__ = "eligibility_rules"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    policy_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policies.id", ondelete="CASCADE"), index=True
+    )
+    policy_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policy_versions.id", ondelete="CASCADE"), index=True
+    )
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), index=True, nullable=True
+    )
+    name: Mapped[str] = mapped_column(String(300))
+    fact_key: Mapped[str] = mapped_column(String(120))
+    operator: Mapped[str] = mapped_column(String(40))
+    expected_json: Mapped[dict] = mapped_column(JSON)
+    is_hard_gate: Mapped[bool] = mapped_column(Boolean, default=True)
+    source_quote: Mapped[str] = mapped_column(Text)
+    article: Mapped[str | None] = mapped_column(String(160))
+    status: Mapped[str] = mapped_column(String(40), default="active")
+
+
+class RequiredMaterial(Base, TimestampMixin):
+    __tablename__ = "required_materials"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    policy_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policies.id", ondelete="CASCADE"), index=True
+    )
+    policy_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policy_versions.id", ondelete="CASCADE"), index=True
+    )
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), index=True, nullable=True
+    )
+    name: Mapped[str] = mapped_column(String(300))
+    description: Mapped[str | None] = mapped_column(Text)
+    is_hard_gate: Mapped[bool] = mapped_column(Boolean, default=False)
+    source_quote: Mapped[str] = mapped_column(Text)
+    article: Mapped[str | None] = mapped_column(String(160))
+
+
+class PolicyBenefit(Base, TimestampMixin):
+    __tablename__ = "policy_benefits"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    policy_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policies.id", ondelete="CASCADE"), index=True
+    )
+    policy_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policy_versions.id", ondelete="CASCADE"), index=True
+    )
+    tenant_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), index=True, nullable=True
+    )
+    benefit_type: Mapped[str] = mapped_column(String(80))
+    description: Mapped[str] = mapped_column(Text)
+    amount_text: Mapped[str | None] = mapped_column(String(160))
+    source_quote: Mapped[str] = mapped_column(Text)
+    article: Mapped[str | None] = mapped_column(String(160))
+
+
 class PolicyScan(Base, TimestampMixin, TenantOwnedMixin):
     """Persistent request/snapshot boundary for one company opportunity scan."""
 
@@ -259,6 +376,9 @@ class Opportunity(Base, TimestampMixin, TenantOwnedMixin):
     policy_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("policies.id", ondelete="SET NULL")
     )
+    policy_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policy_versions.id", ondelete="RESTRICT"), index=True
+    )
     title: Mapped[str] = mapped_column(String(500))
     score: Mapped[float | None]
     status: Mapped[str] = mapped_column(String(40), default="identified")
@@ -274,6 +394,63 @@ class Opportunity(Base, TimestampMixin, TenantOwnedMixin):
         String(40), default="NEED_MORE_INFORMATION", index=True
     )
     eligibility_confidence: Mapped[float | None] = mapped_column(Numeric(4, 3))
+
+
+class EligibilityResult(Base, TimestampMixin, TenantOwnedMixin):
+    """Auditable four-state decision for one opportunity and profile snapshot."""
+
+    __tablename__ = "eligibility_results"
+    __table_args__ = (UniqueConstraint("opportunity_id", name="uq_eligibility_opportunity"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    opportunity_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("opportunities.id", ondelete="CASCADE"), index=True
+    )
+    policy_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policy_versions.id", ondelete="SET NULL"), index=True
+    )
+    profile_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("company_profile_versions.id", ondelete="RESTRICT"), index=True
+    )
+    status: Mapped[str] = mapped_column(String(40), index=True)
+    confidence: Mapped[float] = mapped_column(Numeric(4, 3), default=0)
+    summary: Mapped[str] = mapped_column(Text)
+    criteria_json: Mapped[list] = mapped_column(JSON, default=list)
+    missing_information_json: Mapped[list] = mapped_column(JSON, default=list)
+    engine_version: Mapped[str] = mapped_column(String(80), default="deterministic-v1")
+    review_status: Mapped[str] = mapped_column(String(40), default="not_reviewed")
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Evidence(Base, TimestampMixin, TenantOwnedMixin):
+    """Exact source citation used by an eligibility decision."""
+
+    __tablename__ = "evidence"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    opportunity_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("opportunities.id", ondelete="CASCADE"), index=True
+    )
+    eligibility_result_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("eligibility_results.id", ondelete="CASCADE"), index=True
+    )
+    policy_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policy_versions.id", ondelete="RESTRICT"), index=True
+    )
+    policy_chunk_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policy_chunks.id", ondelete="RESTRICT"), index=True
+    )
+    eligibility_rule_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("eligibility_rules.id", ondelete="SET NULL")
+    )
+    source_title: Mapped[str] = mapped_column(String(500))
+    source_url: Mapped[str | None] = mapped_column(String(1000))
+    issuer: Mapped[str | None] = mapped_column(String(240))
+    article: Mapped[str | None] = mapped_column(String(160))
+    quote: Mapped[str] = mapped_column(Text)
+    quote_start: Mapped[int]
+    quote_end: Mapped[int]
+    confidence: Mapped[float] = mapped_column(Numeric(4, 3), default=1)
+    verifier: Mapped[str] = mapped_column(String(80), default="exact_span_v1")
+    verified: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class Application(Base, TimestampMixin, TenantOwnedMixin):

@@ -135,6 +135,7 @@ export interface Opportunity {
   tenant_id: string;
   company_id: string;
   policy_id: string | null;
+  policy_version_id: string | null;
   scan_id: string | null;
   profile_version_id: string | null;
   title: string;
@@ -167,6 +168,53 @@ export interface Opportunity {
   eligibility_confidence: number | null;
   created_at: string;
   policy_content_available?: boolean;
+  eligibility_result?: {
+    id: string;
+    policy_version_id: string | null;
+    status: EligibilityStatus;
+    confidence: number;
+    summary: string;
+    criteria: Array<{
+      rule_id: string;
+      name: string;
+      fact_key: string;
+      operator: string;
+      expected: unknown;
+      actual: unknown;
+      is_hard_gate: boolean;
+      status: 'PASS' | 'FAIL' | 'MISSING' | 'UNSUPPORTED' | 'UNVERIFIED_SOURCE';
+      article: string | null;
+    }>;
+    missing_information: string[];
+    engine_version: string;
+    review_status: string;
+    verified_at: string | null;
+  } | null;
+  evidence?: Array<{
+    id: string;
+    source_title: string;
+    source_url: string | null;
+    issuer: string | null;
+    article: string | null;
+    quote: string;
+    confidence: number;
+    verifier: string;
+    verified: boolean;
+  }>;
+  required_materials?: Array<{
+    id: string;
+    name: string;
+    description: string | null;
+    is_hard_gate: boolean;
+    article: string | null;
+  }>;
+  benefits?: Array<{
+    id: string;
+    benefit_type: string;
+    description: string;
+    amount_text: string | null;
+    article: string | null;
+  }>;
 }
 
 export interface ApplicationSummary {
