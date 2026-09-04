@@ -142,3 +142,24 @@
 - 30/90 天留存、重复扫描、被确认机会、进入申报和交付验收数据；
 - 软件自动完成与人工服务步骤的明确边界；
 - 价格、毛利、模型/OCR/人工成本和扩张路径。
+
+## Phase 6 remediation status — 2026-09-04
+
+The original P1 finding that Applications lacked an auditable human-review workspace is now
+partially remediated in the codebase:
+
+- Application now connects persisted eligibility, exact policy evidence, source-backed
+  requirements, uploaded documents, a material-preparation Task, versioned drafts, comments, and
+  activity in one tenant-scoped workspace.
+- Readiness rules block review when hard materials, safe eligibility, or verified evidence are
+  missing. Final Application approval requires Owner/Admin review of the latest artifact.
+- Edit, regenerate, reject, and fix create or operate on explicit versions; previous drafts remain
+  immutable and downloadable as DOCX, PDF, XLSX, or JSON.
+- The right-side execution panel uses an explicitly named deterministic evidence engine. It does
+  not claim LLM execution, file parsing, autonomous submission, or model quality that is not yet
+  implemented.
+
+This does not close the broader Golden Journey P1. Company-document parsing/OCR, durable
+Application Agent execution, user assignment and notifications, official form templates, Admin
+operations, evaluation evidence, and billing/enterprise packaging remain open in their planned
+phases.

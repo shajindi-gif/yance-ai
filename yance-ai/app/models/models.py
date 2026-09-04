@@ -503,6 +503,83 @@ class ApplicationActivity(Base, TenantOwnedMixin):
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
 
+class ApplicationDocumentLink(Base, TimestampMixin, TenantOwnedMixin):
+    """Tenant-scoped association between a case, a company document and an optional requirement."""
+
+    __tablename__ = "application_document_links"
+    __table_args__ = (
+        UniqueConstraint(
+            "application_id",
+            "document_id",
+            "requirement_id",
+            name="uq_application_document_requirement",
+            postgresql_nulls_not_distinct=True,
+        ),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    application_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("applications.id", ondelete="CASCADE"), index=True
+    )
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), index=True
+    )
+    requirement_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("application_requirements.id", ondelete="SET NULL"),
+        index=True,
+    )
+    added_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    status: Mapped[str] = mapped_column(String(40), default="linked")
+
+
+class ApplicationArtifact(Base, TimestampMixin, TenantOwnedMixin):
+    """Immutable source-pinned Application draft; edits create a new version."""
+
+    __tablename__ = "application_artifacts"
+    __table_args__ = (
+        UniqueConstraint(
+            "application_id", "artifact_type", "version", name="uq_application_artifact_version"
+        ),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    application_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("applications.id", ondelete="CASCADE"), index=True
+    )
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    artifact_type: Mapped[str] = mapped_column(String(80), default="application_brief")
+    title: Mapped[str] = mapped_column(String(500))
+    version: Mapped[int]
+    status: Mapped[str] = mapped_column(String(40), default="draft", index=True)
+    generation_method: Mapped[str] = mapped_column(
+        String(120), default="deterministic-evidence-v1"
+    )
+    content_json: Mapped[dict] = mapped_column(JSON)
+    source_snapshot_json: Mapped[dict] = mapped_column(JSON)
+    checksum_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    reviewed_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    review_note: Mapped[str | None] = mapped_column(Text)
+
+
+class ApplicationComment(Base, TenantOwnedMixin):
+    __tablename__ = "application_comments"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    application_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("applications.id", ondelete="CASCADE"), index=True
+    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    body: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
 class Order(Base, TimestampMixin, TenantOwnedMixin):
     __tablename__ = "orders"
     __table_args__ = (

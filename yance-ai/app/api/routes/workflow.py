@@ -1,10 +1,11 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Literal
+from urllib.parse import quote
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -14,10 +15,14 @@ from app.models.models import (
     AnalyticsEvent,
     Application,
     ApplicationActivity,
+    ApplicationArtifact,
+    ApplicationComment,
+    ApplicationDocumentLink,
     ApplicationRequirement,
     Company,
     CompanyProfile,
     CompanyProfileVersion,
+    Document,
     EligibilityResult,
     Evidence,
     Opportunity,
@@ -28,8 +33,19 @@ from app.models.models import (
     Task,
     UserRole,
 )
-from app.schemas.schemas import ApplicationCreate, ApplicationOut, OpportunityOut
+from app.schemas.schemas import (
+    ApplicationAgentAction,
+    ApplicationArtifactEdit,
+    ApplicationArtifactReview,
+    ApplicationCommentCreate,
+    ApplicationCreate,
+    ApplicationDocumentLinkCreate,
+    ApplicationOut,
+    OpportunityOut,
+)
 from app.services.agents.harness import AgentHarness
+from app.services.applications.artifacts import render_artifact
+from app.services.applications.workspace import create_artifact, readiness, workspace_records
 from app.services.policies.visibility import visible_policy_clause
 
 router = APIRouter(tags=["policy-scan", "opportunity", "application"])
@@ -81,6 +97,17 @@ APPLICATION_TRANSITIONS = {
     "submitted": {"completed"},
     "completed": set(),
     "cancelled": set(),
+}
+
+STATUS_STAGE = {
+    "draft": "草稿",
+    "preparing": "材料准备",
+    "review": "人工复核",
+    "revision_requested": "修改中",
+    "approved": "已批准",
+    "submitted": "已提交",
+    "completed": "已完成",
+    "cancelled": "已取消",
 }
 
 
@@ -390,6 +417,23 @@ def create_application(
     )
     db.add(application)
     db.flush()
+    db.add(
+        Task(
+            tenant_id=principal.tenant_id,
+            user_id=principal.user.id,
+            company_id=company.id,
+            application_id=application.id,
+            task_type="application_workspace",
+            title=f"{payload.title} — 材料准备与复核",
+            status="draft",
+            agent_type="application_agent",
+            workflow_version="app-workspace-v1",
+            estimated_price=0,
+            payment_status="free",
+            progress=0,
+            current_stage="材料准备",
+        )
+    )
     if opportunity:
         eligibility = db.scalar(
             select(EligibilityResult).where(
@@ -489,14 +533,8 @@ def get_application(
         if application.opportunity_id
         else None
     )
-    requirements = db.scalars(
-        select(ApplicationRequirement)
-        .where(
-            ApplicationRequirement.application_id == application.id,
-            ApplicationRequirement.tenant_id == principal.tenant_id,
-        )
-        .order_by(ApplicationRequirement.sort_order)
-    ).all()
+    records = workspace_records(db, application)
+    requirements = records["requirements"]
     activities = db.scalars(
         select(ApplicationActivity)
         .where(
@@ -504,6 +542,36 @@ def get_application(
             ApplicationActivity.tenant_id == principal.tenant_id,
         )
         .order_by(ApplicationActivity.occurred_at.desc())
+    ).all()
+    artifacts = db.scalars(
+        select(ApplicationArtifact)
+        .where(
+            ApplicationArtifact.application_id == application.id,
+            ApplicationArtifact.tenant_id == principal.tenant_id,
+        )
+        .order_by(ApplicationArtifact.version.desc())
+    ).all()
+    linked_documents = db.execute(
+        select(ApplicationDocumentLink, Document)
+        .join(Document, Document.id == ApplicationDocumentLink.document_id)
+        .where(
+            ApplicationDocumentLink.application_id == application.id,
+            ApplicationDocumentLink.tenant_id == principal.tenant_id,
+            Document.tenant_id == principal.tenant_id,
+        )
+        .order_by(ApplicationDocumentLink.created_at.desc())
+    ).all()
+    tasks = db.scalars(
+        select(Task).where(
+            Task.application_id == application.id,
+            Task.tenant_id == principal.tenant_id,
+        ).order_by(Task.created_at)
+    ).all()
+    comments = db.scalars(
+        select(ApplicationComment).where(
+            ApplicationComment.application_id == application.id,
+            ApplicationComment.tenant_id == principal.tenant_id,
+        ).order_by(ApplicationComment.created_at.desc())
     ).all()
     return {
         **ApplicationOut.model_validate(application).model_dump(mode="json"),
@@ -521,6 +589,7 @@ def get_application(
                 "category": item.category,
                 "status": item.status,
                 "is_hard_gate": item.is_hard_gate,
+                "source": item.source_json,
                 "sort_order": item.sort_order,
             }
             for item in requirements
@@ -533,6 +602,69 @@ def get_application(
                 "occurred_at": item.occurred_at.isoformat(),
             }
             for item in activities
+        ],
+        "readiness": readiness(records),
+        "evidence": [
+            {
+                "id": str(item.id),
+                "source_title": item.source_title,
+                "source_url": item.source_url,
+                "issuer": item.issuer,
+                "article": item.article,
+                "quote": item.quote,
+                "confidence": float(item.confidence),
+                "verified": item.verified,
+            }
+            for item in records["evidence"]
+        ],
+        "documents": [
+            {
+                "link_id": str(link.id),
+                "document_id": str(document.id),
+                "requirement_id": str(link.requirement_id) if link.requirement_id else None,
+                "filename": document.filename,
+                "content_type": document.content_type,
+                "status": document.status,
+                "ingestion_status": document.ingestion_status,
+                "created_at": link.created_at.isoformat(),
+            }
+            for link, document in linked_documents
+        ],
+        "generated": [
+            {
+                "id": str(item.id),
+                "artifact_type": item.artifact_type,
+                "title": item.title,
+                "version": item.version,
+                "status": item.status,
+                "generation_method": item.generation_method,
+                "checksum_sha256": item.checksum_sha256,
+                "source_snapshot": item.source_snapshot_json,
+                "content": item.content_json,
+                "review_note": item.review_note,
+                "reviewed_at": item.reviewed_at.isoformat() if item.reviewed_at else None,
+                "created_at": item.created_at.isoformat(),
+            }
+            for item in artifacts
+        ],
+        "tasks": [
+            {
+                "id": str(item.id),
+                "title": item.title,
+                "status": item.status,
+                "progress": item.progress,
+                "current_stage": item.current_stage,
+            }
+            for item in tasks
+        ],
+        "comments": [
+            {
+                "id": str(item.id),
+                "user_id": str(item.user_id) if item.user_id else None,
+                "body": item.body,
+                "created_at": item.created_at.isoformat(),
+            }
+            for item in comments
         ],
     }
 
@@ -553,6 +685,36 @@ def update_application_status(
             status_code=409,
             detail=f"Application cannot transition from {application.status} to {payload.status}",
         )
+    if payload.status == "review":
+        records = workspace_records(db, application)
+        state = readiness(records)
+        latest_artifact = db.scalar(
+            select(ApplicationArtifact)
+            .where(
+                ApplicationArtifact.application_id == application.id,
+                ApplicationArtifact.tenant_id == principal.tenant_id,
+            )
+            .order_by(ApplicationArtifact.version.desc())
+        )
+        if not latest_artifact:
+            raise HTTPException(status_code=409, detail="请先生成申报工作稿再提交复核")
+        if latest_artifact.status == "rejected":
+            raise HTTPException(status_code=409, detail="最新申报工作稿已退回，请先修复或编辑")
+        if not state["can_submit_for_review"]:
+            raise HTTPException(status_code=409, detail={"message": "申报尚未就绪", **state})
+    if payload.status == "approved":
+        if principal.role not in {UserRole.owner, UserRole.admin}:
+            raise HTTPException(status_code=403, detail="Only owners and admins can approve")
+        latest_artifact = db.scalar(
+            select(ApplicationArtifact)
+            .where(
+                ApplicationArtifact.application_id == application.id,
+                ApplicationArtifact.tenant_id == principal.tenant_id,
+            )
+            .order_by(ApplicationArtifact.version.desc())
+        )
+        if not latest_artifact or latest_artifact.status != "approved":
+            raise HTTPException(status_code=409, detail="最新申报工作稿尚未通过人工复核")
     previous = application.status
     application.status = payload.status
     progress_by_status = {
@@ -566,6 +728,11 @@ def update_application_status(
         "cancelled": application.progress,
     }
     application.progress = progress_by_status[payload.status]
+    application.review_status = {
+        "review": "pending",
+        "revision_requested": "changes_requested",
+        "approved": "approved",
+    }.get(payload.status, application.review_status)
     db.add(
         ApplicationActivity(
             tenant_id=principal.tenant_id,
@@ -576,6 +743,13 @@ def update_application_status(
             metadata_json={"reason": payload.reason} if payload.reason else {},
         )
     )
+    for task in db.scalars(select(Task).where(
+        Task.application_id == application.id,
+        Task.tenant_id == principal.tenant_id,
+    )).all():
+        task.status = payload.status
+        task.progress = application.progress
+        task.current_stage = STATUS_STAGE[payload.status]
     db.commit()
     db.refresh(application)
     return application
@@ -616,3 +790,346 @@ def update_requirement_status(
         )
     )
     db.commit()
+
+
+@router.post("/applications/{application_id}/documents", status_code=201)
+def link_application_document(
+    application_id: UUID,
+    payload: ApplicationDocumentLinkCreate,
+    principal: Principal = Depends(write_principal),
+    db: Session = Depends(get_db),
+):
+    application = require_tenant_resource(
+        db, Application, application_id, principal.tenant_id, "Application"
+    )
+    document = require_tenant_resource(
+        db, Document, payload.document_id, principal.tenant_id, "Document"
+    )
+    if document.company_id and document.company_id != application.company_id:
+        raise HTTPException(status_code=409, detail="Document belongs to another company")
+    if payload.requirement_id:
+        requirement = db.scalar(select(ApplicationRequirement).where(
+            ApplicationRequirement.id == payload.requirement_id,
+            ApplicationRequirement.application_id == application.id,
+            ApplicationRequirement.tenant_id == principal.tenant_id,
+        ))
+        if not requirement:
+            raise HTTPException(status_code=404, detail="Requirement not found")
+    existing = db.scalar(select(ApplicationDocumentLink).where(
+        ApplicationDocumentLink.application_id == application.id,
+        ApplicationDocumentLink.document_id == document.id,
+        ApplicationDocumentLink.requirement_id == payload.requirement_id,
+        ApplicationDocumentLink.tenant_id == principal.tenant_id,
+    ))
+    if existing:
+        return {"id": str(existing.id), "status": existing.status}
+    link = ApplicationDocumentLink(
+        tenant_id=principal.tenant_id,
+        application_id=application.id,
+        document_id=document.id,
+        requirement_id=payload.requirement_id,
+        added_by=principal.user.id,
+        status="linked",
+    )
+    db.add(link)
+    db.add(ApplicationActivity(
+        tenant_id=principal.tenant_id,
+        application_id=application.id,
+        actor_user_id=principal.user.id,
+        action="document_linked",
+        summary=f"已关联企业资料“{document.filename}”",
+        metadata_json={"document_id": str(document.id)},
+    ))
+    db.commit()
+    db.refresh(link)
+    return {"id": str(link.id), "status": link.status}
+
+
+@router.post("/applications/{application_id}/comments", status_code=201)
+def create_application_comment(
+    application_id: UUID,
+    payload: ApplicationCommentCreate,
+    principal: Principal = Depends(write_principal),
+    db: Session = Depends(get_db),
+):
+    application = require_tenant_resource(
+        db, Application, application_id, principal.tenant_id, "Application"
+    )
+    body = payload.body.strip()
+    if not body:
+        raise HTTPException(status_code=422, detail="Comment cannot be blank")
+    comment = ApplicationComment(
+        tenant_id=principal.tenant_id,
+        application_id=application.id,
+        user_id=principal.user.id,
+        body=body,
+    )
+    db.add(comment)
+    db.add(ApplicationActivity(
+        tenant_id=principal.tenant_id,
+        application_id=application.id,
+        actor_user_id=principal.user.id,
+        action="comment_added",
+        summary="新增申报协作评论",
+        metadata_json={"comment_id": str(comment.id)},
+    ))
+    db.commit()
+    db.refresh(comment)
+    return {"id": str(comment.id), "body": comment.body, "created_at": comment.created_at}
+
+
+def _artifact_out(item: ApplicationArtifact) -> dict:
+    return {
+        "id": str(item.id),
+        "title": item.title,
+        "version": item.version,
+        "status": item.status,
+        "generation_method": item.generation_method,
+        "checksum_sha256": item.checksum_sha256,
+        "source_snapshot": item.source_snapshot_json,
+        "content": item.content_json,
+        "review_note": item.review_note,
+        "created_at": item.created_at,
+    }
+
+
+@router.post("/applications/{application_id}/agent-actions")
+def application_agent_action(
+    application_id: UUID,
+    payload: ApplicationAgentAction,
+    principal: Principal = Depends(write_principal),
+    db: Session = Depends(get_db),
+):
+    application = require_tenant_resource(
+        db, Application, application_id, principal.tenant_id, "Application"
+    )
+    artifact_write_states = {"draft", "preparing", "revision_requested"}
+    if (
+        payload.action in {"generate", "fix"}
+        and application.status not in artifact_write_states
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Artifacts cannot be generated while application is {application.status}",
+        )
+    records = workspace_records(db, application)
+    state = readiness(records)
+    response: dict = {
+        "action": payload.action,
+        "engine": "deterministic-evidence-v1",
+        "artifact": None,
+    }
+    if payload.action == "check":
+        response.update({"message": "已按材料硬门槛、资格状态与证据完整性完成检查。", "readiness": state})
+    elif payload.action in {"ask", "explain"}:
+        if payload.action == "ask" and not (payload.question or "").strip():
+            raise HTTPException(status_code=422, detail="Question is required for ask")
+        eligibility = records["eligibility"]
+        response.update({
+            "message": eligibility.summary if eligibility else "当前没有可引用的资格判断。",
+            "readiness": state,
+            "citations": [
+                {
+                    "source_title": item.source_title,
+                    "article": item.article,
+                    "quote": item.quote,
+                    "verified": item.verified,
+                }
+                for item in records["evidence"]
+            ],
+        })
+    else:
+        latest = db.scalar(
+            select(ApplicationArtifact)
+            .where(
+                ApplicationArtifact.application_id == application.id,
+                ApplicationArtifact.tenant_id == principal.tenant_id,
+            )
+            .order_by(ApplicationArtifact.version.desc())
+        )
+        if payload.action == "fix" and not latest:
+            raise HTTPException(status_code=409, detail="No generated artifact to fix")
+        if payload.action == "fix" and (
+            application.status != "revision_requested" or latest.status != "rejected"
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="Fix requires a rejected latest artifact and revision_requested status",
+            )
+        fix_note = (payload.instruction or (latest.review_note if latest else None) or "").strip()
+        if payload.action == "fix" and not fix_note:
+            raise HTTPException(status_code=422, detail="Fix instruction or review note is required")
+        try:
+            artifact = create_artifact(
+                db,
+                application,
+                user_id=principal.user.id,
+                revision_note=fix_note if payload.action == "fix" else None,
+            )
+        except ValueError as error:
+            raise HTTPException(status_code=409, detail=str(error)) from error
+        db.add_all([
+            ApplicationActivity(
+                tenant_id=principal.tenant_id,
+                application_id=application.id,
+                actor_user_id=principal.user.id,
+                action="artifact_generated" if payload.action == "generate" else "artifact_regenerated",
+                summary=f"生成申报工作稿 v{artifact.version}",
+                metadata_json={"artifact_id": str(artifact.id), "method": artifact.generation_method},
+            ),
+            AnalyticsEvent(
+                tenant_id=principal.tenant_id,
+                user_id=principal.user.id,
+                name="document_generated",
+                properties={"application_id": str(application.id), "artifact_id": str(artifact.id)},
+            ),
+        ])
+        db.commit()
+        db.refresh(artifact)
+        response.update({"message": f"已生成版本 v{artifact.version}，等待人工复核。", "artifact": _artifact_out(artifact), "readiness": state})
+        return response
+    db.add(ApplicationActivity(
+        tenant_id=principal.tenant_id,
+        application_id=application.id,
+        actor_user_id=principal.user.id,
+        action=f"workspace_{payload.action}",
+        summary=f"执行工作区动作：{payload.action}",
+        metadata_json={"engine": "deterministic-evidence-v1"},
+    ))
+    db.commit()
+    return response
+
+
+@router.post("/applications/{application_id}/artifacts/{artifact_id}/review")
+def review_application_artifact(
+    application_id: UUID,
+    artifact_id: UUID,
+    payload: ApplicationArtifactReview,
+    principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin)),
+    db: Session = Depends(get_db),
+):
+    application = require_tenant_resource(
+        db, Application, application_id, principal.tenant_id, "Application"
+    )
+    artifact = db.scalar(select(ApplicationArtifact).where(
+        ApplicationArtifact.id == artifact_id,
+        ApplicationArtifact.application_id == application.id,
+        ApplicationArtifact.tenant_id == principal.tenant_id,
+    ))
+    if not artifact:
+        raise HTTPException(status_code=404, detail="Artifact not found")
+    if application.status != "review":
+        raise HTTPException(status_code=409, detail="Application must be in review")
+    if payload.decision == "reject" and not (payload.note or "").strip():
+        raise HTTPException(status_code=422, detail="Review note is required when rejecting")
+    latest_version = db.scalar(select(func.max(ApplicationArtifact.version)).where(
+        ApplicationArtifact.application_id == application.id,
+        ApplicationArtifact.artifact_type == artifact.artifact_type,
+    ))
+    if artifact.version != latest_version:
+        raise HTTPException(status_code=409, detail="Only the latest artifact version can be reviewed")
+    artifact.status = "approved" if payload.decision == "approve" else "rejected"
+    artifact.reviewed_by = principal.user.id
+    artifact.reviewed_at = datetime.now(UTC)
+    artifact.review_note = payload.note
+    application.review_status = "artifact_approved" if payload.decision == "approve" else "changes_requested"
+    if payload.decision == "reject":
+        application.status = "revision_requested"
+        application.progress = 60
+        for task in db.scalars(select(Task).where(
+            Task.application_id == application.id,
+            Task.tenant_id == principal.tenant_id,
+        )).all():
+            task.status = "revision_requested"
+            task.progress = 60
+            task.current_stage = "修改中"
+    db.add(ApplicationActivity(
+        tenant_id=principal.tenant_id,
+        application_id=application.id,
+        actor_user_id=principal.user.id,
+        action=f"artifact_{artifact.status}",
+        summary=f"申报工作稿 v{artifact.version} 已{'批准' if payload.decision == 'approve' else '退回'}",
+        metadata_json={"artifact_id": str(artifact.id)},
+    ))
+    db.commit()
+    db.refresh(artifact)
+    return _artifact_out(artifact)
+
+
+@router.post("/applications/{application_id}/artifacts/{artifact_id}/edit", status_code=201)
+def edit_application_artifact(
+    application_id: UUID,
+    artifact_id: UUID,
+    payload: ApplicationArtifactEdit,
+    principal: Principal = Depends(write_principal),
+    db: Session = Depends(get_db),
+):
+    application = require_tenant_resource(
+        db, Application, application_id, principal.tenant_id, "Application"
+    )
+    source = db.scalar(select(ApplicationArtifact).where(
+        ApplicationArtifact.id == artifact_id,
+        ApplicationArtifact.application_id == application.id,
+        ApplicationArtifact.tenant_id == principal.tenant_id,
+    ))
+    if not source:
+        raise HTTPException(status_code=404, detail="Artifact not found")
+    if application.status not in {"draft", "preparing", "revision_requested"}:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Artifacts cannot be edited while application is {application.status}",
+        )
+    latest_version = db.scalar(select(func.max(ApplicationArtifact.version)).where(
+        ApplicationArtifact.application_id == application.id,
+        ApplicationArtifact.artifact_type == source.artifact_type,
+    ))
+    if source.version != latest_version:
+        raise HTTPException(status_code=409, detail="Only the latest artifact version can be edited")
+    artifact = create_artifact(
+        db,
+        application,
+        user_id=principal.user.id,
+        title=payload.title or source.title,
+        executive_summary=payload.executive_summary or source.content_json.get("executive_summary"),
+        revision_note=f"基于 v{source.version} 人工编辑",
+    )
+    db.add(ApplicationActivity(
+        tenant_id=principal.tenant_id,
+        application_id=application.id,
+        actor_user_id=principal.user.id,
+        action="artifact_edited",
+        summary=f"人工编辑生成申报工作稿 v{artifact.version}",
+        metadata_json={"artifact_id": str(artifact.id), "source_artifact_id": str(source.id)},
+    ))
+    db.commit()
+    db.refresh(artifact)
+    return _artifact_out(artifact)
+
+
+@router.get("/applications/{application_id}/artifacts/{artifact_id}/download")
+def download_application_artifact(
+    application_id: UUID,
+    artifact_id: UUID,
+    export_format: Literal["docx", "pdf", "xlsx", "json"] = Query(
+        default="docx", alias="format"
+    ),
+    principal: Principal = Depends(get_principal),
+    db: Session = Depends(get_db),
+):
+    application = require_tenant_resource(
+        db, Application, application_id, principal.tenant_id, "Application"
+    )
+    artifact = db.scalar(select(ApplicationArtifact).where(
+        ApplicationArtifact.id == artifact_id,
+        ApplicationArtifact.application_id == application.id,
+        ApplicationArtifact.tenant_id == principal.tenant_id,
+    ))
+    if not artifact:
+        raise HTTPException(status_code=404, detail="Artifact not found")
+    body, media_type, extension = render_artifact(artifact.content_json, export_format)
+    filename = quote(f"{artifact.title}_v{artifact.version}.{extension}")
+    return Response(
+        content=body,
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"},
+    )

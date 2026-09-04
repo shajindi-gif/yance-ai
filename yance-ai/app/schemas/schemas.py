@@ -2,7 +2,7 @@ from datetime import date, datetime
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 from app.models.models import UserRole
 
@@ -302,6 +302,37 @@ class ApplicationOut(ApplicationCreate, ORMModel):
     progress: int
     review_status: str
     created_at: datetime
+
+
+class ApplicationDocumentLinkCreate(BaseModel):
+    document_id: UUID
+    requirement_id: UUID | None = None
+
+
+class ApplicationCommentCreate(BaseModel):
+    body: str = Field(min_length=1, max_length=4000)
+
+
+class ApplicationAgentAction(BaseModel):
+    action: Literal["ask", "generate", "check", "fix", "explain"]
+    question: str | None = Field(default=None, max_length=1000)
+    instruction: str | None = Field(default=None, max_length=2000)
+
+
+class ApplicationArtifactEdit(BaseModel):
+    title: str | None = Field(default=None, min_length=2, max_length=500)
+    executive_summary: str | None = Field(default=None, min_length=2, max_length=5000)
+
+    @model_validator(mode="after")
+    def require_change(self) -> "ApplicationArtifactEdit":
+        if self.title is None and self.executive_summary is None:
+            raise ValueError("At least one editable field is required")
+        return self
+
+
+class ApplicationArtifactReview(BaseModel):
+    decision: Literal["approve", "reject"]
+    note: str | None = Field(default=None, max_length=2000)
 
 
 class OrderCreate(BaseModel):

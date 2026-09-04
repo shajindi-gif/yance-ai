@@ -239,6 +239,7 @@ export interface ApplicationRequirement {
   category: string;
   status: string;
   is_hard_gate: boolean;
+  source: Record<string, unknown>;
   sort_order: number;
 }
 
@@ -254,6 +255,78 @@ export interface ApplicationDetail extends ApplicationSummary {
   opportunity: Opportunity | null;
   requirements: ApplicationRequirement[];
   activities: ApplicationActivity[];
+  readiness: {
+    requirement_total: number;
+    requirement_ready: number;
+    hard_gate_blockers: string[];
+    missing_requirements: string[];
+    linked_documents: number;
+    verified_evidence: number;
+    blockers: string[];
+    can_submit_for_review: boolean;
+  };
+  evidence: Array<{
+    id: string;
+    source_title: string;
+    source_url: string | null;
+    issuer: string | null;
+    article: string | null;
+    quote: string;
+    confidence: number;
+    verified: boolean;
+  }>;
+  documents: Array<{
+    link_id: string;
+    document_id: string;
+    requirement_id: string | null;
+    filename: string;
+    content_type: string;
+    status: string;
+    ingestion_status: string;
+    created_at: string;
+  }>;
+  generated: ApplicationArtifact[];
+  tasks: Array<{
+    id: string;
+    title: string;
+    status: string;
+    progress: number;
+    current_stage: string | null;
+  }>;
+  comments: Array<{
+    id: string;
+    user_id: string | null;
+    body: string;
+    created_at: string;
+  }>;
+}
+
+export interface ApplicationArtifact {
+  id: string;
+  artifact_type?: string;
+  title: string;
+  version: number;
+  status: string;
+  generation_method: string;
+  checksum_sha256: string;
+  source_snapshot: Record<string, unknown>;
+  content: {
+    executive_summary?: string;
+    disclaimer?: string;
+    [key: string]: unknown;
+  };
+  review_note: string | null;
+  reviewed_at?: string | null;
+  created_at: string;
+}
+
+export interface ApplicationAgentResponse {
+  action: 'ask' | 'generate' | 'check' | 'fix' | 'explain';
+  engine: string;
+  message: string;
+  readiness?: ApplicationDetail['readiness'];
+  citations?: Array<{ source_title: string; article: string | null; quote: string; verified: boolean }>;
+  artifact: ApplicationArtifact | null;
 }
 
 export interface Order {
@@ -752,6 +825,41 @@ class ApiClient {
       `/applications/${encodeURIComponent(applicationId)}/requirements/${encodeURIComponent(requirementId)}`,
       { method: 'PATCH', body: JSON.stringify({ status }) },
     );
+  }
+
+  async linkApplicationDocument(applicationId: string, documentId: string, requirementId?: string): Promise<{ id: string; status: string }> {
+    return this.request(`/applications/${encodeURIComponent(applicationId)}/documents`, {
+      method: 'POST',
+      body: JSON.stringify({ document_id: documentId, requirement_id: requirementId || null }),
+    });
+  }
+
+  async addApplicationComment(applicationId: string, body: string): Promise<void> {
+    await this.request(`/applications/${encodeURIComponent(applicationId)}/comments`, {
+      method: 'POST', body: JSON.stringify({ body }),
+    });
+  }
+
+  async runApplicationAction(applicationId: string, action: ApplicationAgentResponse['action'], input?: { question?: string; instruction?: string }): Promise<ApplicationAgentResponse> {
+    return this.request(`/applications/${encodeURIComponent(applicationId)}/agent-actions`, {
+      method: 'POST', body: JSON.stringify({ action, ...input }),
+    });
+  }
+
+  async reviewApplicationArtifact(applicationId: string, artifactId: string, decision: 'approve' | 'reject', note?: string): Promise<ApplicationArtifact> {
+    return this.request(`/applications/${encodeURIComponent(applicationId)}/artifacts/${encodeURIComponent(artifactId)}/review`, {
+      method: 'POST', body: JSON.stringify({ decision, note: note || null }),
+    });
+  }
+
+  async editApplicationArtifact(applicationId: string, artifactId: string, executiveSummary: string): Promise<ApplicationArtifact> {
+    return this.request(`/applications/${encodeURIComponent(applicationId)}/artifacts/${encodeURIComponent(artifactId)}/edit`, {
+      method: 'POST', body: JSON.stringify({ executive_summary: executiveSummary }),
+    });
+  }
+
+  async downloadApplicationArtifact(applicationId: string, artifactId: string, format: 'docx' | 'pdf' | 'xlsx' | 'json'): Promise<Blob> {
+    return this.requestBlob(`/applications/${encodeURIComponent(applicationId)}/artifacts/${encodeURIComponent(artifactId)}/download?format=${format}`);
   }
 
   // Policies

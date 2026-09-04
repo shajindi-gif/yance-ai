@@ -530,9 +530,65 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             assert workspace.status_code == 200
             assert workspace.json()["company_name"] == f"Workflow Company {suffix}"
             assert workspace.json()["requirements"]
+            assert workspace.json()["tasks"][0]["current_stage"] == "材料准备"
+            assert workspace.json()["evidence"][0]["verified"] is True
             assert workspace.json()["activities"][0]["action"] == "application_created"
 
             requirement_id = workspace.json()["requirements"][0]["id"]
+            linked = client.post(
+                f"/api/v1/applications/{application_id}/documents",
+                headers=headers,
+                json={"document_id": document_id, "requirement_id": requirement_id},
+            )
+            assert linked.status_code == 201, linked.text
+            duplicate_link = client.post(
+                f"/api/v1/applications/{application_id}/documents",
+                headers=headers,
+                json={"document_id": document_id, "requirement_id": requirement_id},
+            )
+            assert duplicate_link.status_code == 201
+            assert duplicate_link.json()["id"] == linked.json()["id"]
+
+            comment = client.post(
+                f"/api/v1/applications/{application_id}/comments",
+                headers=headers,
+                json={"body": "请复核研发费用材料。"},
+            )
+            assert comment.status_code == 201, comment.text
+
+            empty_ask = client.post(
+                f"/api/v1/applications/{application_id}/agent-actions",
+                headers=headers,
+                json={"action": "ask"},
+            )
+            assert empty_ask.status_code == 422
+            checked = client.post(
+                f"/api/v1/applications/{application_id}/agent-actions",
+                headers=headers,
+                json={"action": "check"},
+            )
+            assert checked.status_code == 200
+            assert checked.json()["engine"] == "deterministic-evidence-v1"
+            assert checked.json()["readiness"]["verified_evidence"] == 1
+            explained = client.post(
+                f"/api/v1/applications/{application_id}/agent-actions",
+                headers=headers,
+                json={"action": "explain"},
+            )
+            assert explained.status_code == 200
+            assert explained.json()["citations"][0]["quote"] == quote
+            generated = client.post(
+                f"/api/v1/applications/{application_id}/agent-actions",
+                headers=headers,
+                json={"action": "generate"},
+            )
+            assert generated.status_code == 200, generated.text
+            artifact_v1 = generated.json()["artifact"]
+            assert artifact_v1["version"] == 1
+            assert artifact_v1["source_snapshot"]["policy_version_id"] == str(
+                policy_version_id
+            )
+
             requirement_update = client.patch(
                 f"/api/v1/applications/{application_id}/requirements/{requirement_id}",
                 headers=headers,
@@ -548,6 +604,90 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             assert preparing.status_code == 200
             assert preparing.json()["progress"] == 20
 
+            reviewing = client.patch(
+                f"/api/v1/applications/{application_id}/status",
+                headers=headers,
+                json={"status": "review"},
+            )
+            assert reviewing.status_code == 200, reviewing.text
+
+            rejected = client.post(
+                f"/api/v1/applications/{application_id}/artifacts/{artifact_v1['id']}/review",
+                headers=headers,
+                json={"decision": "reject", "note": "补充材料状态"},
+            )
+            assert rejected.status_code == 200
+            assert rejected.json()["status"] == "rejected"
+            fixed = client.post(
+                f"/api/v1/applications/{application_id}/agent-actions",
+                headers=headers,
+                json={"action": "fix", "instruction": "根据最新材料状态重新生成"},
+            )
+            assert fixed.status_code == 200
+            artifact_v2 = fixed.json()["artifact"]
+            assert artifact_v2["version"] == 2
+            edited = client.post(
+                f"/api/v1/applications/{application_id}/artifacts/{artifact_v2['id']}/edit",
+                headers=headers,
+                json={"executive_summary": "人工确认后的申报摘要。"},
+            )
+            assert edited.status_code == 201
+            artifact_v3 = edited.json()
+            assert artifact_v3["version"] == 3
+            assert artifact_v3["content"]["executive_summary"] == "人工确认后的申报摘要。"
+
+            reviewing_again = client.patch(
+                f"/api/v1/applications/{application_id}/status",
+                headers=headers,
+                json={"status": "review"},
+            )
+            assert reviewing_again.status_code == 200, reviewing_again.text
+            stale_review = client.post(
+                f"/api/v1/applications/{application_id}/artifacts/{artifact_v1['id']}/review",
+                headers=headers,
+                json={"decision": "approve"},
+            )
+            assert stale_review.status_code == 409
+            approved_artifact = client.post(
+                f"/api/v1/applications/{application_id}/artifacts/{artifact_v3['id']}/review",
+                headers=headers,
+                json={"decision": "approve", "note": "内容已人工复核"},
+            )
+            assert approved_artifact.status_code == 200
+            assert approved_artifact.json()["status"] == "approved"
+
+            for export_format, expected_type in (
+                ("docx", "wordprocessingml.document"),
+                ("xlsx", "spreadsheetml.sheet"),
+                ("json", "application/json"),
+            ):
+                downloaded = client.get(
+                    f"/api/v1/applications/{application_id}/artifacts/{artifact_v3['id']}/download?format={export_format}",
+                    headers=headers,
+                )
+                assert downloaded.status_code == 200
+                assert expected_type in downloaded.headers["content-type"]
+
+            application_approved = client.patch(
+                f"/api/v1/applications/{application_id}/status",
+                headers=headers,
+                json={"status": "approved"},
+            )
+            assert application_approved.status_code == 200, application_approved.text
+
+            terminal_generate = client.post(
+                f"/api/v1/applications/{application_id}/agent-actions",
+                headers=headers,
+                json={"action": "generate"},
+            )
+            assert terminal_generate.status_code == 409
+            terminal_edit = client.post(
+                f"/api/v1/applications/{application_id}/artifacts/{artifact_v3['id']}/edit",
+                headers=headers,
+                json={"executive_summary": "不应覆盖已批准版本"},
+            )
+            assert terminal_edit.status_code == 409
+
             invalid_transition = client.patch(
                 f"/api/v1/applications/{application_id}/status",
                 headers=headers,
@@ -561,6 +701,9 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             assert updated_workspace.status_code == 200
             assert updated_workspace.json()["requirements"][0]["status"] == "collecting"
             assert updated_workspace.json()["activities"][0]["action"] == "status_changed"
+            assert len(updated_workspace.json()["generated"]) == 3
+            assert len(updated_workspace.json()["documents"]) == 1
+            assert len(updated_workspace.json()["comments"]) == 1
 
             second_company = client.post(
                 "/api/v1/companies",
