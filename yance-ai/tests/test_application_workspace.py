@@ -13,7 +13,14 @@ def _content() -> dict:
         "eligibility": {"status": "POTENTIALLY_ELIGIBLE", "summary": "等待人工复核"},
         "criteria": [{"name": "行业要求", "actual": "人工智能", "status": "PASS"}],
         "requirements": [{"title": "营业执照", "description": "企业证照", "status": "ready"}],
-        "evidence": [{"source_title": "测试政策", "article": "第一条", "quote": "支持人工智能企业", "verified": True}],
+        "evidence": [
+            {
+                "source_title": "测试政策",
+                "article": "第一条",
+                "quote": "支持人工智能企业",
+                "verified": True,
+            }
+        ],
         "revision_note": None,
     }
 

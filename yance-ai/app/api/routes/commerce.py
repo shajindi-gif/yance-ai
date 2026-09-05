@@ -17,6 +17,7 @@ from app.schemas.schemas import (
     OrderOut,
     PaymentCreate,
 )
+from app.services.analytics.events import record_event
 from app.services.invoice.generator import generate_invoice_pdf
 
 router = APIRouter(tags=["orders", "payments", "invoices"])
@@ -69,6 +70,15 @@ def create_order(
         status="created",
     )
     db.add(order)
+    db.flush()
+    record_event(
+        db,
+        tenant_id=principal.tenant_id,
+        user_id=principal.user.id,
+        name="checkout_started",
+        event_key=f"checkout_started:{order.id}",
+        properties={"order_id": str(order.id), "product_code": order.product_code},
+    )
     db.commit()
     db.refresh(order)
     return order

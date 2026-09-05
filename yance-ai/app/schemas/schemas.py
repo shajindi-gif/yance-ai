@@ -54,6 +54,7 @@ class UserOut(ORMModel):
     full_name: str
     role: UserRole
     is_active: bool
+    is_platform_admin: bool
 
 
 class TenantOut(ORMModel):
@@ -61,6 +62,7 @@ class TenantOut(ORMModel):
     name: str
     slug: str
     is_active: bool
+    account_stage: str
 
 
 class CompanyCreate(BaseModel):
@@ -400,6 +402,20 @@ class AnalyticsEventCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     session_id: str | None = None
     properties: dict[str, Any] = Field(default_factory=dict)
+
+
+class FeedbackCreate(BaseModel):
+    category: Literal["product", "data", "policy", "billing", "support"] = "product"
+    message: str = Field(min_length=2, max_length=5000)
+    route: str | None = Field(default=None, max_length=500)
+
+
+class FeedbackStatusUpdate(BaseModel):
+    status: Literal["open", "reviewing", "resolved", "dismissed"]
+
+
+class TenantAccountStageUpdate(BaseModel):
+    account_stage: Literal["unclassified", "poc", "customer", "churned", "internal"]
 
 
 class AgentRunCreate(BaseModel):

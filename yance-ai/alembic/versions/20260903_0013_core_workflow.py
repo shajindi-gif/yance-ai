@@ -15,19 +15,27 @@ branch_labels = None
 depends_on = None
 
 UUID = postgresql.UUID(as_uuid=True)
-USER_ROLE = postgresql.ENUM("owner", "admin", "member", "viewer", name="userrole", create_type=False)
+USER_ROLE = postgresql.ENUM(
+    "owner", "admin", "member", "viewer", name="userrole", create_type=False
+)
 
 
 def upgrade() -> None:
     op.create_table(
         "memberships",
         sa.Column("id", UUID, primary_key=True),
-        sa.Column("tenant_id", UUID, sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "tenant_id", UUID, sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column("user_id", UUID, sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
         sa.Column("role", USER_ROLE, nullable=False),
         sa.Column("status", sa.String(40), nullable=False, server_default="active"),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
         sa.UniqueConstraint("tenant_id", "user_id", name="uq_membership_tenant_user"),
     )
     op.create_index("ix_memberships_tenant_id", "memberships", ["tenant_id"])
@@ -46,15 +54,23 @@ def upgrade() -> None:
     op.create_table(
         "company_profiles",
         sa.Column("id", UUID, primary_key=True),
-        sa.Column("tenant_id", UUID, sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("company_id", UUID, sa.ForeignKey("companies.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "tenant_id", UUID, sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
+        ),
+        sa.Column(
+            "company_id", UUID, sa.ForeignKey("companies.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column("status", sa.String(40), nullable=False, server_default="draft"),
         sa.Column("draft_json", sa.JSON(), nullable=False, server_default=sa.text("'{}'::json")),
         sa.Column("completeness_score", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("published_version", sa.Integer(), nullable=True),
         sa.Column("published_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
         sa.UniqueConstraint("company_id", name="uq_company_profile_company"),
     )
     op.create_index("ix_company_profiles_tenant_id", "company_profiles", ["tenant_id"])
@@ -92,19 +108,27 @@ def upgrade() -> None:
     op.create_table(
         "company_profile_versions",
         sa.Column("id", UUID, primary_key=True),
-        sa.Column("tenant_id", UUID, sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "tenant_id", UUID, sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column(
             "profile_id",
             UUID,
             sa.ForeignKey("company_profiles.id", ondelete="CASCADE"),
             nullable=False,
         ),
-        sa.Column("company_id", UUID, sa.ForeignKey("companies.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "company_id", UUID, sa.ForeignKey("companies.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column("version", sa.Integer(), nullable=False),
         sa.Column("snapshot_json", sa.JSON(), nullable=False),
         sa.Column("completeness_score", sa.Integer(), nullable=False),
-        sa.Column("created_by", UUID, sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
-        sa.Column("published_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_by", UUID, sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+        ),
+        sa.Column(
+            "published_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
         sa.UniqueConstraint("profile_id", "version", name="uq_company_profile_version"),
     )
     op.create_index(
@@ -120,7 +144,9 @@ def upgrade() -> None:
     op.create_table(
         "company_facts",
         sa.Column("id", UUID, primary_key=True),
-        sa.Column("tenant_id", UUID, sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "tenant_id", UUID, sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column(
             "profile_version_id",
             UUID,
@@ -132,24 +158,32 @@ def upgrade() -> None:
         sa.Column("unit", sa.String(40), nullable=True),
         sa.Column("source_document_id", UUID, sa.ForeignKey("documents.id", ondelete="SET NULL")),
         sa.Column("confidence", sa.Numeric(4, 3), nullable=True),
-        sa.Column("extraction_method", sa.String(40), nullable=False, server_default="user_asserted"),
-        sa.Column("verification_status", sa.String(40), nullable=False, server_default="unverified"),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
-        sa.UniqueConstraint(
-            "profile_version_id", "fact_key", name="uq_company_fact_version_key"
+        sa.Column(
+            "extraction_method", sa.String(40), nullable=False, server_default="user_asserted"
         ),
+        sa.Column(
+            "verification_status", sa.String(40), nullable=False, server_default="unverified"
+        ),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
+        sa.UniqueConstraint("profile_version_id", "fact_key", name="uq_company_fact_version_key"),
     )
     op.create_index("ix_company_facts_tenant_id", "company_facts", ["tenant_id"])
-    op.create_index(
-        "ix_company_facts_profile_version_id", "company_facts", ["profile_version_id"]
-    )
+    op.create_index("ix_company_facts_profile_version_id", "company_facts", ["profile_version_id"])
 
     op.create_table(
         "policy_scans",
         sa.Column("id", UUID, primary_key=True),
-        sa.Column("tenant_id", UUID, sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("company_id", UUID, sa.ForeignKey("companies.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "tenant_id", UUID, sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
+        ),
+        sa.Column(
+            "company_id", UUID, sa.ForeignKey("companies.id", ondelete="CASCADE"), nullable=False
+        ),
         sa.Column(
             "profile_version_id",
             UUID,
@@ -165,8 +199,12 @@ def upgrade() -> None:
         sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("error_code", sa.String(120), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
         sa.UniqueConstraint("tenant_id", "idempotency_key", name="uq_policy_scan_idempotency"),
     )
     op.create_index("ix_policy_scans_tenant_id", "policy_scans", ["tenant_id"])
@@ -180,7 +218,9 @@ def upgrade() -> None:
     )
     op.add_column(
         "documents",
-        sa.Column("ingestion_status", sa.String(40), nullable=False, server_default="not_requested"),
+        sa.Column(
+            "ingestion_status", sa.String(40), nullable=False, server_default="not_requested"
+        ),
     )
     op.add_column("documents", sa.Column("ingestion_error", sa.String(240), nullable=True))
     op.add_column("documents", sa.Column("ingested_at", sa.DateTime(timezone=True), nullable=True))
@@ -190,7 +230,9 @@ def upgrade() -> None:
     op.add_column("opportunities", sa.Column("profile_version_id", UUID, nullable=True))
     op.add_column(
         "opportunities",
-        sa.Column("policy_snapshot_json", sa.JSON(), nullable=False, server_default=sa.text("'{}'::json")),
+        sa.Column(
+            "policy_snapshot_json", sa.JSON(), nullable=False, server_default=sa.text("'{}'::json")
+        ),
     )
     op.add_column(
         "opportunities",
@@ -205,7 +247,12 @@ def upgrade() -> None:
         "opportunities", sa.Column("eligibility_confidence", sa.Numeric(4, 3), nullable=True)
     )
     op.create_foreign_key(
-        "fk_opportunity_scan", "opportunities", "policy_scans", ["scan_id"], ["id"], ondelete="CASCADE"
+        "fk_opportunity_scan",
+        "opportunities",
+        "policy_scans",
+        ["scan_id"],
+        ["id"],
+        ondelete="CASCADE",
     )
     op.create_foreign_key(
         "fk_opportunity_profile_version",
@@ -231,15 +278,25 @@ def upgrade() -> None:
         sa.Column("review_status", sa.String(40), nullable=False, server_default="not_requested"),
     )
     op.create_foreign_key(
-        "fk_application_owner", "applications", "users", ["owner_user_id"], ["id"], ondelete="SET NULL"
+        "fk_application_owner",
+        "applications",
+        "users",
+        ["owner_user_id"],
+        ["id"],
+        ondelete="SET NULL",
     )
 
     op.create_table(
         "application_requirements",
         sa.Column("id", UUID, primary_key=True),
-        sa.Column("tenant_id", UUID, sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
         sa.Column(
-            "application_id", UUID, sa.ForeignKey("applications.id", ondelete="CASCADE"), nullable=False
+            "tenant_id", UUID, sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
+        ),
+        sa.Column(
+            "application_id",
+            UUID,
+            sa.ForeignKey("applications.id", ondelete="CASCADE"),
+            nullable=False,
         ),
         sa.Column("title", sa.String(300), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
@@ -248,8 +305,12 @@ def upgrade() -> None:
         sa.Column("is_hard_gate", sa.Boolean(), nullable=False, server_default=sa.false()),
         sa.Column("source_json", sa.JSON(), nullable=False, server_default=sa.text("'{}'::json")),
         sa.Column("sort_order", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
-        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
     )
     op.create_index(
         "ix_application_requirements_tenant_id", "application_requirements", ["tenant_id"]
@@ -263,19 +324,24 @@ def upgrade() -> None:
     op.create_table(
         "application_activities",
         sa.Column("id", UUID, primary_key=True),
-        sa.Column("tenant_id", UUID, sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
         sa.Column(
-            "application_id", UUID, sa.ForeignKey("applications.id", ondelete="CASCADE"), nullable=False
+            "tenant_id", UUID, sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
+        ),
+        sa.Column(
+            "application_id",
+            UUID,
+            sa.ForeignKey("applications.id", ondelete="CASCADE"),
+            nullable=False,
         ),
         sa.Column("actor_user_id", UUID, sa.ForeignKey("users.id", ondelete="SET NULL")),
         sa.Column("action", sa.String(120), nullable=False),
         sa.Column("summary", sa.String(500), nullable=False),
         sa.Column("metadata_json", sa.JSON(), nullable=False, server_default=sa.text("'{}'::json")),
-        sa.Column("occurred_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column(
+            "occurred_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+        ),
     )
-    op.create_index(
-        "ix_application_activities_tenant_id", "application_activities", ["tenant_id"]
-    )
+    op.create_index("ix_application_activities_tenant_id", "application_activities", ["tenant_id"])
     op.create_index(
         "ix_application_activities_application_id", "application_activities", ["application_id"]
     )
@@ -283,7 +349,12 @@ def upgrade() -> None:
     op.add_column("tasks", sa.Column("application_id", UUID, nullable=True))
     op.add_column("tasks", sa.Column("scan_id", UUID, nullable=True))
     op.create_foreign_key(
-        "fk_task_application", "tasks", "applications", ["application_id"], ["id"], ondelete="SET NULL"
+        "fk_task_application",
+        "tasks",
+        "applications",
+        ["application_id"],
+        ["id"],
+        ondelete="SET NULL",
     )
     op.create_foreign_key(
         "fk_task_scan", "tasks", "policy_scans", ["scan_id"], ["id"], ondelete="SET NULL"

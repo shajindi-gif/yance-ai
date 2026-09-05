@@ -27,12 +27,18 @@ def chunk_policy_text(content: str) -> list[tuple[int, int, str, str | None]]:
         hard_end = min(start + MAX_CHUNK_CHARS, len(content))
         end = hard_end
         if hard_end < len(content):
-            boundary = max(content.rfind("\n", start, hard_end), content.rfind("。", start, hard_end))
+            boundary = max(
+                content.rfind("\n", start, hard_end), content.rfind("。", start, hard_end)
+            )
             if boundary > start + MAX_CHUNK_CHARS // 2:
                 end = boundary + 1
         text = content[start:end]
         heading = next((line for line in text.splitlines() if ARTICLE_PATTERN.match(line)), None)
-        article = ARTICLE_PATTERN.match(heading).group(1) if heading and ARTICLE_PATTERN.match(heading) else None
+        article = (
+            ARTICLE_PATTERN.match(heading).group(1)
+            if heading and ARTICLE_PATTERN.match(heading)
+            else None
+        )
         chunks.append((start, end, text, article))
         start = end
     return chunks
@@ -95,8 +101,12 @@ async def version_and_chunk_policy(db: Session, policy: Policy) -> PolicyVersion
                     "region": policy.jurisdiction,
                     "industry": policy.industry,
                     "policy_type": policy.policy_type,
-                    "publish_date": policy.published_at.isoformat() if policy.published_at else None,
-                    "effective_date": policy.effective_at.isoformat() if policy.effective_at else None,
+                    "publish_date": policy.published_at.isoformat()
+                    if policy.published_at
+                    else None,
+                    "effective_date": policy.effective_at.isoformat()
+                    if policy.effective_at
+                    else None,
                     "expiry_date": policy.deadline.isoformat() if policy.deadline else None,
                     "document_id": str(policy.id),
                     "article": article,

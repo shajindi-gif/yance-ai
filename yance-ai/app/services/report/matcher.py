@@ -60,6 +60,7 @@ async def match_policies_for_company(
         if not profile_version:
             raise ValueError("Company profile version is outside the scan scope")
     meta = profile_version.snapshot_json if profile_version else (company.metadata_json or {})
+
     def _string_list(value) -> list[str]:
         return [str(item) for item in value] if isinstance(value, list) else []
 

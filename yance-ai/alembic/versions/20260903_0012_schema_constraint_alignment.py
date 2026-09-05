@@ -15,9 +15,7 @@ branch_labels = None
 depends_on = None
 
 
-def _backfill_and_require(
-    table: str, column: str, value_sql: str, column_type: TypeEngine
-) -> None:
+def _backfill_and_require(table: str, column: str, value_sql: str, column_type: TypeEngine) -> None:
     op.execute(sa.text(f'UPDATE "{table}" SET "{column}" = {value_sql} WHERE "{column}" IS NULL'))
     op.alter_column(table, column, existing_type=column_type, nullable=False)
 

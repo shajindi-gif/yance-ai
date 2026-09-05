@@ -48,7 +48,10 @@ export default function OpportunityDetailPage() {
     api
       .getOpportunity(opportunityId)
       .then((result) => {
-        if (active) setOpportunity(result);
+        if (active) {
+          setOpportunity(result);
+          api.recordOpportunityOpened(opportunityId).catch(() => undefined);
+        }
       })
       .catch((loadError) => {
         if (active) {

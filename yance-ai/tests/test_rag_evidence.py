@@ -4,7 +4,9 @@ from app.services.policies.retrieval import _lexical_score, _tokens
 
 
 def test_policy_chunks_preserve_exact_source_spans():
-    source = "第一条 申报企业应在上海市注册。\n第二条 研发费用占比应不低于4%。\n" + ("补充说明。" * 220)
+    source = "第一条 申报企业应在上海市注册。\n第二条 研发费用占比应不低于4%。\n" + (
+        "补充说明。" * 220
+    )
     cleaned = clean_policy_text(source)
     chunks = chunk_policy_text(cleaned)
 

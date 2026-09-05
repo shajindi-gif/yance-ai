@@ -163,3 +163,25 @@ This does not close the broader Golden Journey P1. Company-document parsing/OCR,
 Application Agent execution, user assignment and notifications, official form templates, Admin
 operations, evaluation evidence, and billing/enterprise packaging remain open in their planned
 phases.
+
+## Phase 7 remediation status — 2026-09-05
+
+The original P1 finding that the product lacked a platform Admin and credible operating metrics is
+now partially remediated:
+
+- A persisted platform-admin authority is independent of tenant Owner/Admin roles, and all
+  cross-tenant APIs enforce it on the backend.
+- `/admin` exposes safe, paginated operating views for users, organizations, companies, execution,
+  documents, policies, errors, billing, feedback, and analytics without returning stored secrets,
+  raw payment payloads, document object keys, or Agent inputs/outputs.
+- Server-owned, idempotent events cover the core acquisition-to-delivery milestones. Investor
+  totals, model cost, paid revenue, system state, and the organization milestone funnel are
+  calculated from database records with explicit definitions and currency boundaries.
+- Tenant account stage makes PoC classification explicit; unknown organizations remain
+  `unclassified` rather than being guessed.
+- Missing evaluation, MRR, retention, and historical API-latency data is labelled unavailable. The
+  Eval view displays `No evaluation data yet.` and does not substitute sample accuracy.
+
+This does not close the broader enterprise-readiness P1. Reviewed Agent evaluations, durable
+telemetry history, subscription/quota/invoice systems, cohort retention, CRM attribution, SSO,
+support workflows, and audit-search operations remain open in later phases.

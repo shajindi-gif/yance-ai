@@ -51,6 +51,7 @@ class Tenant(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(160))
     slug: Mapped[str] = mapped_column(String(80), unique=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    account_stage: Mapped[str] = mapped_column(String(40), default="unclassified", index=True)
 
 
 class User(Base, TimestampMixin, TenantOwnedMixin):
@@ -62,6 +63,7 @@ class User(Base, TimestampMixin, TenantOwnedMixin):
     password_hash: Mapped[str] = mapped_column(String(255))
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.member)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_platform_admin: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
 
 
 class Membership(Base, TimestampMixin, TenantOwnedMixin):
@@ -108,9 +110,7 @@ class CompanyProfileVersion(Base, TenantOwnedMixin):
     """Immutable profile snapshot pinned by scans and later decision records."""
 
     __tablename__ = "company_profile_versions"
-    __table_args__ = (
-        UniqueConstraint("profile_id", "version", name="uq_company_profile_version"),
-    )
+    __table_args__ = (UniqueConstraint("profile_id", "version", name="uq_company_profile_version"),)
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     profile_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("company_profiles.id", ondelete="CASCADE"), index=True
@@ -409,7 +409,9 @@ class EligibilityResult(Base, TimestampMixin, TenantOwnedMixin):
         UUID(as_uuid=True), ForeignKey("policy_versions.id", ondelete="SET NULL"), index=True
     )
     profile_version_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("company_profile_versions.id", ondelete="RESTRICT"), index=True
+        UUID(as_uuid=True),
+        ForeignKey("company_profile_versions.id", ondelete="RESTRICT"),
+        index=True,
     )
     status: Mapped[str] = mapped_column(String(40), index=True)
     confidence: Mapped[float] = mapped_column(Numeric(4, 3), default=0)
@@ -554,9 +556,7 @@ class ApplicationArtifact(Base, TimestampMixin, TenantOwnedMixin):
     title: Mapped[str] = mapped_column(String(500))
     version: Mapped[int]
     status: Mapped[str] = mapped_column(String(40), default="draft", index=True)
-    generation_method: Mapped[str] = mapped_column(
-        String(120), default="deterministic-evidence-v1"
-    )
+    generation_method: Mapped[str] = mapped_column(String(120), default="deterministic-evidence-v1")
     content_json: Mapped[dict] = mapped_column(JSON)
     source_snapshot_json: Mapped[dict] = mapped_column(JSON)
     checksum_sha256: Mapped[str] = mapped_column(String(64), index=True)
@@ -663,13 +663,29 @@ class AnalyticsEvent(Base, TenantOwnedMixin):
     __tablename__ = "analytics_events"
     __table_args__ = (
         Index("ix_analytics_event_tenant_name_time", "tenant_id", "name", "occurred_at"),
+        UniqueConstraint("tenant_id", "event_key", name="uq_analytics_event_tenant_key"),
     )
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     name: Mapped[str] = mapped_column(String(120))
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     session_id: Mapped[str | None] = mapped_column(String(120))
+    source: Mapped[str] = mapped_column(String(40), default="server", index=True)
+    event_key: Mapped[str | None] = mapped_column(String(240))
+    request_id: Mapped[str | None] = mapped_column(String(120))
     properties: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class Feedback(Base, TimestampMixin, TenantOwnedMixin):
+    __tablename__ = "feedback"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), index=True
+    )
+    category: Mapped[str] = mapped_column(String(80), default="product")
+    message: Mapped[str] = mapped_column(Text)
+    route: Mapped[str | None] = mapped_column(String(500))
+    status: Mapped[str] = mapped_column(String(40), default="open", index=True)
 
 
 class Product(Base, TimestampMixin):

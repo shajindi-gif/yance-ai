@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
-import { WORKSPACE_NAVIGATION, type WorkspaceNavItem } from "@/lib/navigation";
+import { ADMIN_NAVIGATION, WORKSPACE_NAVIGATION, type WorkspaceNavItem } from "@/lib/navigation";
 import styles from "./AppShell.module.css";
 
 function NavigationIcon({ icon }: Pick<WorkspaceNavItem, "icon">) {
@@ -65,6 +65,12 @@ function NavigationIcon({ icon }: Pick<WorkspaceNavItem, "icon">) {
         <path d="M3 10h18M7 15h3" />
       </>
     ),
+    admin: (
+      <>
+        <path d="M12 3 4.5 6v5c0 4.7 2.8 8.2 7.5 10 4.7-1.8 7.5-5.3 7.5-10V6z" />
+        <path d="M9 12h6M12 9v6" />
+      </>
+    ),
   };
 
   return (
@@ -83,7 +89,11 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const activeItem = WORKSPACE_NAVIGATION.find((item) => item.match(pathname));
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
+  const navigation = isPlatformAdmin
+    ? [...WORKSPACE_NAVIGATION, ADMIN_NAVIGATION]
+    : WORKSPACE_NAVIGATION;
+  const activeItem = navigation.find((item) => item.match(pathname));
 
   useEffect(() => {
     setMobileOpen(false);
@@ -95,6 +105,17 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
       document.body.style.overflow = "";
     };
   }, [mobileOpen]);
+
+  useEffect(() => {
+    let active = true;
+    if (!api.isAuthenticated()) return;
+    api.getMe().then((user) => {
+      if (active) setIsPlatformAdmin(user.is_platform_admin);
+    }).catch(() => {
+      if (active) setIsPlatformAdmin(false);
+    });
+    return () => { active = false; };
+  }, []);
 
   const logout = () => {
     api.clearToken();
@@ -132,7 +153,7 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
 
         <nav className={styles.navigation} aria-label="工作区导航">
           <p className={styles.navLabel}>Workspace</p>
-          {WORKSPACE_NAVIGATION.map((item) => {
+          {navigation.map((item) => {
             const active = item.match(pathname);
             return (
               <Link
@@ -154,7 +175,7 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
         <div className={styles.sidebarFooter}>
           <div className={styles.phaseNote}>
             <span>产品升级中</span>
-            <p>Agent 运行已接入持久化轨迹；知识库与管理后台将按阶段开放。</p>
+            <p>执行轨迹、证据工作区与平台运营指标均读取服务端记录。</p>
           </div>
           <Link href="/" className={styles.secondaryAction}>
             返回产品官网

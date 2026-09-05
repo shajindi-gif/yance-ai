@@ -3,21 +3,24 @@ import secrets
 import time
 from collections import defaultdict
 
+import structlog
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, get_principal
 from app.core.config import settings
 from app.core.db import get_db
 from app.core.security import create_access_token, hash_password, verify_password
-from app.models.models import AnalyticsEvent, Company, Membership, Tenant, User, UserRole
+from app.models.models import Company, Membership, Tenant, User, UserRole
 from app.schemas.schemas import BootstrapRequest, RegisterRequest, Token, UserOut
+from app.services.analytics.events import record_event
 from app.services.company_profiles import create_company_profile
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+logger = structlog.get_logger()
 
 
 # ── 简单 IP 限流（内存，重启重置；商业上线前换 Redis）────────
@@ -154,21 +157,20 @@ def register(
     db.add(company)
     db.flush()
     create_company_profile(db, company)
-    db.add_all(
-        [
-            AnalyticsEvent(
-                tenant_id=tenant.id,
-                user_id=owner.id,
-                name="signup_completed",
-                properties={},
-            ),
-            AnalyticsEvent(
-                tenant_id=tenant.id,
-                user_id=owner.id,
-                name="company_created",
-                properties={"company_id": str(company.id)},
-            ),
-        ]
+    record_event(
+        db,
+        tenant_id=tenant.id,
+        user_id=owner.id,
+        name="signup_completed",
+        event_key=f"signup_completed:{tenant.id}",
+    )
+    record_event(
+        db,
+        tenant_id=tenant.id,
+        user_id=owner.id,
+        name="company_created",
+        event_key=f"company_created:{company.id}",
+        properties={"company_id": str(company.id)},
     )
 
     try:
@@ -218,6 +220,17 @@ def login(
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    record_event(
+        db,
+        tenant_id=user.tenant_id,
+        user_id=user.id,
+        name="login_completed",
+    )
+    try:
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        logger.warning("analytics_event_write_failed", event_name="login_completed")
     return Token(
         access_token=create_access_token(
             user_id=user.id, tenant_id=user.tenant_id, role=user.role.value

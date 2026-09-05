@@ -498,10 +498,7 @@ def final_gate(criteria_results: list[str], blocking: list[bool] | None = None) 
         blocking = [True] * len(criteria_results)
     if any(r == "FAIL" and b for r, b in zip(criteria_results, blocking, strict=False)):
         return "NOT_ELIGIBLE"
-    if any(
-        r == "INSUFFICIENT" and b
-        for r, b in zip(criteria_results, blocking, strict=False)
-    ):
+    if any(r == "INSUFFICIENT" and b for r, b in zip(criteria_results, blocking, strict=False)):
         return "INSUFFICIENT_INFO"
     return "ELIGIBLE"
 

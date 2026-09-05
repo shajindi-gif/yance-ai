@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, get_principal, require_roles
 from app.core.db import get_db
-from app.models.models import AnalyticsEvent, Company, CompanyProfileVersion, UserRole
+from app.models.models import Company, CompanyProfileVersion, UserRole
 from app.schemas.schemas import (
     CompanyCreate,
     CompanyOut,
@@ -14,6 +14,7 @@ from app.schemas.schemas import (
     CompanyProfileOut,
     CompanyProfileVersionOut,
 )
+from app.services.analytics.events import record_event
 from app.services.company_profiles import (
     create_company_profile,
     get_or_create_company_profile,
@@ -41,13 +42,13 @@ def create_company(
     db.add(company)
     db.flush()
     create_company_profile(db, company)
-    db.add(
-        AnalyticsEvent(
-            tenant_id=principal.tenant_id,
-            user_id=principal.user.id,
-            name="company_created",
-            properties={"company_id": str(company.id)},
-        )
+    record_event(
+        db,
+        tenant_id=principal.tenant_id,
+        user_id=principal.user.id,
+        name="company_created",
+        event_key=f"company_created:{company.id}",
+        properties={"company_id": str(company.id)},
     )
     db.commit()
     db.refresh(company)
@@ -121,7 +122,9 @@ def update_company_profile(
     return profile
 
 
-@router.post("/{company_id}/profile/publish", response_model=CompanyProfileVersionOut, status_code=201)
+@router.post(
+    "/{company_id}/profile/publish", response_model=CompanyProfileVersionOut, status_code=201
+)
 def publish_profile(
     company_id: UUID,
     principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
@@ -131,16 +134,16 @@ def publish_profile(
     profile = get_or_create_company_profile(db, company)
     version = publish_company_profile(db, profile, created_by=principal.user.id)
     if version.completeness_score == 100:
-        db.add(
-            AnalyticsEvent(
-                tenant_id=principal.tenant_id,
-                user_id=principal.user.id,
-                name="company_profile_completed",
-                properties={
-                    "company_id": str(company.id),
-                    "profile_version_id": str(version.id),
-                },
-            )
+        record_event(
+            db,
+            tenant_id=principal.tenant_id,
+            user_id=principal.user.id,
+            name="company_profile_completed",
+            event_key=f"company_profile_completed:{version.id}",
+            properties={
+                "company_id": str(company.id),
+                "profile_version_id": str(version.id),
+            },
         )
     db.commit()
     db.refresh(version)

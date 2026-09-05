@@ -2398,6 +2398,64 @@
         "title": "EvaluateRequest",
         "type": "object"
       },
+      "FeedbackCreate": {
+        "properties": {
+          "category": {
+            "default": "product",
+            "enum": [
+              "product",
+              "data",
+              "policy",
+              "billing",
+              "support"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "message": {
+            "maxLength": 5000,
+            "minLength": 2,
+            "title": "Message",
+            "type": "string"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "FeedbackCreate",
+        "type": "object"
+      },
+      "FeedbackStatusUpdate": {
+        "properties": {
+          "status": {
+            "enum": [
+              "open",
+              "reviewing",
+              "resolved",
+              "dismissed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "FeedbackStatusUpdate",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -4133,8 +4191,32 @@
         "title": "TaskCreate",
         "type": "object"
       },
+      "TenantAccountStageUpdate": {
+        "properties": {
+          "account_stage": {
+            "enum": [
+              "unclassified",
+              "poc",
+              "customer",
+              "churned",
+              "internal"
+            ],
+            "title": "Account Stage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_stage"
+        ],
+        "title": "TenantAccountStageUpdate",
+        "type": "object"
+      },
       "TenantOut": {
         "properties": {
+          "account_stage": {
+            "title": "Account Stage",
+            "type": "string"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
@@ -4157,7 +4239,8 @@
           "id",
           "name",
           "slug",
-          "is_active"
+          "is_active",
+          "account_stage"
         ],
         "title": "TenantOut",
         "type": "object"
@@ -4317,6 +4400,10 @@
             "title": "Is Active",
             "type": "boolean"
           },
+          "is_platform_admin": {
+            "title": "Is Platform Admin",
+            "type": "boolean"
+          },
           "role": {
             "$ref": "#/components/schemas/UserRole"
           },
@@ -4332,7 +4419,8 @@
           "email",
           "full_name",
           "role",
-          "is_active"
+          "is_active",
+          "is_platform_admin"
         ],
         "title": "UserOut",
         "type": "object"
@@ -4406,6 +4494,298 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/admin/feedback/{feedback_id}": {
+      "patch": {
+        "operationId": "update_feedback_status_api_v1_admin_feedback__feedback_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "feedback_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Feedback Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackStatusUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Update Feedback Status Api V1 Admin Feedback  Feedback Id  Patch",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Feedback Status",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/investor-metrics": {
+      "get": {
+        "operationId": "get_investor_metrics_api_v1_admin_investor_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Investor Metrics Api V1 Admin Investor Metrics Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Investor Metrics",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/organizations/{tenant_id}": {
+      "patch": {
+        "operationId": "update_tenant_account_stage_api_v1_admin_organizations__tenant_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TenantAccountStageUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Update Tenant Account Stage Api V1 Admin Organizations  Tenant Id  Patch",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Tenant Account Stage",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/overview": {
+      "get": {
+        "operationId": "get_admin_overview_api_v1_admin_overview_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Admin Overview Api V1 Admin Overview Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Admin Overview",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/resources/{resource}": {
+      "get": {
+        "operationId": "list_admin_resources_api_v1_admin_resources__resource__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resource",
+            "required": true,
+            "schema": {
+              "enum": [
+                "users",
+                "organizations",
+                "companies",
+                "agent_runs",
+                "workflow_runs",
+                "llm_usage",
+                "costs",
+                "documents",
+                "policies",
+                "evals",
+                "errors",
+                "billing",
+                "feedback",
+                "analytics"
+              ],
+              "title": "Resource",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Admin Resources Api V1 Admin Resources  Resource  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Admin Resources",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/system-health": {
+      "get": {
+        "operationId": "get_system_health_api_v1_admin_system_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get System Health Api V1 Admin System Health Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get System Health",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/v1/agent-runs": {
       "get": {
         "operationId": "list_agent_runs_api_v1_agent_runs_get",
@@ -6411,6 +6791,55 @@
         ]
       }
     },
+    "/api/v1/feedback": {
+      "post": {
+        "operationId": "create_feedback_api_v1_feedback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Create Feedback Api V1 Feedback Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Feedback",
+        "tags": [
+          "analytics",
+          "feedback"
+        ]
+      }
+    },
     "/api/v1/invoices": {
       "get": {
         "operationId": "list_invoices_api_v1_invoices_get",
@@ -6733,6 +7162,49 @@
           }
         ],
         "summary": "Get Opportunity",
+        "tags": [
+          "policy-scan",
+          "opportunity",
+          "application"
+        ]
+      }
+    },
+    "/api/v1/opportunities/{opportunity_id}/opened": {
+      "post": {
+        "operationId": "record_opportunity_opened_api_v1_opportunities__opportunity_id__opened_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "opportunity_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Opportunity Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Record Opportunity Opened",
         "tags": [
           "policy-scan",
           "opportunity",

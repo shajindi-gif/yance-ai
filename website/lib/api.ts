@@ -13,6 +13,7 @@ export interface Tenant {
   name: string;
   slug: string;
   is_active: boolean;
+  account_stage: string;
 }
 
 export interface User {
@@ -21,6 +22,78 @@ export interface User {
   email: string;
   role: string;
   is_active: boolean;
+  is_platform_admin: boolean;
+}
+
+export interface AdminTotals {
+  total_users: number;
+  active_users_30d: number;
+  organizations: number;
+  companies: number;
+  policy_scans: number;
+  applications: number;
+  reports_generated: number;
+  agent_runs: number;
+  successful_runs: number;
+  failed_runs: number;
+  documents_generated: number;
+  poc_accounts: number;
+  paying_customers: number;
+  llm_cost_usd: number;
+  cost_per_run_usd: number | null;
+}
+
+export interface AdminFunnelStep {
+  event: string;
+  label: string;
+  organizations: number;
+  conversion_from_previous: number | null;
+}
+
+export interface AgentTrendPoint {
+  date: string;
+  runs: number;
+  successful: number;
+  failed: number;
+  cost_usd: number;
+}
+
+export interface AdminSystemHealth {
+  checked_at: string;
+  database: string;
+  agent_queue: { queued: number; running: number; stale_running: number; failed_24h: number };
+  workflow_runs: { running: number; failed_24h: number };
+  documents: { pending_ingestion: number; failed_ingestion: number };
+  errors_24h: number;
+  open_feedback: number;
+  api_latency_history: { available: boolean; reason: string };
+}
+
+export interface AdminOverview {
+  generated_at: string;
+  totals: AdminTotals;
+  revenue_by_currency: Array<{ currency: string; amount: number }>;
+  funnel: AdminFunnelStep[];
+  agent_trend_30d: AgentTrendPoint[];
+  system_health: AdminSystemHealth;
+  resources: Record<string, number>;
+  capabilities: Record<string, { available: boolean; message: string }>;
+}
+
+export interface InvestorMetrics extends Omit<AdminOverview, 'system_health' | 'resources' | 'capabilities'> {
+  scope: string;
+  window: Record<string, string>;
+  definitions: Record<string, string>;
+  availability: Record<string, boolean>;
+}
+
+export interface AdminResourcePage {
+  total: number;
+  limit: number;
+  offset: number;
+  items: Array<Record<string, unknown>>;
+  available?: boolean;
+  message?: string;
 }
 
 export interface Company {
@@ -654,6 +727,40 @@ class ApiClient {
 
   async getMe(): Promise<User> {
     return this.request<User>('/auth/me');
+  }
+
+  async getAdminOverview(): Promise<AdminOverview> {
+    return this.request<AdminOverview>('/admin/overview');
+  }
+
+  async getInvestorMetrics(): Promise<InvestorMetrics> {
+    return this.request<InvestorMetrics>('/admin/investor-metrics');
+  }
+
+  async getAdminResource(resource: string, offset: number = 0): Promise<AdminResourcePage> {
+    return this.request<AdminResourcePage>(
+      `/admin/resources/${encodeURIComponent(resource)}?limit=25&offset=${offset}`,
+    );
+  }
+
+  async updateOrganizationStage(tenantId: string, accountStage: string): Promise<void> {
+    await this.request(`/admin/organizations/${encodeURIComponent(tenantId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ account_stage: accountStage }),
+    });
+  }
+
+  async updateFeedbackStatus(feedbackId: string, status: string): Promise<void> {
+    await this.request(`/admin/feedback/${encodeURIComponent(feedbackId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  async recordOpportunityOpened(opportunityId: string): Promise<void> {
+    await this.request(`/opportunities/${encodeURIComponent(opportunityId)}/opened`, {
+      method: 'POST',
+    });
   }
 
   // Tenant

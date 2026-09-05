@@ -58,4 +58,12 @@ def require_roles(*allowed: UserRole):
     return dependency
 
 
+def require_platform_admin(
+    principal: Principal = Depends(get_principal),
+) -> Principal:
+    if not principal.user.is_platform_admin:
+        raise HTTPException(status_code=403, detail="Platform administrator access required")
+    return principal
+
+
 AdminPrincipal = Depends(require_roles(UserRole.owner, UserRole.admin))

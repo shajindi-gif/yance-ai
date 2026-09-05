@@ -275,6 +275,7 @@ def validate_evidence(
     hallucinations = []
     full = policy_content[:12000]
     full_norm = re.sub(r",(?=\d)", "", full)  # 去千分位逗号
+
     def _norm_field(s: str) -> str:
         return re.sub(r",(?=\d)", "", s or "")
 

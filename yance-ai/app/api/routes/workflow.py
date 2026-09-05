@@ -12,7 +12,6 @@ from sqlalchemy.orm import Session
 from app.api.deps import Principal, get_principal, require_roles
 from app.core.db import get_db
 from app.models.models import (
-    AnalyticsEvent,
     Application,
     ApplicationActivity,
     ApplicationArtifact,
@@ -44,6 +43,7 @@ from app.schemas.schemas import (
     OpportunityOut,
 )
 from app.services.agents.harness import AgentHarness
+from app.services.analytics.events import record_event
 from app.services.applications.artifacts import render_artifact
 from app.services.applications.workspace import create_artifact, readiness, workspace_records
 from app.services.policies.visibility import visible_policy_clause
@@ -207,17 +207,17 @@ def create_policy_scan(
         tenant_id=principal.tenant_id,
         user_id=principal.user.id,
     )
-    db.add(
-        AnalyticsEvent(
-            tenant_id=principal.tenant_id,
-            user_id=principal.user.id,
-            name="policy_scan_started",
-            properties={
-                "scan_id": str(scan.id),
-                "company_id": str(company.id),
-                "profile_version_id": str(profile_version.id),
-            },
-        )
+    record_event(
+        db,
+        tenant_id=principal.tenant_id,
+        user_id=principal.user.id,
+        name="policy_scan_started",
+        event_key=f"policy_scan_started:{scan.id}",
+        properties={
+            "scan_id": str(scan.id),
+            "company_id": str(company.id),
+            "profile_version_id": str(profile_version.id),
+        },
     )
     try:
         db.commit()
@@ -297,69 +297,130 @@ def get_opportunity(
         )
     )
     evidence = (
-        list(db.scalars(select(Evidence).where(
-            Evidence.eligibility_result_id == eligibility.id,
-            Evidence.tenant_id == principal.tenant_id,
-        ).order_by(Evidence.created_at)).all())
-        if eligibility else []
+        list(
+            db.scalars(
+                select(Evidence)
+                .where(
+                    Evidence.eligibility_result_id == eligibility.id,
+                    Evidence.tenant_id == principal.tenant_id,
+                )
+                .order_by(Evidence.created_at)
+            ).all()
+        )
+        if eligibility
+        else []
     )
     materials = (
-        list(db.scalars(select(RequiredMaterial).where(
-            RequiredMaterial.policy_version_id == eligibility.policy_version_id,
-            (RequiredMaterial.tenant_id.is_(None))
-            | (RequiredMaterial.tenant_id == principal.tenant_id),
-        )).all())
-        if eligibility and eligibility.policy_version_id else []
+        list(
+            db.scalars(
+                select(RequiredMaterial).where(
+                    RequiredMaterial.policy_version_id == eligibility.policy_version_id,
+                    (RequiredMaterial.tenant_id.is_(None))
+                    | (RequiredMaterial.tenant_id == principal.tenant_id),
+                )
+            ).all()
+        )
+        if eligibility and eligibility.policy_version_id
+        else []
     )
     benefits = (
-        list(db.scalars(select(PolicyBenefit).where(
-            PolicyBenefit.policy_version_id == eligibility.policy_version_id,
-            (PolicyBenefit.tenant_id.is_(None))
-            | (PolicyBenefit.tenant_id == principal.tenant_id),
-        )).all())
-        if eligibility and eligibility.policy_version_id else []
+        list(
+            db.scalars(
+                select(PolicyBenefit).where(
+                    PolicyBenefit.policy_version_id == eligibility.policy_version_id,
+                    (PolicyBenefit.tenant_id.is_(None))
+                    | (PolicyBenefit.tenant_id == principal.tenant_id),
+                )
+            ).all()
+        )
+        if eligibility and eligibility.policy_version_id
+        else []
     )
     return {
         **OpportunityOut.model_validate(opportunity).model_dump(mode="json"),
         "policy_content_available": bool(policy and policy.content),
-        "eligibility_result": ({
-            "id": str(eligibility.id),
-            "policy_version_id": str(eligibility.policy_version_id) if eligibility.policy_version_id else None,
-            "status": eligibility.status,
-            "confidence": float(eligibility.confidence),
-            "summary": eligibility.summary,
-            "criteria": eligibility.criteria_json,
-            "missing_information": eligibility.missing_information_json,
-            "engine_version": eligibility.engine_version,
-            "review_status": eligibility.review_status,
-            "verified_at": eligibility.verified_at,
-        } if eligibility else None),
-        "evidence": [{
-            "id": str(item.id),
-            "source_title": item.source_title,
-            "source_url": item.source_url,
-            "issuer": item.issuer,
-            "article": item.article,
-            "quote": item.quote,
-            "confidence": float(item.confidence),
-            "verifier": item.verifier,
-            "verified": item.verified,
-        } for item in evidence],
-        "required_materials": [{
-            "id": str(item.id),
-            "name": item.name,
-            "description": item.description,
-            "is_hard_gate": item.is_hard_gate,
-            "article": item.article,
-        } for item in materials],
-        "benefits": [{
-            "id": str(item.id),
-            "benefit_type": item.benefit_type,
-            "description": item.description,
-            "amount_text": item.amount_text,
-            "article": item.article,
-        } for item in benefits],
+        "eligibility_result": (
+            {
+                "id": str(eligibility.id),
+                "policy_version_id": str(eligibility.policy_version_id)
+                if eligibility.policy_version_id
+                else None,
+                "status": eligibility.status,
+                "confidence": float(eligibility.confidence),
+                "summary": eligibility.summary,
+                "criteria": eligibility.criteria_json,
+                "missing_information": eligibility.missing_information_json,
+                "engine_version": eligibility.engine_version,
+                "review_status": eligibility.review_status,
+                "verified_at": eligibility.verified_at,
+            }
+            if eligibility
+            else None
+        ),
+        "evidence": [
+            {
+                "id": str(item.id),
+                "source_title": item.source_title,
+                "source_url": item.source_url,
+                "issuer": item.issuer,
+                "article": item.article,
+                "quote": item.quote,
+                "confidence": float(item.confidence),
+                "verifier": item.verifier,
+                "verified": item.verified,
+            }
+            for item in evidence
+        ],
+        "required_materials": [
+            {
+                "id": str(item.id),
+                "name": item.name,
+                "description": item.description,
+                "is_hard_gate": item.is_hard_gate,
+                "article": item.article,
+            }
+            for item in materials
+        ],
+        "benefits": [
+            {
+                "id": str(item.id),
+                "benefit_type": item.benefit_type,
+                "description": item.description,
+                "amount_text": item.amount_text,
+                "article": item.article,
+            }
+            for item in benefits
+        ],
     }
+
+
+@router.post("/opportunities/{opportunity_id}/opened", status_code=204)
+def record_opportunity_opened(
+    opportunity_id: UUID,
+    principal: Principal = Depends(get_principal),
+    db: Session = Depends(get_db),
+) -> None:
+    opportunity = require_tenant_resource(
+        db, Opportunity, opportunity_id, principal.tenant_id, "Opportunity"
+    )
+    day = datetime.now(UTC).date().isoformat()
+    record_event(
+        db,
+        tenant_id=principal.tenant_id,
+        user_id=principal.user.id,
+        name="opportunity_opened",
+        event_key=f"opportunity_opened:{principal.user.id}:{opportunity.id}:{day}",
+        properties={
+            "opportunity_id": str(opportunity.id),
+            "company_id": str(opportunity.company_id),
+        },
+    )
+    try:
+        db.commit()
+    except IntegrityError:
+        # Two tabs can record the same daily open at the same time. The event's
+        # tenant-scoped key is the source of truth, so a duplicate is success.
+        db.rollback()
 
 
 @router.get("/applications", response_model=list[ApplicationOut])
@@ -442,12 +503,17 @@ def create_application(
             )
         )
         structured_materials = (
-            list(db.scalars(select(RequiredMaterial).where(
-                RequiredMaterial.policy_version_id == eligibility.policy_version_id,
-                (RequiredMaterial.tenant_id.is_(None))
-                | (RequiredMaterial.tenant_id == principal.tenant_id),
-            )).all())
-            if eligibility and eligibility.policy_version_id else []
+            list(
+                db.scalars(
+                    select(RequiredMaterial).where(
+                        RequiredMaterial.policy_version_id == eligibility.policy_version_id,
+                        (RequiredMaterial.tenant_id.is_(None))
+                        | (RequiredMaterial.tenant_id == principal.tenant_id),
+                    )
+                ).all()
+            )
+            if eligibility and eligibility.policy_version_id
+            else []
         )
         material_rows = [
             {
@@ -487,27 +553,27 @@ def create_application(
                     sort_order=position,
                 )
             )
-    db.add_all(
-        [
-            ApplicationActivity(
-                tenant_id=principal.tenant_id,
-                application_id=application.id,
-                actor_user_id=principal.user.id,
-                action="application_created",
-                summary="申报工作区已创建",
-                metadata_json={"opportunity_id": str(opportunity.id) if opportunity else None},
-            ),
-            AnalyticsEvent(
-                tenant_id=principal.tenant_id,
-                user_id=principal.user.id,
-                name="application_created",
-                properties={
-                    "application_id": str(application.id),
-                    "company_id": str(company.id),
-                    "opportunity_id": str(opportunity.id) if opportunity else None,
-                },
-            ),
-        ]
+    db.add(
+        ApplicationActivity(
+            tenant_id=principal.tenant_id,
+            application_id=application.id,
+            actor_user_id=principal.user.id,
+            action="application_created",
+            summary="申报工作区已创建",
+            metadata_json={"opportunity_id": str(opportunity.id) if opportunity else None},
+        )
+    )
+    record_event(
+        db,
+        tenant_id=principal.tenant_id,
+        user_id=principal.user.id,
+        name="application_created",
+        event_key=f"application_created:{application.id}",
+        properties={
+            "application_id": str(application.id),
+            "company_id": str(company.id),
+            "opportunity_id": str(opportunity.id) if opportunity else None,
+        },
     )
     db.commit()
     db.refresh(application)
@@ -562,16 +628,20 @@ def get_application(
         .order_by(ApplicationDocumentLink.created_at.desc())
     ).all()
     tasks = db.scalars(
-        select(Task).where(
+        select(Task)
+        .where(
             Task.application_id == application.id,
             Task.tenant_id == principal.tenant_id,
-        ).order_by(Task.created_at)
+        )
+        .order_by(Task.created_at)
     ).all()
     comments = db.scalars(
-        select(ApplicationComment).where(
+        select(ApplicationComment)
+        .where(
             ApplicationComment.application_id == application.id,
             ApplicationComment.tenant_id == principal.tenant_id,
-        ).order_by(ApplicationComment.created_at.desc())
+        )
+        .order_by(ApplicationComment.created_at.desc())
     ).all()
     return {
         **ApplicationOut.model_validate(application).model_dump(mode="json"),
@@ -743,10 +813,12 @@ def update_application_status(
             metadata_json={"reason": payload.reason} if payload.reason else {},
         )
     )
-    for task in db.scalars(select(Task).where(
-        Task.application_id == application.id,
-        Task.tenant_id == principal.tenant_id,
-    )).all():
+    for task in db.scalars(
+        select(Task).where(
+            Task.application_id == application.id,
+            Task.tenant_id == principal.tenant_id,
+        )
+    ).all():
         task.status = payload.status
         task.progress = application.progress
         task.current_stage = STATUS_STAGE[payload.status]
@@ -766,9 +838,7 @@ def update_requirement_status(
     principal: Principal = Depends(write_principal),
     db: Session = Depends(get_db),
 ) -> None:
-    require_tenant_resource(
-        db, Application, application_id, principal.tenant_id, "Application"
-    )
+    require_tenant_resource(db, Application, application_id, principal.tenant_id, "Application")
     requirement = db.scalar(
         select(ApplicationRequirement).where(
             ApplicationRequirement.id == requirement_id,
@@ -808,19 +878,23 @@ def link_application_document(
     if document.company_id and document.company_id != application.company_id:
         raise HTTPException(status_code=409, detail="Document belongs to another company")
     if payload.requirement_id:
-        requirement = db.scalar(select(ApplicationRequirement).where(
-            ApplicationRequirement.id == payload.requirement_id,
-            ApplicationRequirement.application_id == application.id,
-            ApplicationRequirement.tenant_id == principal.tenant_id,
-        ))
+        requirement = db.scalar(
+            select(ApplicationRequirement).where(
+                ApplicationRequirement.id == payload.requirement_id,
+                ApplicationRequirement.application_id == application.id,
+                ApplicationRequirement.tenant_id == principal.tenant_id,
+            )
+        )
         if not requirement:
             raise HTTPException(status_code=404, detail="Requirement not found")
-    existing = db.scalar(select(ApplicationDocumentLink).where(
-        ApplicationDocumentLink.application_id == application.id,
-        ApplicationDocumentLink.document_id == document.id,
-        ApplicationDocumentLink.requirement_id == payload.requirement_id,
-        ApplicationDocumentLink.tenant_id == principal.tenant_id,
-    ))
+    existing = db.scalar(
+        select(ApplicationDocumentLink).where(
+            ApplicationDocumentLink.application_id == application.id,
+            ApplicationDocumentLink.document_id == document.id,
+            ApplicationDocumentLink.requirement_id == payload.requirement_id,
+            ApplicationDocumentLink.tenant_id == principal.tenant_id,
+        )
+    )
     if existing:
         return {"id": str(existing.id), "status": existing.status}
     link = ApplicationDocumentLink(
@@ -832,14 +906,16 @@ def link_application_document(
         status="linked",
     )
     db.add(link)
-    db.add(ApplicationActivity(
-        tenant_id=principal.tenant_id,
-        application_id=application.id,
-        actor_user_id=principal.user.id,
-        action="document_linked",
-        summary=f"已关联企业资料“{document.filename}”",
-        metadata_json={"document_id": str(document.id)},
-    ))
+    db.add(
+        ApplicationActivity(
+            tenant_id=principal.tenant_id,
+            application_id=application.id,
+            actor_user_id=principal.user.id,
+            action="document_linked",
+            summary=f"已关联企业资料“{document.filename}”",
+            metadata_json={"document_id": str(document.id)},
+        )
+    )
     db.commit()
     db.refresh(link)
     return {"id": str(link.id), "status": link.status}
@@ -865,14 +941,16 @@ def create_application_comment(
         body=body,
     )
     db.add(comment)
-    db.add(ApplicationActivity(
-        tenant_id=principal.tenant_id,
-        application_id=application.id,
-        actor_user_id=principal.user.id,
-        action="comment_added",
-        summary="新增申报协作评论",
-        metadata_json={"comment_id": str(comment.id)},
-    ))
+    db.add(
+        ApplicationActivity(
+            tenant_id=principal.tenant_id,
+            application_id=application.id,
+            actor_user_id=principal.user.id,
+            action="comment_added",
+            summary="新增申报协作评论",
+            metadata_json={"comment_id": str(comment.id)},
+        )
+    )
     db.commit()
     db.refresh(comment)
     return {"id": str(comment.id), "body": comment.body, "created_at": comment.created_at}
@@ -904,10 +982,7 @@ def application_agent_action(
         db, Application, application_id, principal.tenant_id, "Application"
     )
     artifact_write_states = {"draft", "preparing", "revision_requested"}
-    if (
-        payload.action in {"generate", "fix"}
-        and application.status not in artifact_write_states
-    ):
+    if payload.action in {"generate", "fix"} and application.status not in artifact_write_states:
         raise HTTPException(
             status_code=409,
             detail=f"Artifacts cannot be generated while application is {application.status}",
@@ -920,24 +995,28 @@ def application_agent_action(
         "artifact": None,
     }
     if payload.action == "check":
-        response.update({"message": "已按材料硬门槛、资格状态与证据完整性完成检查。", "readiness": state})
+        response.update(
+            {"message": "已按材料硬门槛、资格状态与证据完整性完成检查。", "readiness": state}
+        )
     elif payload.action in {"ask", "explain"}:
         if payload.action == "ask" and not (payload.question or "").strip():
             raise HTTPException(status_code=422, detail="Question is required for ask")
         eligibility = records["eligibility"]
-        response.update({
-            "message": eligibility.summary if eligibility else "当前没有可引用的资格判断。",
-            "readiness": state,
-            "citations": [
-                {
-                    "source_title": item.source_title,
-                    "article": item.article,
-                    "quote": item.quote,
-                    "verified": item.verified,
-                }
-                for item in records["evidence"]
-            ],
-        })
+        response.update(
+            {
+                "message": eligibility.summary if eligibility else "当前没有可引用的资格判断。",
+                "readiness": state,
+                "citations": [
+                    {
+                        "source_title": item.source_title,
+                        "article": item.article,
+                        "quote": item.quote,
+                        "verified": item.verified,
+                    }
+                    for item in records["evidence"]
+                ],
+            }
+        )
     else:
         latest = db.scalar(
             select(ApplicationArtifact)
@@ -958,7 +1037,9 @@ def application_agent_action(
             )
         fix_note = (payload.instruction or (latest.review_note if latest else None) or "").strip()
         if payload.action == "fix" and not fix_note:
-            raise HTTPException(status_code=422, detail="Fix instruction or review note is required")
+            raise HTTPException(
+                status_code=422, detail="Fix instruction or review note is required"
+            )
         try:
             artifact = create_artifact(
                 db,
@@ -968,34 +1049,52 @@ def application_agent_action(
             )
         except ValueError as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
-        db.add_all([
+        db.add(
             ApplicationActivity(
                 tenant_id=principal.tenant_id,
                 application_id=application.id,
                 actor_user_id=principal.user.id,
-                action="artifact_generated" if payload.action == "generate" else "artifact_regenerated",
+                action="artifact_generated"
+                if payload.action == "generate"
+                else "artifact_regenerated",
                 summary=f"生成申报工作稿 v{artifact.version}",
-                metadata_json={"artifact_id": str(artifact.id), "method": artifact.generation_method},
-            ),
-            AnalyticsEvent(
-                tenant_id=principal.tenant_id,
-                user_id=principal.user.id,
-                name="document_generated",
-                properties={"application_id": str(application.id), "artifact_id": str(artifact.id)},
-            ),
-        ])
+                metadata_json={
+                    "artifact_id": str(artifact.id),
+                    "method": artifact.generation_method,
+                },
+            )
+        )
+        record_event(
+            db,
+            tenant_id=principal.tenant_id,
+            user_id=principal.user.id,
+            name="document_generated",
+            event_key=f"document_generated:{artifact.id}",
+            properties={
+                "application_id": str(application.id),
+                "artifact_id": str(artifact.id),
+            },
+        )
         db.commit()
         db.refresh(artifact)
-        response.update({"message": f"已生成版本 v{artifact.version}，等待人工复核。", "artifact": _artifact_out(artifact), "readiness": state})
+        response.update(
+            {
+                "message": f"已生成版本 v{artifact.version}，等待人工复核。",
+                "artifact": _artifact_out(artifact),
+                "readiness": state,
+            }
+        )
         return response
-    db.add(ApplicationActivity(
-        tenant_id=principal.tenant_id,
-        application_id=application.id,
-        actor_user_id=principal.user.id,
-        action=f"workspace_{payload.action}",
-        summary=f"执行工作区动作：{payload.action}",
-        metadata_json={"engine": "deterministic-evidence-v1"},
-    ))
+    db.add(
+        ApplicationActivity(
+            tenant_id=principal.tenant_id,
+            application_id=application.id,
+            actor_user_id=principal.user.id,
+            action=f"workspace_{payload.action}",
+            summary=f"执行工作区动作：{payload.action}",
+            metadata_json={"engine": "deterministic-evidence-v1"},
+        )
+    )
     db.commit()
     return response
 
@@ -1011,46 +1110,58 @@ def review_application_artifact(
     application = require_tenant_resource(
         db, Application, application_id, principal.tenant_id, "Application"
     )
-    artifact = db.scalar(select(ApplicationArtifact).where(
-        ApplicationArtifact.id == artifact_id,
-        ApplicationArtifact.application_id == application.id,
-        ApplicationArtifact.tenant_id == principal.tenant_id,
-    ))
+    artifact = db.scalar(
+        select(ApplicationArtifact).where(
+            ApplicationArtifact.id == artifact_id,
+            ApplicationArtifact.application_id == application.id,
+            ApplicationArtifact.tenant_id == principal.tenant_id,
+        )
+    )
     if not artifact:
         raise HTTPException(status_code=404, detail="Artifact not found")
     if application.status != "review":
         raise HTTPException(status_code=409, detail="Application must be in review")
     if payload.decision == "reject" and not (payload.note or "").strip():
         raise HTTPException(status_code=422, detail="Review note is required when rejecting")
-    latest_version = db.scalar(select(func.max(ApplicationArtifact.version)).where(
-        ApplicationArtifact.application_id == application.id,
-        ApplicationArtifact.artifact_type == artifact.artifact_type,
-    ))
+    latest_version = db.scalar(
+        select(func.max(ApplicationArtifact.version)).where(
+            ApplicationArtifact.application_id == application.id,
+            ApplicationArtifact.artifact_type == artifact.artifact_type,
+        )
+    )
     if artifact.version != latest_version:
-        raise HTTPException(status_code=409, detail="Only the latest artifact version can be reviewed")
+        raise HTTPException(
+            status_code=409, detail="Only the latest artifact version can be reviewed"
+        )
     artifact.status = "approved" if payload.decision == "approve" else "rejected"
     artifact.reviewed_by = principal.user.id
     artifact.reviewed_at = datetime.now(UTC)
     artifact.review_note = payload.note
-    application.review_status = "artifact_approved" if payload.decision == "approve" else "changes_requested"
+    application.review_status = (
+        "artifact_approved" if payload.decision == "approve" else "changes_requested"
+    )
     if payload.decision == "reject":
         application.status = "revision_requested"
         application.progress = 60
-        for task in db.scalars(select(Task).where(
-            Task.application_id == application.id,
-            Task.tenant_id == principal.tenant_id,
-        )).all():
+        for task in db.scalars(
+            select(Task).where(
+                Task.application_id == application.id,
+                Task.tenant_id == principal.tenant_id,
+            )
+        ).all():
             task.status = "revision_requested"
             task.progress = 60
             task.current_stage = "修改中"
-    db.add(ApplicationActivity(
-        tenant_id=principal.tenant_id,
-        application_id=application.id,
-        actor_user_id=principal.user.id,
-        action=f"artifact_{artifact.status}",
-        summary=f"申报工作稿 v{artifact.version} 已{'批准' if payload.decision == 'approve' else '退回'}",
-        metadata_json={"artifact_id": str(artifact.id)},
-    ))
+    db.add(
+        ApplicationActivity(
+            tenant_id=principal.tenant_id,
+            application_id=application.id,
+            actor_user_id=principal.user.id,
+            action=f"artifact_{artifact.status}",
+            summary=f"申报工作稿 v{artifact.version} 已{'批准' if payload.decision == 'approve' else '退回'}",
+            metadata_json={"artifact_id": str(artifact.id)},
+        )
+    )
     db.commit()
     db.refresh(artifact)
     return _artifact_out(artifact)
@@ -1067,11 +1178,13 @@ def edit_application_artifact(
     application = require_tenant_resource(
         db, Application, application_id, principal.tenant_id, "Application"
     )
-    source = db.scalar(select(ApplicationArtifact).where(
-        ApplicationArtifact.id == artifact_id,
-        ApplicationArtifact.application_id == application.id,
-        ApplicationArtifact.tenant_id == principal.tenant_id,
-    ))
+    source = db.scalar(
+        select(ApplicationArtifact).where(
+            ApplicationArtifact.id == artifact_id,
+            ApplicationArtifact.application_id == application.id,
+            ApplicationArtifact.tenant_id == principal.tenant_id,
+        )
+    )
     if not source:
         raise HTTPException(status_code=404, detail="Artifact not found")
     if application.status not in {"draft", "preparing", "revision_requested"}:
@@ -1079,12 +1192,16 @@ def edit_application_artifact(
             status_code=409,
             detail=f"Artifacts cannot be edited while application is {application.status}",
         )
-    latest_version = db.scalar(select(func.max(ApplicationArtifact.version)).where(
-        ApplicationArtifact.application_id == application.id,
-        ApplicationArtifact.artifact_type == source.artifact_type,
-    ))
+    latest_version = db.scalar(
+        select(func.max(ApplicationArtifact.version)).where(
+            ApplicationArtifact.application_id == application.id,
+            ApplicationArtifact.artifact_type == source.artifact_type,
+        )
+    )
     if source.version != latest_version:
-        raise HTTPException(status_code=409, detail="Only the latest artifact version can be edited")
+        raise HTTPException(
+            status_code=409, detail="Only the latest artifact version can be edited"
+        )
     artifact = create_artifact(
         db,
         application,
@@ -1093,14 +1210,16 @@ def edit_application_artifact(
         executive_summary=payload.executive_summary or source.content_json.get("executive_summary"),
         revision_note=f"基于 v{source.version} 人工编辑",
     )
-    db.add(ApplicationActivity(
-        tenant_id=principal.tenant_id,
-        application_id=application.id,
-        actor_user_id=principal.user.id,
-        action="artifact_edited",
-        summary=f"人工编辑生成申报工作稿 v{artifact.version}",
-        metadata_json={"artifact_id": str(artifact.id), "source_artifact_id": str(source.id)},
-    ))
+    db.add(
+        ApplicationActivity(
+            tenant_id=principal.tenant_id,
+            application_id=application.id,
+            actor_user_id=principal.user.id,
+            action="artifact_edited",
+            summary=f"人工编辑生成申报工作稿 v{artifact.version}",
+            metadata_json={"artifact_id": str(artifact.id), "source_artifact_id": str(source.id)},
+        )
+    )
     db.commit()
     db.refresh(artifact)
     return _artifact_out(artifact)
@@ -1110,20 +1229,20 @@ def edit_application_artifact(
 def download_application_artifact(
     application_id: UUID,
     artifact_id: UUID,
-    export_format: Literal["docx", "pdf", "xlsx", "json"] = Query(
-        default="docx", alias="format"
-    ),
+    export_format: Literal["docx", "pdf", "xlsx", "json"] = Query(default="docx", alias="format"),
     principal: Principal = Depends(get_principal),
     db: Session = Depends(get_db),
 ):
     application = require_tenant_resource(
         db, Application, application_id, principal.tenant_id, "Application"
     )
-    artifact = db.scalar(select(ApplicationArtifact).where(
-        ApplicationArtifact.id == artifact_id,
-        ApplicationArtifact.application_id == application.id,
-        ApplicationArtifact.tenant_id == principal.tenant_id,
-    ))
+    artifact = db.scalar(
+        select(ApplicationArtifact).where(
+            ApplicationArtifact.id == artifact_id,
+            ApplicationArtifact.application_id == application.id,
+            ApplicationArtifact.tenant_id == principal.tenant_id,
+        )
+    )
     if not artifact:
         raise HTTPException(status_code=404, detail="Artifact not found")
     body, media_type, extension = render_artifact(artifact.content_json, export_format)

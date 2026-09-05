@@ -110,7 +110,7 @@ def test_validate_settlement_requires_exact_amount_currency_and_tenant():
 
 def test_settlement_creates_one_entitlement_and_real_analytics_event():
     order, payment, product = _records()
-    db = FakeSession([None, order, product, None])
+    db = FakeSession([None, order, product, None, None])
 
     result = settle_payment(
         db,
@@ -134,6 +134,8 @@ def test_settlement_creates_one_entitlement_and_real_analytics_event():
     analytics = [item for item in db.added if isinstance(item, AnalyticsEvent)]
     assert len(analytics) == 1
     assert analytics[0].name == "payment_completed"
+    assert analytics[0].source == "server"
+    assert analytics[0].event_key == f"payment_completed:{order.id}"
 
 
 def test_settlement_rejects_amount_mismatch_without_entitlement():

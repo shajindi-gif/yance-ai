@@ -34,11 +34,32 @@ def _plain_rows(content: dict[str, Any]) -> list[tuple[str, str, str, str]]:
     rows.append(("资格", "结论", str(content.get("eligibility", {}).get("status", "")), ""))
     rows.append(("资格", "说明", str(content.get("eligibility", {}).get("summary", "")), ""))
     for item in content.get("criteria", []):
-        rows.append(("资格条件", str(item.get("name", "")), str(item.get("actual", "")), str(item.get("status", ""))))
+        rows.append(
+            (
+                "资格条件",
+                str(item.get("name", "")),
+                str(item.get("actual", "")),
+                str(item.get("status", "")),
+            )
+        )
     for item in content.get("requirements", []):
-        rows.append(("材料", str(item.get("title", "")), str(item.get("description", "")), str(item.get("status", ""))))
+        rows.append(
+            (
+                "材料",
+                str(item.get("title", "")),
+                str(item.get("description", "")),
+                str(item.get("status", "")),
+            )
+        )
     for item in content.get("evidence", []):
-        rows.append(("政策证据", str(item.get("article") or item.get("source_title", "")), str(item.get("quote", "")), "已核验" if item.get("verified") else "未核验"))
+        rows.append(
+            (
+                "政策证据",
+                str(item.get("article") or item.get("source_title", "")),
+                str(item.get("quote", "")),
+                "已核验" if item.get("verified") else "未核验",
+            )
+        )
     if content.get("revision_note"):
         rows.append(("修订", "说明", str(content["revision_note"]), ""))
     return rows
@@ -58,7 +79,7 @@ def render_docx(content: dict[str, Any]) -> bytes:
     document = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
-        f'<w:body>{"".join(paragraphs)}<w:sectPr/></w:body></w:document>'
+        f"<w:body>{''.join(paragraphs)}<w:sectPr/></w:body></w:document>"
     )
     content_types = (
         '<?xml version="1.0" encoding="UTF-8"?>'
@@ -66,13 +87,13 @@ def render_docx(content: dict[str, Any]) -> bytes:
         '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
         '<Default Extension="xml" ContentType="application/xml"/>'
         '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
-        '</Types>'
+        "</Types>"
     )
     relationships = (
         '<?xml version="1.0" encoding="UTF-8"?>'
         '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
         '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>'
-        '</Relationships>'
+        "</Relationships>"
     )
     output = io.BytesIO()
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
@@ -96,7 +117,7 @@ def render_xlsx(content: dict[str, Any]) -> bytes:
     worksheet = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-        f'<sheetData>{"".join(sheet_rows)}</sheetData></worksheet>'
+        f"<sheetData>{''.join(sheet_rows)}</sheetData></worksheet>"
     )
     workbook = (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
@@ -108,13 +129,13 @@ def render_xlsx(content: dict[str, Any]) -> bytes:
         '<?xml version="1.0" encoding="UTF-8"?>'
         '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
         '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
-        '</Relationships>'
+        "</Relationships>"
     )
     root_rels = (
         '<?xml version="1.0" encoding="UTF-8"?>'
         '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
         '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
-        '</Relationships>'
+        "</Relationships>"
     )
     content_types = (
         '<?xml version="1.0" encoding="UTF-8"?>'
@@ -123,7 +144,7 @@ def render_xlsx(content: dict[str, Any]) -> bytes:
         '<Default Extension="xml" ContentType="application/xml"/>'
         '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
         '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
-        '</Types>'
+        "</Types>"
     )
     output = io.BytesIO()
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
@@ -156,7 +177,10 @@ def render_pdf(content: dict[str, Any]) -> bytes:
 
 def render_artifact(content: dict[str, Any], export_format: ExportFormat) -> tuple[bytes, str, str]:
     renderers = {
-        "docx": (render_docx, "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+        "docx": (
+            render_docx,
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ),
         "pdf": (render_pdf, "application/pdf"),
         "xlsx": (render_xlsx, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
         "json": (render_json, "application/json"),

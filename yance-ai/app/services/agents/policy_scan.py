@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 
 from app.models.models import (
     AgentRun,
-    AnalyticsEvent,
     Artifact,
     Company,
     CompanyProfileVersion,
@@ -39,6 +38,7 @@ from app.services.agents.definitions import (
     POLICY_SEARCH_AGENT_ID,
     REPORT_AGENT_ID,
 )
+from app.services.analytics.events import record_event
 from app.services.policies.eligibility import evaluate_opportunity
 from app.services.policies.visibility import visible_policy_clause
 from app.services.report.matcher import match_policies_for_company
@@ -160,12 +160,15 @@ async def execute_policy_scan(db: Session, run: AgentRun, harness: "AgentHarness
         )
         tool_started = perf_counter()
         states: dict[str, int] = {}
-        profile_snapshot = db.scalar(
-            select(CompanyProfileVersion.snapshot_json).where(
-                CompanyProfileVersion.id == payload.profile_version_id,
-                CompanyProfileVersion.tenant_id == payload.tenant_id,
+        profile_snapshot = (
+            db.scalar(
+                select(CompanyProfileVersion.snapshot_json).where(
+                    CompanyProfileVersion.id == payload.profile_version_id,
+                    CompanyProfileVersion.tenant_id == payload.tenant_id,
+                )
             )
-        ) or {}
+            or {}
+        )
         for opportunity in opportunities:
             result = evaluate_opportunity(db, opportunity, profile_snapshot)
             states[result.status] = states.get(result.status, 0) + 1
@@ -248,18 +251,18 @@ async def execute_policy_scan(db: Session, run: AgentRun, harness: "AgentHarness
     task.progress = 100
     task.current_stage = "已完成"
     task.completed_at = finished
-    db.add(
-        AnalyticsEvent(
-            tenant_id=run.tenant_id,
-            user_id=run.user_id,
-            name="policy_scan_completed",
-            properties={
-                "scan_id": str(scan.id),
-                "workflow_run_id": str(workflow_run.id),
-                "agent_run_id": str(run.id),
-                "total_opportunities": len(opportunities),
-            },
-        )
+    record_event(
+        db,
+        tenant_id=run.tenant_id,
+        user_id=run.user_id,
+        name="policy_scan_completed",
+        event_key=f"policy_scan_completed:{scan.id}",
+        properties={
+            "scan_id": str(scan.id),
+            "workflow_run_id": str(workflow_run.id),
+            "agent_run_id": str(run.id),
+            "total_opportunities": len(opportunities),
+        },
     )
     db.commit()
     logger.info("agent_run_completed", status="completed", latency_ms=latency_ms)

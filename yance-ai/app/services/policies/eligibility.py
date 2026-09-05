@@ -32,7 +32,9 @@ def exact_quote_span(content: str, quote: str) -> tuple[int, int] | None:
             return None
         end = start + len(quote)
         left_numeric_collision = quote[0].isdigit() and start > 0 and content[start - 1].isdigit()
-        right_numeric_collision = quote[-1].isdigit() and end < len(content) and content[end].isdigit()
+        right_numeric_collision = (
+            quote[-1].isdigit() and end < len(content) and content[end].isdigit()
+        )
         if not left_numeric_collision and not right_numeric_collision:
             return start, end
         offset = start + 1
@@ -54,7 +56,9 @@ def _evaluate(actual: Any, operator: str, expected: Any) -> bool:
     if operator == "contains":
         values = actual if isinstance(actual, list) else [actual]
         targets = expected if isinstance(expected, list) else [expected]
-        return any(str(target).lower() in str(value).lower() for value in values for target in targets)
+        return any(
+            str(target).lower() in str(value).lower() for value in values for target in targets
+        )
     if operator in {"gte", "lte"}:
         try:
             left, right = float(actual), float(expected)
@@ -87,7 +91,9 @@ def _exact_source(
     return None
 
 
-def evaluate_opportunity(db: Session, opportunity: Opportunity, snapshot: dict[str, Any]) -> EligibilityResult:
+def evaluate_opportunity(
+    db: Session, opportunity: Opportunity, snapshot: dict[str, Any]
+) -> EligibilityResult:
     existing = db.scalar(
         select(EligibilityResult).where(
             EligibilityResult.opportunity_id == opportunity.id,
@@ -112,14 +118,21 @@ def evaluate_opportunity(db: Session, opportunity: Opportunity, snapshot: dict[s
     version = (
         db.get(PolicyVersion, opportunity.policy_version_id)
         if opportunity.policy_version_id
-        else latest_policy_version(db, opportunity.policy_id) if opportunity.policy_id else None
+        else latest_policy_version(db, opportunity.policy_id)
+        if opportunity.policy_id
+        else None
     )
     rules = (
-        list(db.scalars(select(EligibilityRule).where(
-            EligibilityRule.policy_version_id == version.id,
-            EligibilityRule.status == "active",
-        )).all())
-        if version else []
+        list(
+            db.scalars(
+                select(EligibilityRule).where(
+                    EligibilityRule.policy_version_id == version.id,
+                    EligibilityRule.status == "active",
+                )
+            ).all()
+        )
+        if version
+        else []
     )
     criteria: list[dict[str, Any]] = []
     missing: list[str] = []
@@ -149,24 +162,29 @@ def evaluate_opportunity(db: Session, opportunity: Opportunity, snapshot: dict[s
             if not passed and rule.is_hard_gate:
                 hard_failed = True
             evidence_rows.append((rule, *source))
-        criteria.append({
-            "rule_id": str(rule.id),
-            "name": rule.name,
-            "fact_key": rule.fact_key,
-            "operator": rule.operator,
-            "expected": _expected(rule),
-            "actual": actual,
-            "is_hard_gate": rule.is_hard_gate,
-            "status": state,
-            "article": rule.article,
-        })
+        criteria.append(
+            {
+                "rule_id": str(rule.id),
+                "name": rule.name,
+                "fact_key": rule.fact_key,
+                "operator": rule.operator,
+                "expected": _expected(rule),
+                "actual": actual,
+                "is_hard_gate": rule.is_hard_gate,
+                "status": state,
+                "article": rule.article,
+            }
+        )
 
     if hard_failed:
         status, summary = "NOT_ELIGIBLE", "至少一项已核验硬门槛不满足。"
     elif missing:
         status, summary = "NEED_MORE_INFORMATION", "缺少企业事实、规则或可核验政策原文。"
     elif rules:
-        status, summary = "POTENTIALLY_ELIGIBLE", "已通过结构化规则检查，仍需人工复核后方可确认符合。"
+        status, summary = (
+            "POTENTIALLY_ELIGIBLE",
+            "已通过结构化规则检查，仍需人工复核后方可确认符合。",
+        )
     else:
         status, summary = "NEED_MORE_INFORMATION", "尚未形成可验证资格结论。"
 
@@ -185,24 +203,26 @@ def evaluate_opportunity(db: Session, opportunity: Opportunity, snapshot: dict[s
     db.flush()
 
     for rule, chunk, start, end in evidence_rows:
-        db.add(Evidence(
-            tenant_id=opportunity.tenant_id,
-            opportunity_id=opportunity.id,
-            eligibility_result_id=result.id,
-            policy_version_id=version.id,
-            policy_chunk_id=chunk.id,
-            eligibility_rule_id=rule.id,
-            source_title=version.title,
-            source_url=version.source_url,
-            issuer=version.issuer,
-            article=rule.article or chunk.article,
-            quote=rule.source_quote,
-            quote_start=start,
-            quote_end=end,
-            confidence=1,
-            verifier="exact_span_v1",
-            verified=version.content[start:end] == rule.source_quote,
-        ))
+        db.add(
+            Evidence(
+                tenant_id=opportunity.tenant_id,
+                opportunity_id=opportunity.id,
+                eligibility_result_id=result.id,
+                policy_version_id=version.id,
+                policy_chunk_id=chunk.id,
+                eligibility_rule_id=rule.id,
+                source_title=version.title,
+                source_url=version.source_url,
+                issuer=version.issuer,
+                article=rule.article or chunk.article,
+                quote=rule.source_quote,
+                quote_start=start,
+                quote_end=end,
+                confidence=1,
+                verifier="exact_span_v1",
+                verified=version.content[start:end] == rule.source_quote,
+            )
+        )
     opportunity.eligibility_status = status
     opportunity.eligibility_confidence = confidence
     return result
@@ -211,10 +231,14 @@ def evaluate_opportunity(db: Session, opportunity: Opportunity, snapshot: dict[s
 def policy_supporting_data(db: Session, policy_version_id: UUID | None) -> tuple[list, list]:
     if not policy_version_id:
         return [], []
-    materials = list(db.scalars(select(RequiredMaterial).where(
-        RequiredMaterial.policy_version_id == policy_version_id
-    )).all())
-    benefits = list(db.scalars(select(PolicyBenefit).where(
-        PolicyBenefit.policy_version_id == policy_version_id
-    )).all())
+    materials = list(
+        db.scalars(
+            select(RequiredMaterial).where(RequiredMaterial.policy_version_id == policy_version_id)
+        ).all()
+    )
+    benefits = list(
+        db.scalars(
+            select(PolicyBenefit).where(PolicyBenefit.policy_version_id == policy_version_id)
+        ).all()
+    )
     return materials, benefits

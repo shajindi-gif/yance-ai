@@ -419,7 +419,9 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             eligibility_agent = next(
                 item for item in agent_registry.json() if item["key"] == "eligibility"
             )
-            evidence_agent = next(item for item in agent_registry.json() if item["key"] == "evidence")
+            evidence_agent = next(
+                item for item in agent_registry.json() if item["key"] == "evidence"
+            )
             assert eligibility_agent["status"] == "active"
             assert eligibility_agent["run_count"] >= 1
             assert evidence_agent["status"] == "active"
@@ -429,7 +431,9 @@ def test_persisted_company_to_application_workflow(monkeypatch):
                 f"/api/v1/opportunities/{opportunity['id']}", headers=headers
             )
             assert opportunity_detail.status_code == 200
-            assert opportunity_detail.json()["eligibility_result"]["criteria"][0]["status"] == "PASS"
+            assert (
+                opportunity_detail.json()["eligibility_result"]["criteria"][0]["status"] == "PASS"
+            )
             assert opportunity_detail.json()["evidence"][0]["quote"] == quote
             assert opportunity_detail.json()["evidence"][0]["verified"] is True
 
@@ -496,16 +500,22 @@ def test_persisted_company_to_application_workflow(monkeypatch):
                     )
                     == 3
                 )
-                assert db.scalar(
-                    select(func.count())
-                    .select_from(EligibilityResult)
-                    .where(EligibilityResult.opportunity_id == uuid.UUID(opportunity["id"]))
-                ) == 1
-                assert db.scalar(
-                    select(func.count())
-                    .select_from(Evidence)
-                    .where(Evidence.opportunity_id == uuid.UUID(opportunity["id"]))
-                ) == 1
+                assert (
+                    db.scalar(
+                        select(func.count())
+                        .select_from(EligibilityResult)
+                        .where(EligibilityResult.opportunity_id == uuid.UUID(opportunity["id"]))
+                    )
+                    == 1
+                )
+                assert (
+                    db.scalar(
+                        select(func.count())
+                        .select_from(Evidence)
+                        .where(Evidence.opportunity_id == uuid.UUID(opportunity["id"]))
+                    )
+                    == 1
+                )
                 assert (
                     db.scalar(
                         select(func.count())
@@ -585,9 +595,7 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             assert generated.status_code == 200, generated.text
             artifact_v1 = generated.json()["artifact"]
             assert artifact_v1["version"] == 1
-            assert artifact_v1["source_snapshot"]["policy_version_id"] == str(
-                policy_version_id
-            )
+            assert artifact_v1["source_snapshot"]["policy_version_id"] == str(policy_version_id)
 
             requirement_update = client.patch(
                 f"/api/v1/applications/{application_id}/requirements/{requirement_id}",

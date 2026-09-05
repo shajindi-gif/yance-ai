@@ -9,13 +9,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.models import (
-    AnalyticsEvent,
     Entitlement,
     Order,
     Payment,
     PaymentEvent,
     Product,
 )
+from app.services.analytics.events import record_event
 
 
 @dataclass(frozen=True)
@@ -160,13 +160,13 @@ def settle_payment(
                 status="active",
             )
         )
-    db.add(
-        AnalyticsEvent(
-            tenant_id=order.tenant_id,
-            user_id=None,
-            name="payment_completed",
-            properties={"order_id": str(order.id), "provider": payment.provider},
-        )
+    record_event(
+        db,
+        tenant_id=order.tenant_id,
+        user_id=None,
+        name="payment_completed",
+        event_key=f"payment_completed:{order.id}",
+        properties={"order_id": str(order.id), "provider": payment.provider},
     )
     event.status = "processed"
     replay = _commit_or_resolve_replay(db, event=event)

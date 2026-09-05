@@ -40,6 +40,7 @@ def initial_profile_data(company: Company) -> dict[str, Any]:
     qualifications = legacy.get("qualifications", [])
     if not isinstance(qualifications, list):
         qualifications = []
+
     def _list_value(key: str) -> list[str]:
         value = legacy.get(key, [])
         return [str(item) for item in value] if isinstance(value, list) else []

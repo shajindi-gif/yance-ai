@@ -10,13 +10,14 @@ from sqlalchemy.orm import Session
 from app.api.deps import Principal, get_principal, require_roles
 from app.core.config import settings
 from app.core.db import get_db
-from app.models.models import AnalyticsEvent, Company, Document, UserRole
+from app.models.models import Company, Document, UserRole
 from app.schemas.schemas import (
     DocumentComplete,
     DocumentCreate,
     DocumentOut,
     PresignedUploadOut,
 )
+from app.services.analytics.events import record_event
 from app.services.oss import OSSStorage, get_oss_storage
 
 router = APIRouter(prefix="/documents", tags=["document"])
@@ -119,13 +120,13 @@ def complete_upload(
     document.ingestion_status = "pending"
     document.ingestion_error = None
     document.size_bytes = actual_size
-    db.add(
-        AnalyticsEvent(
-            tenant_id=principal.tenant_id,
-            user_id=principal.user.id,
-            name="document_uploaded",
-            properties={"document_id": str(document.id)},
-        )
+    record_event(
+        db,
+        tenant_id=principal.tenant_id,
+        user_id=principal.user.id,
+        name="document_uploaded",
+        event_key=f"document_uploaded:{document.id}",
+        properties={"document_id": str(document.id)},
     )
     db.commit()
     db.refresh(document)

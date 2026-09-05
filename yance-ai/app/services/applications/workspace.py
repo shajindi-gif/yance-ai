@@ -18,31 +18,53 @@ from app.services.applications.artifacts import content_checksum
 
 def workspace_records(db: Session, application: Application) -> dict[str, Any]:
     company = db.get(Company, application.company_id)
-    opportunity = db.get(Opportunity, application.opportunity_id) if application.opportunity_id else None
+    opportunity = (
+        db.get(Opportunity, application.opportunity_id) if application.opportunity_id else None
+    )
     eligibility = (
-        db.scalar(select(EligibilityResult).where(
-            EligibilityResult.opportunity_id == opportunity.id,
-            EligibilityResult.tenant_id == application.tenant_id,
-        ))
-        if opportunity else None
+        db.scalar(
+            select(EligibilityResult).where(
+                EligibilityResult.opportunity_id == opportunity.id,
+                EligibilityResult.tenant_id == application.tenant_id,
+            )
+        )
+        if opportunity
+        else None
     )
-    requirements = list(db.scalars(
-        select(ApplicationRequirement).where(
-            ApplicationRequirement.application_id == application.id,
-            ApplicationRequirement.tenant_id == application.tenant_id,
-        ).order_by(ApplicationRequirement.sort_order)
-    ).all())
+    requirements = list(
+        db.scalars(
+            select(ApplicationRequirement)
+            .where(
+                ApplicationRequirement.application_id == application.id,
+                ApplicationRequirement.tenant_id == application.tenant_id,
+            )
+            .order_by(ApplicationRequirement.sort_order)
+        ).all()
+    )
     evidence = (
-        list(db.scalars(select(Evidence).where(
-            Evidence.eligibility_result_id == eligibility.id,
-            Evidence.tenant_id == application.tenant_id,
-        ).order_by(Evidence.created_at)).all())
-        if eligibility else []
+        list(
+            db.scalars(
+                select(Evidence)
+                .where(
+                    Evidence.eligibility_result_id == eligibility.id,
+                    Evidence.tenant_id == application.tenant_id,
+                )
+                .order_by(Evidence.created_at)
+            ).all()
+        )
+        if eligibility
+        else []
     )
-    links = list(db.scalars(select(ApplicationDocumentLink).where(
-        ApplicationDocumentLink.application_id == application.id,
-        ApplicationDocumentLink.tenant_id == application.tenant_id,
-    ).order_by(ApplicationDocumentLink.created_at)).all())
+    links = list(
+        db.scalars(
+            select(ApplicationDocumentLink)
+            .where(
+                ApplicationDocumentLink.application_id == application.id,
+                ApplicationDocumentLink.tenant_id == application.tenant_id,
+            )
+            .order_by(ApplicationDocumentLink.created_at)
+        ).all()
+    )
     return {
         "company": company,
         "opportunity": opportunity,
@@ -68,7 +90,11 @@ def readiness(records: dict[str, Any]) -> dict[str, Any]:
         blockers.append("缺少资格判断")
     elif eligibility.status in {"NOT_ELIGIBLE", "NEED_MORE_INFORMATION"}:
         blockers.append(f"资格状态为 {eligibility.status}")
-    if eligibility and eligibility.status in {"ELIGIBLE", "POTENTIALLY_ELIGIBLE"} and evidence_count == 0:
+    if (
+        eligibility
+        and eligibility.status in {"ELIGIBLE", "POTENTIALLY_ELIGIBLE"}
+        and evidence_count == 0
+    ):
         blockers.append("缺少已核验政策证据")
     return {
         "requirement_total": len(requirements),
@@ -105,7 +131,10 @@ def build_content(
         "company_name": company.name if company else "",
         "disclaimer": "本文件为证据型工作稿，正式提交前必须由授权人员复核。",
         "executive_summary": summary,
-        "eligibility": {"status": status, "summary": eligibility.summary if eligibility else summary},
+        "eligibility": {
+            "status": status,
+            "summary": eligibility.summary if eligibility else summary,
+        },
         "criteria": list(eligibility.criteria_json if eligibility else []),
         "requirements": [
             {
@@ -136,8 +165,12 @@ def build_content(
         "application_id": str(application.id),
         "company_id": str(application.company_id),
         "opportunity_id": str(opportunity.id) if opportunity else None,
-        "profile_version_id": str(opportunity.profile_version_id) if opportunity and opportunity.profile_version_id else None,
-        "policy_version_id": str(opportunity.policy_version_id) if opportunity and opportunity.policy_version_id else None,
+        "profile_version_id": str(opportunity.profile_version_id)
+        if opportunity and opportunity.profile_version_id
+        else None,
+        "policy_version_id": str(opportunity.policy_version_id)
+        if opportunity and opportunity.policy_version_id
+        else None,
         "eligibility_result_id": str(eligibility.id) if eligibility else None,
         "requirement_ids": [str(item.id) for item in records["requirements"]],
         "document_link_ids": [str(item.id) for item in records["links"]],
@@ -155,17 +188,20 @@ def create_artifact(
     executive_summary: str | None = None,
     title: str | None = None,
 ) -> ApplicationArtifact:
-    db.execute(
-        select(Application.id).where(Application.id == application.id).with_for_update()
-    )
+    db.execute(select(Application.id).where(Application.id == application.id).with_for_update())
     records = workspace_records(db, application)
     eligibility = records["eligibility"]
     if eligibility and eligibility.status == "NOT_ELIGIBLE":
         raise ValueError("已核验硬门槛不满足，不能生成申报工作稿")
-    version = (db.scalar(select(func.max(ApplicationArtifact.version)).where(
-        ApplicationArtifact.application_id == application.id,
-        ApplicationArtifact.artifact_type == "application_brief",
-    )) or 0) + 1
+    version = (
+        db.scalar(
+            select(func.max(ApplicationArtifact.version)).where(
+                ApplicationArtifact.application_id == application.id,
+                ApplicationArtifact.artifact_type == "application_brief",
+            )
+        )
+        or 0
+    ) + 1
     content, source_snapshot = build_content(
         application,
         records,

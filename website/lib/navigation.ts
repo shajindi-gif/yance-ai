@@ -2,7 +2,7 @@ export interface WorkspaceNavItem {
   href: string;
   label: string;
   description: string;
-  icon: "home" | "opportunities" | "companies" | "applications" | "agents" | "tasks" | "documents" | "reports" | "billing";
+  icon: "home" | "opportunities" | "companies" | "applications" | "agents" | "tasks" | "documents" | "reports" | "billing" | "admin";
   match: (pathname: string) => boolean;
 }
 
@@ -16,6 +16,7 @@ export const WORKSPACE_ROUTES = [
   "/tasks",
   "/reports",
   "/orders",
+  "/admin",
 ] as const;
 
 export const WORKSPACE_NAVIGATION: WorkspaceNavItem[] = [
@@ -83,6 +84,14 @@ export const WORKSPACE_NAVIGATION: WorkspaceNavItem[] = [
     match: (pathname) => pathname === "/orders",
   },
 ];
+
+export const ADMIN_NAVIGATION: WorkspaceNavItem = {
+  href: "/admin",
+  label: "Admin",
+  description: "平台运营与真实指标",
+  icon: "admin",
+  match: (pathname) => pathname === "/admin" || pathname.startsWith("/admin/"),
+};
 
 export function isWorkspaceRoute(pathname: string): boolean {
   return WORKSPACE_ROUTES.some(

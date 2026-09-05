@@ -215,18 +215,19 @@ def create_eligibility_rule(
 def _owned_policy_version(
     db: Session, *, policy_id: UUID, version_id: UUID | None, tenant_id: UUID
 ) -> PolicyVersion:
-    policy = db.scalar(
-        select(Policy).where(Policy.id == policy_id, Policy.tenant_id == tenant_id)
-    )
+    policy = db.scalar(select(Policy).where(Policy.id == policy_id, Policy.tenant_id == tenant_id))
     if not policy:
         raise HTTPException(status_code=404, detail="Tenant policy not found")
     version = (
-        db.scalar(select(PolicyVersion).where(
-            PolicyVersion.id == version_id,
-            PolicyVersion.policy_id == policy.id,
-            PolicyVersion.tenant_id == tenant_id,
-        ))
-        if version_id else latest_policy_version(db, policy.id)
+        db.scalar(
+            select(PolicyVersion).where(
+                PolicyVersion.id == version_id,
+                PolicyVersion.policy_id == policy.id,
+                PolicyVersion.tenant_id == tenant_id,
+            )
+        )
+        if version_id
+        else latest_policy_version(db, policy.id)
     )
     if not version:
         raise HTTPException(status_code=409, detail="Policy source version is required")
