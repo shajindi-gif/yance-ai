@@ -847,6 +847,209 @@ class EvaluationError(Base, TenantOwnedMixin):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
 
+class Plan(Base, TimestampMixin):
+    """Version-independent SaaS package; limits are server-owned configuration."""
+
+    __tablename__ = "plans"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    code: Mapped[str] = mapped_column(String(40), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    description: Mapped[str] = mapped_column(Text)
+    tier: Mapped[int] = mapped_column(default=0)
+    status: Mapped[str] = mapped_column(String(40), default="active", index=True)
+    sales_motion: Mapped[str] = mapped_column(String(40), default="self_serve")
+    limits_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    features_json: Mapped[list] = mapped_column(JSON, default=list)
+
+
+class PriceVersion(Base, TimestampMixin):
+    """Immutable commercial price attached to a Plan."""
+
+    __tablename__ = "price_versions"
+    __table_args__ = (UniqueConstraint("plan_id", "version", name="uq_price_version_plan"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    plan_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("plans.id", ondelete="RESTRICT"), index=True
+    )
+    version: Mapped[int]
+    currency: Mapped[str] = mapped_column(String(8))
+    unit_amount: Mapped[float] = mapped_column(Numeric(12, 2))
+    billing_interval: Mapped[str] = mapped_column(String(20), default="month")
+    provider: Mapped[str | None] = mapped_column(String(40))
+    provider_price_id: Mapped[str | None] = mapped_column(String(160), unique=True)
+    status: Mapped[str] = mapped_column(String(40), default="draft", index=True)
+    effective_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    retired_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Subscription(Base, TimestampMixin, TenantOwnedMixin):
+    __tablename__ = "subscriptions"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    plan_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("plans.id", ondelete="RESTRICT"), index=True
+    )
+    price_version_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("price_versions.id", ondelete="RESTRICT"), index=True
+    )
+    provider: Mapped[str] = mapped_column(String(40), default="internal")
+    provider_customer_id: Mapped[str | None] = mapped_column(String(160), index=True)
+    provider_subscription_id: Mapped[str | None] = mapped_column(
+        String(160), unique=True, index=True
+    )
+    status: Mapped[str] = mapped_column(String(40), default="active", index=True)
+    current_period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    current_period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    cancel_at_period_end: Mapped[bool] = mapped_column(Boolean, default=False)
+    canceled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    grace_ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class SubscriptionItem(Base, TimestampMixin, TenantOwnedMixin):
+    __tablename__ = "subscription_items"
+    __table_args__ = (
+        UniqueConstraint("subscription_id", "meter_key", name="uq_subscription_item_meter"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    subscription_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("subscriptions.id", ondelete="CASCADE"), index=True
+    )
+    meter_key: Mapped[str] = mapped_column(String(80), index=True)
+    quantity: Mapped[int] = mapped_column(default=1)
+
+
+class UsageMeter(Base, TimestampMixin):
+    __tablename__ = "usage_meters"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    key: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(160))
+    unit: Mapped[str] = mapped_column(String(40))
+    aggregation: Mapped[str] = mapped_column(String(40), default="sum")
+    source: Mapped[str] = mapped_column(String(80))
+    reset_period: Mapped[str] = mapped_column(String(20), default="subscription")
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class UsageRecord(Base, TenantOwnedMixin):
+    __tablename__ = "usage_records"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "idempotency_key", name="uq_usage_record_tenant_key"),
+        Index("ix_usage_records_meter_period", "tenant_id", "meter_key", "occurred_at"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    subscription_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("subscriptions.id", ondelete="RESTRICT"), index=True
+    )
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), index=True
+    )
+    workflow_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("workflow_runs.id", ondelete="SET NULL"), index=True
+    )
+    meter_key: Mapped[str] = mapped_column(String(80), index=True)
+    quantity: Mapped[int]
+    idempotency_key: Mapped[str] = mapped_column(String(200))
+    resource_type: Mapped[str | None] = mapped_column(String(80))
+    resource_id: Mapped[str | None] = mapped_column(String(160))
+    source: Mapped[str] = mapped_column(String(80), default="server")
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class UsageBudget(Base, TimestampMixin, TenantOwnedMixin):
+    __tablename__ = "usage_budgets"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id", "scope_type", "scope_id", "meter_key", name="uq_usage_budget_scope"
+        ),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    scope_type: Mapped[str] = mapped_column(String(40), index=True)
+    scope_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), index=True)
+    meter_key: Mapped[str] = mapped_column(String(80), index=True)
+    hard_limit: Mapped[int]
+    warning_threshold: Mapped[int | None]
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class ApiKey(Base, TimestampMixin, TenantOwnedMixin):
+    __tablename__ = "api_keys"
+    __table_args__ = (UniqueConstraint("tenant_id", "prefix", name="uq_api_key_tenant_prefix"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    name: Mapped[str] = mapped_column(String(160))
+    prefix: Mapped[str] = mapped_column(String(24), index=True)
+    secret_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    scopes_json: Mapped[list] = mapped_column(JSON, default=list)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class RetentionPolicy(Base, TimestampMixin, TenantOwnedMixin):
+    __tablename__ = "retention_policies"
+    __table_args__ = (UniqueConstraint("tenant_id", name="uq_retention_policy_tenant"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_days: Mapped[int] = mapped_column(default=365)
+    agent_trace_days: Mapped[int] = mapped_column(default=180)
+    analytics_days: Mapped[int] = mapped_column(default=365)
+    audit_days: Mapped[int] = mapped_column(default=730)
+    legal_hold: Mapped[bool] = mapped_column(Boolean, default=False)
+    legal_hold_reason: Mapped[str | None] = mapped_column(String(500))
+    configured_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+
+
+class ExportJob(Base, TimestampMixin, TenantOwnedMixin):
+    __tablename__ = "export_jobs"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    requested_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    status: Mapped[str] = mapped_column(String(40), default="queued", index=True)
+    format: Mapped[str] = mapped_column(String(20), default="json")
+    scope: Mapped[str] = mapped_column(String(40), default="workspace")
+    payload_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    checksum_sha256: Mapped[str | None] = mapped_column(String(64))
+    record_counts_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(120))
+
+
+class DeletionRequest(Base, TimestampMixin, TenantOwnedMixin):
+    __tablename__ = "deletion_requests"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    requested_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    status: Mapped[str] = mapped_column(String(40), default="scheduled", index=True)
+    reason: Mapped[str | None] = mapped_column(String(500))
+    scheduled_for: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    canceled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    blocker_json: Mapped[list] = mapped_column(JSON, default=list)
+
+
+class FeatureFlag(Base, TimestampMixin):
+    __tablename__ = "feature_flags"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    key: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+    description: Mapped[str] = mapped_column(Text)
+    enabled_by_default: Mapped[bool] = mapped_column(Boolean, default=False)
+    status: Mapped[str] = mapped_column(String(40), default="active")
+
+
+class TenantFeatureFlag(Base, TimestampMixin, TenantOwnedMixin):
+    __tablename__ = "tenant_feature_flags"
+    __table_args__ = (UniqueConstraint("tenant_id", "feature_flag_id", name="uq_tenant_flag"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    feature_flag_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("feature_flags.id", ondelete="CASCADE"), index=True
+    )
+    enabled: Mapped[bool] = mapped_column(Boolean)
+
+
 class Product(Base, TimestampMixin):
     """Unified Product SKU — single source of truth for pricing."""
 
@@ -1098,6 +1301,11 @@ class AuditLog(Base, TenantOwnedMixin):
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     ip_address: Mapped[str | None] = mapped_column(String(64))
     details: Mapped[dict] = mapped_column(JSON, default=dict)
+    request_id: Mapped[str | None] = mapped_column(String(120), index=True)
+    result: Mapped[str] = mapped_column(String(40), default="success")
+    reason: Mapped[str | None] = mapped_column(String(500))
+    previous_hash: Mapped[str | None] = mapped_column(String(64))
+    entry_hash: Mapped[str | None] = mapped_column(String(64), index=True)
 
 
 class Task(Base, TimestampMixin, TenantOwnedMixin):

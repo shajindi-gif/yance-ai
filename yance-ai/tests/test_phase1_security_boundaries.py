@@ -3,6 +3,7 @@ import uuid
 
 import pytest
 from fastapi import HTTPException
+from starlette.requests import Request
 
 from app.api import deps
 from app.api.deps import Principal
@@ -12,7 +13,7 @@ from app.api.routes.tasks import RevisionCreate, request_revision
 from app.api.routes.telemetry import capture_event, start_agent_run
 from app.api.routes.tenants import create_user
 from app.core.config import settings
-from app.models.models import Document, Product, Task, User, UserRole
+from app.models.models import Document, Membership, Product, Task, User, UserRole
 from app.schemas.schemas import (
     AgentRunCreate,
     AnalyticsEventCreate,
@@ -79,9 +80,20 @@ def test_principal_query_requires_an_active_tenant(monkeypatch):
             "tenant_id": str(principal.tenant_id),
         },
     )
-    db = FakeDb([principal.user])
+    membership = Membership(
+        tenant_id=principal.tenant_id,
+        user_id=principal.user.id,
+        role=UserRole.owner,
+        status="active",
+    )
+    db = FakeDb([principal.user, membership])
 
-    result = deps.get_principal(token="token", db=db)
+    result = deps.get_principal(
+        request=Request({"type": "http", "method": "GET", "path": "/api/v1/companies", "headers": []}),
+        token="token",
+        x_api_key=None,
+        db=db,
+    )
 
     query = str(db.queries[0])
     assert "JOIN tenants" in query

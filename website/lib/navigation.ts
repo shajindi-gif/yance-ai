@@ -2,7 +2,7 @@ export interface WorkspaceNavItem {
   href: string;
   label: string;
   description: string;
-  icon: "home" | "opportunities" | "companies" | "applications" | "agents" | "tasks" | "documents" | "reports" | "billing" | "admin";
+  icon: "home" | "opportunities" | "companies" | "applications" | "agents" | "tasks" | "documents" | "reports" | "billing" | "settings" | "admin";
   match: (pathname: string) => boolean;
 }
 
@@ -16,6 +16,8 @@ export const WORKSPACE_ROUTES = [
   "/tasks",
   "/reports",
   "/orders",
+  "/billing",
+  "/settings",
   "/admin",
 ] as const;
 
@@ -77,11 +79,18 @@ export const WORKSPACE_NAVIGATION: WorkspaceNavItem[] = [
     match: (pathname) => pathname === "/reports",
   },
   {
-    href: "/orders",
-    label: "订单与账单",
-    description: "真实交易记录",
+    href: "/billing",
+    label: "用量与账单",
+    description: "套餐、配额与交易",
     icon: "billing",
-    match: (pathname) => pathname === "/orders",
+    match: (pathname) => pathname === "/billing" || pathname === "/orders",
+  },
+  {
+    href: "/settings",
+    label: "企业设置",
+    description: "API 与数据治理",
+    icon: "settings",
+    match: (pathname) => pathname === "/settings",
   },
 ];
 

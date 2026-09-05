@@ -8,6 +8,7 @@ from app.core.db import get_db
 from app.core.security import hash_password
 from app.models.models import Membership, Tenant, User, UserRole
 from app.schemas.schemas import TenantOut, UserCreate, UserOut
+from app.services.billing.usage import QuotaExceeded, ensure_capacity
 
 router = APIRouter(tags=["tenant", "users"])
 
@@ -38,6 +39,10 @@ def create_user(
 ) -> User:
     if payload.role == UserRole.owner and principal.role != UserRole.owner:
         raise HTTPException(status_code=403, detail="Only an owner can add another owner")
+    try:
+        ensure_capacity(db, tenant_id=principal.tenant_id, meter="users")
+    except QuotaExceeded as exc:
+        raise HTTPException(status_code=429, detail=exc.detail()) from exc
     user = User(
         tenant_id=principal.tenant_id,
         email=str(payload.email).lower(),

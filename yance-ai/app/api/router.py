@@ -6,10 +6,12 @@ from app.api.routes import (
     agents,
     analytics,
     auth,
+    billing,
     commerce,
     companies,
     demo_match,
     documents,
+    enterprise,
     payments,
     policies,
     policy_engine,
@@ -22,6 +24,7 @@ from app.api.routes import (
 
 api_router = APIRouter()
 api_router.include_router(auth.router)
+api_router.include_router(billing.router)
 api_router.include_router(admin.router)
 api_router.include_router(admin_evals.router)
 api_router.include_router(analytics.router)
@@ -29,6 +32,7 @@ api_router.include_router(agents.router)
 api_router.include_router(tenants.router)
 api_router.include_router(companies.router)
 api_router.include_router(documents.router)
+api_router.include_router(enterprise.router)
 api_router.include_router(policies.router)
 api_router.include_router(workflow.router)
 api_router.include_router(commerce.router)

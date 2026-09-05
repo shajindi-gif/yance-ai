@@ -158,3 +158,28 @@ ReconciliationRun / Difference
 ### P3
 
 - warehouse/semantic layer、跨 vertical schema registry 和高级数据产品。
+
+## Phase 9 remediation status — 2026-09-05
+
+Migration `20260905_0019` adds the first normalized recurring-commercial and enterprise-governance
+layer without altering historical payment migrations:
+
+```text
+Plan → PriceVersion → Subscription → SubscriptionItem
+                    ↘ UsageMeter → UsageRecord / UsageBudget
+
+Tenant → ApiKey / RetentionPolicy / ExportJob / DeletionRequest
+FeatureFlag → TenantFeatureFlag
+Tenant → hash-linked AuditLog entries
+```
+
+Four plans and eight meters are product configuration only. Only Free has an active zero-value
+PriceVersion; paid plan prices and subscriptions are absent until configured. Resource usage is
+reconciled from live tenant rows, while event usage is idempotently recorded inside the relevant
+product transaction. The migration passed fresh base-to-head, populated downgrade/upgrade and ORM
+schema-drift checks.
+
+The remaining data-model gaps are material: there is no subscription-provider event/reconciliation
+ledger, refund/dispute model, usage reservation/final settlement, customer billing profile,
+retention execution evidence, deletion propagation graph or database-enforced RLS. Audit entries are
+hash-linked but not yet protected by an append-only database role/trigger or external immutable sink.

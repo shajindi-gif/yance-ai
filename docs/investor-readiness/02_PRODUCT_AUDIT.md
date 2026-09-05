@@ -207,3 +207,22 @@ quality. The next quality milestone is a human-reviewed, double-annotated, adjud
 benchmark drawn from the scoped launch domain, followed by live-model and end-to-end workflow
 evaluation. Billing, quota, retention, commercial conversion, and enterprise controls remain Phase
 9 work and must continue to use authoritative database records rather than inferred claims.
+
+## Phase 9 remediation status — 2026-09-05
+
+The product now exposes a database-backed Free/Pro/Business/Enterprise catalog, active tenant
+subscription period, eight real usage meters, organization/user/workflow budgets, API Keys, safe
+workspace export, retention/legal hold, deletion requests and tenant-effective Feature Flags.
+Quota checks are enforced by the API at the actual company, user, upload, scan, Agent Run, report
+and generated-document write paths rather than being decorative UI limits.
+
+`/billing` and `/settings` make the current operational boundary visible. Only Free has a configured
+price; paid tiers say `价格未配置`, and the system does not create a pretend paid subscription.
+Retention enforcement and deletion propagation are also explicitly marked unavailable until their
+deployment workers exist. Empty orders remain an empty state rather than synthetic revenue.
+
+This partially remediates the commercial packaging and enterprise-governance P1/P2 findings, but
+does not make Yance enterprise-sellable by itself. Real recurring provider integration, dunning,
+refunds, reconciliation, tax-invoice issuance, SSO/SCIM/MFA, RLS, automated retention/erasure and
+customer evidence remain open. Phase 10 must keep demo accounts strictly separated from investor
+metrics and generate data-room claims only from implemented controls and test evidence.

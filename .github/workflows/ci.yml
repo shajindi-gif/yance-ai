@@ -35,6 +35,7 @@ jobs:
       APP_ENV: test
       DATABASE_URL: postgresql+psycopg://yance:ci_password@localhost:5432/yance_ci
       JWT_SECRET: ci-only-secret-at-least-32-characters
+      API_KEY_PEPPER: ci-only-api-key-pepper-at-least-32-characters
       BOOTSTRAP_TOKEN: ci-only-bootstrap-token
       TENANT_PROVISIONING_TOKEN: ci-only-tenant-provisioning-token
     defaults:

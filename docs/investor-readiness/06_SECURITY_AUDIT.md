@@ -175,3 +175,25 @@ Browser → Next.js → FastAPI → PostgreSQL/OSS → LLM/OCR/payment providers
 - 每月：权限和 secret review、restore smoke；
 - 每季度：incident tabletop、供应商与数据流 review；
 - 每年或重大架构变更：独立渗透测试。频率必须按实际执行后再公开。
+
+## Phase 9 remediation status — 2026-09-05
+
+The enterprise control surface now applies several concrete security controls:
+
+- API Keys are returned once, stored as peppered HMAC-SHA256 digests, scoped, expirable and
+  revocable. They fail closed on inactive users/memberships and cannot authenticate to Admin,
+  billing, membership, payment or enterprise-control endpoints.
+- Authentication resolves the current active Membership and treats its role as authoritative,
+  reducing stale-token and duplicate-role drift risk.
+- Workspace exports use a tenant-scoped allowlist and omit password hashes, API-key hashes, payment
+  raw responses and object-storage keys. Cross-tenant export download is negatively tested.
+- Retention changes, API-key mutations, deletion requests, budgets and tenant Feature Flag overrides
+  write hash-linked audit entries. Legal hold blocks deletion scheduling, and the seven-day cooling
+  period can be canceled by the Owner.
+- `API_KEY_PEPPER` is now part of the environment contract and placeholder values fail production
+  configuration validation.
+
+These controls do not close the broader security program. Browser JWT storage, shared distributed
+rate limits, credential lifecycle/MFA/SSO, database RLS, tamper-enforced append-only audit storage,
+automated retention/deletion propagation, provider data-erasure evidence, key rotation, DAST and an
+independent penetration test remain open. The UI therefore does not claim those controls exist.

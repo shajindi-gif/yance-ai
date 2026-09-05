@@ -511,6 +511,50 @@ export interface Order {
   created_at: string;
 }
 
+export interface BillingOverview {
+  subscription: {
+    id: string;
+    status: string;
+    provider: string;
+    current_period_start: string;
+    current_period_end: string;
+    cancel_at_period_end: boolean;
+    grace_ends_at: string | null;
+  };
+  plan: {
+    code: string;
+    name: string;
+    sales_motion: string;
+    limits: Record<string, number | null>;
+    features: string[];
+  };
+  usage: Array<{ meter: string; used: number; limit: number | null; remaining: number | null }>;
+  budgets: Array<{ id: string; scope_type: string; scope_id: string; meter_key: string; hard_limit: number; warning_threshold: number | null }>;
+  orders: Order[];
+  tax_invoices: Array<{ id: string; order_id: string; invoice_no: string | null; total_amount: number; status: string; created_at: string }>;
+  paid_plan_checkout_available: boolean;
+  paid_plan_checkout_message: string;
+}
+
+export interface PlanCatalogItem {
+  code: string;
+  name: string;
+  description: string;
+  tier: number;
+  sales_motion: string;
+  limits: Record<string, number | null>;
+  features: string[];
+  price: null | { version: number; currency: string; unit_amount: number; billing_interval: string; provider: string | null; checkout_available: boolean };
+}
+
+export interface EnterpriseSettings {
+  apiKeys: Array<{ id: string; name: string; prefix: string; scopes: string[]; expires_at: string | null; last_used_at: string | null; revoked_at: string | null; created_at: string }>;
+  retention: { document_days: number; agent_trace_days: number; analytics_days: number; audit_days: number; legal_hold: boolean; legal_hold_reason: string | null; enforcement_worker_available: boolean };
+  exports: Array<{ id: string; status: string; format: string; scope: string; checksum_sha256: string | null; record_counts: Record<string, number>; created_at: string; completed_at: string | null }>;
+  deletion: { request: null | { id: string; status: string; scheduled_for: string; reason: string | null; blockers: string[] }; execution_worker_available: boolean };
+  flags: Record<string, boolean>;
+}
+
 export interface Report {
   id: string;
   company_id: string;
@@ -1137,6 +1181,56 @@ class ApiClient {
   // Orders
   async getOrders(): Promise<Order[]> {
     return this.request<Order[]>('/orders');
+  }
+
+  async getPlans(): Promise<PlanCatalogItem[]> {
+    const result = await this.request<{ items: PlanCatalogItem[] }>('/billing/plans');
+    return result.items;
+  }
+
+  async getBillingOverview(): Promise<BillingOverview> {
+    return this.request<BillingOverview>('/billing/overview');
+  }
+
+  async getEnterpriseSettings(): Promise<EnterpriseSettings> {
+    const [keys, retention, exports, deletion, flags] = await Promise.all([
+      this.request<{ items: EnterpriseSettings['apiKeys'] }>('/enterprise/api-keys'),
+      this.request<EnterpriseSettings['retention']>('/enterprise/retention'),
+      this.request<{ items: EnterpriseSettings['exports'] }>('/enterprise/exports'),
+      this.request<EnterpriseSettings['deletion']>('/enterprise/deletion-request'),
+      this.request<{ flags: Record<string, boolean> }>('/enterprise/feature-flags'),
+    ]);
+    return { apiKeys: keys.items, retention, exports: exports.items, deletion, flags: flags.flags };
+  }
+
+  async createApiKey(name: string, scopes: string[]): Promise<{ secret: string }> {
+    return this.request('/enterprise/api-keys', {
+      method: 'POST',
+      body: JSON.stringify({ name, scopes }),
+    });
+  }
+
+  async revokeApiKey(keyId: string): Promise<void> {
+    await this.request(`/enterprise/api-keys/${encodeURIComponent(keyId)}/revoke`, { method: 'POST' });
+  }
+
+  async createWorkspaceExport(): Promise<{ id: string }> {
+    return this.request('/enterprise/exports', { method: 'POST' });
+  }
+
+  async downloadWorkspaceExport(jobId: string): Promise<Blob> {
+    return this.requestBlob(`/enterprise/exports/${encodeURIComponent(jobId)}/download`);
+  }
+
+  async scheduleWorkspaceDeletion(reason?: string): Promise<{ id: string }> {
+    return this.request('/enterprise/deletion-request', {
+      method: 'POST',
+      body: JSON.stringify({ reason: reason || null }),
+    });
+  }
+
+  async cancelWorkspaceDeletion(requestId: string): Promise<void> {
+    await this.request(`/enterprise/deletion-request/${encodeURIComponent(requestId)}/cancel`, { method: 'POST' });
   }
 
   async getProducts(): Promise<ProductCatalogItem[]> {

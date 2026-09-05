@@ -15,6 +15,7 @@ from app.schemas.schemas import (
     CompanyProfileVersionOut,
 )
 from app.services.analytics.events import record_event
+from app.services.billing.usage import QuotaExceeded, ensure_capacity
 from app.services.company_profiles import (
     create_company_profile,
     get_or_create_company_profile,
@@ -38,6 +39,10 @@ def create_company(
     principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
     db: Session = Depends(get_db),
 ) -> Company:
+    try:
+        ensure_capacity(db, tenant_id=principal.tenant_id, meter="companies")
+    except QuotaExceeded as exc:
+        raise HTTPException(status_code=429, detail=exc.detail()) from exc
     company = Company(tenant_id=principal.tenant_id, **payload.model_dump())
     db.add(company)
     db.flush()

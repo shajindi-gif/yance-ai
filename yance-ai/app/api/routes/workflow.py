@@ -46,6 +46,7 @@ from app.services.agents.harness import AgentHarness
 from app.services.analytics.events import record_event
 from app.services.applications.artifacts import render_artifact
 from app.services.applications.workspace import create_artifact, readiness, workspace_records
+from app.services.billing.usage import QuotaExceeded, consume_usage
 from app.services.policies.visibility import visible_policy_clause
 
 router = APIRouter(tags=["policy-scan", "opportunity", "application"])
@@ -200,13 +201,39 @@ def create_policy_scan(
     db.add(task)
     db.flush()
     scan.task_id = task.id
-    AgentHarness().enqueue_policy_scan(
+    run = AgentHarness().enqueue_policy_scan(
         db,
         scan=scan,
         task=task,
         tenant_id=principal.tenant_id,
         user_id=principal.user.id,
     )
+    try:
+        consume_usage(
+            db,
+            tenant_id=principal.tenant_id,
+            meter="policy_scans",
+            quantity=1,
+            idempotency_key=f"policy_scan:{scan.id}",
+            user_id=principal.user.id,
+            workflow_run_id=scan.workflow_run_id,
+            resource_type="policy_scan",
+            resource_id=str(scan.id),
+        )
+        consume_usage(
+            db,
+            tenant_id=principal.tenant_id,
+            meter="agent_runs",
+            quantity=1,
+            idempotency_key=f"agent_run:{run.id}",
+            user_id=principal.user.id,
+            workflow_run_id=scan.workflow_run_id,
+            resource_type="agent_run",
+            resource_id=str(run.id),
+        )
+    except QuotaExceeded as exc:
+        db.rollback()
+        raise HTTPException(status_code=429, detail=exc.detail()) from exc
     record_event(
         db,
         tenant_id=principal.tenant_id,
@@ -1049,6 +1076,20 @@ def application_agent_action(
             )
         except ValueError as error:
             raise HTTPException(status_code=409, detail=str(error)) from error
+        try:
+            consume_usage(
+                db,
+                tenant_id=principal.tenant_id,
+                meter="generated_documents",
+                quantity=1,
+                idempotency_key=f"application_artifact:{artifact.id}",
+                user_id=principal.user.id,
+                resource_type="application_artifact",
+                resource_id=str(artifact.id),
+            )
+        except QuotaExceeded as exc:
+            db.rollback()
+            raise HTTPException(status_code=429, detail=exc.detail()) from exc
         db.add(
             ApplicationActivity(
                 tenant_id=principal.tenant_id,
@@ -1210,6 +1251,20 @@ def edit_application_artifact(
         executive_summary=payload.executive_summary or source.content_json.get("executive_summary"),
         revision_note=f"基于 v{source.version} 人工编辑",
     )
+    try:
+        consume_usage(
+            db,
+            tenant_id=principal.tenant_id,
+            meter="generated_documents",
+            quantity=1,
+            idempotency_key=f"application_artifact:{artifact.id}",
+            user_id=principal.user.id,
+            resource_type="application_artifact",
+            resource_id=str(artifact.id),
+        )
+    except QuotaExceeded as exc:
+        db.rollback()
+        raise HTTPException(status_code=429, detail=exc.detail()) from exc
     db.add(
         ApplicationActivity(
             tenant_id=principal.tenant_id,

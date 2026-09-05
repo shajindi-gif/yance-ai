@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60
     bootstrap_token: str = "change-bootstrap-token"
     tenant_provisioning_token: str = "change-tenant-provisioning-token"
+    api_key_pepper: str = "change-api-key-pepper-at-least-32-characters"
 
     oss_endpoint: str = ""
     oss_internal_endpoint: str = ""
@@ -96,6 +97,7 @@ class Settings(BaseSettings):
                 "jwt_secret": self.jwt_secret.startswith("change-"),
                 "bootstrap_token": self.bootstrap_token.startswith("change-"),
                 "tenant_provisioning_token": self.tenant_provisioning_token.startswith("change-"),
+                "api_key_pepper": self.api_key_pepper.startswith("change-"),
             }
             invalid = [name for name, value in bad.items() if value]
             if invalid:

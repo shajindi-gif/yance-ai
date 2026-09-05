@@ -259,3 +259,23 @@ AgentRun 目前不完整记录 input/output tokens、标准化价格版本和 co
 ## “为什么不是 ChatGPT”验收
 
 每项新功能必须至少强化一项不可由单次聊天替代的资产：版本化企业事实、政策结构化规则、原文证据、确定性资格 Gate、持久申报 Workspace、审批与执行历史、可重复 Eval、组织级权限与数据隔离、真实使用/成本数据。若一项工作只增加聊天入口、营销文案或视觉效果，而不增强上述资产，则不得进入主路线。
+
+## Phase 9 remediation status — 2026-09-05
+
+Enterprise packaging is now partially implemented rather than represented by static pricing UI:
+
+- database Plan/PriceVersion/Subscription records and eight server-enforced quota meters;
+- organization, user and workflow budgets that can narrow but not expand plan allowances;
+- Owner/Admin API Key lifecycle with one-time secret return, scopes, expiry, revocation and
+  control-plane denial;
+- retention/legal-hold records, safe workspace export and Owner deletion cooling-period requests;
+- platform-admin Feature Flag definitions and audited per-tenant rollout overrides;
+- `/billing` and `/settings` views backed by current database state, with explicit empty/unavailable
+  states and retry actions.
+
+The current truthful commercial status is: Free is automatically provisioned; Pro, Business and
+Enterprise are defined product configurations with no active price and cannot be purchased. There
+is no basis yet to claim subscriptions, MRR, invoices, paying customers or enterprise identity
+integrations. Recurring provider settlement, dunning/refunds/reconciliation, deletion workers,
+SSO/SCIM/MFA, RLS and service-level evidence remain diligence gaps. Phase 10 demo records must be
+isolated and visibly labelled so they never enter the real investor funnel or revenue metrics.

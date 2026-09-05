@@ -1,7 +1,9 @@
+import re
 from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
@@ -14,17 +16,52 @@ from app.models.models import (
     Company,
     Document,
     EvalRun,
+    FeatureFlag,
     Feedback,
     Order,
     Policy,
     Tenant,
+    TenantFeatureFlag,
     User,
     WorkflowRun,
 )
 from app.schemas.schemas import FeedbackStatusUpdate, TenantAccountStageUpdate
 from app.services.admin.metrics import admin_overview, investor_metrics, system_health
+from app.services.enterprise.audit import record_audit
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+
+class FeatureFlagUpsert(BaseModel):
+    description: str = Field(min_length=3, max_length=500)
+    enabled_by_default: bool = False
+    status: Literal["active", "archived"] = "active"
+
+
+class TenantFeatureFlagUpdate(BaseModel):
+    enabled: bool
+    reason: str = Field(min_length=3, max_length=500)
+
+
+def _validate_flag_key(key: str) -> str:
+    if not re.fullmatch(r"[a-z][a-z0-9_]{2,119}", key):
+        raise HTTPException(
+            status_code=422,
+            detail="Feature flag keys must use lowercase snake_case.",
+        )
+    return key
+
+
+def _flag_out(flag: FeatureFlag) -> dict:
+    return {
+        "id": str(flag.id),
+        "key": flag.key,
+        "description": flag.description,
+        "enabled_by_default": flag.enabled_by_default,
+        "status": flag.status,
+        "created_at": flag.created_at,
+        "updated_at": flag.updated_at,
+    }
 
 AdminResource = Literal[
     "users",
@@ -336,3 +373,145 @@ def update_feedback_status(
     feedback.status = payload.status
     db.commit()
     return {"id": str(feedback.id), "status": feedback.status}
+
+
+@router.get("/feature-flags")
+def list_feature_flags(
+    _: Principal = Depends(require_platform_admin),
+    db: Session = Depends(get_db),
+) -> dict:
+    flags = db.scalars(select(FeatureFlag).order_by(FeatureFlag.key)).all()
+    overrides = db.execute(
+        select(TenantFeatureFlag, FeatureFlag.key)
+        .join(FeatureFlag, FeatureFlag.id == TenantFeatureFlag.feature_flag_id)
+        .order_by(FeatureFlag.key, TenantFeatureFlag.tenant_id)
+    ).all()
+    return {
+        "items": [_flag_out(flag) for flag in flags],
+        "tenant_overrides": [
+            {
+                "id": str(override.id),
+                "tenant_id": str(override.tenant_id),
+                "key": key,
+                "enabled": override.enabled,
+                "updated_at": override.updated_at,
+            }
+            for override, key in overrides
+        ],
+    }
+
+
+@router.put("/feature-flags/{key}")
+def upsert_feature_flag(
+    key: str,
+    payload: FeatureFlagUpsert,
+    principal: Principal = Depends(require_platform_admin),
+    db: Session = Depends(get_db),
+) -> dict:
+    key = _validate_flag_key(key)
+    flag = db.scalar(select(FeatureFlag).where(FeatureFlag.key == key).with_for_update())
+    if flag is None:
+        flag = FeatureFlag(key=key, **payload.model_dump())
+        db.add(flag)
+        db.flush()
+    else:
+        flag.description = payload.description
+        flag.enabled_by_default = payload.enabled_by_default
+        flag.status = payload.status
+    record_audit(
+        db,
+        tenant_id=principal.tenant_id,
+        actor_user_id=principal.user.id,
+        action="feature_flag.configured",
+        resource_type="feature_flag",
+        resource_id=str(flag.id),
+        details={
+            "key": flag.key,
+            "enabled_by_default": flag.enabled_by_default,
+            "status": flag.status,
+        },
+    )
+    db.commit()
+    return _flag_out(flag)
+
+
+@router.put("/feature-flags/{key}/tenants/{tenant_id}")
+def set_tenant_feature_flag(
+    key: str,
+    tenant_id: UUID,
+    payload: TenantFeatureFlagUpdate,
+    principal: Principal = Depends(require_platform_admin),
+    db: Session = Depends(get_db),
+) -> dict:
+    key = _validate_flag_key(key)
+    tenant = db.get(Tenant, tenant_id)
+    flag = db.scalar(select(FeatureFlag).where(FeatureFlag.key == key))
+    if tenant is None or flag is None:
+        raise HTTPException(status_code=404, detail="Organization or feature flag not found")
+    override = db.scalar(
+        select(TenantFeatureFlag)
+        .where(
+            TenantFeatureFlag.tenant_id == tenant_id,
+            TenantFeatureFlag.feature_flag_id == flag.id,
+        )
+        .with_for_update()
+    )
+    if override is None:
+        override = TenantFeatureFlag(
+            tenant_id=tenant_id,
+            feature_flag_id=flag.id,
+            enabled=payload.enabled,
+        )
+        db.add(override)
+        db.flush()
+    else:
+        override.enabled = payload.enabled
+    record_audit(
+        db,
+        tenant_id=tenant_id,
+        actor_user_id=principal.user.id,
+        action="feature_flag.tenant_override_set",
+        resource_type="tenant_feature_flag",
+        resource_id=str(override.id),
+        reason=payload.reason,
+        details={"key": key, "enabled": override.enabled, "platform_admin": True},
+    )
+    db.commit()
+    return {
+        "id": str(override.id),
+        "tenant_id": str(tenant_id),
+        "key": key,
+        "enabled": override.enabled,
+    }
+
+
+@router.delete("/feature-flags/{key}/tenants/{tenant_id}", status_code=204)
+def remove_tenant_feature_flag(
+    key: str,
+    tenant_id: UUID,
+    reason: str = Query(min_length=3, max_length=500),
+    principal: Principal = Depends(require_platform_admin),
+    db: Session = Depends(get_db),
+) -> None:
+    key = _validate_flag_key(key)
+    override = db.scalar(
+        select(TenantFeatureFlag)
+        .join(FeatureFlag, FeatureFlag.id == TenantFeatureFlag.feature_flag_id)
+        .where(TenantFeatureFlag.tenant_id == tenant_id, FeatureFlag.key == key)
+        .with_for_update()
+    )
+    if override is None:
+        raise HTTPException(status_code=404, detail="Tenant feature flag override not found")
+    override_id = str(override.id)
+    db.delete(override)
+    record_audit(
+        db,
+        tenant_id=tenant_id,
+        actor_user_id=principal.user.id,
+        action="feature_flag.tenant_override_removed",
+        resource_type="tenant_feature_flag",
+        resource_id=override_id,
+        reason=reason,
+        details={"key": key, "platform_admin": True},
+    )
+    db.commit()

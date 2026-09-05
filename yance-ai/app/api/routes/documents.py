@@ -18,6 +18,7 @@ from app.schemas.schemas import (
     PresignedUploadOut,
 )
 from app.services.analytics.events import record_event
+from app.services.billing.usage import QuotaExceeded, ensure_capacity
 from app.services.oss import OSSStorage, get_oss_storage
 
 router = APIRouter(prefix="/documents", tags=["document"])
@@ -59,6 +60,16 @@ def presign_upload(
     storage: OSSStorage = Depends(get_oss_storage),
 ) -> PresignedUploadOut:
     validate_upload(payload.filename, payload.content_type, payload.size_bytes)
+    try:
+        ensure_capacity(db, tenant_id=principal.tenant_id, meter="documents")
+        ensure_capacity(
+            db,
+            tenant_id=principal.tenant_id,
+            meter="storage_bytes",
+            requested=payload.size_bytes,
+        )
+    except QuotaExceeded as exc:
+        raise HTTPException(status_code=429, detail=exc.detail()) from exc
     if payload.checksum_sha256:
         raise HTTPException(
             status_code=400,

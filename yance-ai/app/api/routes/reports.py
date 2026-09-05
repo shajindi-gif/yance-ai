@@ -1,12 +1,16 @@
 """AI 报告生成：语义搜索 → LLM 分析 → 交付报告"""
 
-from fastapi import APIRouter, Depends, Form, HTTPException
+import uuid
+
+from fastapi import APIRouter, Depends, Form, Header, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, require_roles
 from app.core.db import get_db
 from app.models.models import Policy, UserRole
+from app.services.analytics.events import record_event
+from app.services.billing.usage import QuotaExceeded, consume_usage_once
 from app.services.llm.registry import embed_texts
 from app.services.llm.router import LLMRouter
 from app.services.policies.visibility import visible_policy_clause
@@ -30,8 +34,33 @@ async def generate_report(
     limit: int = Form(default=5),
     principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
     db: Session = Depends(get_db),
+    idempotency_key: str | None = Header(default=None, alias="Idempotency-Key", max_length=128),
 ):
     """生成 AI 政策分析报告：语义搜索 + LLM 综合分析"""
+    report_key = f"report:{idempotency_key or uuid.uuid4()}"
+    try:
+        _, created = consume_usage_once(
+            db,
+            tenant_id=principal.tenant_id,
+            meter="reports",
+            quantity=1,
+            idempotency_key=report_key,
+            user_id=principal.user.id,
+            resource_type="report",
+        )
+    except QuotaExceeded as exc:
+        db.rollback()
+        raise HTTPException(status_code=429, detail=exc.detail()) from exc
+    if not created:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "idempotency_replay_unavailable",
+                "message": "This report request was already processed; use a new idempotency key.",
+            },
+        )
+
     # 1. 语义搜索
     embeddings = await embed_texts([query])
     query_vector = embeddings[0]
@@ -82,6 +111,16 @@ async def generate_report(
             max_tokens=2048,
         )
     )
+
+    record_event(
+        db,
+        tenant_id=principal.tenant_id,
+        user_id=principal.user.id,
+        name="report_generated",
+        event_key=f"report_generated:{report_key}",
+        properties={"provider": response.provider, "model": response.model},
+    )
+    db.commit()
 
     return {
         "query": query,
