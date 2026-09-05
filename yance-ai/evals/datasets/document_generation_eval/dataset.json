@@ -1,0 +1,17 @@
+{
+  "key": "document_generation_synthetic",
+  "name": "Application brief generation regression",
+  "eval_type": "document_generation_eval",
+  "description": "Synthetic contract and file-format checks for the deterministic evidence-bound application brief renderer.",
+  "version": "2026.09.1",
+  "target_key": "application_brief_renderer",
+  "target_version": "deterministic-evidence-v1",
+  "scorer_version": "deterministic-v1",
+  "review_status": "unreviewed",
+  "reviewed_by": null,
+  "reviewed_at": null,
+  "data_classification": "synthetic",
+  "contains_customer_data": false,
+  "is_demo": false,
+  "thresholds": {"correctness": 1.0, "completeness": 1.0, "evidence": 1.0, "overall": 0.95}
+}

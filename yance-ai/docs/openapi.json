@@ -2374,6 +2374,25 @@
         "title": "EligibilityRuleOut",
         "type": "object"
       },
+      "EvalRunRequest": {
+        "properties": {
+          "eval_type": {
+            "default": "all",
+            "enum": [
+              "all",
+              "policy_retrieval_eval",
+              "eligibility_eval",
+              "citation_eval",
+              "hallucination_eval",
+              "document_generation_eval"
+            ],
+            "title": "Eval Type",
+            "type": "string"
+          }
+        },
+        "title": "EvalRunRequest",
+        "type": "object"
+      },
       "EvaluateRequest": {
         "properties": {
           "company_id": {
@@ -4494,6 +4513,219 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/admin/evals/overview": {
+      "get": {
+        "operationId": "get_evaluation_overview_api_v1_admin_evals_overview_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "eval_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "policy_retrieval_eval",
+                    "eligibility_eval",
+                    "citation_eval",
+                    "hallucination_eval",
+                    "document_generation_eval"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Eval Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Evaluation Overview Api V1 Admin Evals Overview Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Evaluation Overview",
+        "tags": [
+          "admin",
+          "evaluations"
+        ]
+      }
+    },
+    "/api/v1/admin/evals/runs": {
+      "get": {
+        "operationId": "list_evaluation_runs_api_v1_admin_evals_runs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response List Evaluation Runs Api V1 Admin Evals Runs Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Evaluation Runs",
+        "tags": [
+          "admin",
+          "evaluations"
+        ]
+      },
+      "post": {
+        "operationId": "create_evaluation_runs_api_v1_admin_evals_runs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvalRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Create Evaluation Runs Api V1 Admin Evals Runs Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Evaluation Runs",
+        "tags": [
+          "admin",
+          "evaluations"
+        ]
+      }
+    },
+    "/api/v1/admin/evals/runs/{run_id}": {
+      "get": {
+        "operationId": "get_evaluation_run_api_v1_admin_evals_runs__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Get Evaluation Run Api V1 Admin Evals Runs  Run Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Evaluation Run",
+        "tags": [
+          "admin",
+          "evaluations"
+        ]
+      }
+    },
     "/api/v1/admin/feedback/{feedback_id}": {
       "patch": {
         "operationId": "update_feedback_status_api_v1_admin_feedback__feedback_id__patch",

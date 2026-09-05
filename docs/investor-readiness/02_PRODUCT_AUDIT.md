@@ -185,3 +185,25 @@ now partially remediated:
 This does not close the broader enterprise-readiness P1. Reviewed Agent evaluations, durable
 telemetry history, subscription/quota/invoice systems, cohort retention, CRM attribution, SSO,
 support workflows, and audit-search operations remain open in later phases.
+
+## Phase 8 remediation status — 2026-09-05
+
+The original product-integrity gap around invisible or fabricated quality metrics is now partially
+remediated:
+
+- `/admin/evals` reports Accuracy, Citation Accuracy, Hallucination Rate, Pass Rate, Average
+  Latency, and Average Cost only from persisted Eval Runs, with the applicable sample size and
+  denominator visible.
+- Each result can be traced through dataset version/checksum, target and scorer version, question,
+  ground truth, actual answer, six quality dimensions, supporting evidence, and errors.
+- Empty databases show `No evaluation data yet.`; repeated runs do not inflate the headline sample
+  because comparison uses only the latest completed non-demo run per evaluation type.
+- The bundled 11-case regression suite is clearly labelled synthetic and unreviewed. It does not
+  make investor quality metrics available and is not represented as customer, model, or production
+  performance.
+
+This improves diligence readiness and release discipline but does not prove market-facing Agent
+quality. The next quality milestone is a human-reviewed, double-annotated, adjudicated and frozen
+benchmark drawn from the scoped launch domain, followed by live-model and end-to-end workflow
+evaluation. Billing, quota, retention, commercial conversion, and enterprise controls remain Phase
+9 work and must continue to use authoritative database records rather than inferred claims.

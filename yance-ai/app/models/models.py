@@ -1,11 +1,12 @@
 import enum
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     JSON,
     Boolean,
+    Date,
     DateTime,
     Enum,
     ForeignKey,
@@ -686,6 +687,164 @@ class Feedback(Base, TimestampMixin, TenantOwnedMixin):
     message: Mapped[str] = mapped_column(Text)
     route: Mapped[str | None] = mapped_column(String(500))
     status: Mapped[str] = mapped_column(String(40), default="open", index=True)
+
+
+class EvalDataset(Base, TimestampMixin):
+    """Global evaluation dataset identity; content lives in immutable versions."""
+
+    __tablename__ = "eval_datasets"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    key: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(240))
+    eval_type: Mapped[str] = mapped_column(String(80), index=True)
+    description: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(40), default="draft", index=True)
+    data_classification: Mapped[str] = mapped_column(String(80), default="synthetic")
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+
+
+class EvalDatasetVersion(Base):
+    __tablename__ = "eval_dataset_versions"
+    __table_args__ = (
+        UniqueConstraint("dataset_id", "version", name="uq_eval_dataset_version"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    dataset_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("eval_datasets.id", ondelete="CASCADE"), index=True
+    )
+    version: Mapped[str] = mapped_column(String(80))
+    content_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    case_count: Mapped[int]
+    target_key: Mapped[str] = mapped_column(String(160))
+    target_version: Mapped[str] = mapped_column(String(80))
+    scorer_version: Mapped[str] = mapped_column(String(80))
+    review_status: Mapped[str] = mapped_column(String(40), default="unreviewed", index=True)
+    card_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class EvalCase(Base):
+    __tablename__ = "eval_cases"
+    __table_args__ = (
+        UniqueConstraint("dataset_version_id", "case_id", name="uq_eval_case_version_key"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    dataset_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("eval_dataset_versions.id", ondelete="CASCADE"), index=True
+    )
+    case_id: Mapped[str] = mapped_column(String(160))
+    eval_type: Mapped[str] = mapped_column(String(80), index=True)
+    question: Mapped[str] = mapped_column(Text)
+    input_json: Mapped[dict] = mapped_column(JSON)
+    ground_truth_json: Mapped[dict] = mapped_column(JSON)
+    expected_evidence_json: Mapped[list] = mapped_column(JSON, default=list)
+    tags_json: Mapped[list] = mapped_column(JSON, default=list)
+    risk_tier: Mapped[str] = mapped_column(String(40), index=True)
+    reference_date: Mapped[date | None] = mapped_column(Date)
+    content_sha256: Mapped[str] = mapped_column(String(64), index=True)
+
+
+class EvalRun(Base, TimestampMixin, TenantOwnedMixin):
+    __tablename__ = "eval_runs"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    batch_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), index=True)
+    dataset_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("eval_dataset_versions.id", ondelete="RESTRICT"), index=True
+    )
+    created_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    eval_type: Mapped[str] = mapped_column(String(80), index=True)
+    status: Mapped[str] = mapped_column(String(40), default="queued", index=True)
+    target_key: Mapped[str] = mapped_column(String(160))
+    target_version: Mapped[str] = mapped_column(String(80))
+    scorer_version: Mapped[str] = mapped_column(String(80))
+    model: Mapped[str | None] = mapped_column(String(160))
+    prompt_version: Mapped[str | None] = mapped_column(String(120))
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    requested_cases: Mapped[int] = mapped_column(default=0)
+    completed_cases: Mapped[int] = mapped_column(default=0)
+    passed_cases: Mapped[int] = mapped_column(default=0)
+    error_cases: Mapped[int] = mapped_column(default=0)
+    total_latency_ms: Mapped[int] = mapped_column(default=0)
+    total_cost_usd: Mapped[float] = mapped_column(Numeric(14, 6), default=0)
+    release_gate_passed: Mapped[bool | None] = mapped_column(Boolean)
+    config_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Evaluation(Base, TenantOwnedMixin):
+    """One executed case result. Errors remain first-class denominator rows."""
+
+    __tablename__ = "evaluations"
+    __table_args__ = (
+        UniqueConstraint("eval_run_id", "eval_case_id", name="uq_evaluation_run_case"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    eval_run_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("eval_runs.id", ondelete="CASCADE"), index=True
+    )
+    eval_case_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("eval_cases.id", ondelete="RESTRICT"), index=True
+    )
+    agent_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="SET NULL"), index=True
+    )
+    status: Mapped[str] = mapped_column(String(40), index=True)
+    model_answer_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    overall_score: Mapped[float | None] = mapped_column(Numeric(6, 5))
+    passed: Mapped[bool] = mapped_column(Boolean, default=False)
+    hallucination_detected: Mapped[bool] = mapped_column(Boolean, default=False)
+    error_types_json: Mapped[list] = mapped_column(JSON, default=list)
+    latency_ms: Mapped[int] = mapped_column(default=0)
+    cost_usd: Mapped[float] = mapped_column(Numeric(14, 6), default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class EvaluationDimensionScore(Base, TenantOwnedMixin):
+    __tablename__ = "evaluation_dimension_scores"
+    __table_args__ = (
+        UniqueConstraint("evaluation_id", "dimension", name="uq_evaluation_dimension"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    evaluation_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("evaluations.id", ondelete="CASCADE"), index=True
+    )
+    dimension: Mapped[str] = mapped_column(String(80), index=True)
+    score: Mapped[float | None] = mapped_column(Numeric(6, 5))
+    is_applicable: Mapped[bool] = mapped_column(Boolean, default=True)
+    scorer: Mapped[str] = mapped_column(String(160))
+    scorer_version: Mapped[str] = mapped_column(String(80))
+    rationale: Mapped[str] = mapped_column(Text)
+
+
+class EvaluationEvidence(Base, TenantOwnedMixin):
+    __tablename__ = "evaluation_evidence"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    evaluation_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("evaluations.id", ondelete="CASCADE"), index=True
+    )
+    expectation: Mapped[str] = mapped_column(Text)
+    observed: Mapped[str] = mapped_column(Text)
+    source_reference: Mapped[str | None] = mapped_column(String(500))
+    passed: Mapped[bool] = mapped_column(Boolean)
+
+
+class EvaluationError(Base, TenantOwnedMixin):
+    __tablename__ = "evaluation_errors"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    eval_run_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("eval_runs.id", ondelete="CASCADE"), index=True
+    )
+    evaluation_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("evaluations.id", ondelete="CASCADE"), index=True
+    )
+    case_id: Mapped[str] = mapped_column(String(160), index=True)
+    code: Mapped[str] = mapped_column(String(120), index=True)
+    error_type: Mapped[str] = mapped_column(String(120), index=True)
+    safe_message: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
 
 class Product(Base, TimestampMixin):

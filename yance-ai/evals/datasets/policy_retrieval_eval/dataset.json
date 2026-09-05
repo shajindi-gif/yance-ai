@@ -1,0 +1,17 @@
+{
+  "key": "policy_retrieval_synthetic",
+  "name": "Policy retrieval deterministic regression",
+  "eval_type": "policy_retrieval_eval",
+  "description": "Synthetic regression cases for the named lexical retrieval component; this is not a hybrid-vector recall benchmark.",
+  "version": "2026.09.1",
+  "target_key": "policy_lexical_retrieval",
+  "target_version": "v1",
+  "scorer_version": "deterministic-v1",
+  "review_status": "unreviewed",
+  "reviewed_by": null,
+  "reviewed_at": null,
+  "data_classification": "synthetic",
+  "contains_customer_data": false,
+  "is_demo": false,
+  "thresholds": {"correctness": 1.0, "completeness": 1.0, "overall": 0.9}
+}

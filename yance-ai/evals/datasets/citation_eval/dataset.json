@@ -1,0 +1,17 @@
+{
+  "key": "citation_exact_span_synthetic",
+  "name": "Citation exact-span regression",
+  "eval_type": "citation_eval",
+  "description": "Synthetic positive and negative cases for the production exact-span citation verifier.",
+  "version": "2026.09.1",
+  "target_key": "citation_exact_span",
+  "target_version": "v1",
+  "scorer_version": "deterministic-v1",
+  "review_status": "unreviewed",
+  "reviewed_by": null,
+  "reviewed_at": null,
+  "data_classification": "synthetic",
+  "contains_customer_data": false,
+  "is_demo": false,
+  "thresholds": {"correctness": 1.0, "citation_accuracy": 1.0, "overall": 0.95}
+}

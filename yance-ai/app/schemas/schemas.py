@@ -418,6 +418,17 @@ class TenantAccountStageUpdate(BaseModel):
     account_stage: Literal["unclassified", "poc", "customer", "churned", "internal"]
 
 
+class EvalRunRequest(BaseModel):
+    eval_type: Literal[
+        "all",
+        "policy_retrieval_eval",
+        "eligibility_eval",
+        "citation_eval",
+        "hallucination_eval",
+        "document_generation_eval",
+    ] = "all"
+
+
 class AgentRunCreate(BaseModel):
     agent_name: str
     provider: str

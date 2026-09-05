@@ -12,6 +12,8 @@ from app.models.models import (
     ApplicationArtifact,
     Company,
     Document,
+    EvalDatasetVersion,
+    EvalRun,
     Feedback,
     Order,
     Policy,
@@ -108,6 +110,18 @@ def investor_metrics(db: Session) -> dict:
             )
         )
 
+    reviewed_evaluation_runs = int(
+        db.scalar(
+            select(func.count(distinct(EvalRun.eval_type)))
+            .join(EvalDatasetVersion, EvalDatasetVersion.id == EvalRun.dataset_version_id)
+            .where(
+                EvalRun.status == "completed",
+                EvalRun.is_demo.is_(False),
+                EvalDatasetVersion.review_status == "reviewed",
+            )
+        )
+        or 0
+    )
     totals = {
         "total_users": _count(db, User),
         "active_users_30d": int(
@@ -164,7 +178,7 @@ def investor_metrics(db: Session) -> dict:
             "funnel": "Distinct organizations with each server-owned milestone event; not cohort-normalized.",
         },
         "availability": {
-            "evaluation_metrics": False,
+            "evaluation_metrics": reviewed_evaluation_runs == 5,
             "subscription_mrr": False,
             "retention": False,
             "api_latency_history": False,
@@ -216,6 +230,7 @@ def system_health(db: Session) -> dict:
 
 def admin_overview(db: Session) -> dict:
     metrics = investor_metrics(db)
+    completed_evals = _count(db, EvalRun, EvalRun.status == "completed")
     return {
         "generated_at": metrics["generated_at"],
         "totals": metrics["totals"],
@@ -235,9 +250,13 @@ def admin_overview(db: Session) -> dict:
             "billing": _count(db, Order),
             "feedback": _count(db, Feedback),
             "analytics": _count(db, AnalyticsEvent),
+            "evals": _count(db, EvalRun),
         },
         "capabilities": {
-            "evals": {"available": False, "message": "No evaluation data yet."},
+            "evals": {
+                "available": completed_evals > 0,
+                "message": None if completed_evals else "No evaluation data yet.",
+            },
             "subscriptions": {
                 "available": False,
                 "message": "Subscription metrics not implemented.",

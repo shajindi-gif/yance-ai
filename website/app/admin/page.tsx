@@ -35,7 +35,7 @@ const COLUMNS: Record<Resource, string[]> = {
   costs: ["agent_name", "model", "cost_usd", "total_tokens", "tenant_id", "created_at"],
   documents: ["filename", "content_type", "size_bytes", "status", "ingestion_status", "tenant_id", "created_at"],
   policies: ["title", "issuing_authority", "jurisdiction", "status", "tenant_id", "created_at"],
-  evals: [],
+  evals: ["eval_type", "status", "target_key", "target_version", "scorer_version", "requested_cases", "passed_cases", "error_cases", "release_gate_passed", "created_at"],
   errors: ["code", "category", "safe_message", "retryable", "agent_run_id", "tenant_id", "occurred_at"],
   billing: ["order_no", "product_code", "amount", "currency", "status", "tenant_id", "created_at"],
   feedback: ["category", "message", "route", "status", "tenant_id", "created_at"],
@@ -122,7 +122,7 @@ export default function AdminPage() {
   const columns = COLUMNS[resource];
 
   return <AppShell>
-    <PageHeader eyebrow="Platform Admin" title="运营控制台" description={`全平台服务端记录 · 刷新于 ${new Date(overview.generated_at).toLocaleString("zh-CN")}`} actions={<ButtonLink href="/admin/investor-metrics">Investor Metrics</ButtonLink>} />
+    <PageHeader eyebrow="Platform Admin" title="运营控制台" description={`全平台服务端记录 · 刷新于 ${new Date(overview.generated_at).toLocaleString("zh-CN")}`} actions={<><ButtonLink href="/admin/evals" variant="secondary">Eval Dashboard</ButtonLink><ButtonLink href="/admin/investor-metrics">Investor Metrics</ButtonLink></>} />
     {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}
 
     <div className={styles.metricGrid}>

@@ -13,6 +13,7 @@ from app.models.models import (
     AnalyticsEvent,
     Company,
     Document,
+    EvalRun,
     Feedback,
     Order,
     Policy,
@@ -102,15 +103,6 @@ def list_admin_resources(
     _: Principal = Depends(require_platform_admin),
     db: Session = Depends(get_db),
 ) -> dict:
-    if resource == "evals":
-        return {
-            "total": 0,
-            "limit": limit,
-            "offset": offset,
-            "items": [],
-            "available": False,
-            "message": "No evaluation data yet.",
-        }
     if resource == "users":
         return _page(
             db,
@@ -186,6 +178,31 @@ def list_admin_resources(
                 "created_at": item.created_at,
             },
         )
+    if resource == "evals":
+        page = _page(
+            db,
+            select(EvalRun).order_by(EvalRun.created_at.desc()),
+            limit=limit,
+            offset=offset,
+            serializer=lambda item: {
+                "id": str(item.id),
+                "batch_id": str(item.batch_id),
+                "eval_type": item.eval_type,
+                "status": item.status,
+                "target_key": item.target_key,
+                "target_version": item.target_version,
+                "scorer_version": item.scorer_version,
+                "requested_cases": item.requested_cases,
+                "passed_cases": item.passed_cases,
+                "error_cases": item.error_cases,
+                "release_gate_passed": item.release_gate_passed,
+                "is_demo": item.is_demo,
+                "created_at": item.created_at,
+            },
+        )
+        if not page["items"]:
+            page.update(available=False, message="No evaluation data yet.")
+        return page
     if resource == "documents":
         return _page(
             db,

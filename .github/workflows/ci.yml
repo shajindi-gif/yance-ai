@@ -72,6 +72,9 @@ jobs:
       - name: Run backend tests with coverage floor
         run: pytest --cov=app --cov-report=term-missing --cov-fail-under=50
 
+      - name: Run five-part deterministic evaluation gate
+        run: python evals/run_evals.py run --no-persist
+
   frontend:
     name: Frontend audit, typecheck, and build
     runs-on: ubuntu-latest

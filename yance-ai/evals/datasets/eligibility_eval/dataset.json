@@ -1,0 +1,17 @@
+{
+  "key": "eligibility_rules_synthetic",
+  "name": "Eligibility typed-rule regression",
+  "eval_type": "eligibility_eval",
+  "description": "Synthetic cases for typed operators, hard gates, missing facts and exact policy-source validation.",
+  "version": "2026.09.1",
+  "target_key": "eligibility_rule_contract",
+  "target_version": "deterministic-v1",
+  "scorer_version": "deterministic-v1",
+  "review_status": "unreviewed",
+  "reviewed_by": null,
+  "reviewed_at": null,
+  "data_classification": "synthetic",
+  "contains_customer_data": false,
+  "is_demo": false,
+  "thresholds": {"correctness": 1.0, "evidence": 1.0, "citation_accuracy": 1.0, "overall": 0.95}
+}

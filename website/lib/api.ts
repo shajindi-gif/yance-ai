@@ -96,6 +96,102 @@ export interface AdminResourcePage {
   message?: string;
 }
 
+export type EvalType =
+  | 'policy_retrieval_eval'
+  | 'eligibility_eval'
+  | 'citation_eval'
+  | 'hallucination_eval'
+  | 'document_generation_eval';
+
+export interface EvalRunSummary {
+  id: string;
+  batch_id: string;
+  eval_type: EvalType;
+  status: string;
+  target_key: string;
+  target_version: string;
+  scorer_version: string;
+  model: string | null;
+  requested_cases: number;
+  completed_cases: number;
+  passed_cases: number;
+  error_cases: number;
+  total_latency_ms: number;
+  total_cost_usd: number;
+  release_gate_passed: boolean | null;
+  created_at: string;
+  finished_at: string | null;
+}
+
+export interface EvaluationOverview {
+  available: boolean;
+  message: string | null;
+  generated_at: string;
+  scope: string;
+  cards: {
+    accuracy: number | null;
+    citation_accuracy: number | null;
+    hallucination_rate: number | null;
+    pass_rate: number | null;
+    average_latency_ms: number | null;
+    average_cost_usd: number | null;
+  };
+  counts: { requested: number; completed: number; passed: number; errors: number };
+  dimensions: Array<{ dimension: string; score: number | null; sample_size: number }>;
+  runs: Array<EvalRunSummary & {
+    dataset: string;
+    dataset_key: string;
+    dataset_version: string;
+    review_status: string;
+    data_classification: string;
+  }>;
+  investor_quality_eligible: boolean;
+}
+
+export interface EvalRunDetail {
+  run: EvalRunSummary;
+  dataset: {
+    key: string;
+    name: string;
+    description: string;
+    version: string;
+    content_sha256: string;
+    review_status: string;
+    data_classification: string;
+    case_count: number;
+    card: Record<string, unknown>;
+  };
+  cases: Array<{
+    case_id: string;
+    question: string;
+    risk_tier: string;
+    tags: string[];
+    ground_truth: Record<string, unknown>;
+    model_answer: Record<string, unknown>;
+    status: string;
+    overall_score: number | null;
+    passed: boolean;
+    latency_ms: number;
+    cost_usd: number;
+    error_types: string[];
+    dimensions: Array<{
+      dimension: string;
+      score: number | null;
+      is_applicable: boolean;
+      scorer: string;
+      scorer_version: string;
+      rationale: string;
+    }>;
+    evidence: Array<{
+      expectation: string;
+      observed: string;
+      source_reference: string | null;
+      passed: boolean;
+    }>;
+    errors: Array<{ code: string; error_type: string; safe_message: string }>;
+  }>;
+}
+
 export interface Company {
   id: string;
   tenant_id: string;
@@ -735,6 +831,26 @@ class ApiClient {
 
   async getInvestorMetrics(): Promise<InvestorMetrics> {
     return this.request<InvestorMetrics>('/admin/investor-metrics');
+  }
+
+  async getEvaluationOverview(evalType?: EvalType): Promise<EvaluationOverview> {
+    const query = evalType ? `?eval_type=${encodeURIComponent(evalType)}` : '';
+    return this.request<EvaluationOverview>(`/admin/evals/overview${query}`);
+  }
+
+  async runEvaluations(evalType: EvalType | 'all' = 'all'): Promise<{
+    batch_id: string;
+    runs: EvalRunSummary[];
+    release_gate_passed: boolean;
+  }> {
+    return this.request('/admin/evals/runs', {
+      method: 'POST',
+      body: JSON.stringify({ eval_type: evalType }),
+    });
+  }
+
+  async getEvaluationRun(runId: string): Promise<EvalRunDetail> {
+    return this.request<EvalRunDetail>(`/admin/evals/runs/${encodeURIComponent(runId)}`);
   }
 
   async getAdminResource(resource: string, offset: number = 0): Promise<AdminResourcePage> {

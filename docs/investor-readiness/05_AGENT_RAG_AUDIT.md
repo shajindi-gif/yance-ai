@@ -187,3 +187,27 @@ Still open by design:
 - real benchmark execution and Admin Eval reporting.
 
 The original benchmark warning remains active. This remediation improves provenance and fail-closed behavior; it does not establish production accuracy by itself.
+
+## Phase 8 remediation status — 2026-09-05
+
+The original finding that `evals/run_evals.py` validated only JSONL shape is now partially
+remediated:
+
+- Five named evaluation families execute bounded production capabilities for policy retrieval,
+  deterministic eligibility, exact-span citation, evidence-bound hallucination checks, and
+  multi-format Application document generation.
+- Dataset cards, immutable versions and checksums, cases, runs, six dimension scores, evidence,
+  and errors are persisted with target/scorer/model/prompt provenance, latency, cost, and explicit
+  denominators.
+- Target exceptions become zero-score error rows and remain in requested-case denominators.
+  Latest dashboard metrics use one completed non-demo run per evaluation type, avoiding historical
+  inflation from repeated runs.
+- Platform Admin can run and inspect every case. Investor metric availability stays false unless
+  all five latest evaluation types use reviewed datasets.
+- CI now executes the 5-dataset, 11-case deterministic gate rather than stopping at schema
+  validation.
+
+The current passing result remains a narrow engineering regression signal: all bundled data is
+synthetic, unreviewed, and too small for a production-accuracy claim. Reviewed/adjudicated frozen
+sets, live-model and end-to-end workflow evaluations, learned retrieval metrics, semantic citation
+entailment, OCR quality, security evals, and online monitoring remain open.

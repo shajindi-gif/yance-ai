@@ -1,0 +1,17 @@
+{
+  "key": "hallucination_claim_gate_synthetic",
+  "name": "Unsupported-claim blocking regression",
+  "eval_type": "hallucination_eval",
+  "description": "Synthetic adversarial cases that require unsupported claims and prompt-injection text to be blocked.",
+  "version": "2026.09.1",
+  "target_key": "evidence_claim_gate",
+  "target_version": "exact-span-v1",
+  "scorer_version": "deterministic-v1",
+  "review_status": "unreviewed",
+  "reviewed_by": null,
+  "reviewed_at": null,
+  "data_classification": "synthetic",
+  "contains_customer_data": false,
+  "is_demo": false,
+  "thresholds": {"correctness": 1.0, "hallucination": 1.0, "overall": 0.95}
+}

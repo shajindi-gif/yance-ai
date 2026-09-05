@@ -60,6 +60,7 @@ class Settings(BaseSettings):
     stripe_price_id: str = ""
 
     demo_features_enabled: bool = False
+    eval_dataset_root: str = "evals/datasets"
 
     # Alipay 电脑网站支付
     alipay_app_id: str = ""
