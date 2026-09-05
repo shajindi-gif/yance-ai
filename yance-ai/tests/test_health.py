@@ -8,6 +8,16 @@ def test_health_endpoint():
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
     assert response.headers["X-Request-ID"]
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "DENY"
+    assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
+    assert response.headers["Permissions-Policy"] == "camera=(), microphone=(), geolocation=()"
+
+
+def test_api_responses_are_not_cached():
+    response = TestClient(app).get("/api/v1/companies")
+    assert response.status_code == 401
+    assert response.headers["Cache-Control"] == "no-store"
 
 
 def test_required_api_paths_are_registered():

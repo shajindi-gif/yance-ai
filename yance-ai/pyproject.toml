@@ -52,3 +52,7 @@ ignore = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+markers = [
+  "e2e: persisted API and worker golden-journey release gate",
+  "performance: bounded smoke checks; not a production capacity benchmark",
+]

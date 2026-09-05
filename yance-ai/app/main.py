@@ -43,6 +43,15 @@ async def request_logging(request: Request, call_next):
         response = JSONResponse(status_code=500, content={"detail": "Internal server error"})
     duration_ms = round((time.perf_counter() - start) * 1000, 2)
     response.headers["X-Request-ID"] = request_id
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["Cache-Control"] = "no-store" if request.url.path.startswith(
+        settings.api_v1_prefix
+    ) else response.headers.get("Cache-Control", "no-cache")
+    if settings.app_env == "production":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     logger.info(
         "request_completed",
         method=request.method,

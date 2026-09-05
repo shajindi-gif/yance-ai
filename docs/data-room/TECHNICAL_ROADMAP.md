@@ -4,7 +4,7 @@ Status: **Forward plan; items below are not shipped claims**.
 
 ## Next 30 days
 
-- Complete full regression/E2E production-hardening gate and restore drill.
+- Connect the implemented regression/E2E/restore gates to protected-branch enforcement and a staging environment.
 - Expand ingestion fixtures for DOCX/XLSX/URL edge cases.
 - Add policy freshness monitoring and change-detection jobs.
 - Establish staging telemetry dashboards and alert ownership.

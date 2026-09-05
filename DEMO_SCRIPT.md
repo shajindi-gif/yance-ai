@@ -67,9 +67,15 @@ Close on evidence quality, proprietary workflow state, organization knowledge, e
 ## Pre-demo checklist
 
 - Database migration is at head and the safe demo seeder reports five scenarios.
+- Run `npm run test:e2e` against the intended local/staging API before a live session; retain failure evidence if it does not pass.
+- Run the backend `pytest -m e2e --no-cov` gate against an isolated PostgreSQL database.
 - `/demo` shows the synthetic-data notice and all five company types.
 - Every scenario completes all seven UI steps.
 - Evidence link uses `example.invalid` and the quote is marked verified.
 - DOCX download opens; PDF/XLSX/JSON endpoints are healthy.
 - Investor metrics exclude demo tenants; no fake commerce or analytics events exist.
 - Never improvise customer, revenue, government, accuracy, funding or success claims.
+
+## Verified release-candidate evidence
+
+On 2026-09-06, the Chromium demo gate completed all seven stages and downloaded a DOCX against local Next.js, FastAPI and PostgreSQL services. The backend golden journey passed twice consecutively. These checks prove workflow wiring and repeatability; they do not prove production availability, policy accuracy or customer adoption.

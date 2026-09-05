@@ -5,7 +5,7 @@ import uuid
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 
 from app.api.routes import auth
 from app.core.db import SessionLocal
@@ -23,16 +23,20 @@ from app.models.models import (
     PolicyChunk,
     PolicyScan,
     PolicyVersion,
+    Tenant,
     ToolCall,
 )
 from app.services.agents.harness import AgentHarness
 from app.services.oss import get_oss_storage
 from app.services.policies.eligibility import evaluate_opportunity
 
-pytestmark = pytest.mark.skipif(
-    os.getenv("APP_ENV") != "test",
-    reason="Core workflow integration tests require the migrated PostgreSQL CI database",
-)
+pytestmark = [
+    pytest.mark.e2e,
+    pytest.mark.skipif(
+        os.getenv("APP_ENV") != "test",
+        reason="Core workflow E2E tests require the migrated PostgreSQL CI database",
+    ),
+]
 
 
 class FakeStorage:
@@ -94,6 +98,7 @@ def _complete_profile() -> dict:
 
 def test_persisted_company_to_application_workflow(monkeypatch):
     suffix = uuid.uuid4().hex
+    cleanup_tenant_ids: set[uuid.UUID] = set()
     fake_storage = FakeStorage()
     app.dependency_overrides[get_oss_storage] = lambda: fake_storage
     auth._register_rate.clear()
@@ -118,8 +123,10 @@ def test_persisted_company_to_application_workflow(monkeypatch):
                 )
                 assert membership_count == 1
                 tenant_id = uuid.UUID(companies.json()[0]["tenant_id"])
+                cleanup_tenant_ids.add(tenant_id)
 
                 policy = Policy(
+                    tenant_id=tenant_id,
                     title="上海市人工智能企业研发支持政策",
                     issuing_authority="测试政策发布机关",
                     level="municipal",
@@ -138,6 +145,7 @@ def test_persisted_company_to_application_workflow(monkeypatch):
                 policy_text = policy.content or ""
                 policy_version = PolicyVersion(
                     policy_id=policy.id,
+                    tenant_id=tenant_id,
                     version=1,
                     content_sha256=hashlib.sha256(policy_text.encode()).hexdigest(),
                     title=policy.title,
@@ -155,6 +163,7 @@ def test_persisted_company_to_application_workflow(monkeypatch):
                 chunk = PolicyChunk(
                     policy_id=policy.id,
                     policy_version_id=policy_version.id,
+                    tenant_id=tenant_id,
                     chunk_index=0,
                     content=policy_text,
                     char_start=0,
@@ -261,6 +270,9 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             assert [item["id"] for item in listed_rules.json()] == [valid_rule.json()["id"]]
 
             other_headers, _ = _register(client, f"other-{suffix}")
+            other_companies = client.get("/api/v1/companies", headers=other_headers)
+            assert other_companies.status_code == 200
+            cleanup_tenant_ids.add(uuid.UUID(other_companies.json()[0]["tenant_id"]))
             isolated_rules = client.get(
                 f"/api/v1/eligibility-rules?policy_id={private_policy_id}",
                 headers=other_headers,
@@ -353,8 +365,14 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             assert repeated.json()["id"] == scan_id
 
             with SessionLocal() as db:
-                run_id = asyncio.run(AgentHarness().run_once(db, "integration-worker"))
+                run_id = db.scalar(
+                    select(AgentRun.id).where(
+                        AgentRun.workflow_run_id == uuid.UUID(workflow_run_id),
+                        AgentRun.tenant_id == tenant_id,
+                    )
+                )
                 assert run_id is not None
+                asyncio.run(AgentHarness().execute(db, run_id))
 
             scan_detail = client.get(f"/api/v1/policy-scans/{scan_id}", headers=headers)
             assert scan_detail.status_code == 200
@@ -367,7 +385,9 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             assert len({item["policy_id"] for item in opportunities.json()}) == len(
                 opportunities.json()
             )
-            opportunity = opportunities.json()[0]
+            opportunity = next(
+                item for item in opportunities.json() if item["policy_id"] == str(policy_id)
+            )
             assert opportunity["eligibility_status"] == "POTENTIALLY_ELIGIBLE"
             assert opportunity["policy_version_id"] == str(policy_version_id)
             assert opportunity["policy_snapshot_json"]["policy_version_id"] == str(
@@ -738,3 +758,7 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             assert cross_tenant_run.status_code == 404
     finally:
         app.dependency_overrides.pop(get_oss_storage, None)
+        with SessionLocal() as db:
+            if cleanup_tenant_ids:
+                db.execute(delete(Tenant).where(Tenant.id.in_(cleanup_tenant_ids)))
+            db.commit()
