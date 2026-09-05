@@ -9,6 +9,7 @@ from app.api.routes import (
     billing,
     commerce,
     companies,
+    demo,
     demo_match,
     documents,
     enterprise,
@@ -40,6 +41,7 @@ api_router.include_router(payments.router)
 api_router.include_router(payments.bank_router)
 api_router.include_router(telemetry.router)
 api_router.include_router(reports.router)
+api_router.include_router(demo.router)
 api_router.include_router(demo_match.router)
 api_router.include_router(tasks.router)
 api_router.include_router(policy_engine.router)

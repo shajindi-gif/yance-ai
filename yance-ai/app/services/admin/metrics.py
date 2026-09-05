@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
-from sqlalchemy import Date, cast, distinct, func, select
+from sqlalchemy import Date, cast, distinct, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.models import (
@@ -11,6 +11,7 @@ from app.models.models import (
     Application,
     ApplicationArtifact,
     Company,
+    DemoScenario,
     Document,
     EvalDatasetVersion,
     EvalRun,
@@ -37,28 +38,63 @@ def _count(db: Session, model, *criteria) -> int:
     return int(db.scalar(select(func.count()).select_from(model).where(*criteria)) or 0)
 
 
+def _real_tenant_count(db: Session, model, *criteria) -> int:
+    if model is Tenant:
+        return _count(db, Tenant, Tenant.is_demo.is_(False), *criteria)
+    return int(
+        db.scalar(
+            select(func.count())
+            .select_from(model)
+            .join(Tenant, model.tenant_id == Tenant.id)
+            .where(Tenant.is_demo.is_(False), *criteria)
+        )
+        or 0
+    )
+
+
 def _money(value) -> float:
     return float(value or Decimal("0"))
+
+
+def _real_policy_count(db: Session) -> int:
+    return int(
+        db.scalar(
+            select(func.count())
+            .select_from(Policy)
+            .outerjoin(Tenant, Policy.tenant_id == Tenant.id)
+            .where(or_(Policy.tenant_id.is_(None), Tenant.is_demo.is_(False)))
+        )
+        or 0
+    )
 
 
 def investor_metrics(db: Session) -> dict:
     now = datetime.now(UTC)
     active_since = now - timedelta(days=30)
-    total_runs = _count(db, AgentRun)
-    llm_cost = _money(db.scalar(select(func.coalesce(func.sum(AgentRun.cost_usd), 0))))
+    total_runs = _real_tenant_count(db, AgentRun)
+    llm_cost = _money(
+        db.scalar(
+            select(func.coalesce(func.sum(AgentRun.cost_usd), 0))
+            .join(Tenant, AgentRun.tenant_id == Tenant.id)
+            .where(Tenant.is_demo.is_(False))
+        )
+    )
 
     revenue_rows = db.execute(
         select(Order.currency, func.coalesce(func.sum(Order.amount), 0))
-        .where(Order.status == "paid")
+        .join(Tenant, Order.tenant_id == Tenant.id)
+        .where(Order.status == "paid", Tenant.is_demo.is_(False))
         .group_by(Order.currency)
         .order_by(Order.currency)
     ).all()
     funnel_counts = dict(
         db.execute(
             select(AnalyticsEvent.name, func.count(distinct(AnalyticsEvent.tenant_id)))
+            .join(Tenant, AnalyticsEvent.tenant_id == Tenant.id)
             .where(
                 AnalyticsEvent.name.in_([name for name, _ in FUNNEL_STEPS]),
                 AnalyticsEvent.source == "server",
+                Tenant.is_demo.is_(False),
             )
             .group_by(AnalyticsEvent.name)
         ).all()
@@ -86,7 +122,8 @@ def investor_metrics(db: Session) -> dict:
             func.count(AgentRun.id).filter(AgentRun.status == "failed"),
             func.coalesce(func.sum(AgentRun.cost_usd), 0),
         )
-        .where(AgentRun.created_at >= active_since)
+        .join(Tenant, AgentRun.tenant_id == Tenant.id)
+        .where(AgentRun.created_at >= active_since, Tenant.is_demo.is_(False))
         .group_by("day")
         .order_by("day")
     ).all()
@@ -114,43 +151,52 @@ def investor_metrics(db: Session) -> dict:
         db.scalar(
             select(func.count(distinct(EvalRun.eval_type)))
             .join(EvalDatasetVersion, EvalDatasetVersion.id == EvalRun.dataset_version_id)
+            .join(Tenant, EvalRun.tenant_id == Tenant.id)
             .where(
                 EvalRun.status == "completed",
                 EvalRun.is_demo.is_(False),
                 EvalDatasetVersion.review_status == "reviewed",
+                Tenant.is_demo.is_(False),
             )
         )
         or 0
     )
     totals = {
-        "total_users": _count(db, User),
+        "total_users": _real_tenant_count(db, User),
         "active_users_30d": int(
             db.scalar(
-                select(func.count(distinct(AnalyticsEvent.user_id))).where(
+                select(func.count(distinct(AnalyticsEvent.user_id)))
+                .join(Tenant, AnalyticsEvent.tenant_id == Tenant.id)
+                .where(
                     AnalyticsEvent.occurred_at >= active_since,
                     AnalyticsEvent.user_id.is_not(None),
                     AnalyticsEvent.source == "server",
+                    Tenant.is_demo.is_(False),
                 )
             )
             or 0
         ),
-        "organizations": _count(db, Tenant),
-        "companies": _count(db, Company),
-        "policy_scans": _count(db, PolicyScan),
-        "applications": _count(db, Application),
-        "reports_generated": _count(
+        "organizations": _real_tenant_count(db, Tenant),
+        "companies": _real_tenant_count(db, Company),
+        "policy_scans": _real_tenant_count(db, PolicyScan),
+        "applications": _real_tenant_count(db, Application),
+        "reports_generated": _real_tenant_count(
             db,
             AnalyticsEvent,
             AnalyticsEvent.name == "report_generated",
             AnalyticsEvent.source == "server",
         ),
         "agent_runs": total_runs,
-        "successful_runs": _count(db, AgentRun, AgentRun.status == "completed"),
-        "failed_runs": _count(db, AgentRun, AgentRun.status == "failed"),
-        "documents_generated": _count(db, ApplicationArtifact),
-        "poc_accounts": _count(db, Tenant, Tenant.account_stage == "poc"),
+        "successful_runs": _real_tenant_count(db, AgentRun, AgentRun.status == "completed"),
+        "failed_runs": _real_tenant_count(db, AgentRun, AgentRun.status == "failed"),
+        "documents_generated": _real_tenant_count(db, ApplicationArtifact),
+        "poc_accounts": _real_tenant_count(db, Tenant, Tenant.account_stage == "poc"),
         "paying_customers": int(
-            db.scalar(select(func.count(distinct(Order.tenant_id))).where(Order.status == "paid"))
+            db.scalar(
+                select(func.count(distinct(Order.tenant_id)))
+                .join(Tenant, Order.tenant_id == Tenant.id)
+                .where(Order.status == "paid", Tenant.is_demo.is_(False))
+            )
             or 0
         ),
         "llm_cost_usd": round(llm_cost, 6),
@@ -176,6 +222,7 @@ def investor_metrics(db: Session) -> dict:
             "llm_cost_usd": "Sum of persisted AgentRun.cost_usd; deterministic runs record zero.",
             "cost_per_run_usd": "Total persisted AgentRun cost divided by all Agent Runs.",
             "funnel": "Distinct organizations with each server-owned milestone event; not cohort-normalized.",
+            "demo_exclusion": "Tenants marked is_demo=true are excluded from all investor metrics.",
         },
         "availability": {
             "evaluation_metrics": reviewed_evaluation_runs == 5,
@@ -189,7 +236,7 @@ def investor_metrics(db: Session) -> dict:
 def system_health(db: Session) -> dict:
     now = datetime.now(UTC)
     day_ago = now - timedelta(days=1)
-    stale_running = _count(
+    stale_running = _real_tenant_count(
         db,
         AgentRun,
         AgentRun.status == "running",
@@ -200,27 +247,33 @@ def system_health(db: Session) -> dict:
         "checked_at": now.isoformat(),
         "database": "ready",
         "agent_queue": {
-            "queued": _count(db, AgentRun, AgentRun.status == "queued"),
-            "running": _count(db, AgentRun, AgentRun.status == "running"),
+            "queued": _real_tenant_count(db, AgentRun, AgentRun.status == "queued"),
+            "running": _real_tenant_count(db, AgentRun, AgentRun.status == "running"),
             "stale_running": stale_running,
-            "failed_24h": _count(
+            "failed_24h": _real_tenant_count(
                 db, AgentRun, AgentRun.status == "failed", AgentRun.updated_at >= day_ago
             ),
         },
         "workflow_runs": {
-            "running": _count(db, WorkflowRun, WorkflowRun.status == "running"),
-            "failed_24h": _count(
+            "running": _real_tenant_count(db, WorkflowRun, WorkflowRun.status == "running"),
+            "failed_24h": _real_tenant_count(
                 db, WorkflowRun, WorkflowRun.status == "failed", WorkflowRun.updated_at >= day_ago
             ),
         },
         "documents": {
-            "pending_ingestion": _count(
+            "pending_ingestion": _real_tenant_count(
                 db, Document, Document.ingestion_status.in_(["pending", "processing"])
             ),
-            "failed_ingestion": _count(db, Document, Document.ingestion_status == "failed"),
+            "failed_ingestion": _real_tenant_count(
+                db, Document, Document.ingestion_status == "failed"
+            ),
         },
-        "errors_24h": _count(db, AgentRunError, AgentRunError.occurred_at >= day_ago),
-        "open_feedback": _count(db, Feedback, Feedback.status.in_(["open", "reviewing"])),
+        "errors_24h": _real_tenant_count(
+            db, AgentRunError, AgentRunError.occurred_at >= day_ago
+        ),
+        "open_feedback": _real_tenant_count(
+            db, Feedback, Feedback.status.in_(["open", "reviewing"])
+        ),
         "api_latency_history": {
             "available": False,
             "reason": "Not persisted; inspect structured logs.",
@@ -230,7 +283,7 @@ def system_health(db: Session) -> dict:
 
 def admin_overview(db: Session) -> dict:
     metrics = investor_metrics(db)
-    completed_evals = _count(db, EvalRun, EvalRun.status == "completed")
+    completed_evals = _real_tenant_count(db, EvalRun, EvalRun.status == "completed")
     return {
         "generated_at": metrics["generated_at"],
         "totals": metrics["totals"],
@@ -239,18 +292,19 @@ def admin_overview(db: Session) -> dict:
         "agent_trend_30d": metrics["agent_trend_30d"],
         "system_health": system_health(db),
         "resources": {
-            "users": _count(db, User),
-            "organizations": _count(db, Tenant),
-            "companies": _count(db, Company),
-            "agent_runs": _count(db, AgentRun),
-            "workflow_runs": _count(db, WorkflowRun),
-            "documents": _count(db, Document),
-            "policies": _count(db, Policy),
-            "errors": _count(db, AgentRunError),
-            "billing": _count(db, Order),
-            "feedback": _count(db, Feedback),
-            "analytics": _count(db, AnalyticsEvent),
-            "evals": _count(db, EvalRun),
+            "users": _real_tenant_count(db, User),
+            "organizations": _real_tenant_count(db, Tenant),
+            "companies": _real_tenant_count(db, Company),
+            "agent_runs": _real_tenant_count(db, AgentRun),
+            "workflow_runs": _real_tenant_count(db, WorkflowRun),
+            "documents": _real_tenant_count(db, Document),
+            "policies": _real_policy_count(db),
+            "errors": _real_tenant_count(db, AgentRunError),
+            "billing": _real_tenant_count(db, Order),
+            "feedback": _real_tenant_count(db, Feedback),
+            "analytics": _real_tenant_count(db, AnalyticsEvent),
+            "evals": _real_tenant_count(db, EvalRun),
+            "demo_scenarios": _count(db, DemoScenario),
         },
         "capabilities": {
             "evals": {

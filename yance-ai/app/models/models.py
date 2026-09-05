@@ -53,6 +53,55 @@ class Tenant(Base, TimestampMixin):
     slug: Mapped[str] = mapped_column(String(80), unique=True, index=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     account_stage: Mapped[str] = mapped_column(String(40), default="unclassified", index=True)
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    demo_dataset_key: Mapped[str | None] = mapped_column(String(120), unique=True, index=True)
+
+
+class DemoScenario(Base, TimestampMixin):
+    """Platform-owned index over a complete, tenant-isolated synthetic workflow."""
+
+    __tablename__ = "demo_scenarios"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    key: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), unique=True, index=True
+    )
+    company_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), index=True
+    )
+    profile_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("company_profile_versions.id", ondelete="CASCADE")
+    )
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE")
+    )
+    scan_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policy_scans.id", ondelete="CASCADE")
+    )
+    opportunity_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("opportunities.id", ondelete="CASCADE")
+    )
+    eligibility_result_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("eligibility_results.id", ondelete="CASCADE")
+    )
+    application_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("applications.id", ondelete="CASCADE")
+    )
+    artifact_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("application_artifacts.id", ondelete="CASCADE")
+    )
+    agent_run_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="CASCADE")
+    )
+    title: Mapped[str] = mapped_column(String(240))
+    industry: Mapped[str] = mapped_column(String(160))
+    persona: Mapped[str] = mapped_column(String(240))
+    summary: Mapped[str] = mapped_column(Text)
+    next_best_action: Mapped[str] = mapped_column(Text)
+    dataset_version: Mapped[str] = mapped_column(String(80), index=True)
+    data_classification: Mapped[str] = mapped_column(String(40), default="synthetic")
+    status: Mapped[str] = mapped_column(String(40), default="draft", index=True)
+    display_order: Mapped[int] = mapped_column(default=0)
 
 
 class User(Base, TimestampMixin, TenantOwnedMixin):

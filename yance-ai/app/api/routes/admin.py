@@ -169,6 +169,8 @@ def list_admin_resources(
                 "slug": item.slug,
                 "account_stage": item.account_stage,
                 "is_active": item.is_active,
+                "is_demo": item.is_demo,
+                "demo_dataset_key": item.demo_dataset_key,
                 "created_at": item.created_at,
             },
         )

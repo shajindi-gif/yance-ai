@@ -7,7 +7,7 @@ Evidence-Grounded 政策匹配与申报 Agent 平台。
 ```
 yance/
 ├── yance-ai/     # FastAPI backend (Python 3.12, SQLAlchemy 2, pgvector)
-├── website/      # Next.js 14 frontend (TypeScript, App Router)
+├── website/      # Next.js 16 frontend (TypeScript, App Router)
 └── benchmark/    # Policy Engine evaluation benchmarks
 ```
 
@@ -35,3 +35,5 @@ See `.env.example`. Never commit `.env` or `env.prod`.
 
 - Backend docs: `yance-ai/docs/`
 - Operations: `yance-ai/docs/PRODUCTION_OPS.md`
+- Investor demo: `/demo` after running `python scripts/seed_investor_demo.py`
+- Engineering data room: `docs/data-room/`

@@ -736,6 +736,68 @@ export interface NextAction {
   href?: string | null;
 }
 
+export interface DemoScenarioSummary {
+  key: string;
+  title: string;
+  industry: string;
+  persona: string;
+  summary: string;
+  next_best_action: string;
+  display_order: number;
+}
+
+export interface DemoScenarioList {
+  dataset_version: string | null;
+  data_classification: 'synthetic';
+  data_notice: string;
+  items: DemoScenarioSummary[];
+}
+
+export interface DemoScenarioDetail extends DemoScenarioSummary {
+  dataset_version: string;
+  data_classification: 'synthetic';
+  data_notice: string;
+  company: {
+    id: string; name: string; industry: string; province: string; city: string;
+    profile_version: number; completeness_score: number; profile: Record<string, unknown>;
+  };
+  document: {
+    id: string; filename: string; content_type: string; ingestion_status: string;
+    metadata: Record<string, unknown>;
+  };
+  scan: { id: string; status: string; provider: string; total_opportunities: number; completed_at: string };
+  opportunity: {
+    id: string; title: string; match_score: number; eligibility: string; confidence: number;
+    potential_benefit: string; deadline: string; region: string; authority: string;
+    policy_type: string; evidence_count: number;
+  };
+  eligibility: {
+    id: string; status: string; confidence: number; summary: string;
+    criteria: Array<Record<string, unknown>>; missing_information: string[];
+    engine_version: string; review_status: string; verified_at: string;
+  };
+  evidence: Array<{
+    id: string; conclusion: string; source_title: string; source_url: string; issuer: string;
+    article: string; quote: string; publish_date: string; effective_date: string;
+    expiry_date: string; region: string; confidence: number; verified: boolean; verifier: string;
+  }>;
+  application: {
+    id: string; title: string; status: string; progress: number; review_status: string; due_at: string;
+    requirements: Array<{ id: string; title: string; description: string; status: string; is_hard_gate: boolean }>;
+    tasks: Array<{ id: string; title: string; status: string; priority: string; progress: number }>;
+  };
+  agent_run: {
+    id: string; status: string; agent_name: string; model: string; latency_ms: number;
+    tokens: number; cost_usd: number;
+    steps: Array<{ sequence: number; type: string; status: string; output: Record<string, unknown>; verification: Record<string, unknown> }>;
+    tool_calls: Array<{ tool_name: string; status: string; latency_ms: number; result: Record<string, unknown> }>;
+  };
+  artifact: {
+    id: string; title: string; version: number; status: string; generation_method: string;
+    checksum_sha256: string; content: Record<string, unknown>; formats: Array<'docx' | 'pdf' | 'xlsx' | 'json'>;
+  };
+}
+
 class ApiClient {
   private token: string | null = null;
 
@@ -1336,6 +1398,25 @@ class ApiClient {
     available_models: Record<string, string>;
   }> {
     return this.request('/analytics/stats');
+  }
+
+  // Public investor demo. The API exposes only published synthetic tenants.
+  async getDemoScenarios(): Promise<DemoScenarioList> {
+    return this.request<DemoScenarioList>('/demo/scenarios');
+  }
+
+  async getDemoScenario(key: string): Promise<DemoScenarioDetail> {
+    return this.request<DemoScenarioDetail>(`/demo/scenarios/${encodeURIComponent(key)}`);
+  }
+
+  async downloadDemoArtifact(
+    key: string,
+    artifactId: string,
+    format: 'docx' | 'pdf' | 'xlsx' | 'json',
+  ): Promise<Blob> {
+    return this.requestBlob(
+      `/demo/scenarios/${encodeURIComponent(key)}/artifacts/${encodeURIComponent(artifactId)}/download?format=${format}`,
+    );
   }
 
   // Health
