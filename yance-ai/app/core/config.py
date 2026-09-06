@@ -48,6 +48,18 @@ class Settings(BaseSettings):
     document_chunk_overlap_chars: int = 200
     document_ingestion_lease_seconds: int = 300
     document_ingestion_max_attempts: int = 3
+    document_ocr_enabled: bool = False
+    document_ocr_provider: Literal["tesseract"] = "tesseract"
+    document_ocr_languages: str = "chi_sim+eng"
+    document_ocr_max_pages: int = 40
+    document_ocr_dpi: int = 200
+    document_ocr_max_pixels_per_page: int = 25_000_000
+    document_ocr_page_timeout_seconds: float = 30.0
+    document_url_import_enabled: bool = True
+    document_url_max_redirects: int = 3
+    document_url_connect_timeout_seconds: float = 5.0
+    document_url_read_timeout_seconds: float = 15.0
+    document_url_total_timeout_seconds: float = 30.0
     malware_scan_mode: Literal["disabled", "optional", "required"] = "disabled"
     clamd_host: str = ""
     clamd_port: int = 3310
@@ -122,6 +134,8 @@ class Settings(BaseSettings):
                 raise ValueError("Production document ingestion requires MALWARE_SCAN_MODE=required")
             if not self.clamd_host:
                 raise ValueError("Production document ingestion requires CLAMD_HOST")
+            if not self.document_ocr_enabled:
+                raise ValueError("Production document ingestion requires DOCUMENT_OCR_ENABLED=true")
         return self
 
 

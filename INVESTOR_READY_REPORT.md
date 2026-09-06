@@ -77,10 +77,11 @@ Evidence includes conclusion linkage, source title/URL, issuer, region, article,
 11. Added five tenant-isolated synthetic investor scenarios and a 3–5 minute `/demo` workflow that uses persisted product entities and production renderers.
 12. Added explicit API/worker and Chromium E2E gates, migration rollback/forward checks, logical restore verification, bounded latency smoke, CodeQL, SBOMs and container scanning.
 13. Added production-shaped company-document intelligence: real five-format parsers, quarantine/signature/archive/malware gates, durable ingestion attempts, source-locatable chunks, evidence-bearing fact candidates, human review and published-fact provenance.
+14. Added bounded local OCR and safe public-HTTPS document ingestion, including redirect-by-redirect SSRF checks, DNS decision pinning, source provenance and a staging OSS/ClamAV verifier.
 
 ## Security posture
 
-Implemented controls include password hashing, short-lived scoped JWTs, RBAC, tenant ownership checks, hashed API keys, process-local rate limits, upload quarantine/type/size/signature/archive checks, server-side hashes, fail-closed production malware-scanning configuration, SSRF-aware policy ingestion, replay-safe payment settlement, safe renderers, production secret validation, request correlation, no sensitive body logging, security response headers, audit records and CI dependency/secret/SAST/container scanning.
+Implemented controls include password hashing, short-lived scoped JWTs, RBAC, tenant ownership checks, hashed API keys, process-local rate limits, upload quarantine/type/size/signature/archive checks, server-side hashes, fail-closed production malware-scanning configuration, redirect-safe validated-IP-pinned URL ingestion, bounded local OCR, replay-safe payment settlement, safe renderers, production secret validation, request correlation, no sensitive body logging, security response headers, audit records and CI dependency/secret/SAST/container scanning.
 
 Known boundaries are disclosed in [`docs/production-readiness/RISK_ACCEPTANCE.md`](docs/production-readiness/RISK_ACCEPTANCE.md). There is no certification, external penetration-test, SSO/SAML, customer-managed key or PostgreSQL RLS claim.
 
@@ -90,8 +91,8 @@ Observed locally on 2026-09-06:
 
 | Gate | Result | Scope caveat |
 |---|---:|---|
-| Backend automated suite | 67 passed | clean PostgreSQL + pgvector test environment |
-| Backend line coverage | 77.80% | aggregate line coverage, not risk coverage |
+| Backend automated suite | 76 passed | clean PostgreSQL + pgvector test environment |
+| Backend line coverage | 78% | aggregate line coverage, not risk coverage |
 | API/worker golden journey | passed twice consecutively | deterministic embedding/storage substitutes; real database and product services |
 | Chromium browser stories | 2 specs | investor demo previously passed; authenticated Documents workspace passed against live local Next.js + FastAPI + PostgreSQL |
 | Deterministic eval gate | 11/11 passed across 5 families | synthetic and unreviewed; **not a product accuracy claim** |
@@ -99,6 +100,7 @@ Observed locally on 2026-09-06:
 | One-revision downgrade/upgrade | passed | validates latest revision path, not every historical production dataset |
 | Logical backup/restore | passed | restored to isolated DB; revision and key counts checked |
 | Frontend TypeScript | passed | `tsc --noEmit` |
+| Local scanned-PDF OCR smoke | passed | generated image-only PDF; Tesseract `chi_sim+eng`; not an accuracy benchmark |
 
 The CI workflow repeats these gates and adds locked dependency audits, secret history scanning, CodeQL security-extended analysis, container builds, SPDX JSON SBOM generation, fixed high/critical vulnerability blocking and non-root runtime checks. Repository configuration does not prove that branch protection is enabled on the remote host.
 
@@ -138,8 +140,8 @@ ChatGPT or DeepSeek can draft an answer; they do not by themselves provide this 
 
 There are no known open P0 issues in the current local release checks. P1 items, role owners, dates and temporary acceptance are recorded in the risk register. The most material are:
 
-- the production ClamAV/signature-update lifecycle and real OSS ingestion path still need staging evidence;
-- scanned-PDF OCR and controlled company webpage ingestion are not yet enabled;
+- the production ClamAV/signature-update lifecycle and real OSS ingestion path still need staging evidence using the supplied verifier;
+- OCR and controlled static webpage ingestion are implemented, but reviewed OCR-quality evidence and staging network-policy verification remain incomplete;
 - reviewed real-world evaluation evidence is insufficient for accuracy claims;
 - hosted OpenTelemetry, centralized retention and alert delivery are not connected;
 - managed backup scheduling/cross-region recovery is unproven despite the local restore drill;
@@ -155,7 +157,7 @@ There are no known open P0 issues in the current local release checks. P1 items,
 
 - Connect CI to protected required checks and an isolated staging environment.
 - Deploy hosted telemetry, dashboards, alert delivery and scheduled encrypted backups; pass two restore drills.
-- Verify the five-format document pipeline with real OSS and ClamAV signature updates in staging; add OCR and controlled webpage URL ingestion as separately gated capabilities.
+- Verify file/OCR/URL document ingestion with real OSS, network policy and ClamAV signature updates in staging using the supplied runbook.
 - Pin promoted container images and third-party actions by digest/commit.
 - Add policy freshness monitoring and change detection.
 

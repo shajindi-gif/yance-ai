@@ -3,6 +3,7 @@ import io
 import re
 import unicodedata
 from dataclasses import dataclass, field
+from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
@@ -11,9 +12,10 @@ from openpyxl import load_workbook
 from pypdf import PdfReader
 
 from app.core.config import settings
+from app.services.documents.ocr import OCRProvider, get_ocr_provider
 from app.services.documents.security import DocumentIngestionError
 
-PARSER_VERSION = "document-parser-v1"
+PARSER_VERSION = "document-parser-v2"
 
 
 @dataclass(frozen=True)
@@ -61,6 +63,77 @@ def _decode_text(payload: bytes) -> tuple[str, str]:
 def _parse_txt(payload: bytes) -> ParsedDocument:
     text, encoding = _decode_text(payload)
     return ParsedDocument(text=_bounded(text), parser="text", metadata={"encoding": encoding})
+
+
+class _ReadableHTMLParser(HTMLParser):
+    ignored = {"script", "style", "noscript", "svg", "canvas", "template"}
+    blocks = {
+        "article",
+        "br",
+        "div",
+        "footer",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "header",
+        "li",
+        "main",
+        "p",
+        "section",
+        "table",
+        "td",
+        "th",
+        "tr",
+    }
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+        self.ignored_depth = 0
+        self.in_title = False
+        self.title_parts: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs) -> None:
+        normalized = tag.lower()
+        if normalized in self.ignored:
+            self.ignored_depth += 1
+        if normalized == "title":
+            self.in_title = True
+        if not self.ignored_depth and normalized in self.blocks:
+            self.parts.append("\n")
+
+    def handle_endtag(self, tag: str) -> None:
+        normalized = tag.lower()
+        if normalized == "title":
+            self.in_title = False
+        if normalized in self.ignored and self.ignored_depth:
+            self.ignored_depth -= 1
+        elif not self.ignored_depth and normalized in self.blocks:
+            self.parts.append("\n")
+
+    def handle_data(self, data: str) -> None:
+        if self.in_title:
+            self.title_parts.append(data)
+        if not self.ignored_depth and not self.in_title:
+            self.parts.append(data)
+
+
+def _parse_html(payload: bytes) -> ParsedDocument:
+    decoded, encoding = _decode_text(payload)
+    parser = _ReadableHTMLParser()
+    try:
+        parser.feed(decoded)
+        parser.close()
+    except Exception as exc:
+        raise DocumentIngestionError("html_parse_failed", "Web document could not be parsed") from exc
+    return ParsedDocument(
+        text=_bounded(" ".join(parser.parts)),
+        parser="html.parser",
+        metadata={"encoding": encoding, "title": _clean(" ".join(parser.title_parts))[:500]},
+    )
 
 
 def _parse_csv(payload: bytes) -> ParsedDocument:
@@ -145,7 +218,7 @@ def _parse_xlsx(payload: bytes) -> ParsedDocument:
     )
 
 
-def _parse_pdf(payload: bytes) -> ParsedDocument:
+def _parse_pdf(payload: bytes, ocr_provider: OCRProvider | None = None) -> ParsedDocument:
     try:
         reader = PdfReader(io.BytesIO(payload), strict=False)
         if reader.is_encrypted:
@@ -170,8 +243,42 @@ def _parse_pdf(payload: bytes) -> ParsedDocument:
     except Exception as exc:
         raise DocumentIngestionError("pdf_parse_failed", "PDF content could not be parsed") from exc
     if len(re.sub(r"\s", "", joined)) < 20:
-        raise DocumentIngestionError(
-            "ocr_required", "This PDF contains insufficient machine-readable text and requires OCR"
+        provider = ocr_provider or get_ocr_provider()
+        if provider is None:
+            raise DocumentIngestionError(
+                "ocr_required",
+                "This PDF contains insufficient machine-readable text and requires OCR",
+                retryable=True,
+            )
+        result = provider.extract_pdf(payload)
+        parts = []
+        spans = []
+        cursor = 0
+        for page_number, page_text in enumerate(result.pages, start=1):
+            text = _clean(page_text)
+            if not text:
+                continue
+            if parts:
+                parts.append("\n\n")
+                cursor += 2
+            start = cursor
+            parts.append(text)
+            cursor += len(text)
+            spans.append(SourceSpan(start=start, end=cursor, locator={"page": page_number}))
+        joined = _bounded("".join(parts))
+        if len(re.sub(r"\s", "", joined)) < 20:
+            raise DocumentIngestionError("ocr_empty", "OCR found no readable text in this PDF")
+        return ParsedDocument(
+            text=joined,
+            parser=f"ocr:{result.provider}",
+            page_count=len(result.pages),
+            metadata={
+                "ocr": True,
+                "ocr_provider": result.provider,
+                "ocr_languages": result.languages,
+                "pages_with_text": len(spans),
+            },
+            spans=spans,
         )
     return ParsedDocument(
         text=joined,
@@ -182,18 +289,24 @@ def _parse_pdf(payload: bytes) -> ParsedDocument:
     )
 
 
-def parse_document(filename: str, payload: bytes) -> ParsedDocument:
+def parse_document(
+    filename: str, payload: bytes, *, ocr_provider: OCRProvider | None = None
+) -> ParsedDocument:
     extension = Path(filename).suffix.lower()
     parser = {
         ".txt": _parse_txt,
         ".csv": _parse_csv,
         ".docx": _parse_docx,
         ".xlsx": _parse_xlsx,
-        ".pdf": _parse_pdf,
+        ".html": _parse_html,
+        ".htm": _parse_html,
     }.get(extension)
-    if not parser:
+    if extension == ".pdf":
+        result = _parse_pdf(payload, ocr_provider)
+    elif parser:
+        result = parser(payload)
+    else:
         raise DocumentIngestionError("unsupported_type", "Unsupported document type")
-    result = parser(payload)
     if not result.text:
         raise DocumentIngestionError("empty_document", "Document contains no extractable text")
     return result

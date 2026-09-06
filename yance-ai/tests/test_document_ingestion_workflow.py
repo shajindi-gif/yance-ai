@@ -10,6 +10,7 @@ from app.api.routes import auth
 from app.core.db import SessionLocal
 from app.main import app
 from app.models.models import CompanyFact, Tenant
+from app.services.documents.url_fetcher import FetchedDocument, get_safe_url_fetcher
 from app.services.oss import get_oss_storage
 
 pytestmark = [
@@ -38,6 +39,24 @@ class MemoryStorage:
         assert len(self.payload) <= max_bytes
         return self.payload
 
+    def put_bytes(self, _object_key: str, payload: bytes, _content_type: str) -> None:
+        self.payload = payload
+
+
+class StubURLFetcher:
+    def __init__(self, payload: bytes):
+        self.payload = payload
+
+    def fetch(self, source_url: str) -> FetchedDocument:
+        assert source_url == "https://example.com/company-profile"
+        return FetchedDocument(
+            payload=self.payload,
+            filename="company-profile.html",
+            content_type="text/html",
+            source_url=source_url,
+            final_url=source_url,
+            redirects=0,
+        )
 
 def _register(client: TestClient, suffix: str) -> tuple[dict[str, str], str, str]:
     response = client.post(
@@ -72,6 +91,8 @@ def test_document_ingestion_review_and_profile_provenance():
 """.encode()
     storage = MemoryStorage(content)
     app.dependency_overrides[get_oss_storage] = lambda: storage
+    url_content = b"<html><body><p>Current needs: policy scan</p></body></html>"
+    app.dependency_overrides[get_safe_url_fetcher] = lambda: StubURLFetcher(url_content)
     auth._register_rate.clear()
     tenant_ids: list[uuid.UUID] = []
     try:
@@ -162,8 +183,36 @@ def test_document_ingestion_review_and_profile_provenance():
             tenant_ids.append(uuid.UUID(other_tenant_id))
             hidden = client.get(f"/api/v1/documents/{document_id}", headers=other_headers)
             assert hidden.status_code == 404
+
+            denied_url_import = client.post(
+                "/api/v1/documents/url",
+                headers=other_headers,
+                json={
+                    "url": "https://example.com/company-profile",
+                    "company_id": company_id,
+                },
+            )
+            assert denied_url_import.status_code == 404
+
+            url_import = client.post(
+                "/api/v1/documents/url",
+                headers=headers,
+                json={
+                    "url": "https://example.com/company-profile",
+                    "company_id": company_id,
+                },
+            )
+            assert url_import.status_code == 201, url_import.text
+            imported = url_import.json()
+            assert imported["document"]["source_type"] == "url"
+            assert imported["document"]["ingestion_status"] == "completed"
+            assert imported["document"]["metadata_json"]["source_url"] == (
+                "https://example.com/company-profile"
+            )
+            assert imported["content"]["parser"] == "html.parser"
     finally:
         app.dependency_overrides.pop(get_oss_storage, None)
+        app.dependency_overrides.pop(get_safe_url_fetcher, None)
         with SessionLocal() as db:
             if tenant_ids:
                 db.execute(delete(Tenant).where(Tenant.id.in_(tenant_ids)))

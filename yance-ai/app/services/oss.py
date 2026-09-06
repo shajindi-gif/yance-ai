@@ -43,6 +43,13 @@ class OSSStorage:
             raise ValueError("Stored object exceeds the configured read limit")
         return payload
 
+    def put_bytes(self, object_key: str, payload: bytes, content_type: str) -> None:
+        self.internal_bucket.put_object(
+            object_key,
+            payload,
+            headers={"Content-Type": content_type},
+        )
+
 
 @lru_cache
 def get_oss_storage() -> OSSStorage:

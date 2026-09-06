@@ -2,6 +2,16 @@
   min-width: 84px;
 }
 
+.urlImport {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  margin-top: 16px;
+  border-top: 1px solid #eef1f5;
+  padding-top: 16px;
+}
+
 .detailGrid {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
@@ -91,6 +101,10 @@
 
 @media (max-width: 900px) {
   .detailGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .urlImport {
     grid-template-columns: 1fr;
   }
 }

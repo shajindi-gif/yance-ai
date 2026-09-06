@@ -36,8 +36,11 @@ test('authenticated documents workspace renders the verified ingestion controls'
     '.pdf,.docx,.xlsx,.csv,.txt',
   );
   await expect(page.getByRole('button', { name: '上传资料' })).toBeDisabled();
+  await expect(page.getByLabel('或从公开网页导入')).toHaveAttribute('type', 'url');
+  await expect(page.getByRole('button', { name: '导入网页' })).toBeDisabled();
   await expect(page.getByText('暂无资料')).toBeVisible();
-  await expect(page.getByText(/扫描版 PDF 会明确标记为需要 OCR/)).toBeVisible();
+  await expect(page.getByText(/扫描版 PDF 会进入受限 OCR 流程/)).toBeVisible();
+  await expect(page.getByText(/仅允许公开 HTTPS 地址/)).toBeVisible();
   expect(failedResponses).toEqual([]);
   await expect(
     page.locator('[data-nextjs-dialog], .vite-error-overlay, #webpack-dev-server-client-overlay'),

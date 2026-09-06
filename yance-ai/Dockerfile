@@ -11,11 +11,11 @@ FROM python:3.12-slim AS runtime
 
 ENV PATH="/opt/venv/bin:$PATH" PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
-# WeasyPrint system dependencies + Chinese fonts
+# WeasyPrint system dependencies, Chinese fonts and local OCR runtime.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 \
     libffi8 libgdk-pixbuf-2.0-0 shared-mime-info \
-    fonts-noto-cjk \
+    fonts-noto-cjk tesseract-ocr tesseract-ocr-chi-sim tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --system yance && useradd --system --gid yance --home /app yance

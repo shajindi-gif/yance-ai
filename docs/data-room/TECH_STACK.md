@@ -10,6 +10,7 @@ Status: **Implemented**.
 | Retrieval | PostgreSQL full-text search + pgvector | [`yance-ai/app/services/policies/retrieval.py`](../../yance-ai/app/services/policies/retrieval.py) |
 | LLM | provider-neutral interface; Qwen, DeepSeek and other OpenAI-compatible endpoints | [`yance-ai/app/services/llm/`](../../yance-ai/app/services/llm/) |
 | Artifacts | deterministic DOCX/PDF/XLSX/JSON renderer | [`yance-ai/app/services/applications/artifacts.py`](../../yance-ai/app/services/applications/artifacts.py) |
+| Document intelligence | pypdf, PyMuPDF/Tesseract OCR, python-docx, openpyxl, bounded HTML/text parsers, ClamAV | [`yance-ai/app/services/documents/`](../../yance-ai/app/services/documents/) |
 | Runtime | Docker; separate API, migration, worker, database services | [`yance-ai/docker-compose.prod.yml`](../../yance-ai/docker-compose.prod.yml) |
 | CI | GitHub Actions: lint, contract, migration, tests, eval, audits, builds | [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) |
 

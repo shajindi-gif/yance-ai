@@ -1,6 +1,7 @@
 import re
 import uuid
 from pathlib import Path
+from urllib.parse import urlsplit
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -29,6 +30,7 @@ from app.schemas.schemas import (
     DocumentDetail,
     DocumentIngestRequest,
     DocumentOut,
+    DocumentUrlImport,
     PresignedUploadOut,
 )
 from app.services.analytics.events import record_event
@@ -36,6 +38,7 @@ from app.services.billing.usage import QuotaExceeded, ensure_capacity
 from app.services.company_profiles import get_or_create_company_profile, profile_completeness
 from app.services.documents.ingestion import ingestion_counts, process_ingestion, queue_ingestion
 from app.services.documents.security import DocumentIngestionError
+from app.services.documents.url_fetcher import SafeURLFetcher, get_safe_url_fetcher
 from app.services.enterprise.audit import record_audit
 from app.services.oss import OSSStorage, get_oss_storage
 
@@ -74,6 +77,101 @@ def list_documents(
             .order_by(Document.created_at.desc())
         ).all()
     )
+
+
+def _url_error_status(error: DocumentIngestionError) -> int:
+    if error.code == "url_size_limit":
+        return 413
+    if error.code == "url_content_type":
+        return 415
+    if error.retryable:
+        return 502
+    return 400
+
+
+@router.post("/url", response_model=DocumentDetail, status_code=201)
+def import_document_url(
+    payload: DocumentUrlImport,
+    principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
+    db: Session = Depends(get_db),
+    storage: OSSStorage = Depends(get_oss_storage),
+    fetcher: SafeURLFetcher = Depends(get_safe_url_fetcher),
+):
+    company = db.scalar(
+        select(Company).where(
+            Company.id == payload.company_id, Company.tenant_id == principal.tenant_id
+        )
+    )
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    try:
+        ensure_capacity(db, tenant_id=principal.tenant_id, meter="documents")
+        fetched = fetcher.fetch(payload.url)
+        ensure_capacity(
+            db,
+            tenant_id=principal.tenant_id,
+            meter="storage_bytes",
+            requested=len(fetched.payload),
+        )
+    except QuotaExceeded as exc:
+        raise HTTPException(status_code=429, detail=exc.detail()) from exc
+    except DocumentIngestionError as exc:
+        raise HTTPException(status_code=_url_error_status(exc), detail=exc.safe_message) from exc
+
+    object_key = (
+        f"tenants/{principal.tenant_id}/documents/{uuid.uuid4()}/{safe_filename(fetched.filename)}"
+    )
+    try:
+        storage.put_bytes(object_key, fetched.payload, fetched.content_type)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Web document could not be stored") from exc
+    document = Document(
+        tenant_id=principal.tenant_id,
+        company_id=company.id,
+        filename=fetched.filename,
+        content_type=fetched.content_type,
+        object_key=object_key,
+        status="quarantined",
+        size_bytes=len(fetched.payload),
+        source_type="url",
+        ingestion_status="pending",
+        metadata_json={
+            "source_url": fetched.source_url,
+            "final_url": fetched.final_url,
+            "redirects": fetched.redirects,
+        },
+    )
+    db.add(document)
+    db.flush()
+    run = queue_ingestion(db, document, requested_by=principal.user.id)
+    record_event(
+        db,
+        tenant_id=principal.tenant_id,
+        user_id=principal.user.id,
+        name="document_uploaded",
+        event_key=f"document_uploaded:{document.id}",
+        properties={"document_id": str(document.id), "source_type": "url"},
+    )
+    db.commit()
+    processed = process_ingestion(db, run.id, storage)
+    db.refresh(document)
+    record_audit(
+        db,
+        tenant_id=principal.tenant_id,
+        actor_user_id=principal.user.id,
+        action="document.url_imported",
+        resource_type="document",
+        resource_id=str(document.id),
+        result="success" if processed.status == "completed" else "failed",
+        reason=document.ingestion_error,
+        details={
+            "source_host": urlsplit(fetched.source_url).hostname,
+            "redirects": fetched.redirects,
+            "ingestion_status": document.ingestion_status,
+        },
+    )
+    db.commit()
+    return _document_detail(db, document)
 
 
 def _tenant_document(db: Session, document_id: UUID, tenant_id: UUID) -> Document:

@@ -27,7 +27,8 @@ disabled by default and must never be enabled in production.
 - Uploaded files remain quarantined until server-side signature/archive checks, SHA-256 and the configured malware gate complete.
 - Production startup requires fail-closed ClamAV configuration. Scanner outages must not be treated as clean results.
 - Extracted company facts require an authorized human accept/reject decision before they change a company profile draft.
-- Scanned PDFs are reported as requiring OCR; unsupported URL ingestion is not silently attempted.
+- Scanned PDFs use bounded local OCR when enabled and otherwise remain explicitly `ocr_required`.
+- Public URL imports are HTTPS/443-only, validate every redirect and non-global address, and pin the validated IP for the TLS connection. Disable the feature if the staging egress gate regresses.
 
 ## Current limitations
 

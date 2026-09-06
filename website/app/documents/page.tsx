@@ -55,8 +55,10 @@ export default function DocumentsPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [sourceUrl, setSourceUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [importingUrl, setImportingUrl] = useState(false);
   const [working, setWorking] = useState("");
   const [detail, setDetail] = useState<DocumentDetail | null>(null);
   const [error, setError] = useState("");
@@ -74,6 +76,28 @@ export default function DocumentsPage() {
     setDocuments(documentResult);
     setCompanies(companyResult);
     setCompanyId((current) => current || companyResult[0]?.id || "");
+  };
+
+  const importUrl = async () => {
+    if (!sourceUrl.trim() || !companyId) return;
+    setImportingUrl(true);
+    setError("");
+    setMessage("");
+    try {
+      const imported = await api.importDocumentUrl(companyId, sourceUrl.trim());
+      setDocuments((current) => [imported.document, ...current]);
+      setDetail(imported);
+      setSourceUrl("");
+      setMessage(
+        imported.document.ingestion_status === "completed"
+          ? "网页资料已安全获取并完成解析。请检查来源和候选企业信息。"
+          : imported.document.ingestion_error || "网页资料已进入摄取流程。",
+      );
+    } catch (importError) {
+      setError(importError instanceof Error ? importError.message : "网页资料导入失败");
+    } finally {
+      setImportingUrl(false);
+    }
   };
 
   useEffect(() => {
@@ -205,12 +229,22 @@ export default function DocumentsPage() {
             <div className={flow.fileInput}>
               <input id="company-document" type="file" accept=".pdf,.docx,.xlsx,.csv,.txt" onChange={(event) => setFile(event.target.files?.[0] || null)} required />
             </div>
-            <span className={flow.helper}>支持 PDF、DOCX、XLSX、CSV、TXT，单文件上限由服务端配置（默认 25 MiB）。扫描版 PDF 会明确标记为需要 OCR；网页 URL 在 SSRF 门禁验收前不开放。</span>
+            <span className={flow.helper}>支持 PDF、DOCX、XLSX、CSV、TXT，单文件上限由服务端配置（默认 25 MiB）。扫描版 PDF 会进入受限 OCR 流程。</span>
           </div>
         </div>
         <div className={content.actionRow}>
           <Button type="submit" disabled={uploading || !file || !companyId}>
             {uploading ? "上传中…" : "上传资料"}
+          </Button>
+        </div>
+        <div className={styles.urlImport}>
+          <div className={flow.fieldWide}>
+            <label htmlFor="document-url">或从公开网页导入</label>
+            <input id="document-url" type="url" inputMode="url" placeholder="https://example.gov.cn/policy-or-company-page" value={sourceUrl} onChange={(event) => setSourceUrl(event.target.value)} />
+            <span className={flow.helper}>仅允许公开 HTTPS 地址。系统会逐次校验跳转和目标网络、限制下载大小，并保留原始来源。</span>
+          </div>
+          <Button type="button" variant="secondary" disabled={importingUrl || !sourceUrl.trim() || !companyId} onClick={importUrl}>
+            {importingUrl ? "安全导入中…" : "导入网页"}
           </Button>
         </div>
       </form>
@@ -226,13 +260,14 @@ export default function DocumentsPage() {
           <div className={content.tableSurface}>
             <DataTable>
               <table className={content.table}>
-                <thead><tr><th>文件</th><th>企业</th><th>大小</th><th>摄取状态</th><th>上传时间</th><th>操作</th></tr></thead>
+                <thead><tr><th>资料</th><th>来源</th><th>企业</th><th>大小</th><th>摄取状态</th><th>创建时间</th><th>操作</th></tr></thead>
                 <tbody>
                   {documents.map((document) => {
                     const status = INGESTION_LABELS[document.ingestion_status] || { label: document.ingestion_status, tone: "neutral" as const };
                     return (
                       <tr key={document.id}>
                         <td>{document.filename}</td>
+                        <td><Badge tone="neutral">{document.source_type === "url" ? "公开网页" : "上传文件"}</Badge></td>
                         <td>{document.company_id ? companyNames.get(document.company_id) || "未知企业" : "未关联"}</td>
                         <td>{document.size_bytes == null ? "—" : `${(document.size_bytes / 1024).toFixed(1)} KiB`}</td>
                         <td><Badge tone={status.tone}>{status.label}</Badge></td>
@@ -252,8 +287,9 @@ export default function DocumentsPage() {
         <section className={content.section} aria-live="polite">
           <div className={content.sectionHeading}>
             <div><h2>解析与企业智能</h2><p>{detail.document.filename} · {detail.chunk_count} 个可检索片段 · {detail.candidates.length} 条候选信息</p></div>
-            {detail.document.ingestion_status === "failed" ? <Button type="button" variant="secondary" onClick={retryIngestion} disabled={working === detail.document.id}>重新解析</Button> : null}
+            {detail.document.ingestion_status === "failed" || detail.document.ingestion_status === "ocr_required" ? <Button type="button" variant="secondary" onClick={retryIngestion} disabled={working === detail.document.id}>重新解析</Button> : null}
           </div>
+          {detail.document.source_type === "url" && typeof detail.document.metadata_json.source_url === "string" ? <InlineAlert tone="info">网页来源：{detail.document.metadata_json.source_url}</InlineAlert> : null}
           {detail.document.metadata_json.security_scan && (detail.document.metadata_json.security_scan as { status?: string }).status !== "clean" ? (
             <InlineAlert tone="info">当前记录的恶意文件扫描状态为 {(detail.document.metadata_json.security_scan as { status?: string }).status || "未知"}；生产环境必须配置为强制扫描。</InlineAlert>
           ) : null}

@@ -47,3 +47,33 @@ def test_production_document_ingestion_requires_fail_closed_malware_scanning():
             api_key_pepper="production-api-key-pepper-at-least-32-characters",
             malware_scan_mode="disabled",
         )
+
+
+def test_production_document_ingestion_requires_ocr():
+    with pytest.raises(ValidationError, match="DOCUMENT_OCR_ENABLED=true"):
+        Settings(
+            app_env="production",
+            jwt_secret="production-jwt-secret-with-at-least-32-characters",
+            bootstrap_token="production-bootstrap-token",
+            tenant_provisioning_token="production-provisioning-token",
+            api_key_pepper="production-api-key-pepper-at-least-32-characters",
+            malware_scan_mode="required",
+            clamd_host="clamav",
+            document_ocr_enabled=False,
+        )
+
+
+def test_production_document_ingestion_accepts_fail_closed_ocr_configuration():
+    config = Settings(
+        _env_file=None,
+        app_env="production",
+        jwt_secret="production-jwt-secret-with-at-least-32-characters",
+        bootstrap_token="production-bootstrap-token",
+        tenant_provisioning_token="production-provisioning-token",
+        api_key_pepper="production-api-key-pepper-at-least-32-characters",
+        malware_scan_mode="required",
+        clamd_host="clamav",
+        document_ocr_enabled=True,
+    )
+    assert config.document_ocr_provider == "tesseract"
+    assert config.document_url_import_enabled is True

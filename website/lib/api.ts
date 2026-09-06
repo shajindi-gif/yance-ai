@@ -1124,6 +1124,13 @@ class ApiClient {
     return this.request<DocumentDetail>(`/documents/${encodeURIComponent(documentId)}`);
   }
 
+  async importDocumentUrl(companyId: string, url: string): Promise<DocumentDetail> {
+    return this.request<DocumentDetail>('/documents/url', {
+      method: 'POST',
+      body: JSON.stringify({ company_id: companyId, url }),
+    });
+  }
+
   async ingestDocument(documentId: string, force: boolean = false): Promise<DocumentDetail> {
     return this.request<DocumentDetail>(`/documents/${encodeURIComponent(documentId)}/ingest`, {
       method: 'POST',

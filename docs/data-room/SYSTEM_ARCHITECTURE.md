@@ -18,7 +18,7 @@ FastAPI API ── auth / RBAC / tenant boundary / quotas
 PostgreSQL + pgvector       Object storage adapter
         │                           │
         ├──────── Agent worker ─────┤
-        └──── Document worker ─ ClamAV
+        └──── Document worker ─ ClamAV ─ local Tesseract OCR
 ```
 
 ## Implemented
@@ -28,6 +28,7 @@ PostgreSQL + pgvector       Object storage adapter
 - SQLAlchemy domain model and incremental Alembic history: [`yance-ai/app/models/models.py`](../../yance-ai/app/models/models.py) and [`yance-ai/alembic/versions/`](../../yance-ai/alembic/versions/).
 - Separate API and durable worker processes in production composition: [`yance-ai/docker-compose.prod.yml`](../../yance-ai/docker-compose.prod.yml).
 - A dedicated document worker consumes durable ingestion runs and applies the same verified service used by the synchronous API path: [`yance-ai/app/workers/document_worker.py`](../../yance-ai/app/workers/document_worker.py).
+- Public webpage documents enter through a validated-IP-pinned HTTPS fetcher and then reuse the same quarantine/worker path; there is no unaudited browser fetch path.
 - Explicit demo isolation at tenant level: [`yance-ai/alembic/versions/20260905_0020_investor_demo.py`](../../yance-ai/alembic/versions/20260905_0020_investor_demo.py).
 
 ## Partial / planned

@@ -175,6 +175,11 @@ class DocumentIngestRequest(BaseModel):
     force: bool = False
 
 
+class DocumentUrlImport(BaseModel):
+    url: str = Field(min_length=9, max_length=2048)
+    company_id: UUID
+
+
 class DocumentIngestionRunOut(ORMModel):
     id: UUID
     document_id: UUID

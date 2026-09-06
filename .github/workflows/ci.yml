@@ -222,6 +222,13 @@ jobs:
           test -n "$runtime_user"
           test "$runtime_user" != "0"
 
+      - name: Verify backend OCR runtime
+        if: matrix.name == 'backend'
+        run: |
+          docker run --rm "yance-${{ matrix.name }}:ci" python -c "import pymupdf; print(pymupdf.__version__)"
+          docker run --rm --entrypoint tesseract "yance-${{ matrix.name }}:ci" --list-langs | grep -F chi_sim
+          docker run --rm --entrypoint tesseract "yance-${{ matrix.name }}:ci" --list-langs | grep -F eng
+
   browser-e2e:
     name: Browser product journeys
     runs-on: ubuntu-latest

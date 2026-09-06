@@ -42,9 +42,13 @@ def verify_signature(filename: str, content_type: str, payload: bytes) -> None:
             )
         validate_office_archive(payload, extension)
         return
-    if extension in {".txt", ".csv"}:
+    if extension in {".txt", ".csv", ".html", ".htm"}:
         if b"\x00" in payload[:8192]:
             raise DocumentIngestionError("binary_text", "Text document contains binary data")
+        if extension in {".html", ".htm"} and content_type.lower() != "text/html":
+            raise DocumentIngestionError(
+                "signature_mismatch", "Web document content type does not match its extension"
+            )
         return
     raise DocumentIngestionError("unsupported_type", f"Unsupported document type: {content_type}")
 
