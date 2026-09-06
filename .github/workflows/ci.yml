@@ -223,7 +223,7 @@ jobs:
           test "$runtime_user" != "0"
 
   browser-e2e:
-    name: Browser investor golden journey
+    name: Browser product journeys
     runs-on: ubuntu-latest
     timeout-minutes: 25
     services:
@@ -251,6 +251,7 @@ jobs:
       CORS_ORIGINS: http://localhost:3000
       NEXT_PUBLIC_API_URL: http://localhost:8011/api/v1
       PLAYWRIGHT_BASE_URL: http://localhost:3000
+      PLAYWRIGHT_API_BASE_URL: http://localhost:8011/api/v1
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -297,7 +298,7 @@ jobs:
           cat "$RUNNER_TEMP/yance-e2e-api.log"
           exit 1
 
-      - name: Run Chromium investor demo E2E
+      - name: Run Chromium product E2E
         working-directory: website
         run: npm run test:e2e
 

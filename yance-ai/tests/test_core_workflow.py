@@ -41,7 +41,7 @@ pytestmark = [
 
 class FakeStorage:
     def __init__(self):
-        self.size = 0
+        self.payload = b""
 
     def presign_put(self, object_key: str, content_type: str) -> str:
         return f"https://upload.invalid/{object_key}?content-type={content_type}"
@@ -50,7 +50,11 @@ class FakeStorage:
         return True
 
     def object_size(self, _object_key: str) -> int:
-        return self.size
+        return len(self.payload)
+
+    def read_bytes(self, _object_key: str, max_bytes: int) -> bytes:
+        assert len(self.payload) <= max_bytes
+        return self.payload
 
 
 def _register(client: TestClient, suffix: str) -> tuple[dict[str, str], str]:
@@ -324,15 +328,18 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             assert published.json()["version"] == 1
             assert published.json()["snapshot_json"]["annual_revenue"] == 12_000_000
 
-            fake_storage.size = 2048
+            fake_storage.payload = (
+                "所属行业：人工智能\n员工人数：42 人\n年度营业收入：1,200 万元\n"
+                "核心产品：企业知识管理平台\n当前需求：研发补贴、高企申报\n"
+            ).encode()
             presigned = client.post(
                 "/api/v1/documents/presign-upload",
                 headers=headers,
                 json={
-                    "filename": "company-profile.pdf",
-                    "content_type": "application/pdf",
+                    "filename": "company-profile.txt",
+                    "content_type": "text/plain",
                     "company_id": company_id,
-                    "size_bytes": fake_storage.size,
+                    "size_bytes": len(fake_storage.payload),
                 },
             )
             assert presigned.status_code == 201, presigned.text
@@ -341,8 +348,18 @@ def test_persisted_company_to_application_workflow(monkeypatch):
                 f"/api/v1/documents/{document_id}/complete", headers=headers, json={}
             )
             assert completed_upload.status_code == 200, completed_upload.text
-            assert completed_upload.json()["status"] == "uploaded"
+            assert completed_upload.json()["status"] == "quarantined"
             assert completed_upload.json()["ingestion_status"] == "pending"
+            ingested_upload = client.post(
+                f"/api/v1/documents/{document_id}/ingest",
+                headers=headers,
+                json={"force": False},
+            )
+            assert ingested_upload.status_code == 200, ingested_upload.text
+            assert ingested_upload.json()["document"]["status"] == "active"
+            assert ingested_upload.json()["document"]["ingestion_status"] == "completed"
+            assert ingested_upload.json()["chunk_count"] >= 1
+            assert ingested_upload.json()["candidates"]
 
             idempotency_key = f"scan-{suffix}"
             scan_response = client.post(

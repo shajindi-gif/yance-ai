@@ -220,6 +220,101 @@ class Document(Base, TimestampMixin, TenantOwnedMixin):
     ingested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class DocumentIngestionRun(Base, TimestampMixin, TenantOwnedMixin):
+    """Durable, retryable execution record for one document ingestion attempt."""
+
+    __tablename__ = "document_ingestion_runs"
+    __table_args__ = (
+        UniqueConstraint("document_id", "attempt", name="uq_document_ingestion_attempt"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), index=True
+    )
+    requested_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    attempt: Mapped[int] = mapped_column(default=1)
+    status: Mapped[str] = mapped_column(String(40), default="queued", index=True)
+    parser_version: Mapped[str] = mapped_column(String(80), default="document-parser-v1")
+    claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(120))
+    safe_message: Mapped[str | None] = mapped_column(String(500))
+    metrics_json: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class DocumentContent(Base, TimestampMixin, TenantOwnedMixin):
+    """Canonical bounded text projection produced by a verified parser."""
+
+    __tablename__ = "document_contents"
+    __table_args__ = (UniqueConstraint("document_id", name="uq_document_content_document"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), index=True
+    )
+    parser: Mapped[str] = mapped_column(String(80))
+    parser_version: Mapped[str] = mapped_column(String(80))
+    text: Mapped[str] = mapped_column(Text)
+    text_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    character_count: Mapped[int]
+    page_count: Mapped[int | None]
+    language: Mapped[str | None] = mapped_column(String(40))
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class DocumentChunk(Base, TimestampMixin, TenantOwnedMixin):
+    """Source-locatable chunks for company document retrieval."""
+
+    __tablename__ = "document_chunks"
+    __table_args__ = (
+        UniqueConstraint("document_id", "sequence", name="uq_document_chunk_sequence"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), index=True
+    )
+    sequence: Mapped[int]
+    content: Mapped[str] = mapped_column(Text)
+    content_sha256: Mapped[str] = mapped_column(String(64), index=True)
+    character_start: Mapped[int]
+    character_end: Mapped[int]
+    token_estimate: Mapped[int]
+    locator_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(1024))
+
+
+class DocumentFactCandidate(Base, TimestampMixin, TenantOwnedMixin):
+    """A review-required company fact grounded in an exact document excerpt."""
+
+    __tablename__ = "document_fact_candidates"
+    __table_args__ = (
+        UniqueConstraint("document_id", "candidate_hash", name="uq_document_fact_candidate_hash"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    document_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("documents.id", ondelete="CASCADE"), index=True
+    )
+    company_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("companies.id", ondelete="CASCADE"), index=True
+    )
+    field_key: Mapped[str] = mapped_column(String(120), index=True)
+    value_json: Mapped[dict] = mapped_column(JSON)
+    confidence: Mapped[float] = mapped_column(Numeric(4, 3))
+    evidence_excerpt: Mapped[str] = mapped_column(Text)
+    source_locator_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    extraction_method: Mapped[str] = mapped_column(String(80), default="deterministic")
+    extraction_version: Mapped[str] = mapped_column(String(80), default="company-intelligence-v1")
+    candidate_hash: Mapped[str] = mapped_column(String(64))
+    status: Mapped[str] = mapped_column(String(40), default="pending_review", index=True)
+    reviewed_by: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class Policy(Base, TimestampMixin):
     """Global Policy Knowledge Base — platform-level, shared by all tenants."""
 

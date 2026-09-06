@@ -15,6 +15,7 @@ from app.models.models import (
     AnalyticsEvent,
     Company,
     Document,
+    DocumentIngestionRun,
     EvalRun,
     FeatureFlag,
     Feedback,
@@ -72,6 +73,7 @@ AdminResource = Literal[
     "llm_usage",
     "costs",
     "documents",
+    "document_ingestion_runs",
     "policies",
     "evals",
     "errors",
@@ -257,6 +259,25 @@ def list_admin_resources(
                 "size_bytes": item.size_bytes,
                 "status": item.status,
                 "ingestion_status": item.ingestion_status,
+                "created_at": item.created_at,
+            },
+        )
+    if resource == "document_ingestion_runs":
+        return _page(
+            db,
+            select(DocumentIngestionRun).order_by(DocumentIngestionRun.created_at.desc()),
+            limit=limit,
+            offset=offset,
+            serializer=lambda item: {
+                "id": str(item.id),
+                "tenant_id": str(item.tenant_id),
+                "document_id": str(item.document_id),
+                "attempt": item.attempt,
+                "status": item.status,
+                "parser_version": item.parser_version,
+                "error_code": item.error_code,
+                "safe_message": item.safe_message,
+                "metrics": item.metrics_json,
                 "created_at": item.created_at,
             },
         )

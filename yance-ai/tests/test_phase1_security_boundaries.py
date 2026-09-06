@@ -55,6 +55,9 @@ class FakeDb:
     def commit(self):
         self.commits += 1
 
+    def flush(self):
+        return None
+
     def refresh(self, _record):
         return None
 

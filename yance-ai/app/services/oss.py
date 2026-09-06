@@ -36,6 +36,13 @@ class OSSStorage:
     def object_size(self, object_key: str) -> int:
         return int(self.internal_bucket.get_object_meta(object_key).content_length)
 
+    def read_bytes(self, object_key: str, max_bytes: int) -> bytes:
+        stream = self.internal_bucket.get_object(object_key)
+        payload = stream.read(max_bytes + 1)
+        if len(payload) > max_bytes:
+            raise ValueError("Stored object exceeds the configured read limit")
+        return payload
+
 
 @lru_cache
 def get_oss_storage() -> OSSStorage:

@@ -2113,6 +2113,81 @@
         "title": "DemoPayRequest",
         "type": "object"
       },
+      "DocumentCandidateDecision": {
+        "properties": {
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "decision": {
+            "enum": [
+              "accept",
+              "reject"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "value_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Json"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "decision"
+        ],
+        "title": "DocumentCandidateDecision",
+        "type": "object"
+      },
+      "DocumentCandidateReview": {
+        "properties": {
+          "decisions": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentCandidateDecision"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Decisions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "decisions"
+        ],
+        "title": "DocumentCandidateReview",
+        "type": "object"
+      },
+      "DocumentCandidateReviewResult": {
+        "properties": {
+          "accepted": {
+            "title": "Accepted",
+            "type": "integer"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/CompanyProfileOut"
+          },
+          "rejected": {
+            "title": "Rejected",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "accepted",
+          "rejected",
+          "profile"
+        ],
+        "title": "DocumentCandidateReviewResult",
+        "type": "object"
+      },
       "DocumentComplete": {
         "properties": {
           "checksum_sha256": {
@@ -2129,6 +2204,69 @@
           }
         },
         "title": "DocumentComplete",
+        "type": "object"
+      },
+      "DocumentContentSummary": {
+        "properties": {
+          "character_count": {
+            "title": "Character Count",
+            "type": "integer"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "metadata_json": {
+            "additionalProperties": true,
+            "title": "Metadata Json",
+            "type": "object"
+          },
+          "page_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Count"
+          },
+          "parser": {
+            "title": "Parser",
+            "type": "string"
+          },
+          "parser_version": {
+            "title": "Parser Version",
+            "type": "string"
+          },
+          "preview": {
+            "title": "Preview",
+            "type": "string"
+          },
+          "text_sha256": {
+            "title": "Text Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "parser",
+          "parser_version",
+          "text_sha256",
+          "character_count",
+          "page_count",
+          "language",
+          "metadata_json",
+          "preview"
+        ],
+        "title": "DocumentContentSummary",
         "type": "object"
       },
       "DocumentCreate": {
@@ -2188,8 +2326,271 @@
         "title": "DocumentCreate",
         "type": "object"
       },
+      "DocumentDetail": {
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentFactCandidateOut"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "chunk_count": {
+            "title": "Chunk Count",
+            "type": "integer"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DocumentContentSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "document": {
+            "$ref": "#/components/schemas/DocumentOut"
+          },
+          "ingestion_runs": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentIngestionRunOut"
+            },
+            "title": "Ingestion Runs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "document",
+          "content",
+          "chunk_count",
+          "candidates",
+          "ingestion_runs"
+        ],
+        "title": "DocumentDetail",
+        "type": "object"
+      },
+      "DocumentFactCandidateOut": {
+        "properties": {
+          "company_id": {
+            "format": "uuid",
+            "title": "Company Id",
+            "type": "string"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "document_id": {
+            "format": "uuid",
+            "title": "Document Id",
+            "type": "string"
+          },
+          "evidence_excerpt": {
+            "title": "Evidence Excerpt",
+            "type": "string"
+          },
+          "extraction_method": {
+            "title": "Extraction Method",
+            "type": "string"
+          },
+          "extraction_version": {
+            "title": "Extraction Version",
+            "type": "string"
+          },
+          "field_key": {
+            "title": "Field Key",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "reviewed_by": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed By"
+          },
+          "source_locator_json": {
+            "additionalProperties": true,
+            "title": "Source Locator Json",
+            "type": "object"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "value_json": {
+            "additionalProperties": true,
+            "title": "Value Json",
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "document_id",
+          "company_id",
+          "field_key",
+          "value_json",
+          "confidence",
+          "evidence_excerpt",
+          "source_locator_json",
+          "extraction_method",
+          "extraction_version",
+          "status",
+          "reviewed_by",
+          "reviewed_at",
+          "created_at"
+        ],
+        "title": "DocumentFactCandidateOut",
+        "type": "object"
+      },
+      "DocumentIngestRequest": {
+        "properties": {
+          "force": {
+            "default": false,
+            "title": "Force",
+            "type": "boolean"
+          }
+        },
+        "title": "DocumentIngestRequest",
+        "type": "object"
+      },
+      "DocumentIngestionRunOut": {
+        "properties": {
+          "attempt": {
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "document_id": {
+            "format": "uuid",
+            "title": "Document Id",
+            "type": "string"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "metrics_json": {
+            "additionalProperties": true,
+            "title": "Metrics Json",
+            "type": "object"
+          },
+          "parser_version": {
+            "title": "Parser Version",
+            "type": "string"
+          },
+          "safe_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Safe Message"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "document_id",
+          "attempt",
+          "status",
+          "parser_version",
+          "error_code",
+          "safe_message",
+          "metrics_json",
+          "started_at",
+          "finished_at",
+          "created_at"
+        ],
+        "title": "DocumentIngestionRunOut",
+        "type": "object"
+      },
       "DocumentOut": {
         "properties": {
+          "checksum_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checksum Sha256"
+          },
           "company_id": {
             "anyOf": [
               {
@@ -2247,6 +2648,11 @@
             "title": "Ingestion Status",
             "type": "string"
           },
+          "metadata_json": {
+            "additionalProperties": true,
+            "title": "Metadata Json",
+            "type": "object"
+          },
           "object_key": {
             "title": "Object Key",
             "type": "string"
@@ -2285,6 +2691,8 @@
           "object_key",
           "status",
           "size_bytes",
+          "checksum_sha256",
+          "metadata_json",
           "source_type",
           "ingestion_status",
           "ingestion_error",
@@ -5573,6 +5981,7 @@
                 "llm_usage",
                 "costs",
                 "documents",
+                "document_ingestion_runs",
                 "policies",
                 "evals",
                 "errors",
@@ -8438,6 +8847,70 @@
         ]
       }
     },
+    "/api/v1/documents/{document_id}": {
+      "get": {
+        "operationId": "get_document_api_v1_documents__document_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Document",
+        "tags": [
+          "document"
+        ]
+      }
+    },
     "/api/v1/documents/{document_id}/complete": {
       "post": {
         "operationId": "complete_upload_api_v1_documents__document_id__complete_post",
@@ -8507,6 +8980,154 @@
           }
         ],
         "summary": "Complete Upload",
+        "tags": [
+          "document"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/facts/review": {
+      "post": {
+        "operationId": "review_document_facts_api_v1_documents__document_id__facts_review_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentCandidateReview"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentCandidateReviewResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Review Document Facts",
+        "tags": [
+          "document"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/ingest": {
+      "post": {
+        "operationId": "ingest_document_api_v1_documents__document_id__ingest_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentIngestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Ingest Document",
         "tags": [
           "document"
         ]

@@ -38,6 +38,20 @@ class Settings(BaseSettings):
     oss_access_key_secret: str = ""
     oss_presign_expire_seconds: int = 900
     document_upload_max_bytes: int = 25 * 1024 * 1024
+    document_extracted_text_max_chars: int = 2_000_000
+    document_archive_max_entries: int = 10_000
+    document_archive_max_uncompressed_bytes: int = 100 * 1024 * 1024
+    document_archive_max_compression_ratio: int = 100
+    document_workbook_max_rows: int = 25_000
+    document_workbook_max_cells: int = 250_000
+    document_chunk_size_chars: int = 1_600
+    document_chunk_overlap_chars: int = 200
+    document_ingestion_lease_seconds: int = 300
+    document_ingestion_max_attempts: int = 3
+    malware_scan_mode: Literal["disabled", "optional", "required"] = "disabled"
+    clamd_host: str = ""
+    clamd_port: int = 3310
+    clamd_timeout_seconds: float = 15.0
 
     llm_default_provider: str = "mock"
     qwen_api_key: str = ""
@@ -93,6 +107,8 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_production_secrets(self) -> "Settings":
         if self.app_env == "production":
+            if self.demo_features_enabled:
+                raise ValueError("Demo features must be disabled in production")
             bad = {
                 "jwt_secret": self.jwt_secret.startswith("change-"),
                 "bootstrap_token": self.bootstrap_token.startswith("change-"),
@@ -102,8 +118,10 @@ class Settings(BaseSettings):
             invalid = [name for name, value in bad.items() if value]
             if invalid:
                 raise ValueError(f"Production secrets must be replaced: {', '.join(invalid)}")
-            if self.demo_features_enabled:
-                raise ValueError("Demo features must be disabled in production")
+            if self.malware_scan_mode != "required":
+                raise ValueError("Production document ingestion requires MALWARE_SCAN_MODE=required")
+            if not self.clamd_host:
+                raise ValueError("Production document ingestion requires CLAMD_HOST")
         return self
 
 

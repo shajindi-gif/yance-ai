@@ -7,7 +7,7 @@ The relational model separates business truth, source snapshots, decisions, exec
 | Domain | Core entities |
 |---|---|
 | Identity | Tenant, User, Membership |
-| Company intelligence | Company, CompanyProfile, CompanyProfileVersion, CompanyFact, Document, DocumentChunk |
+| Company intelligence | Company, CompanyProfile, CompanyProfileVersion, CompanyFact, Document, DocumentIngestionRun, DocumentContent, DocumentChunk, DocumentFactCandidate |
 | Policy graph | Policy, PolicyVersion, PolicyChunk, EligibilityRule, RequiredMaterial, PolicyBenefit |
 | Opportunity | PolicyScan, Opportunity, EligibilityResult, Evidence |
 | Execution | Workflow, WorkflowRun, Agent, AgentRun, AgentStep, ToolCall, Error, Retry |
@@ -17,4 +17,4 @@ The relational model separates business truth, source snapshots, decisions, exec
 
 Authoritative definitions are in [`yance-ai/app/models/models.py`](../../yance-ai/app/models/models.py); schema evolution is in [`yance-ai/alembic/versions/`](../../yance-ai/alembic/versions/).
 
-Key lineage is explicit: a scan pins a profile version; an opportunity pins a policy version; an eligibility result pins both; evidence pins an exact policy chunk; an artifact stores a source snapshot and checksum.
+Key lineage is explicit: a document candidate pins an exact document/excerpt/locator and reviewer; a published fact retains its source document; a scan pins a profile version; an opportunity pins a policy version; an eligibility result pins both; evidence pins an exact policy chunk; an artifact stores a source snapshot and checksum.

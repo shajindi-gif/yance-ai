@@ -150,6 +150,8 @@ class DocumentOut(ORMModel):
     object_key: str
     status: str
     size_bytes: int | None
+    checksum_sha256: str | None
+    metadata_json: dict[str, Any]
     source_type: str
     ingestion_status: str
     ingestion_error: str | None
@@ -167,6 +169,76 @@ class PresignedUploadOut(BaseModel):
 
 class DocumentComplete(BaseModel):
     checksum_sha256: str | None = Field(default=None, pattern=r"^[a-fA-F0-9]{64}$")
+
+
+class DocumentIngestRequest(BaseModel):
+    force: bool = False
+
+
+class DocumentIngestionRunOut(ORMModel):
+    id: UUID
+    document_id: UUID
+    attempt: int
+    status: str
+    parser_version: str
+    error_code: str | None
+    safe_message: str | None
+    metrics_json: dict[str, Any]
+    started_at: datetime | None
+    finished_at: datetime | None
+    created_at: datetime
+
+
+class DocumentContentSummary(BaseModel):
+    parser: str
+    parser_version: str
+    text_sha256: str
+    character_count: int
+    page_count: int | None
+    language: str | None
+    metadata_json: dict[str, Any]
+    preview: str
+
+
+class DocumentFactCandidateOut(ORMModel):
+    id: UUID
+    document_id: UUID
+    company_id: UUID
+    field_key: str
+    value_json: dict[str, Any]
+    confidence: float
+    evidence_excerpt: str
+    source_locator_json: dict[str, Any]
+    extraction_method: str
+    extraction_version: str
+    status: str
+    reviewed_by: UUID | None
+    reviewed_at: datetime | None
+    created_at: datetime
+
+
+class DocumentDetail(BaseModel):
+    document: DocumentOut
+    content: DocumentContentSummary | None
+    chunk_count: int
+    candidates: list[DocumentFactCandidateOut]
+    ingestion_runs: list[DocumentIngestionRunOut]
+
+
+class DocumentCandidateDecision(BaseModel):
+    candidate_id: UUID
+    decision: Literal["accept", "reject"]
+    value_json: dict[str, Any] | None = None
+
+
+class DocumentCandidateReview(BaseModel):
+    decisions: list[DocumentCandidateDecision] = Field(min_length=1, max_length=100)
+
+
+class DocumentCandidateReviewResult(BaseModel):
+    accepted: int
+    rejected: int
+    profile: CompanyProfileOut
 
 
 class PolicyCreate(BaseModel):

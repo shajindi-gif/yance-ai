@@ -14,7 +14,7 @@ No known open P0 was found in the Phase 11 local release checks. This is not a s
 | SSO/SAML and automated provisioning are absent | RBAC, memberships, short-lived JWTs, API keys | Product + Identity Lead | 2026-11-15 | Accepted for SMB/PoC; blocks SSO-required deals |
 | Hosted OpenTelemetry/log retention/alert delivery is not connected in repository evidence | structured request/run logs and admin trace views | Platform Lead | 2026-09-30 | Accepted only for local/staging demo |
 | Reviewed real-world eval corpus is too small/not yet persisted as an accuracy claim | versioned datasets, hashes, review state, five eval families, explicit empty state | AI Quality Lead | 2026-10-31 | No accuracy marketing claim allowed |
-| User-uploaded company document extraction still requires a production ingestion worker/provider integration | validated upload lifecycle, document records, company profile versioning | Agent Platform Lead | 2026-10-15 | Demo uses labelled deterministic data; real automation claim is limited |
+| Production ClamAV/signature-update operations and real OSS ingestion are not yet evidenced in staging | real format parsers, durable document worker, quarantine, fail-closed production config, source-grounded human review | Agent Platform + Security | 2026-09-30 | Local/CI parser and API evidence only; blocks accepting customer files in production |
 | Managed backup scheduling and cross-region restore are not evidenced | locally tested logical restore and runbook | Platform Lead | 2026-09-30 | Blocks production data SLA |
 | No external penetration test or compliance certification | CI scans, security boundaries, secret policy, secure defaults | Security Lead | 2026-11-30 | Must be disclosed in enterprise diligence |
 | Container base images use version tags rather than repository-pinned digests | locked app dependencies, SBOM and image scanning | Platform + Security | 2026-09-30 | Accepted for CI; production deploy must record digests |
@@ -24,6 +24,7 @@ No known open P0 was found in the Phase 11 local release checks. This is not a s
 
 - Shared/distributed rate limiting and queue-depth autoscaling.
 - Policy freshness/change-detection jobs and source connector expansion.
+- OCR provider integration for scanned PDFs and redirect-by-redirect SSRF-tested webpage ingestion.
 - Organization-specific retrieval collections and learned reranking after evaluation evidence.
 - PDF export coverage in the authenticated golden journey (demo endpoint already exercises the production renderer).
 - WCAG/accessibility audit and continuous Core Web Vitals telemetry.

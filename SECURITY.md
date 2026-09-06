@@ -22,6 +22,13 @@ disabled by default and must never be enabled in production.
 - Rotate a credential immediately if it may have entered Git history or logs.
 - Do not log prompt bodies, document text, access tokens, or payment data.
 
+## Customer document handling
+
+- Uploaded files remain quarantined until server-side signature/archive checks, SHA-256 and the configured malware gate complete.
+- Production startup requires fail-closed ClamAV configuration. Scanner outages must not be treated as clean results.
+- Extracted company facts require an authorized human accept/reject decision before they change a company profile draft.
+- Scanned PDFs are reported as requiring OCR; unsupported URL ingestion is not silently attempted.
+
 ## Current limitations
 
 The project has not completed an independent penetration test or formal

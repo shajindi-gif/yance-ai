@@ -3,7 +3,13 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.models import Company, CompanyFact, CompanyProfile, CompanyProfileVersion
+from app.models.models import (
+    Company,
+    CompanyFact,
+    CompanyProfile,
+    CompanyProfileVersion,
+    DocumentFactCandidate,
+)
 from app.schemas.schemas import CompanyProfileData
 
 COMPLETENESS_FIELDS = (
@@ -122,18 +128,38 @@ def publish_company_profile(
     )
     db.add(version)
     db.flush()
+    accepted_candidates = list(
+        db.scalars(
+            select(DocumentFactCandidate)
+            .where(
+                DocumentFactCandidate.company_id == profile.company_id,
+                DocumentFactCandidate.tenant_id == profile.tenant_id,
+                DocumentFactCandidate.status == "accepted",
+            )
+            .order_by(DocumentFactCandidate.reviewed_at.desc())
+        ).all()
+    )
+    source_by_field: dict[str, DocumentFactCandidate] = {}
+    for candidate in accepted_candidates:
+        if (
+            candidate.field_key not in source_by_field
+            and candidate.value_json.get("value") == snapshot.get(candidate.field_key)
+        ):
+            source_by_field[candidate.field_key] = candidate
     for key, value in snapshot.items():
         if value is None or value == "" or value == []:
             continue
+        source = source_by_field.get(key)
         db.add(
             CompanyFact(
                 tenant_id=profile.tenant_id,
                 profile_version_id=version.id,
                 fact_key=key,
                 value_json={"value": value},
-                confidence=1,
-                extraction_method="user_asserted",
-                verification_status="user_asserted",
+                source_document_id=source.document_id if source else None,
+                confidence=source.confidence if source else 1,
+                extraction_method="document_reviewed" if source else "user_asserted",
+                verification_status="user_accepted" if source else "user_asserted",
             )
         )
     profile.status = "published"

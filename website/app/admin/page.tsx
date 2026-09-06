@@ -19,6 +19,7 @@ const RESOURCES = [
   ["users", "Users"], ["organizations", "Organizations"], ["companies", "Companies"],
   ["agent_runs", "Agent Runs"], ["workflow_runs", "Workflow Runs"], ["llm_usage", "LLM Usage"],
   ["costs", "Costs"], ["documents", "Documents"], ["policies", "Policies"],
+  ["document_ingestion_runs", "Document Ingestion"],
   ["evals", "Evals"], ["errors", "Errors"], ["billing", "Billing"],
   ["feedback", "Feedback"], ["analytics", "Analytics"],
 ] as const;
@@ -34,6 +35,7 @@ const COLUMNS: Record<Resource, string[]> = {
   llm_usage: ["agent_name", "model", "total_tokens", "cost_usd", "latency_ms", "tenant_id", "created_at"],
   costs: ["agent_name", "model", "cost_usd", "total_tokens", "tenant_id", "created_at"],
   documents: ["filename", "content_type", "size_bytes", "status", "ingestion_status", "tenant_id", "created_at"],
+  document_ingestion_runs: ["document_id", "attempt", "status", "parser_version", "error_code", "safe_message", "metrics", "tenant_id", "created_at"],
   policies: ["title", "issuing_authority", "jurisdiction", "status", "tenant_id", "created_at"],
   evals: ["eval_type", "status", "target_key", "target_version", "scorer_version", "requested_cases", "passed_cases", "error_cases", "release_gate_passed", "created_at"],
   errors: ["code", "category", "safe_message", "retryable", "agent_run_id", "tenant_id", "occurred_at"],

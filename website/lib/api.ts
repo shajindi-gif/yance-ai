@@ -272,11 +272,59 @@ export interface DocumentRecord {
   object_key: string;
   status: string;
   size_bytes: number | null;
+  checksum_sha256: string | null;
+  metadata_json: Record<string, unknown>;
   source_type: string;
   ingestion_status: string;
   ingestion_error: string | null;
   ingested_at: string | null;
   created_at: string;
+}
+
+export interface DocumentFactCandidate {
+  id: string;
+  document_id: string;
+  company_id: string;
+  field_key: keyof CompanyProfileData;
+  value_json: { value: unknown };
+  confidence: number;
+  evidence_excerpt: string;
+  source_locator_json: Record<string, unknown>;
+  extraction_method: string;
+  extraction_version: string;
+  status: 'pending_review' | 'accepted' | 'rejected';
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+}
+
+export interface DocumentDetail {
+  document: DocumentRecord;
+  content: null | {
+    parser: string;
+    parser_version: string;
+    text_sha256: string;
+    character_count: number;
+    page_count: number | null;
+    language: string | null;
+    metadata_json: Record<string, unknown>;
+    preview: string;
+  };
+  chunk_count: number;
+  candidates: DocumentFactCandidate[];
+  ingestion_runs: Array<{
+    id: string;
+    document_id: string;
+    attempt: number;
+    status: string;
+    parser_version: string;
+    error_code: string | null;
+    safe_message: string | null;
+    metrics_json: Record<string, unknown>;
+    started_at: string | null;
+    finished_at: string | null;
+    created_at: string;
+  }>;
 }
 
 export interface PolicyScan {
@@ -1072,6 +1120,31 @@ class ApiClient {
     );
   }
 
+  async getDocument(documentId: string): Promise<DocumentDetail> {
+    return this.request<DocumentDetail>(`/documents/${encodeURIComponent(documentId)}`);
+  }
+
+  async ingestDocument(documentId: string, force: boolean = false): Promise<DocumentDetail> {
+    return this.request<DocumentDetail>(`/documents/${encodeURIComponent(documentId)}/ingest`, {
+      method: 'POST',
+      body: JSON.stringify({ force }),
+    });
+  }
+
+  async reviewDocumentFacts(
+    documentId: string,
+    decisions: Array<{
+      candidate_id: string;
+      decision: 'accept' | 'reject';
+      value_json?: { value: unknown };
+    }>,
+  ): Promise<{ accepted: number; rejected: number; profile: CompanyProfile }> {
+    return this.request(`/documents/${encodeURIComponent(documentId)}/facts/review`, {
+      method: 'POST',
+      body: JSON.stringify({ decisions }),
+    });
+  }
+
   async uploadDocument(companyId: string, file: File): Promise<DocumentRecord> {
     const presigned = await this.presignDocumentUpload({
       filename: file.name,
@@ -1085,7 +1158,9 @@ class ApiClient {
       body: file,
     });
     if (!upload.ok) throw new Error(`对象存储上传失败（HTTP ${upload.status}）`);
-    return this.completeDocumentUpload(presigned.document.id);
+    const completed = await this.completeDocumentUpload(presigned.document.id);
+    const detail = await this.ingestDocument(completed.id);
+    return detail.document;
   }
 
   // Core workflow

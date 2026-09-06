@@ -904,6 +904,11 @@ def link_application_document(
     )
     if document.company_id and document.company_id != application.company_id:
         raise HTTPException(status_code=409, detail="Document belongs to another company")
+    if document.ingestion_status != "completed" or document.status not in {"active", "uploaded"}:
+        raise HTTPException(
+            status_code=409,
+            detail="Document must pass security scanning and ingestion before it can be linked",
+        )
     if payload.requirement_id:
         requirement = db.scalar(
             select(ApplicationRequirement).where(
