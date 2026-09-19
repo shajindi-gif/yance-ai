@@ -35,7 +35,7 @@ export default function BillingPage() {
   }, [retryNonce]);
   if (loading) return <AppShell><LoadingState label="正在读取套餐与真实用量" /></AppShell>;
   return <AppShell>
-    <PageHeader eyebrow="Billing · Server Source" title="用量与账单" description="套餐、周期、用量、订单和发票均读取服务端记录；没有 PriceVersion 时不会展示虚构价格。" actions={<ButtonLink href="/orders" variant="secondary">查看全部订单</ButtonLink>} />
+    <PageHeader eyebrow="Billing · Server Source" title="用量与账单" description="套餐、周期、用量、订单和付款凭证均读取服务端记录；没有 PriceVersion 时不会展示虚构价格。" actions={<ButtonLink href="/orders" variant="secondary">查看全部订单</ButtonLink>} />
     {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}
     {error && !overview ? <Button type="button" variant="secondary" onClick={() => setRetryNonce((value) => value + 1)}>重新加载账单数据</Button> : null}
     {overview ? <div className={styles.stack}>

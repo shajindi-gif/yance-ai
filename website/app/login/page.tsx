@@ -29,6 +29,9 @@ function LoginContent() {
   const [ownerName, setOwnerName] = useState('');
   const [ownerEmail, setOwnerEmail] = useState('');
   const [ownerPassword, setOwnerPassword] = useState('');
+  const [agreed, setAgreed] = useState(false);
+
+  const TERMS_VERSION = '2026-09-19';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +60,7 @@ function LoginContent() {
         owner_name: ownerName,
         owner_email: ownerEmail,
         owner_password: ownerPassword,
+        agreed_terms_version: agreed ? TERMS_VERSION : undefined,
       });
       router.push('/onboarding');
     } catch (err) {
@@ -139,14 +143,29 @@ function LoginContent() {
               </div>
               <div className="yc-form-group">
                 <label>密码 <span className="yc-required">*</span></label>
-                <input type="password" value={ownerPassword} onChange={e => setOwnerPassword(e.target.value)} placeholder="至少 8 位" minLength={8} required />
+                <input type="password" value={ownerPassword} onChange={e => setOwnerPassword(e.target.value)} placeholder="至少 12 位，含字母和数字" minLength={12} required />
               </div>
-              <button type="submit" className="yc-btn-primary yc-btn-full" disabled={loading}>
+              <div className="yc-agree-group">
+                <label className="yc-agree-label">
+                  <input
+                    type="checkbox"
+                    checked={agreed}
+                    onChange={e => setAgreed(e.target.checked)}
+                  />
+                  <span>
+                    我已阅读并同意
+                    <a href="/terms" target="_blank" rel="noopener noreferrer">《服务条款》</a>
+                    与
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer">《隐私政策》</a>
+                  </span>
+                </label>
+              </div>
+              <button type="submit" className="yc-btn-primary yc-btn-full" disabled={loading || !agreed}>
                 {loading ? '注册中...' : '立即注册'}
               </button>
-              <p className="yc-auth-hint">
-                注册即表示同意《服务条款》与《隐私政策》
-              </p>
+              {!agreed ? (
+                <p className="yc-auth-hint">请先勾选同意《服务条款》与《隐私政策》后再注册</p>
+              ) : null}
             </form>
           )}
         </div>
@@ -172,6 +191,11 @@ function LoginContent() {
         .yc-form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .yc-btn-full { width: 100%; padding: 13px; font-size: 15px; margin-top: 4px; }
         .yc-auth-hint { text-align: center; font-size: 12px; color: #94a3b8; margin: 8px 0 0; }
+        .yc-agree-group { margin-top: 2px; }
+        .yc-agree-label { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: #374151; cursor: pointer; line-height: 1.5; }
+        .yc-agree-label input[type='checkbox'] { width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; cursor: pointer; accent-color: #0ea5e9; }
+        .yc-agree-label a { color: #0ea5e9; text-decoration: none; }
+        .yc-agree-label a:hover { text-decoration: underline; }
         @media (max-width: 500px) { .yc-form-row-2 { grid-template-columns: 1fr; } }
       `}</style>
     </div>

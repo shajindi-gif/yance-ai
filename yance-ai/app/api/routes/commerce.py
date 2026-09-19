@@ -102,7 +102,11 @@ def create_invoice(
     principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin)),
     db: Session = Depends(get_db),
 ) -> Invoice:
-    """Create invoice record for an order."""
+    """Create invoice (payment voucher) record for an order.
+
+    Note: the generated PDF is a payment voucher for reconciliation,
+    NOT a tax invoice. Formal tax invoices are issued via manual review.
+    """
     order = db.scalar(
         select(Order).where(Order.id == payload.order_id, Order.tenant_id == principal.tenant_id)
     )
@@ -180,7 +184,7 @@ async def download_invoice(
     principal: Principal = Depends(get_principal),
     db: Session = Depends(get_db),
 ):
-    """Download invoice PDF."""
+    """Download payment voucher PDF (not a tax invoice)."""
     from uuid import UUID
 
     invoice = db.scalar(
@@ -197,7 +201,7 @@ async def download_invoice(
     return FileResponse(
         invoice.pdf_path,
         media_type="application/pdf",
-        filename=f"发票_{invoice.invoice_no}.pdf",
+        filename=f"付款凭证_{invoice.invoice_no}.pdf",
     )
 
 

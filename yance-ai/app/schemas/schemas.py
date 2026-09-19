@@ -38,6 +38,9 @@ class RegisterRequest(BaseModel):
     owner_email: EmailStr
     owner_name: str = Field(min_length=2, max_length=160)
     owner_password: str = Field(min_length=12, max_length=128)
+    agreed_terms_version: str | None = Field(
+        default=None, max_length=40
+    )  # 用户显式勾选同意的协议版本（可追溯）
 
 
 class UserCreate(BaseModel):

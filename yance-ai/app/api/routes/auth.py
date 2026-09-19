@@ -2,6 +2,7 @@ import re
 import secrets
 import time
 from collections import defaultdict
+from datetime import datetime, timezone
 
 import structlog
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
@@ -116,6 +117,13 @@ def register(
     client_ip = request.client.host if request.client else "unknown"
     _check_rate_limit(client_ip)
 
+    # Require explicit consent to the current terms/privacy policy version.
+    if not payload.agreed_terms_version:
+        raise HTTPException(
+            status_code=400,
+            detail="请先阅读并同意《服务条款》与《隐私政策》后再注册",
+        )
+
     # Check email uniqueness across all users
     existing_user = db.scalar(select(User).where(User.email == str(payload.owner_email).lower()))
     if existing_user:
@@ -163,6 +171,18 @@ def register(
         user_id=owner.id,
         name="signup_completed",
         event_key=f"signup_completed:{tenant.id}",
+    )
+    record_event(
+        db,
+        tenant_id=tenant.id,
+        user_id=owner.id,
+        name="terms_accepted",
+        event_key=f"terms_accepted:{owner.id}",
+        properties={
+            "terms_version": payload.agreed_terms_version,
+            "documents": ["terms", "privacy"],
+            "accepted_at": datetime.now(timezone.utc).isoformat(),
+        },
     )
     record_event(
         db,

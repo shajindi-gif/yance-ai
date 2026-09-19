@@ -960,6 +960,7 @@ class ApiClient {
     owner_name: string;
     owner_email: string;
     owner_password: string;
+    agreed_terms_version?: string;
   }): Promise<LoginResponse> {
     const response = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
@@ -1375,6 +1376,13 @@ class ApiClient {
 
   async cancelWorkspaceDeletion(requestId: string): Promise<void> {
     await this.request(`/enterprise/deletion-request/${encodeURIComponent(requestId)}/cancel`, { method: 'POST' });
+  }
+
+  async submitFeedback(category: string, message: string): Promise<{ id: string; status: string }> {
+    return this.request('/feedback', {
+      method: 'POST',
+      body: JSON.stringify({ category, message, route: typeof window !== 'undefined' ? window.location.pathname : null }),
+    });
   }
 
   async getProducts(): Promise<ProductCatalogItem[]> {
