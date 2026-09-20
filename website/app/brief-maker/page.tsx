@@ -15,7 +15,7 @@ export default function BriefMakerPage() {
             className="badge"
             style={{
               background: 'rgba(14,165,233,0.2)',
-              color: '#0ea5e9',
+              color: 'var(--teal)',
               marginBottom: '16px',
             }}
           >
@@ -42,8 +42,8 @@ export default function BriefMakerPage() {
                 每一份输出都包含精确的政策引用、材料要求说明和缺口分析，可以直接用于园区企业服务工作。
               </p>
               <div className="mt-8">
-                <Link href="/login?register=1" className="btn btn-primary" style={{ background: '#0ea5e9', borderColor: '#0ea5e9', borderRadius: '12px' }}>
-                  查看生成样例
+                <Link href="/login?register=1" className="btn btn-primary" style={{ background: '#126a9a', borderColor: '#126a9a', borderRadius: '12px' }}>
+                  注册生成报告
                 </Link>
               </div>
             </div>
@@ -57,7 +57,7 @@ export default function BriefMakerPage() {
                       key={step}
                       style={{
                         padding: '10px 16px',
-                        background: i === 0 ? '#0ea5e9' : i === 3 ? '#f97316' : 'var(--bg-card)',
+                        background: i === 0 ? '#126a9a' : i === 3 ? '#f97316' : 'var(--bg-card)',
                         color: i === 0 || i === 3 ? '#fff' : 'var(--text)',
                         border: i === 0 || i === 3 ? 'none' : '1px solid var(--border)',
                         borderRadius: '8px',
@@ -88,8 +88,8 @@ export default function BriefMakerPage() {
           </div>
 
           <div className="grid grid-3" style={{ gap: '24px' }}>
-            <div className="module-card" style={{ borderTop: '4px solid #0ea5e9' }}>
-              <div className="module-card-name" style={{ color: '#0ea5e9' }}>Output 1</div>
+            <div className="module-card" style={{ borderTop: '4px solid #126a9a' }}>
+              <div className="module-card-name" style={{ color: 'var(--teal)' }}>Output 1</div>
               <h3 className="module-card-title">申报材料清单</h3>
               <p className="module-card-desc">
                 针对每个政策项目，生成完整的申报材料清单，标注每项材料的状态和要求。
@@ -196,10 +196,10 @@ export default function BriefMakerPage() {
 
           <div className="grid grid-4" style={{ gap: '20px' }}>
             {[
-              { icon: '\u{1F4C4}', title: 'PDF', desc: '标准 PDF 格式，可直接打印或发送' },
-              { icon: '\u{1F4CA}', title: 'Excel', desc: '结构化表格，便于数据分析和二次处理' },
-              { icon: '\u{1F4DD}', title: 'Word', desc: '可编辑文档，便于修改和补充' },
-              { icon: '\u{1F517}', title: 'API', desc: '通过 API 集成到现有系统' },
+              { icon: '\u{1F4C4}', title: 'PDF', desc: '报告支持 PDF 导出（当前已上线）' },
+              { icon: '\u{1F4CA}', title: 'Excel', desc: '规划中 · 尚未上线' },
+              { icon: '\u{1F4DD}', title: 'Word', desc: '申报材料支持 DOCX 导出（当前已上线）' },
+              { icon: '\u{1F517}', title: 'API', desc: '规划中 · 尚未开放' },
             ].map((fmt) => (
               <div key={fmt.title} className="card" style={{ textAlign: 'center', padding: '32px 24px' }}>
                 <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>{fmt.icon}</div>
@@ -229,7 +229,7 @@ export default function BriefMakerPage() {
               className="btn btn-lg"
               style={{ background: '#f97316', color: '#fff', borderColor: '#f97316', borderRadius: '12px' }}
             >
-              查看 Demo
+              免费注册
             </Link>
             <Link href="/parks" className="btn btn-outline-white btn-lg">
               了解园区方案

@@ -119,8 +119,8 @@ export default function ChromeExtensionPage() {
             展示浏览器侧边栏采集与核对政策信息的产品设想；当前没有可下载扩展，也没有经验证的效率数据。
           </p>
           <div className="yc-ext-hero-ctas">
-            <Link href="/downloads" className="yc-btn-primary">
-              查看发布状态
+            <Link href="/login?register=1" className="yc-btn-primary">
+              先用 Web 工作区
             </Link>
             <a href="#features" className="yc-btn-outline-white">
               了解功能

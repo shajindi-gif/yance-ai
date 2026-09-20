@@ -72,7 +72,7 @@ export default function PoliciesPage() {
     <>
       <section className="page-banner" style={{ background: 'linear-gradient(135deg, #0d1b2a 0%, #1b2d44 60%, #0d1b2a 100%)' }}>
         <div className="container">
-          <span className="badge" style={{ background: 'rgba(14,165,233,0.2)', color: '#0ea5e9', marginBottom: '16px' }}>政策知识库</span>
+          <span className="badge" style={{ background: 'rgba(14,165,233,0.2)', color: 'var(--teal)', marginBottom: '16px' }}>政策知识库</span>
           <h1>全国政策知识库</h1>
           <p>登录后查看数据库中带来源的政策记录，并获取与你企业匹配的政策机会。</p>
         </div>
@@ -94,7 +94,7 @@ export default function PoliciesPage() {
                 onClick={() => setFilter(f.key)}
                 style={{
                   padding: '8px 20px', borderRadius: '9999px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
-                  border: filter === f.key ? '2px solid #0ea5e9' : '1px solid #e2e8f0',
+                  border: filter === f.key ? '2px solid #126a9a' : '1px solid #e2e8f0',
                   background: filter === f.key ? '#f0f9ff' : '#fff',
                   color: filter === f.key ? '#0369a1' : '#64748b',
                 }}
@@ -134,7 +134,7 @@ export default function PoliciesPage() {
                       {p.issuing_authority}
                       {p.deadline && <span style={{ marginLeft: '16px', color: '#dc2626' }}>截止：{new Date(p.deadline).toLocaleDateString('zh-CN')}</span>}
                     </div>
-                    <Link href="/login?register=1" style={{ fontSize: '13px', color: '#0ea5e9', textDecoration: 'none', fontWeight: 500 }}>
+                    <Link href="/login?register=1" style={{ fontSize: '13px', color: 'var(--teal)', textDecoration: 'none', fontWeight: 500 }}>
                       注册查看匹配度 →
                     </Link>
                   </div>

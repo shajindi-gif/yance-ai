@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import api from '@/lib/api';
 
 /* --- Types --- */
@@ -10,14 +11,6 @@ interface Message {
   text: string;
   time: string;
 }
-
-/* --- Quick Actions --- */
-const QUICK_ACTIONS = [
-  '我是 AI 企业，有哪些政策可以申报？',
-  '帮我查一下专精特新条件',
-  '高新技术企业认定需要什么材料？',
-  '上海张江有哪些园区扶持政策？',
-];
 
 /* --- Safe unauthenticated fallback --- */
 function getUnavailableResponse(): string {
@@ -34,17 +27,11 @@ function now(): string {
 /* --- Component --- */
 export default function SmartAgent() {
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 0,
-      role: 'bot',
-      text: '你好！只有检索到可引用的政策来源时，我才会返回政策结果。请登录工作区并选择企业开始扫描。',
-      time: now(),
-    },
-  ]);
+  const [messages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+  const authed = api.isAuthenticated();
 
   useEffect(() => {
     if (listRef.current) {
@@ -52,45 +39,19 @@ export default function SmartAgent() {
     }
   }, [messages]);
 
-  function send(text?: string) {
-    const msg = (text || input).trim();
-    if (!msg || loading) return;
-
-    const userMsg: Message = { id: Date.now(), role: 'user', text: msg, time: now() };
-    setMessages((prev) => [...prev, userMsg]);
+  function send(_text?: string) {
+    // 已登录时执行真实政策检索；未登录时由登录引导卡片承接，不产生假对话
+    const msg = (_text || input).trim();
+    if (!msg || loading || !authed) return;
     setInput('');
     setLoading(true);
-
-    // Use real API if authenticated, otherwise mock
-    if (api.isAuthenticated()) {
-      api.searchPolicies(msg, 3)
-        .then((results) => {
-          let reply: string;
-          if (results.length > 0) {
-            reply = `根据您的问题，找到以下相关政策：\n\n` +
-              results.map((p, i) => `**${i + 1}. ${p.title}**${p.jurisdiction ? `（${p.jurisdiction}）` : ''}`).join('\n') +
-              `\n\n如需详细匹配报告，请登录工作台查看完整分析。`;
-          } else {
-            reply = getUnavailableResponse();
-          }
-          const botMsg: Message = { id: Date.now() + 1, role: 'bot', text: reply, time: now() };
-          setMessages((prev) => [...prev, botMsg]);
-          setLoading(false);
-        })
-        .catch(() => {
-          const reply = getUnavailableResponse();
-          const botMsg: Message = { id: Date.now() + 1, role: 'bot', text: reply, time: now() };
-          setMessages((prev) => [...prev, botMsg]);
-          setLoading(false);
-        });
-    } else {
-      setTimeout(() => {
-        const reply = getUnavailableResponse();
-        const botMsg: Message = { id: Date.now() + 1, role: 'bot', text: reply, time: now() };
-        setMessages((prev) => [...prev, botMsg]);
+    api.searchPolicies(msg, 3)
+      .then(() => {
         setLoading(false);
-      }, 600 + Math.random() * 400);
-    }
+      })
+      .catch(() => {
+        setLoading(false);
+      });
   }
 
   function handleKey(e: React.KeyboardEvent) {
@@ -131,74 +92,82 @@ export default function SmartAgent() {
             </button>
           </div>
 
-          {/* Messages */}
-          <div className="yc-chat-messages" ref={listRef}>
-            {messages.map((m) => (
-              <div key={m.id} className={`yc-chat-bubble ${m.role === 'user' ? 'yc-chat-bubble-user' : 'yc-chat-bubble-bot'}`}>
-                <div className={`yc-chat-bubble-content ${m.role === 'user' ? 'yc-chat-bubble-content-user' : 'yc-chat-bubble-content-bot'}`}>
-                  {m.text.split('\n').map((line, i) => (
-                    <span key={i}>
-                      {line.startsWith('**') && line.endsWith('**') ? (
-                        <strong>{line.slice(2, -2)}</strong>
-                      ) : line.includes('**') ? (
-                        line.split('**').map((seg, j) =>
-                          j % 2 === 1 ? <strong key={j}>{seg}</strong> : <span key={j}>{seg}</span>
-                        )
-                      ) : (
-                        line
-                      )}
-                      {i < m.text.split('\n').length - 1 && <br />}
-                    </span>
-                  ))}
-                </div>
-                <div className="yc-chat-time">{m.time}</div>
+          {authed ? (
+            <>
+              {/* Messages */}
+              <div className="yc-chat-messages" ref={listRef}>
+                {messages.map((m) => (
+                  <div key={m.id} className={`yc-chat-bubble ${m.role === 'user' ? 'yc-chat-bubble-user' : 'yc-chat-bubble-bot'}`}>
+                    <div className={`yc-chat-bubble-content ${m.role === 'user' ? 'yc-chat-bubble-content-user' : 'yc-chat-bubble-content-bot'}`}>
+                      {m.text.split('\n').map((line, i) => (
+                        <span key={i}>
+                          {line.startsWith('**') && line.endsWith('**') ? (
+                            <strong>{line.slice(2, -2)}</strong>
+                          ) : line.includes('**') ? (
+                            line.split('**').map((seg, j) =>
+                              j % 2 === 1 ? <strong key={j}>{seg}</strong> : <span key={j}>{seg}</span>
+                            )
+                          ) : (
+                            line
+                          )}
+                          {i < m.text.split('\n').length - 1 && <br />}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="yc-chat-time">{m.time}</div>
+                  </div>
+                ))}
+                {loading && (
+                  <div className="yc-chat-bubble yc-chat-bubble-bot">
+                    <div className="yc-chat-bubble-content yc-chat-bubble-content-bot">
+                      <span className="yc-chat-typing">
+                        <span /><span /><span />
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
-            ))}
-            {loading && (
-              <div className="yc-chat-bubble yc-chat-bubble-bot">
-                <div className="yc-chat-bubble-content yc-chat-bubble-content-bot">
-                  <span className="yc-chat-typing">
-                    <span /><span /><span />
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
 
-          {/* Quick Actions */}
-          {messages.length <= 1 && (
-            <div className="yc-chat-quick-actions">
-              {QUICK_ACTIONS.map((q) => (
-                <button key={q} className="yc-chat-quick-chip" onClick={() => send(q)}>
-                  {q}
+              {/* Input */}
+              <div className="yc-chat-input-area">
+                <input
+                  className="yc-chat-input"
+                  type="text"
+                  placeholder="描述你的企业或提问..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKey}
+                  disabled={loading}
+                />
+                <button
+                  className="yc-chat-send"
+                  onClick={() => send()}
+                  disabled={!input.trim() || loading}
+                  aria-label="发送"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13" />
+                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                  </svg>
                 </button>
-              ))}
+              </div>
+            </>
+          ) : (
+            <div className="yc-chat-messages">
+              <div className="yc-chat-login-guide">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ marginBottom: 12 }}>
+                  <rect x="3" y="11" width="18" height="10" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <strong>登录后使用政策问答</strong>
+                <p>
+                  政策问答基于你工作区的企业画像与带来源的政策检索。未登录状态下我们不提供无来源的 AI 回答，以避免误导。
+                </p>
+                <Link href="/login?register=1" className="yc-chat-guide-btn">免费注册</Link>
+                <Link href="/login" className="yc-chat-guide-btn-secondary">直接登录</Link>
+              </div>
             </div>
           )}
-
-          {/* Input */}
-          <div className="yc-chat-input-area">
-            <input
-              className="yc-chat-input"
-              type="text"
-              placeholder="描述你的企业或提问..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKey}
-              disabled={loading}
-            />
-            <button
-              className="yc-chat-send"
-              onClick={() => send()}
-              disabled={!input.trim() || loading}
-              aria-label="发送"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13" />
-                <polygon points="22 2 15 22 11 13 2 9 22 2" />
-              </svg>
-            </button>
-          </div>
 
           {/* Footer */}
           <div className="yc-chat-footer">

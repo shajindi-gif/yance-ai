@@ -10,62 +10,62 @@ import Image from 'next/image';
 const productLinks = [
   {
     href: '/login?register=1',
-    icon: '\u{1F3AF}',
-    title: 'Policy Match',
+    title: '政策匹配',
+    subtitle: 'Policy Match',
     desc: '企业政策匹配引擎',
   },
   {
     href: '/pricing',
-    icon: '\u{1F4DD}',
-    title: 'Grant Copilot',
-    desc: '政策补贴申报助手',
+    title: '申报助手',
+    subtitle: 'Grant Copilot',
+    desc: '政策补贴申报辅助',
   },
   {
     href: '/policy-knowledge-base',
-    icon: '\u{1F4CA}',
-    title: 'Industry Research',
-    desc: '新质生产力产业研究系统',
+    title: '产业研究',
+    subtitle: 'Industry Research',
+    desc: '新质生产力产业研究',
   },
   {
     href: '/company-match',
-    icon: '\u{1F3E2}',
-    title: 'Company Profile',
-    desc: '科技企业画像生成器',
+    title: '企业画像',
+    subtitle: 'Company Profile',
+    desc: '科技企业画像生成',
   },
   {
     href: '/parks',
-    icon: '\u{1F3D7}\u{FE0F}',
-    title: 'Park Entry',
-    desc: '园区入驻与资源匹配助手',
+    title: '园区入驻',
+    subtitle: 'Park Entry',
+    desc: '园区资源匹配',
   },
   {
     href: '/brief-maker',
-    icon: '\u{1F4D1}',
-    title: 'Report Studio',
-    desc: '产业报告与申报材料生成器',
+    title: '报告生成',
+    subtitle: 'Report Studio',
+    desc: '报告与申报材料生成',
   },
   {
     href: '/policy-knowledge-base',
-    icon: '\u{1F916}',
-    title: 'Knowledge Bot',
-    desc: '园区政策知识库 Bot',
+    title: '知识库 Bot',
+    subtitle: 'Knowledge Bot',
+    desc: '路线图 · 尚未发布',
   },
 ];
 
 const solutionLinks = [
-  { href: '/login?register=1', title: 'AI 企业', desc: '大模型、AI 应用、AI SaaS 政策服务' },
-  { href: '/login?register=1', title: '机器人与智能制造', desc: '首台套政策、产业用地、示范项目' },
-  { href: '/login?register=1', title: '生物医药', desc: '研发补贴、临床批件、GMP 认证' },
-  { href: '/login?register=1', title: '集成电路', desc: '流片补贴、EDA 工具、人才专项' },
-  { href: '/login?register=1', title: '新能源新材料', desc: '绿色金融、碳中和政策、基地入驻' },
+  { href: '/company-match', title: 'AI 企业', desc: '大模型、AI 应用、AI SaaS 政策服务' },
+  { href: '/company-match', title: '机器人与智能制造', desc: '首台套政策、产业用地、示范项目' },
+  { href: '/company-match', title: '生物医药', desc: '研发补贴、临床批件、GMP 认证' },
+  { href: '/company-match', title: '集成电路', desc: '流片补贴、EDA 工具、人才专项' },
+  { href: '/company-match', title: '新能源新材料', desc: '绿色金融、碳中和政策、基地入驻' },
   { href: '/parks', title: '园区与产业服务机构', desc: '知识库 Bot、企业服务台、招商工具' },
 ];
 
 const resourceLinks = [
   { href: '/dashboard', title: '政策仪表盘', desc: '查看企业政策红利与申报进度' },
-  { href: '/login?register=1', title: '免费体验', desc: '注册即可体验全部产品功能' },
-  { href: '/policy-knowledge-base', title: '政策知识库', desc: '浏览最新政策法规' },
-  { href: '/chrome-extension', title: '浏览器插件', desc: 'Chrome 政策助手插件' },
+  { href: '/login?register=1', title: '免费注册', desc: '注册后即可体验产品功能' },
+  { href: '/policies', title: '政策知识库', desc: '浏览最新政策法规' },
+  { href: '/pricing', title: '价格方案', desc: '产品目录与付费方式' },
   { href: '/about', title: '关于我们', desc: '团队与产品理念' },
   { href: '/security', title: '安全合规', desc: '数据安全与隐私保护' },
 ];
@@ -76,7 +76,7 @@ const resourceLinks = [
 interface MegaMenuProps {
   items: Array<{
     href: string;
-    icon?: string;
+    subtitle?: string;
     title: string;
     desc: string;
   }>;
@@ -101,11 +101,11 @@ function MegaMenu({ items, columns = 2, onNavigate }: MegaMenuProps) {
             className="mega-menu-item"
             onClick={onNavigate}
           >
-            {item.icon && (
-              <div className="mega-menu-icon">{item.icon}</div>
-            )}
             <div className="mega-menu-text">
-              <h4>{item.title}</h4>
+              <h4>
+                {item.title}
+                {item.subtitle ? <span className="mega-menu-subtitle">{item.subtitle}</span> : null}
+              </h4>
               <p>{item.desc}</p>
             </div>
           </Link>
@@ -335,7 +335,7 @@ export default function Header() {
             href={item.href}
             onClick={() => setMobileOpen(false)}
           >
-            {item.icon} {item.title}
+            {item.title}
           </Link>
         ))}
 

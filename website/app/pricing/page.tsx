@@ -44,7 +44,7 @@ export default function PricingPage() {
     <>
       <section className="page-banner" style={{ background: 'linear-gradient(135deg, #0d1b2a 0%, #1b2d44 60%, #0d1b2a 100%)' }}>
         <div className="container">
-          <span className="badge" style={{ background: 'rgba(14,165,233,0.2)', color: '#0ea5e9', marginBottom: '16px' }}>按次付费</span>
+          <span className="badge" style={{ background: 'rgba(14,165,233,0.2)', color: 'var(--teal)', marginBottom: '16px' }}>按次付费</span>
           <h1>按次购买，需要时再买</h1>
           <p>无需订阅，无自动续费。免费注册即可体验政策匹配，深度交付物按次购买。</p>
         </div>
@@ -104,8 +104,13 @@ export default function PricingPage() {
                         ? '免费开始'
                         : isPurchasableHere
                           ? '选择企业并购买'
-                          : '从具体机会工作区购买'}
+                          : '进入工作区后购买'}
                     </button>
+                    {!isPurchasableHere && displayedPrice !== 0 ? (
+                      <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                        该产品在政策机会详情页内下单：先免费注册，运行匹配后在机会工作区购买。
+                      </p>
+                    ) : null}
                   </div>
                 );
               })}

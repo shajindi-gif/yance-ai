@@ -146,7 +146,7 @@ export default function DownloadsPage() {
           ))}
 
           <div className="yc-dl-requirements" style={{ padding: 24, textAlign: 'center' }}>
-            No signed client artifacts available yet.
+            客户端发布后，此处将提供经过签名的安装包与版本说明。
           </div>
         </div>
       </section>

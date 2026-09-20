@@ -25,6 +25,7 @@ export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [data, setData] = useState({
     name: '',
@@ -116,7 +117,7 @@ export default function OnboardingPage() {
       router.push('/dashboard?onboarded=1');
     } catch (err) {
       console.error('Onboarding failed:', err);
-      router.push('/dashboard');
+      setError(err instanceof Error ? err.message : '保存失败，请重试或跳过稍后完善');
     } finally {
       setLoading(false);
     }
@@ -140,13 +141,13 @@ export default function OnboardingPage() {
         {/* Progress */}
         <div style={{ display: 'flex', gap: '4px', marginBottom: '32px' }}>
           {STEPS.map(s => (
-            <div key={s.id} style={{ flex: 1, height: '4px', borderRadius: '2px', background: s.id <= step ? '#0ea5e9' : 'rgba(255,255,255,0.15)', transition: 'all 0.3s' }} />
+            <div key={s.id} style={{ flex: 1, height: '4px', borderRadius: '2px', background: s.id <= step ? '#126a9a' : 'rgba(255,255,255,0.15)', transition: 'all 0.3s' }} />
           ))}
         </div>
 
         {/* Step info */}
         <div style={{ marginBottom: '24px' }}>
-          <span style={{ fontSize: '12px', color: '#0ea5e9', fontWeight: 600 }}>步骤 {step}/8</span>
+          <span style={{ fontSize: '12px', color: 'var(--teal)', fontWeight: 600 }}>步骤 {step}/8</span>
           <h2 style={{ fontSize: '20px', color: '#fff', fontWeight: 700, margin: '8px 0 4px' }}>{STEPS[step - 1].title}</h2>
           <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>{STEPS[step - 1].desc}</p>
         </div>
@@ -191,7 +192,7 @@ export default function OnboardingPage() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {INDUSTRIES.map(ind => (
                 <button key={ind} onClick={() => updateField('industry', ind)}
-                  style={{ padding: '10px 16px', borderRadius: '8px', border: data.industry === ind ? '2px solid #0ea5e9' : '1px solid #e2e8f0', background: data.industry === ind ? '#f0f9ff' : '#fff', color: data.industry === ind ? '#0369a1' : '#374151', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
+                  style={{ padding: '10px 16px', borderRadius: '8px', border: data.industry === ind ? '2px solid #126a9a' : '1px solid #e2e8f0', background: data.industry === ind ? '#f0f9ff' : '#fff', color: data.industry === ind ? '#0369a1' : '#374151', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
                   {ind}
                 </button>
               ))}
@@ -203,7 +204,7 @@ export default function OnboardingPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {SCALES.map(s => (
                 <button key={s} onClick={() => updateField('scale', s)}
-                  style={{ padding: '14px 16px', borderRadius: '10px', border: data.scale === s ? '2px solid #0ea5e9' : '1px solid #e2e8f0', background: data.scale === s ? '#f0f9ff' : '#fff', color: data.scale === s ? '#0369a1' : '#374151', fontSize: '14px', fontWeight: 500, cursor: 'pointer', textAlign: 'left' }}>
+                  style={{ padding: '14px 16px', borderRadius: '10px', border: data.scale === s ? '2px solid #126a9a' : '1px solid #e2e8f0', background: data.scale === s ? '#f0f9ff' : '#fff', color: data.scale === s ? '#0369a1' : '#374151', fontSize: '14px', fontWeight: 500, cursor: 'pointer', textAlign: 'left' }}>
                   {s}
                 </button>
               ))}
@@ -215,7 +216,7 @@ export default function OnboardingPage() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {AGES.map(a => (
                 <button key={a} onClick={() => updateField('founded_year', a)}
-                  style={{ padding: '10px 16px', borderRadius: '8px', border: data.founded_year === a ? '2px solid #0ea5e9' : '1px solid #e2e8f0', background: data.founded_year === a ? '#f0f9ff' : '#fff', color: data.founded_year === a ? '#0369a1' : '#374151', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
+                  style={{ padding: '10px 16px', borderRadius: '8px', border: data.founded_year === a ? '2px solid #126a9a' : '1px solid #e2e8f0', background: data.founded_year === a ? '#f0f9ff' : '#fff', color: data.founded_year === a ? '#0369a1' : '#374151', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
                   {a}
                 </button>
               ))}
@@ -229,7 +230,7 @@ export default function OnboardingPage() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {QUALIFICATIONS.map(q => (
                   <button key={q} onClick={() => toggleArray('qualifications', q)}
-                    style={{ padding: '10px 16px', borderRadius: '8px', border: data.qualifications.includes(q) ? '2px solid #0ea5e9' : '1px solid #e2e8f0', background: data.qualifications.includes(q) ? '#f0f9ff' : '#fff', color: data.qualifications.includes(q) ? '#0369a1' : '#374151', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
+                    style={{ padding: '10px 16px', borderRadius: '8px', border: data.qualifications.includes(q) ? '2px solid #126a9a' : '1px solid #e2e8f0', background: data.qualifications.includes(q) ? '#f0f9ff' : '#fff', color: data.qualifications.includes(q) ? '#0369a1' : '#374151', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
                     {q}
                   </button>
                 ))}
@@ -280,7 +281,7 @@ export default function OnboardingPage() {
             ) : <div />}
             {step < 8 ? (
               <button onClick={handleNext} disabled={!canNext()}
-                style={{ padding: '11px 24px', borderRadius: '8px', border: 'none', background: canNext() ? '#0ea5e9' : '#94a3b8', color: '#fff', fontSize: '14px', fontWeight: 500, cursor: canNext() ? 'pointer' : 'not-allowed' }}>
+                style={{ padding: '11px 24px', borderRadius: '8px', border: 'none', background: canNext() ? '#126a9a' : '#94a3b8', color: '#fff', fontSize: '14px', fontWeight: 500, cursor: canNext() ? 'pointer' : 'not-allowed' }}>
                 下一步
               </button>
             ) : (
@@ -290,6 +291,11 @@ export default function OnboardingPage() {
               </button>
             )}
           </div>
+          {error ? (
+            <div role="alert" style={{ marginTop: '16px', padding: '10px 14px', borderRadius: '8px', background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', fontSize: '13px', lineHeight: 1.5 }}>
+              {error}
+            </div>
+          ) : null}
         </div>
 
         {/* Skip */}

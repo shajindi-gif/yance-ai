@@ -187,14 +187,14 @@ function LoginContent() {
         .yc-form-group label { display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 4px; }
         .yc-required { color: #f97316; }
         .yc-form-group input, .yc-form-group select { width: 100%; padding: 11px 14px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 14px; outline: none; background: #fff; }
-        .yc-form-group input:focus, .yc-form-group select:focus { border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1); }
+        .yc-form-group input:focus, .yc-form-group select:focus { border-color: #126a9a; box-shadow: 0 0 0 3px rgba(18, 106, 154, 0.12); }
         .yc-form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .yc-btn-full { width: 100%; padding: 13px; font-size: 15px; margin-top: 4px; }
         .yc-auth-hint { text-align: center; font-size: 12px; color: #94a3b8; margin: 8px 0 0; }
         .yc-agree-group { margin-top: 2px; }
         .yc-agree-label { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: #374151; cursor: pointer; line-height: 1.5; }
-        .yc-agree-label input[type='checkbox'] { width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; cursor: pointer; accent-color: #0ea5e9; }
-        .yc-agree-label a { color: #0ea5e9; text-decoration: none; }
+        .yc-agree-label input[type='checkbox'] { width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; cursor: pointer; accent-color: #126a9a; }
+        .yc-agree-label a { color: #126a9a; text-decoration: none; }
         .yc-agree-label a:hover { text-decoration: underline; }
         @media (max-width: 500px) { .yc-form-row-2 { grid-template-columns: 1fr; } }
       `}</style>

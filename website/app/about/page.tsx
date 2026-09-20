@@ -16,7 +16,7 @@ export default function AboutPage() {
             className="badge"
             style={{
               background: 'rgba(14,165,233,0.2)',
-              color: '#0ea5e9',
+              color: 'var(--teal)',
               marginBottom: '16px',
             }}
           >
@@ -106,7 +106,7 @@ export default function AboutPage() {
                 title: '精准服务',
                 desc: '每一条政策建议都基于数据驱动的精准匹配，而非经验猜测。',
                 bg: '#f0f9ff',
-                color: '#0ea5e9',
+                color: 'var(--teal)',
               },
               {
                 icon: '\u{1F50D}',
@@ -127,7 +127,7 @@ export default function AboutPage() {
                 title: '生态共建',
                 desc: '与园区、服务商和政务平台共同构建智能服务生态，实现多方共赢。',
                 bg: '#f0f9ff',
-                color: '#0ea5e9',
+                color: 'var(--teal)',
               },
             ].map((val) => (
               <div key={val.title} className="value-card">
@@ -154,13 +154,13 @@ export default function AboutPage() {
           </div>
 
           <div className="grid grid-2" style={{ gap: '32px' }}>
-            <div className="card" style={{ padding: '32px', borderTop: '3px solid #0ea5e9' }}>
-              <div className="card-icon" style={{ background: '#f0f9ff', color: '#0ea5e9' }}>
-                &#x1F9E0;
+            <div className="card" style={{ padding: '32px', borderTop: '3px solid #126a9a' }}>
+              <div className="card-icon" style={{ background: '#f0f9ff', color: 'var(--teal)' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 9 9h-4a5 5 0 0 0-10 0H3a9 9 0 0 1 9-9z" fill="currentColor" stroke="none" opacity=".25"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>
               </div>
               <h3 className="card-title">政策语义理解引擎</h3>
               <p className="card-desc" style={{ marginBottom: '20px' }}>
-                基于可配置大语言模型与规则校验提取政策条件；未使用“领域微调”作为当前能力声明。
+                基于可配置大语言模型与规则校验提取政策条件，条件要素结构化后进入匹配引擎。
               </p>
               <ul className="module-card-features">
                 <li>政策文本结构化解析</li>
@@ -171,7 +171,7 @@ export default function AboutPage() {
             </div>
             <div className="card" style={{ padding: '32px', borderTop: '3px solid #16a34a' }}>
               <div className="card-icon" style={{ background: '#f0fdf4', color: '#16a34a' }}>
-                &#x2699;&#xFE0F;
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
               </div>
               <h3 className="card-title">企业-政策匹配算法</h3>
               <p className="card-desc" style={{ marginBottom: '20px' }}>
@@ -195,7 +195,7 @@ export default function AboutPage() {
             <span className="section-label">责任域</span>
             <h2 className="section-title">产品建设所需的职责</h2>
             <p className="section-subtitle">
-              以下是产品交付需要覆盖的能力域，不代表未经披露或无法验证的团队规模与履历。
+              产品交付需要覆盖的能力域，随产品阶段逐步完备。
             </p>
           </div>
 
@@ -206,7 +206,7 @@ export default function AboutPage() {
                 title: 'AI 与算法团队',
                 desc: '负责模型接入、检索、证据、评测和成本边界。',
                 bg: '#f0f9ff',
-                color: '#0ea5e9',
+                color: 'var(--teal)',
               },
               {
                 initials: 'PD',
@@ -263,7 +263,7 @@ export default function AboutPage() {
                 { title: '当前代码基线', desc: '具备租户、企业、政策、匹配、报告、订单与基础任务模型。' },
                 { title: '安全加固进行中', desc: '支付、租户边界、文件入口、文档渲染和真实性声明已进入自动化验证。' },
                 { title: 'Agent 工作闭环建设中', desc: 'Harness、证据优先检索、Application Workspace 和人工复核仍在分阶段实现。' },
-                { title: '试点状态', desc: '尚无可在本网站公开验证的签约园区或客户成效数据。' },
+                { title: '试点进行中', desc: '正在与首批企业和园区开展定向试点，成效数据将在可公开验证后发布。' },
               ].map((milestone) => (
                 <div key={milestone.title} className="timeline-item">
                   <h3 className="timeline-item-title">{milestone.title}</h3>
@@ -285,8 +285,8 @@ export default function AboutPage() {
 
           <div className="grid grid-3" style={{ gap: '24px' }}>
             <div className="card" style={{ textAlign: 'center', padding: '32px' }}>
-              <div className="card-icon" style={{ margin: '0 auto 16px', background: '#f0f9ff', color: '#0ea5e9' }}>
-                &#x1F4E7;
+              <div className="card-icon" style={{ margin: '0 auto 16px', background: '#f0f9ff', color: 'var(--teal)' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
               </div>
               <h4 className="card-title">邮件联系</h4>
               <p className="card-desc">
@@ -295,20 +295,18 @@ export default function AboutPage() {
             </div>
             <div className="card" style={{ textAlign: 'center', padding: '32px' }}>
               <div className="card-icon" style={{ margin: '0 auto 16px', background: '#f0fdf4', color: '#16a34a' }}>
-                &#x1F3E2;
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="3" width="10" height="18" rx="1"/><path d="M14 9h5a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-5"/><path d="M7 7h4M7 11h4M7 15h4"/></svg>
               </div>
               <h4 className="card-title">公司地址</h4>
               <p className="card-desc">上海市徐汇区</p>
             </div>
             <div className="card" style={{ textAlign: 'center', padding: '32px' }}>
               <div className="card-icon" style={{ margin: '0 auto 16px', background: '#fff7ed', color: '#f97316' }}>
-                &#x1F310;
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/></svg>
               </div>
-              <h4 className="card-title">官方网站</h4>
+              <h4 className="card-title">联系邮箱</h4>
               <p className="card-desc">
-                <a href="https://yance.ai" target="_blank" rel="noopener noreferrer">
-                  衍策引擎AI
-                </a>
+                <a href="mailto:contact@yance.ai">contact@yance.ai</a>
               </p>
             </div>
           </div>
@@ -333,7 +331,7 @@ export default function AboutPage() {
               className="btn btn-lg"
               style={{ background: '#f97316', color: '#fff', borderColor: '#f97316', borderRadius: '12px' }}
             >
-              预约演示
+              免费注册
             </Link>
             <a href="mailto:contact@yance.ai" className="btn btn-outline-white btn-lg">
               发送邮件

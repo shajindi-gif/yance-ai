@@ -15,7 +15,7 @@ export default function ParksPage() {
             className="badge"
             style={{
               background: 'rgba(14,165,233,0.2)',
-              color: '#0ea5e9',
+              color: 'var(--teal)',
               marginBottom: '16px',
             }}
           >
@@ -49,8 +49,8 @@ export default function ParksPage() {
                 基于企业画像和政策条件形成可复核的匹配结果；准确率需在真实试点数据上评测。
               </p>
             </div>
-            <div className="card" style={{ borderTop: '3px solid #0ea5e9' }}>
-              <div className="card-icon" style={{ background: '#f0f9ff', color: '#0ea5e9' }}>
+            <div className="card" style={{ borderTop: '3px solid #126a9a' }}>
+              <div className="card-icon" style={{ background: '#f0f9ff', color: 'var(--teal)' }}>
                 &#x26A1;
               </div>
               <h3 className="card-title">效率提升</h3>
@@ -179,7 +179,7 @@ export default function ParksPage() {
                       key={layer}
                       style={{
                         padding: '12px 16px',
-                        background: i === 0 ? '#0d1b2a' : i === 1 ? '#1b2d44' : i === 2 ? '#0ea5e9' : i === 3 ? '#16a34a' : '#f97316',
+                        background: i === 0 ? '#0d1b2a' : i === 1 ? '#1b2d44' : i === 2 ? '#126a9a' : i === 3 ? '#16a34a' : '#f97316',
                         color: '#fff',
                         borderRadius: '8px',
                         fontSize: '0.875rem',
@@ -235,7 +235,7 @@ export default function ParksPage() {
           </div>
 
           <div className="card-flat" style={{ padding: '28px', textAlign: 'center' }}>
-            No customer outcome data yet.
+            客户成效数据将在试点完成后，从真实事件与评测结果中生成并公开。
           </div>
         </div>
       </section>
@@ -245,13 +245,9 @@ export default function ParksPage() {
         <div className="container">
           <div className="container-narrow">
             <div className="quote-card">
-              <p className="quote-text">示例验收目标：每一项服务建议都能回到政策来源、企业事实和人工复核记录。</p>
-              <div className="quote-author">
-                <div className="quote-author-avatar">YD</div>
-                <div>
-                  <div className="quote-author-name">DEMO / 非客户评价</div>
-                  <div className="quote-author-role">产品工作流示例</div>
-                </div>
+              <p className="quote-text">验收目标：每一项服务建议都能回到政策来源、企业事实和人工复核记录。</p>
+              <div className="quote-author-role" style={{ textAlign: 'center', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                衍策引擎AI 服务原则
               </div>
             </div>
           </div>

@@ -15,7 +15,7 @@ export default function RoadshowPage() {
             className="badge"
             style={{
               background: 'rgba(14,165,233,0.2)',
-              color: '#0ea5e9',
+              color: 'var(--teal)',
               marginBottom: '16px',
             }}
           >
@@ -144,7 +144,7 @@ export default function RoadshowPage() {
               { value: '待测量', label: '效率变化', desc: '与试点基线对比' },
             ].map((kpi) => (
               <div key={kpi.label} className="stat-card" style={{ padding: '32px 20px' }}>
-                <div className="stat-value" style={{ color: '#0ea5e9' }}>
+                <div className="stat-value" style={{ color: 'var(--teal)' }}>
                   {kpi.value}
                 </div>
                 <div className="stat-label" style={{ fontWeight: 600, color: 'var(--text)' }}>
@@ -201,8 +201,8 @@ export default function RoadshowPage() {
           </div>
 
           <div className="grid grid-3" style={{ gap: '24px' }}>
-            <div className="card" style={{ borderTop: '3px solid #0ea5e9' }}>
-              <div className="card-icon" style={{ background: '#f0f9ff', color: '#0ea5e9' }}>
+            <div className="card" style={{ borderTop: '3px solid #126a9a' }}>
+              <div className="card-icon" style={{ background: '#f0f9ff', color: 'var(--teal)' }}>
                 &#x1F91D;
               </div>
               <h3 className="card-title">试点合作</h3>

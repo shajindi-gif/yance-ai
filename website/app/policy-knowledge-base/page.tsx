@@ -14,12 +14,12 @@ export default function PolicyKnowledgeBasePage() {
           <span
             className="badge"
             style={{
-              background: 'rgba(14,165,233,0.2)',
-              color: '#0ea5e9',
+              background: 'rgba(18,106,154,0.16)',
+              color: 'var(--teal)',
               marginBottom: '16px',
             }}
           >
-            PolicyCopilot
+            政策知识库
           </span>
           <h1>政策知识库</h1>
           <p>
@@ -39,22 +39,11 @@ export default function PolicyKnowledgeBasePage() {
             </p>
           </div>
 
-          <div className="grid grid-4" style={{ gap: '20px' }}>
-            {[
-              { value: '待统计', label: '政策文件总数', color: '' },
-              { value: '待统计', label: '覆盖城市', color: 'green' },
-              { value: '待统计', label: '更新频率', color: 'orange' },
-              { value: '待评测', label: '结构化覆盖率', color: '' },
-            ].map((stat) => (
-              <div key={stat.label} className="stat-card">
-                <div
-                  className={`stat-value${stat.color === 'green' ? ' stat-value-green' : stat.color === 'orange' ? ' stat-value-orange' : ''}`}
-                >
-                  {stat.value}
-                </div>
-                <div className="stat-label">{stat.label}</div>
-              </div>
-            ))}
+          <div className="card-flat" style={{ padding: '24px 28px', display: 'flex', flexWrap: 'wrap', gap: '8px 28px', alignItems: 'center', justifyContent: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+            <span>政策文件总数 · 待统计</span>
+            <span>覆盖城市 · 待统计</span>
+            <span>更新频率 · 待统计</span>
+            <span>结构化覆盖率 · 待评测</span>
           </div>
         </div>
       </section>
@@ -68,8 +57,8 @@ export default function PolicyKnowledgeBasePage() {
           </div>
 
           <div className="grid grid-3" style={{ gap: '24px' }}>
-            <div className="card" style={{ borderTop: '3px solid #0ea5e9' }}>
-              <div className="card-icon" style={{ background: '#f0f9ff', color: '#0ea5e9' }}>
+            <div className="card" style={{ borderTop: '3px solid #126a9a' }}>
+              <div className="card-icon" style={{ background: '#f0f9ff', color: 'var(--teal)' }}>
                 &#x1F3DB;&#xFE0F;
               </div>
               <h3 className="card-title">按行政级别</h3>
@@ -212,7 +201,7 @@ export default function PolicyKnowledgeBasePage() {
                       background: 'var(--bg-alt)',
                       padding: '20px',
                       borderRadius: '12px',
-                      borderLeft: '3px solid #0ea5e9',
+                      borderLeft: '3px solid #126a9a',
                     }}
                   >
                     <p
@@ -231,7 +220,7 @@ export default function PolicyKnowledgeBasePage() {
                     <p
                       style={{
                         fontSize: '0.75rem',
-                        color: '#0ea5e9',
+                        color: 'var(--teal)',
                         marginTop: '8px',
                         fontWeight: 500,
                       }}

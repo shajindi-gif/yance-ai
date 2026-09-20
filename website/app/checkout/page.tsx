@@ -78,7 +78,7 @@ function CheckoutContent() {
         <div style={{ fontSize: '48px', marginBottom: '16px' }}>❌</div>
         <h2 style={{ color: '#0d1b2a', marginBottom: '8px' }}>产品未找到</h2>
         <p style={{ color: '#64748b', marginBottom: '20px' }}>请从定价页选择产品</p>
-        <button onClick={() => router.push('/pricing')} style={{ padding: '10px 24px', background: '#0ea5e9', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>返回定价页</button>
+        <button onClick={() => router.push('/pricing')} style={{ padding: '10px 24px', background: '#126a9a', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>返回定价页</button>
       </div>
     </div>
   );
@@ -88,7 +88,7 @@ function CheckoutContent() {
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', paddingTop: '100px' }}>
       <div style={{ maxWidth: '560px', margin: '0 auto', padding: '32px 24px' }}>
-        <button onClick={() => router.push('/pricing')} style={{ background: 'none', border: 'none', color: '#0ea5e9', fontSize: '13px', cursor: 'pointer', marginBottom: '24px', padding: 0 }}>← 返回定价页</button>
+        <button onClick={() => router.push('/pricing')} style={{ background: 'none', border: 'none', color: 'var(--teal)', fontSize: '13px', cursor: 'pointer', marginBottom: '24px', padding: 0 }}>← 返回定价页</button>
 
         <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
           {/* Order summary */}

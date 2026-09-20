@@ -15,7 +15,7 @@ export default function CompanyMatchPage() {
             className="badge"
             style={{
               background: 'rgba(14,165,233,0.2)',
-              color: '#0ea5e9',
+              color: 'var(--teal)',
               marginBottom: '16px',
             }}
           >
@@ -42,8 +42,8 @@ export default function CompanyMatchPage() {
                 基于画像数据，系统能够自动识别企业的发展阶段、行业定位和成长潜力，为精准服务提供数据基础。
               </p>
               <div className="mt-8">
-                <Link href="/login?register=1" className="btn btn-primary" style={{ background: '#0ea5e9', borderColor: '#0ea5e9', borderRadius: '12px' }}>
-                  查看企业画像 Demo
+                <Link href="/login?register=1" className="btn btn-primary" style={{ background: '#126a9a', borderColor: '#126a9a', borderRadius: '12px' }}>
+                  注册生成企业画像
                 </Link>
               </div>
             </div>
@@ -103,14 +103,14 @@ export default function CompanyMatchPage() {
                 key={dim.title}
                 className="card"
                 style={{
-                  borderTop: `3px solid ${dim.accent === 'green' ? '#16a34a' : dim.accent === 'orange' ? '#f97316' : '#0ea5e9'}`,
+                  borderTop: `3px solid ${dim.accent === 'green' ? '#16a34a' : dim.accent === 'orange' ? '#f97316' : '#126a9a'}`,
                 }}
               >
                 <div
                   className="card-icon"
                   style={{
                     background: dim.accent === 'green' ? '#f0fdf4' : dim.accent === 'orange' ? '#fff7ed' : '#f0f9ff',
-                    color: dim.accent === 'green' ? '#16a34a' : dim.accent === 'orange' ? '#f97316' : '#0ea5e9',
+                    color: dim.accent === 'green' ? '#16a34a' : dim.accent === 'orange' ? '#f97316' : '#126a9a',
                   }}
                 >
                   {dim.icon}
@@ -138,7 +138,7 @@ export default function CompanyMatchPage() {
               </p>
               <div className="mt-8">
                 <Link href="/login?register=1" className="btn btn-primary" style={{ background: '#f97316', borderColor: '#f97316', borderRadius: '12px' }}>
-                  查看匹配示例
+                  注册开始政策匹配
                 </Link>
               </div>
             </div>
@@ -148,8 +148,8 @@ export default function CompanyMatchPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {[
                     { name: '高新技术企业认定', score: 92, color: '#16a34a' },
-                    { name: '专精特新中小企业', score: 85, color: '#0ea5e9' },
-                    { name: '科技型中小企业评价', score: 88, color: '#0ea5e9' },
+                    { name: '专精特新中小企业', score: 85, color: 'var(--teal)' },
+                    { name: '科技型中小企业评价', score: 88, color: 'var(--teal)' },
                     { name: '研发费用加计扣除', score: 78, color: '#f97316' },
                   ].map((match) => (
                     <div key={match.name} className="card-flat" style={{ padding: '16px 20px' }}>
@@ -208,7 +208,7 @@ export default function CompanyMatchPage() {
 
           <div className="dashboard-preview">
             <div className="dashboard-header">
-              <span className="dashboard-header-title">企业：上海XX科技有限公司</span>
+              <span className="dashboard-header-title">企业：上海示例科技有限公司（DEMO）</span>
               <span className="badge badge-primary">匹配完成</span>
             </div>
 
@@ -246,28 +246,28 @@ export default function CompanyMatchPage() {
                     <td style={{ fontWeight: 600 }}>高新技术企业认定</td>
                     <td>92%</td>
                     <td>国家级</td>
-                    <td>2025-06-30</td>
+                    <td>2026-12-31</td>
                     <td><span className="badge badge-success">可申报</span></td>
                   </tr>
                   <tr>
                     <td style={{ fontWeight: 600 }}>专精特新中小企业</td>
                     <td>85%</td>
                     <td>市级</td>
-                    <td>2025-08-15</td>
+                    <td>2027-03-31</td>
                     <td><span className="badge badge-success">可申报</span></td>
                   </tr>
                   <tr>
                     <td style={{ fontWeight: 600 }}>科技型中小企业评价</td>
                     <td>88%</td>
                     <td>国家级</td>
-                    <td>2025-12-31</td>
+                    <td>2027-06-30</td>
                     <td><span className="badge badge-success">可申报</span></td>
                   </tr>
                   <tr>
                     <td style={{ fontWeight: 600 }}>研发费用加计扣除</td>
                     <td>78%</td>
                     <td>国家级</td>
-                    <td>2025-05-31</td>
+                    <td>2026-11-30</td>
                     <td><span className="badge badge-warning">需补充材料</span></td>
                   </tr>
                 </tbody>
