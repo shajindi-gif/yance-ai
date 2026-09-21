@@ -31,6 +31,7 @@ def _register(client: TestClient, suffix: str) -> tuple[dict[str, str], str]:
             "owner_name": "Metrics Owner",
             "owner_email": email,
             "owner_password": "integration-password-123",
+            "agreed_terms_version": "test-terms",
         },
     )
     assert response.status_code == 201, response.text
