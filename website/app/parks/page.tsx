@@ -1,5 +1,12 @@
 import Link from 'next/link';
 
+export const metadata = {
+  title: '园区入驻与资源匹配 | 衍策引擎AI',
+  description:
+    '按企业行业、发展阶段与资源需求推荐园区入驻方案，匹配产业资源与扶持政策。',
+};
+
+
 export default function ParksPage() {
   return (
     <>

@@ -1,5 +1,12 @@
 import Link from 'next/link';
 
+export const metadata = {
+  title: '政策知识库 | 衍策引擎AI',
+  description:
+    '结构化存储与智能检索各级政府政策文件，为政策匹配提供可追溯的数据基础。',
+};
+
+
 export default function PolicyKnowledgeBasePage() {
   return (
     <>

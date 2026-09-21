@@ -1,5 +1,12 @@
 import Link from 'next/link';
 
+export const metadata = {
+  title: '报告与申报材料生成 | 衍策引擎AI',
+  description:
+    '产业研究报告、申报书、材料清单与合规检查生成，支持 PDF 与 Word 导出。',
+};
+
+
 export default function BriefMakerPage() {
   return (
     <>

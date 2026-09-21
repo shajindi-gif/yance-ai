@@ -1,6 +1,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
 
+export const metadata = {
+  title: '关于我们 | 衍策引擎AI',
+  description:
+    '团队、产品理念与责任域说明：衍策引擎AI 如何以可追溯的数据与流程服务科技企业政策申报。',
+};
+
+
 export default function AboutPage() {
   return (
     <>

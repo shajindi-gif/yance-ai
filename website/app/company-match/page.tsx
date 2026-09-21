@@ -1,5 +1,12 @@
 import Link from 'next/link';
 
+export const metadata = {
+  title: '企业政策匹配 | 衍策引擎AI',
+  description:
+    '基于企业画像的政策适配度评分、关键条件对比、材料缺口分析与申报时间建议。',
+};
+
+
 export default function CompanyMatchPage() {
   return (
     <>

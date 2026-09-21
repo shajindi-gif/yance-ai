@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /onboarding
+Disallow: /orders
+Disallow: /billing
+Disallow: /settings
+Disallow: /tasks
+Disallow: /companies
+Disallow: /documents
+Disallow: /applications
+Disallow: /opportunities
+Disallow: /reports
+Disallow: /agents
+Disallow: /checkout
+Disallow: /success
+Disallow: /demo
+
+Sitemap: https://yance.ai/sitemap.xml
