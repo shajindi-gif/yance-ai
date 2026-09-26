@@ -3,7 +3,7 @@ import time
 import uuid
 from binascii import Error as BinasciiError
 from decimal import Decimal, InvalidOperation
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
@@ -28,12 +28,27 @@ def _stripe_checkout_available() -> bool:
 
 
 # ── Alipay helpers ────────────────────────────────────────────────────
+_PLACEHOLDER_MARKERS = ("REPLACE_WITH", "CHANGEME", "YOUR_", "TODO")
+
+
+def _is_unconfigured(value: str | None) -> bool:
+    """True when a credential is missing or still a deployment placeholder."""
+    if not value:
+        return True
+    upper = value.upper()
+    return any(marker in upper for marker in _PLACEHOLDER_MARKERS)
+
+
 def _alipay_available() -> bool:
-    return bool(settings.alipay_app_id and settings.alipay_private_key)
+    return not _is_unconfigured(settings.alipay_app_id) and not _is_unconfigured(
+        settings.alipay_private_key
+    )
 
 
 def _alipay_notify_available() -> bool:
-    return bool(settings.alipay_app_id and settings.alipay_public_key)
+    return not _is_unconfigured(settings.alipay_app_id) and not _is_unconfigured(
+        settings.alipay_public_key
+    )
 
 
 def _alipay_gateway_url() -> str:
@@ -42,24 +57,39 @@ def _alipay_gateway_url() -> str:
     return settings.alipay_gateway
 
 
+def _load_rsa_private_key(raw: str):
+    """Import an RSA private key in PEM, single-line base64, PKCS#8 or PKCS#1.
+
+    Raises HTTPException 503 (not 500) when the key is malformed, so a bad
+    deployment surfaces as "provider not configured".
+    """
+    key_text = raw.replace("\\n", "\n").strip()
+    if not key_text.startswith("-----BEGIN"):
+        # PKCS#8 DER starts with the AlgorithmIdentifier for rsaEncryption:
+        # base64 "MIIEvQIBADANBgkqhkiG9w0BAQEF..." ; PKCS#1 RSAPrivateKey has
+        # no such header and starts with the version integer instead.
+        if "MIIEvQIBADANBgkqhkiG9w0BAQEF" in key_text[:64]:
+            key_text = f"-----BEGIN PRIVATE KEY-----\n{key_text}\n-----END PRIVATE KEY-----"
+        else:
+            key_text = f"-----BEGIN RSA PRIVATE KEY-----\n{key_text}\n-----END RSA PRIVATE KEY-----"
+    try:
+        return RSA.import_key(key_text)
+    except (ValueError, IndexError, TypeError) as exc:
+        raise HTTPException(
+            status_code=503, detail="Alipay private key is not configured correctly"
+        ) from exc
+
+
 def _build_alipay_sign(params: dict) -> str:
     """Build RSA-SHA256 sign for Alipay request."""
-    # Sort keys alphabetically, remove sign/sign_type, concat with &
+    # Sort keys alphabetically, exclude only "sign"; sign_type MUST take part
+    # in the signing payload (verified against the live gateway: requests
+    # whose signature excludes sign_type fail with invalid-signature).
     sorted_items = sorted(
-        (k, v)
-        for k, v in params.items()
-        if v != "" and v is not None and k not in ("sign", "sign_type")
+        (k, v) for k, v in params.items() if v != "" and v is not None and k != "sign"
     )
     raw_string = "&".join(f"{k}={v}" for k, v in sorted_items)
-    private_key = settings.alipay_private_key
-    # Restore newlines if stored as single-line
-    if "\\n" in private_key:
-        private_key = private_key.replace("\\n", "\n")
-    if not private_key.startswith("-----BEGIN"):
-        private_key = (
-            f"-----BEGIN RSA PRIVATE KEY-----\n{private_key}\n-----END RSA PRIVATE KEY-----"
-        )
-    rsa_key = RSA.import_key(private_key)
+    rsa_key = _load_rsa_private_key(settings.alipay_private_key)
     signer = PKCS1_v1_5.new(rsa_key)
     h = SHA256.new(raw_string.encode("utf-8"))
     signature = signer.sign(h)
@@ -124,14 +154,18 @@ def alipay_page_pay(
     params = {
         "app_id": settings.alipay_app_id,
         "method": "alipay.trade.page.pay",
-        "format": "JSON",
         "charset": "utf-8",
         "sign_type": "RSA2",
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
         "version": "1.0",
         "notify_url": settings.alipay_notify_url,
         "return_url": settings.alipay_return_url,
-        "biz_content": json.dumps(biz_content, ensure_ascii=False),
+        # separators must be compact: Alipay re-serializes biz_content without
+        # spaces when verifying, so a default json.dumps (", ", ": ") breaks
+        # the signature (gateway error: invalid-signature).
+        # NOTE: "format" is intentionally omitted — the verified reference
+        # implementation (fengyuxueye, alipay-sdk) does not send it.
+        "biz_content": json.dumps(biz_content, ensure_ascii=False, separators=(",", ":")),
     }
 
     params["sign"] = _build_alipay_sign(params)
@@ -150,7 +184,10 @@ def alipay_page_pay(
     db.commit()
 
     gateway = _alipay_gateway_url()
-    payment_url = f"{gateway}?{urlencode(params)}"
+    # Strict percent-encoding (safe=''): unencoded '/' in notify_url/return_url
+    # passes Python's urlencode default but breaks Alipay's gateway signature
+    # verification (verified by bisect against the working reference request).
+    payment_url = f"{gateway}?{urlencode(params, quote_via=quote, safe='')}"
     return {"url": payment_url, "out_trade_no": out_trade_no}
 
 
