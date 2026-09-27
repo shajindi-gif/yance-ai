@@ -97,10 +97,11 @@ def scan_deadlines(db: Session, *, tenant_id=None, now: datetime | None = None) 
             if band is None:
                 continue
         severity = "critical" if band == 0 else _severity_for(band)
+        days_display = max(0, round(days_left))
         label = (
             f"申报「{application.title}」已逾期"
             if band == 0
-            else f"申报「{application.title}」还有 {max(band, round(days_left))} 天截止"
+            else f"申报「{application.title}」还有 {days_display} 天截止"
         )
         key = f"deadline:application:{application.id}:{'overdue' if band == 0 else f'T-{band}'}"
         if add_notification(
