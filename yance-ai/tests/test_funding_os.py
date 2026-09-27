@@ -218,6 +218,67 @@ def test_consultant_answers_with_citations_or_insufficient():
         assert deadlines["intent"] == "deadlines"
 
 
+def test_application_inherits_policy_deadline_and_notifies():
+    suffix = uuid.uuid4().hex
+    with TestClient(app) as client:
+        headers, me = _register(client, suffix)
+        company = client.get("/api/v1/companies", headers=headers).json()[0]
+        deadline = datetime.now(timezone.utc) + timedelta(days=10)
+        with SessionLocal() as db:
+            policy = Policy(
+                title=f"截止联动测试政策 {suffix}",
+                level="district",
+                province="上海市",
+                support_amount="最高100万",
+                deadline=deadline,
+                status="published",
+            )
+            db.add(policy)
+            db.flush()
+            db.add(
+                Opportunity(
+                    tenant_id=uuid.UUID(me["tenant_id"]),
+                    company_id=uuid.UUID(company["id"]),
+                    policy_id=policy.id,
+                    title=policy.title,
+                    score=80.0,
+                    eligibility_status="ELIGIBLE",
+                    policy_snapshot_json={"deadline": deadline.isoformat(), "title": policy.title},
+                )
+            )
+            db.commit()
+            opportunity_id = str(
+                db.scalar(
+                    select(Opportunity).where(Opportunity.title == policy.title)
+                ).id
+            )
+
+        application = client.post(
+            "/api/v1/applications",
+            headers=headers,
+            json={"company_id": company["id"], "opportunity_id": opportunity_id, "title": f"截止联动申报 {suffix}"},
+        )
+        assert application.status_code == 201, application.text
+        # Deadline inherited from the official policy snapshot, no manual step.
+        assert application.json()["due_at"] is not None
+        application_id = application.json()["id"]
+
+        # Manual override via PATCH.
+        new_due = (datetime.now(timezone.utc) + timedelta(days=2)).isoformat()
+        patched = client.patch(
+            f"/api/v1/applications/{application_id}",
+            headers=headers,
+            json={"due_at": new_due},
+        )
+        assert patched.status_code == 200
+        assert patched.json()["due_at"][:10] == new_due[:10]
+
+        scan = client.post("/api/v1/notifications/scan", headers=headers)
+        assert scan.status_code == 200 and scan.json()["created"] >= 1
+        titles = [n["title"] for n in client.get("/api/v1/notifications", headers=headers).json()]
+        assert any("截止" in title for title in titles)
+
+
 def test_funding_summary_and_amount_backfill():
     suffix = uuid.uuid4().hex
     with TestClient(app) as client:

@@ -383,6 +383,13 @@ class ApplicationCreate(BaseModel):
     title: str = Field(min_length=2, max_length=500)
     status: str = "draft"
     form_data: dict[str, Any] = Field(default_factory=dict)
+    due_at: datetime | None = None  # falls back to the linked policy deadline
+
+
+class ApplicationUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=2, max_length=500)
+    due_at: datetime | None = None
+    form_data: dict[str, Any] | None = None
 
 
 class ApplicationOut(ApplicationCreate, ORMModel):

@@ -40,6 +40,7 @@ from app.schemas.schemas import (
     ApplicationCreate,
     ApplicationDocumentLinkCreate,
     ApplicationOut,
+    ApplicationUpdate,
     OpportunityOut,
 )
 from app.services.agents.harness import AgentHarness
@@ -492,6 +493,21 @@ def create_application(
         if existing:
             return existing
 
+    # Deadline: explicit input wins; otherwise inherit the official policy
+    # deadline from the linked opportunity so T-30/14/7/3/1 reminders work.
+    due_at = payload.due_at
+    if due_at is None and opportunity is not None:
+        snapshot_deadline = (opportunity.policy_snapshot_json or {}).get("deadline")
+        if snapshot_deadline:
+            try:
+                due_at = datetime.fromisoformat(str(snapshot_deadline).replace("Z", "+00:00"))
+            except ValueError:
+                due_at = None
+        if due_at is None and opportunity.policy_id:
+            policy_row = db.get(Policy, opportunity.policy_id)
+            if policy_row is not None:
+                due_at = policy_row.deadline
+
     application = Application(
         tenant_id=principal.tenant_id,
         company_id=company.id,
@@ -500,6 +516,7 @@ def create_application(
         status="draft",
         form_data=payload.form_data,
         owner_user_id=principal.user.id,
+        due_at=due_at,
         progress=0,
         review_status="not_requested",
     )
@@ -764,6 +781,25 @@ def get_application(
             for item in comments
         ],
     }
+
+
+@router.patch("/applications/{application_id}", response_model=ApplicationOut)
+def update_application(
+    application_id: UUID,
+    payload: ApplicationUpdate,
+    principal: Principal = Depends(write_principal),
+    db: Session = Depends(get_db),
+) -> Application:
+    application = require_tenant_resource(
+        db, Application, application_id, principal.tenant_id, "Application"
+    )
+    data = payload.model_dump(exclude_unset=True)
+    for field in ("title", "due_at", "form_data"):
+        if field in data:
+            setattr(application, field, data[field])
+    db.commit()
+    db.refresh(application)
+    return application
 
 
 @router.patch("/applications/{application_id}/status", response_model=ApplicationOut)
