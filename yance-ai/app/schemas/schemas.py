@@ -266,6 +266,15 @@ class PolicyCreate(BaseModel):
     source: str | None = Field(default=None, max_length=160)
     support_amount: str | None = Field(default=None, max_length=120)
     support_type: str | None = Field(default=None, max_length=120)
+    # Funding OS structured facts (nullable; parsed deterministically or curated)
+    funding_type: str | None = Field(default=None, max_length=40)
+    funding_amount_min: float | None = Field(default=None, ge=0)
+    funding_amount_max: float | None = Field(default=None, ge=0)
+    funding_ratio: float | None = Field(default=None, ge=0, le=100)
+    funding_currency: str | None = Field(default="CNY", max_length=8)
+    applicant_type: str | None = Field(default=None, max_length=120)
+    company_stage: str | None = Field(default=None, max_length=160)
+    technology: str | None = Field(default=None, max_length=240)
     content: str | None = None
     status: str = "draft"
 

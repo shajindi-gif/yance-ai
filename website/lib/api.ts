@@ -213,6 +213,105 @@ export interface Policy {
   content: string;
   status: string;
   created_at: string;
+  issuing_authority?: string | null;
+  level?: string | null;
+  province?: string | null;
+  city?: string | null;
+  district?: string | null;
+  industry?: string | null;
+  policy_type?: string | null;
+  support_amount?: string | null;
+  support_type?: string | null;
+  funding_type?: string | null;
+  funding_amount_min?: number | null;
+  funding_amount_max?: number | null;
+  funding_ratio?: number | null;
+  deadline?: string | null;
+  published_at?: string | null;
+}
+
+// ── Funding OS types ─────────────────────────────────────────────────
+export interface NotificationItem {
+  id: string;
+  kind: string;
+  severity: 'info' | 'warning' | 'critical';
+  title: string;
+  body: string | null;
+  entity_type: string | null;
+  entity_id: string | null;
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface MilestoneItem {
+  id: string;
+  application_id: string;
+  kind: string;
+  title: string;
+  description: string | null;
+  owner_user_id: string | null;
+  due_at: string | null;
+  status: 'todo' | 'doing' | 'done' | 'blocked';
+  completion_note: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConsultantBlock {
+  kind: string;
+  title: string;
+  detail?: Record<string, unknown> | null;
+  citation?: Record<string, unknown> | null;
+}
+
+export interface ConsultantAnswer {
+  intent: string;
+  insufficient: boolean;
+  summary: string;
+  blocks: ConsultantBlock[];
+  missing_evidence?: string[];
+  next_actions: string[];
+  company_id: string;
+  asked_at: string;
+}
+
+export interface FundingSummary {
+  company_id: string;
+  company_name: string;
+  estimated_funding_available_wan: number;
+  funding_amount_coverage: { eligible: number; with_official_amount: number };
+  eligible_count: number;
+  high_match_count: number;
+  deadlines_in_30_days: number;
+  applications_in_progress: number;
+  missing_evidence_count: number;
+  profile_completeness: number;
+  pipeline: Record<string, number>;
+  upcoming_tasks: Array<{
+    id: string;
+    title: string;
+    due_at: string | null;
+    status: string;
+    application_id: string;
+  }>;
+  recommended_opportunities: Array<{
+    id: string;
+    title: string;
+    score: number | null;
+    eligibility: string;
+  }>;
+  unread_notifications: number;
+}
+
+export interface TeamMember {
+  id: string;
+  tenant_id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  is_active: boolean;
+  is_platform_admin: boolean;
 }
 
 export interface CompanyProfileData {
@@ -1275,6 +1374,10 @@ class ApiClient {
   }
 
   // Policies
+  async getPolicies(): Promise<Policy[]> {
+    return this.request<Policy[]>('/policies');
+  }
+
   async searchPolicies(query: string, limit: number = 5): Promise<Policy[]> {
     const formData = new FormData();
     formData.append('query', query);
@@ -1513,6 +1616,90 @@ class ApiClient {
   async health(): Promise<{ status: string; version: string }> {
     const response = await fetch(`${API_BASE.replace('/api/v1', '')}/health`);
     return response.json();
+  }
+
+  // ── Funding OS: notifications ──────────────────────────────────────
+  async getNotifications(unreadOnly = false): Promise<NotificationItem[]> {
+    return this.request<NotificationItem[]>(
+      `/notifications?unread_only=${unreadOnly ? 'true' : 'false'}`,
+    );
+  }
+
+  async getUnreadNotificationCount(): Promise<{ unread: number }> {
+    return this.request<{ unread: number }>('/notifications/unread-count');
+  }
+
+  async markNotificationRead(id: string): Promise<NotificationItem> {
+    return this.request<NotificationItem>(
+      `/notifications/${encodeURIComponent(id)}/read`,
+      { method: 'POST' },
+    );
+  }
+
+  async markAllNotificationsRead(): Promise<{ updated: number }> {
+    return this.request<{ updated: number }>('/notifications/read-all', { method: 'POST' });
+  }
+
+  async scanDeadlineNotifications(): Promise<{ created: number }> {
+    return this.request<{ created: number }>('/notifications/scan', { method: 'POST' });
+  }
+
+  // ── Funding OS: AI consultant ──────────────────────────────────────
+  async askConsultant(companyId: string, question: string): Promise<ConsultantAnswer> {
+    return this.request<ConsultantAnswer>('/consultant/ask', {
+      method: 'POST',
+      body: JSON.stringify({ company_id: companyId, question }),
+    });
+  }
+
+  // ── Funding OS: command center summary ─────────────────────────────
+  async getFundingSummary(companyId?: string): Promise<FundingSummary> {
+    const query = companyId ? `?company_id=${encodeURIComponent(companyId)}` : '';
+    return this.request<FundingSummary>(`/funding/summary${query}`);
+  }
+
+  // ── Funding OS: milestones ─────────────────────────────────────────
+  async listMilestones(applicationId: string): Promise<MilestoneItem[]> {
+    return this.request<MilestoneItem[]>(
+      `/applications/${encodeURIComponent(applicationId)}/milestones`,
+    );
+  }
+
+  async createMilestone(
+    applicationId: string,
+    body: { title: string; description?: string; kind?: string; due_at?: string | null },
+  ): Promise<MilestoneItem> {
+    return this.request<MilestoneItem>(
+      `/applications/${encodeURIComponent(applicationId)}/milestones`,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async updateMilestone(
+    id: string,
+    body: { status?: string; title?: string; due_at?: string | null; completion_note?: string | null },
+  ): Promise<MilestoneItem> {
+    return this.request<MilestoneItem>(`/milestones/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async deleteMilestone(id: string): Promise<void> {
+    await this.request<void>(`/milestones/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  }
+
+  // ── Team ───────────────────────────────────────────────────────────
+  async getUsers(): Promise<TeamMember[]> {
+    return this.request<TeamMember[]>('/users');
+  }
+
+  async createUser(body: {
+    email: string;
+    full_name: string;
+    password: string;
+  }): Promise<TeamMember> {
+    return this.request<TeamMember>('/users', { method: 'POST', body: JSON.stringify(body) });
   }
 }
 

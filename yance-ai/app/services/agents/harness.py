@@ -420,6 +420,7 @@ async def run_agent_worker(*, poll_seconds: float | None = None, once: bool = Fa
     harness = AgentHarness()
     resolved_poll_seconds = poll_seconds or settings.agent_worker_poll_seconds
     worker_id = f"worker-{uuid.uuid4()}"
+    last_deadline_scan = 0.0
     while True:
         with SessionLocal() as db:
             claimed = await harness.run_once(db, worker_id)
@@ -427,4 +428,15 @@ async def run_agent_worker(*, poll_seconds: float | None = None, once: bool = Fa
             if once:
                 return
         if claimed is None:
+            # Hourly deadline sweep emits T-30/14/7/3/1 notifications (deduped).
+            now = time.monotonic()
+            if now - last_deadline_scan >= 3600:
+                last_deadline_scan = now
+                try:
+                    from app.services.notifications.deadlines import scan_deadlines
+
+                    with SessionLocal() as db:
+                        scan_deadlines(db)
+                except Exception:  # noqa: BLE001 - notifications must never kill the worker
+                    pass
             await asyncio.sleep(resolved_poll_seconds)

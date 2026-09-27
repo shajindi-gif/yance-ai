@@ -18,6 +18,7 @@ import api, {
   type Company,
   type CompanyProfile,
   type DocumentRecord,
+  type FundingSummary,
   type Opportunity,
   type PolicyScan,
   type Tenant,
@@ -32,6 +33,7 @@ interface DashboardState {
   scans: PolicyScan[];
   agentRuns: AgentRunSummary[];
   firstProfile: CompanyProfile | null;
+  funding: FundingSummary | null;
 }
 
 export default function DashboardPage() {
@@ -60,6 +62,9 @@ export default function DashboardPage() {
       const firstProfile = companies[0]
         ? await api.getCompanyProfile(companies[0].id)
         : null;
+      const funding = companies.length
+        ? await api.getFundingSummary(companies[0].id).catch(() => null)
+        : null;
       return {
         tenant,
         companies,
@@ -69,6 +74,7 @@ export default function DashboardPage() {
         scans,
         agentRuns,
         firstProfile,
+        funding,
       };
     };
     load()
@@ -120,7 +126,6 @@ export default function DashboardPage() {
     const timestamp = new Date(deadline).getTime();
     return timestamp >= now && timestamp <= nextThirtyDays;
   });
-  const maxScore = Math.max(0, ...data.opportunities.map((item) => item.score || 0));
 
   let nextAction = {
     title: "查看政策机会",
@@ -162,18 +167,89 @@ export default function DashboardPage() {
   return (
     <AppShell workspaceName={data.tenant.name}>
       <PageHeader
-        eyebrow="Home"
-        title="工作台"
-        description={`${data.tenant.name} · 所有指标来自当前租户的服务端记录。`}
+        eyebrow="Funding Command Center"
+        title="指挥中心"
+        description={`${data.tenant.name} · 所有指标来自当前租户的服务端记录；金额为官方条款结构化值，非预测。`}
       />
       {error && <InlineAlert>{error}</InlineAlert>}
 
       <div className={flow.metricGrid}>
-        <div className={flow.metric}><strong>{Math.round(maxScore * 100)}%</strong><span>最高机会相关性</span></div>
-        <div className={flow.metric}><strong>{data.opportunities.length}</strong><span>已匹配机会</span></div>
-        <div className={flow.metric}><strong>{activeApplications.length}</strong><span>进行中申报</span></div>
-        <div className={flow.metric}><strong>{pendingDocuments.length}</strong><span>未完成摄取资料</span></div>
+        <div className={flow.metric}>
+          <strong>
+            {data.funding
+              ? data.funding.estimated_funding_available_wan > 0
+                ? `¥${data.funding.estimated_funding_available_wan.toLocaleString("zh-CN")} 万`
+                : "见条款"
+              : "—"}
+          </strong>
+          <span>可申请材料资金上限合计</span>
+        </div>
+        <div className={flow.metric}><strong>{data.funding?.eligible_count ?? data.opportunities.length}</strong><span>合格/潜在合格机会</span></div>
+        <div className={flow.metric}><strong>{data.funding?.high_match_count ?? 0}</strong><span>高匹配（≥70 分）</span></div>
+        <div className={flow.metric}><strong>{data.funding?.deadlines_in_30_days ?? upcomingDeadlines.length}</strong><span>30 天内截止</span></div>
+        <div className={flow.metric}><strong>{data.funding?.applications_in_progress ?? activeApplications.length}</strong><span>进行中申报</span></div>
+        <div className={flow.metric}><strong>{data.funding?.missing_evidence_count ?? pendingDocuments.length}</strong><span>缺失关键证据</span></div>
       </div>
+
+      {data.funding ? (
+        <div className={flow.gridTwo}>
+          <section className={content.card}>
+            <div className={content.cardHeader}>
+              <div><h2>资金管道</h2><p className={content.cardIntro}>按申报状态统计的真实管道；画像完成度 {data.funding.profile_completeness}%。</p></div>
+              <Badge tone={data.funding.unread_notifications ? "warning" : "neutral"}>{data.funding.unread_notifications} 未读</Badge>
+            </div>
+            {Object.keys(data.funding.pipeline).length === 0 ? (
+              <p className={content.cardIntro}>尚无申报进入管道。</p>
+            ) : (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {Object.entries(data.funding.pipeline).map(([status, count]) => (
+                  <Badge key={status} tone={status === "completed" ? "success" : status === "cancelled" ? "neutral" : "info"}>
+                    {status} · {count}
+                  </Badge>
+                ))}
+              </div>
+            )}
+            <div className={content.actionRow} style={{ marginTop: 12 }}>
+              <Link href="/projects" className={flow.link}>查看完整管道与里程碑</Link>
+              <Link href="/notifications" className={flow.link}>通知中心</Link>
+            </div>
+          </section>
+
+          <section className={content.card}>
+            <div className={content.cardHeader}>
+              <div><h2>推荐机会</h2><p className={content.cardIntro}>来自最近一次资格扫描的高分结果。</p></div>
+              <Link href="/opportunities" className={flow.link}>全部</Link>
+            </div>
+            {data.funding.recommended_opportunities.length === 0 ? (
+              <p className={content.cardIntro}>暂无合格推荐，先运行政策扫描。</p>
+            ) : (
+              data.funding.recommended_opportunities.map((item) => (
+                <Link key={item.id} href={`/opportunities/${item.id}`} className={content.activityRow}>
+                  <span>{item.title}</span>
+                  <span className={content.activityLatency}>{item.score != null ? `${Math.round(item.score)} 分` : ""}</span>
+                </Link>
+              ))
+            )}
+          </section>
+        </div>
+      ) : null}
+
+      {data.funding && data.funding.upcoming_tasks.length > 0 ? (
+        <section className={content.card} style={{ marginBottom: 20 }}>
+          <div className={content.cardHeader}>
+            <div><h2>近期任务</h2><p className={content.cardIntro}>未完成里程碑按截止日排序。</p></div>
+            <Link href="/projects" className={flow.link}>管理</Link>
+          </div>
+          {data.funding.upcoming_tasks.slice(0, 5).map((task) => (
+            <div key={task.id} className={content.activityRow}>
+              <span>{task.title}</span>
+              <span className={content.activityLatency}>
+                {task.due_at ? new Date(task.due_at).toLocaleDateString("zh-CN") : "无期限"} · {task.status}
+              </span>
+            </div>
+          ))}
+        </section>
+      ) : null}
 
       <div className={flow.gridTwo}>
         <section className={content.card}>

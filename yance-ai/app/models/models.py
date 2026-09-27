@@ -346,6 +346,18 @@ class Policy(Base, TimestampMixin):
     crawled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     support_amount: Mapped[str | None] = mapped_column(String(120))  # e.g. "最高500万"
     support_type: Mapped[str | None] = mapped_column(String(120))  # 资金补贴/税收优惠/资质认定
+    # Funding OS: structured funding facts (parsed deterministically or curated;
+    # never fabricated — leave NULL when the official document does not state it)
+    funding_type: Mapped[str | None] = mapped_column(
+        String(40), index=True
+    )  # grant/tax_incentive/loan_discount/voucher/talent/competition/equity/service
+    funding_amount_min: Mapped[float | None] = mapped_column(Numeric(14, 2))  # 万元
+    funding_amount_max: Mapped[float | None] = mapped_column(Numeric(14, 2))  # 万元
+    funding_ratio: Mapped[float | None] = mapped_column(Numeric(5, 2))  # % of eligible spend
+    funding_currency: Mapped[str | None] = mapped_column(String(8), default="CNY")
+    applicant_type: Mapped[str | None] = mapped_column(String(120))
+    company_stage: Mapped[str | None] = mapped_column(String(160))
+    technology: Mapped[str | None] = mapped_column(String(240))
     embedding: Mapped[list[float] | None] = mapped_column(Vector(1024))
     status: Mapped[str] = mapped_column(String(40), default="draft", index=True)
 
@@ -1544,3 +1556,50 @@ class RevisionRequest(Base, TenantOwnedMixin):
     status: Mapped[str] = mapped_column(String(40), default="pending")
     response: Mapped[str | None] = mapped_column(Text)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Notification(Base, TenantOwnedMixin):
+    """In-app notification (deadline reminders, pipeline events). Deduped per tenant."""
+
+    __tablename__ = "notifications"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "dedup_key", name="uq_notification_tenant_key"),
+        Index("ix_notification_tenant_created", "tenant_id", "created_at"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), index=True
+    )
+    kind: Mapped[str] = mapped_column(String(40), index=True)  # deadline/pipeline/agent/system
+    severity: Mapped[str] = mapped_column(String(20), default="info")  # info/warning/critical
+    title: Mapped[str] = mapped_column(String(300))
+    body: Mapped[str | None] = mapped_column(Text)
+    entity_type: Mapped[str | None] = mapped_column(String(40))
+    entity_id: Mapped[str | None] = mapped_column(String(64))
+    dedup_key: Mapped[str] = mapped_column(String(200))
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class Milestone(Base, TimestampMixin, TenantOwnedMixin):
+    """Deadline-driven task or post-award project checkpoint under an application."""
+
+    __tablename__ = "milestones"
+    __table_args__ = (
+        Index("ix_milestone_tenant_due", "tenant_id", "due_at"),
+        Index("ix_milestone_application", "application_id"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    application_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("applications.id", ondelete="CASCADE")
+    )
+    kind: Mapped[str] = mapped_column(String(40), default="preparation")  # preparation/acceptance
+    title: Mapped[str] = mapped_column(String(300))
+    description: Mapped[str | None] = mapped_column(Text)
+    owner_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    status: Mapped[str] = mapped_column(String(40), default="todo", index=True)  # todo/doing/done/blocked
+    completion_note: Mapped[str | None] = mapped_column(Text)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

@@ -10,6 +10,7 @@ from app.api.routes import (
     commerce,
     companies,
     demo,
+    funding_os,
     demo_match,
     documents,
     enterprise,
@@ -45,3 +46,4 @@ api_router.include_router(demo.router)
 api_router.include_router(demo_match.router)
 api_router.include_router(tasks.router)
 api_router.include_router(policy_engine.router)
+api_router.include_router(funding_os.router)

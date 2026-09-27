@@ -292,3 +292,44 @@ def create_policy_benefit(
     db.commit()
     db.refresh(item)
     return item
+
+
+@router.post("/policies/parse-amounts")
+def parse_support_amounts(
+    principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin)),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Deterministically backfill structured funding facts from support_amount text.
+
+    Only writes values it can parse with confidence; everything else stays NULL
+    (INSUFFICIENT EVIDENCE by design). Safe to re-run (idempotent).
+    """
+    from app.services.funding.amounts import infer_funding_type, parse_support_amount
+
+    updated_amounts = 0
+    updated_types = 0
+    policies = list(
+        db.scalars(
+            select(Policy).where(Policy.support_amount.is_not(None), Policy.support_amount != "")
+        ).all()
+    )
+    for policy in policies:
+        if policy.funding_amount_min is None and policy.funding_amount_max is None:
+            parsed = parse_support_amount(policy.support_amount)
+            if parsed.parsed:
+                policy.funding_amount_min = parsed.amount_min
+                policy.funding_amount_max = parsed.amount_max
+                if parsed.ratio is not None and policy.funding_ratio is None:
+                    policy.funding_ratio = parsed.ratio
+                updated_amounts += 1
+        if policy.funding_type is None:
+            inferred = infer_funding_type(policy.support_amount, policy.support_type)
+            if inferred:
+                policy.funding_type = inferred
+                updated_types += 1
+    db.commit()
+    return {
+        "scanned": len(policies),
+        "amounts_backfilled": updated_amounts,
+        "types_backfilled": updated_types,
+    }

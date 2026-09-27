@@ -27,7 +27,7 @@ function now(): string {
 /* --- Component --- */
 export default function SmartAgent() {
   const [open, setOpen] = useState(false);
-  const [messages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -40,16 +40,41 @@ export default function SmartAgent() {
   }, [messages]);
 
   function send(_text?: string) {
-    // 已登录时执行真实政策检索；未登录时由登录引导卡片承接，不产生假对话
+    // 已登录时执行真实政策检索并展示结果；未登录时由登录引导卡片承接，不产生假对话
     const msg = (_text || input).trim();
     if (!msg || loading || !authed) return;
+    const userMsg: Message = { id: Date.now(), role: 'user', text: msg, time: now() };
+    setMessages((previous) => [...previous, userMsg]);
     setInput('');
     setLoading(true);
     api.searchPolicies(msg, 3)
-      .then(() => {
+      .then((results) => {
+        const reply: Message = results.length
+          ? {
+              id: Date.now() + 1,
+              role: 'bot',
+              text:
+                `找到 ${results.length} 条相关政策：\n\n` +
+                results
+                  .map((policy, index) => `**${index + 1}. ${policy.title}**`)
+                  .join('\n') +
+                '\n\n资格结论与证据请前往「AI 顾问」查看（基于你工作区的画像扫描）。',
+              time: now(),
+            }
+          : {
+              id: Date.now() + 1,
+              role: 'bot',
+              text: getUnavailableResponse(),
+              time: now(),
+            };
+        setMessages((previous) => [...previous, reply]);
         setLoading(false);
       })
       .catch(() => {
+        setMessages((previous) => [
+          ...previous,
+          { id: Date.now() + 1, role: 'bot', text: getUnavailableResponse(), time: now() },
+        ]);
         setLoading(false);
       });
   }
