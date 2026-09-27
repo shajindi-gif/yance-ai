@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import Principal, get_principal, require_roles
+from app.api.deps import Principal, get_principal, require_platform_admin, require_roles
 from app.core.config import settings
 from app.core.db import get_db
 from app.models.models import (
@@ -296,12 +296,13 @@ def create_policy_benefit(
 
 @router.post("/policies/parse-amounts")
 def parse_support_amounts(
-    principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin)),
+    principal: Principal = Depends(require_platform_admin),
     db: Session = Depends(get_db),
 ) -> dict:
     """Deterministically backfill structured funding facts from support_amount text.
 
-    Only writes values it can parse with confidence; everything else stays NULL
+    Platform-admin curation tool (writes global knowledge-base rows). Only
+    parses values it can extract with confidence; everything else stays NULL
     (INSUFFICIENT EVIDENCE by design). Safe to re-run (idempotent).
     """
     from app.services.funding.amounts import infer_funding_type, parse_support_amount

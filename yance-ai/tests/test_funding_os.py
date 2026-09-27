@@ -255,12 +255,16 @@ def test_funding_summary_and_amount_backfill():
 
         with SessionLocal() as db:
             owner = db.scalar(select(User).where(User.email == f"fundingos-{suffix}@example.com"))
+            owner.is_platform_admin = True
+            db.commit()
             principal = _P(
                 user=owner,
                 tenant_id=uuid.UUID(me["tenant_id"]),
                 role=UserRole.owner,
             )
             result = parse_support_amounts(principal=principal, db=db)
+            owner.is_platform_admin = False
+            db.commit()
         assert result["amounts_backfilled"] >= 1
         with SessionLocal() as db:
             policy_row = db.scalar(
