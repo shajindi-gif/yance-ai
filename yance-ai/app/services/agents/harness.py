@@ -429,7 +429,7 @@ async def run_agent_worker(*, poll_seconds: float | None = None, once: bool = Fa
                 return
         if claimed is None:
             # Hourly deadline sweep emits T-30/14/7/3/1 notifications (deduped).
-            now = time.monotonic()
+            now = perf_counter()
             if now - last_deadline_scan >= 3600:
                 last_deadline_scan = now
                 try:
