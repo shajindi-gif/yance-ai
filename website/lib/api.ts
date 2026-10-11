@@ -1515,6 +1515,22 @@ class ApiClient {
     );
   }
 
+  // WeChat Pay Native: returns a code_url to render as a QR, plus the merchant
+  // order number used for active-query compensation.
+  async createWechatNativeOrder(orderId: string): Promise<{ code_url: string; out_trade_no: string; amount_fen: number }> {
+    return this.request<{ code_url: string; out_trade_no: string; amount_fen: number }>(
+      `/payments/wechat/native?order_id=${encodeURIComponent(orderId)}`,
+      { method: 'POST' },
+    );
+  }
+
+  async queryWechatOrder(orderId: string): Promise<{ status: string; queried: boolean; trade_state?: string }> {
+    return this.request<{ status: string; queried: boolean; trade_state?: string }>(
+      `/payments/wechat/query?order_id=${encodeURIComponent(orderId)}`,
+      { method: 'POST' },
+    );
+  }
+
   // Demo: Match Report (with multi-model)
   async matchReport(companyId: string, provider: string = 'qwen'): Promise<{
     company_name: string;

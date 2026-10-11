@@ -19,15 +19,17 @@ from Crypto.Signature import PKCS1_v1_5
 
 from app.core.config import settings
 
-# Single-line base64 PKCS#8 RSA private keys start with this AlgorithmIdentifier
-_PKCS8_PREFIX = "MIIEvQIBADANBgkqhkiG9w0BAQEF"
+# PKCS#8 (what the WeChat/Alipay key tools export) carries the rsaEncryption
+# AlgorithmIdentifier marker; PKCS#1 does not. Length-independent, unlike a fixed
+# "MIIEvQ" prefix (real keys also start "MIIEvg").
+_PKCS8_MARKER = "ADANBgkqhkiG9w0BAQEF"
 
 
 def _load_private_key() -> RSA.RsaKey:
     pem = settings.wxpay_private_key.replace("\\n", "\n").strip()
     if not pem.startswith("-----BEGIN"):
         # Production stores the merchant key as single-line base64 in env.
-        if _PKCS8_PREFIX in pem[:64]:
+        if _PKCS8_MARKER in pem[:64]:
             pem = f"-----BEGIN PRIVATE KEY-----\n{pem}\n-----END PRIVATE KEY-----"
         else:
             pem = f"-----BEGIN RSA PRIVATE KEY-----\n{pem}\n-----END RSA PRIVATE KEY-----"
