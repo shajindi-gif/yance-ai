@@ -99,6 +99,23 @@ class Settings(BaseSettings):
     alipay_gateway: str = "https://openapi.alipay.com/gateway.do"
     alipay_sandbox: bool = False  # True=沙箱环境
 
+    # 微信支付 APIv3（直连商户，Native 扫码；复用已验证商户，独立回调域名）
+    wxpay_mode: str = "direct"  # direct | partner
+    wxpay_mch_id: str = ""
+    wxpay_app_id: str = ""
+    wxpay_serial_no: str = ""  # 商户 API 证书序列号
+    wxpay_private_key: str = ""  # apiclient_key.pem 内容（单行，\n 表示换行）
+    wxpay_apiv3_key: str = ""  # 32 位 APIv3 密钥
+    wxpay_notify_url: str = "https://api.yance.ai/api/v1/payments/wechat/notify"
+    wxpay_gateway: str = "https://api.mch.weixin.qq.com"
+    # 微信支付公钥模式（新商户无平台证书）
+    wxpay_pubkey_id: str = ""  # PUB_KEY_ID_xxx
+    wxpay_pubkey: str = ""  # 微信支付公钥 PEM（单行，\n 表示换行）
+    # 服务商模式字段（direct 模式留空）
+    wxpay_sp_mch_id: str = ""
+    wxpay_sp_app_id: str = ""
+    wxpay_sub_mch_id: str = ""
+
     # 公司对公账户（银行转账）
     company_name: str = ""
     company_tax_id: str = ""

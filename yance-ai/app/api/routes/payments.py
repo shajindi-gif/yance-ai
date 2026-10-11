@@ -17,6 +17,7 @@ from app.api.deps import Principal, get_principal, require_roles
 from app.core.config import settings
 from app.core.db import get_db
 from app.models.models import Order, Payment, UserRole
+from app.services.payments import wechat as wx
 from app.services.payments.settlement import settle_payment
 
 router = APIRouter(prefix="/payments", tags=["payments"])
@@ -293,6 +294,171 @@ async def alipay_return(request: Request, db: Session = Depends(get_db)) -> dict
         "status": payment.status,
         "order_id": str(payment.order_id),
     }
+
+
+# ── WeChat Pay APIv3 (Native QR) ───────────────────────────────────────
+def _wechat_out_trade_no(order: Order) -> str:
+    """Stable merchant order number: same order reuses one out_trade_no so the
+    QR can be re-scanned and the active-query compensation can find it."""
+    return order.order_no
+
+
+@router.post("/wechat/native")
+def wechat_native(
+    order_id: uuid.UUID,
+    principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Create a WeChat Native order; returns code_url for QR rendering."""
+    if not wx.is_wechat_configured():
+        raise HTTPException(status_code=503, detail="WeChat Pay not configured")
+
+    order = db.scalar(
+        select(Order).where(Order.id == order_id, Order.tenant_id == principal.tenant_id)
+    )
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.status == "paid":
+        raise HTTPException(status_code=400, detail="Order already paid")
+    if order.currency.upper() != "CNY":
+        raise HTTPException(status_code=400, detail="WeChat checkout requires CNY")
+
+    out_trade_no = _wechat_out_trade_no(order)
+    existing = db.scalar(
+        select(Payment).where(
+            Payment.provider == "wechat",
+            Payment.provider_trade_no == out_trade_no,
+        )
+    )
+    if existing and existing.status == "completed":
+        raise HTTPException(status_code=400, detail="Order already paid")
+
+    total_fen = int(round(float(order.amount) * 100))
+    description = f"yance.ai - {order.product_code}"
+    code_url, error = wx.create_native_order(out_trade_no, total_fen, description, settings.wxpay_notify_url)
+    if not code_url:
+        raise HTTPException(status_code=502, detail=f"WeChat native order failed: {error}")
+
+    if existing:
+        payment = existing
+    else:
+        payment = Payment(
+            tenant_id=principal.tenant_id,
+            order_id=order.id,
+            provider="wechat",
+            provider_trade_no=out_trade_no,
+            amount=order.amount,
+            currency=order.currency,
+            status="created",
+        )
+        db.add(payment)
+    payment.raw_response = {"code_url": code_url}
+    db.commit()
+
+    return {"code_url": code_url, "out_trade_no": out_trade_no, "amount_fen": total_fen}
+
+
+@router.post("/wechat/notify")
+async def wechat_notify(request: Request, db: Session = Depends(get_db)) -> dict:
+    """WeChat Pay APIv3 async callback: verify signature, decrypt, settle once."""
+    body = await request.body()
+    text = body.decode("utf-8", errors="replace")
+    timestamp = request.headers.get("wechatpay-timestamp", "")
+    nonce = request.headers.get("wechatpay-nonce", "")
+    signature = request.headers.get("wechatpay-signature", "")
+    serial = request.headers.get("wechatpay-serial", "")
+
+    if not wx.is_wechat_configured() or not wx.verify_notify_signature(
+        timestamp, nonce, text, signature, serial
+    ):
+        return {"code": "FAIL", "message": "签名验证失败"}
+
+    try:
+        payload = json.loads(text)
+        resource = payload.get("resource") or {}
+        result = wx.decrypt_resource(resource)
+    except (ValueError, KeyError, TypeError):
+        return {"code": "FAIL", "message": "回调解密失败"}
+
+    out_trade_no = result.get("out_trade_no", "")
+    trade_state = result.get("trade_state", "")
+    transaction_id = result.get("transaction_id", "")
+    total_fen = (result.get("amount") or {}).get("payer_total") or (result.get("amount") or {}).get("total")
+
+    payment = db.scalar(
+        select(Payment).where(
+            Payment.provider == "wechat",
+            Payment.provider_trade_no == out_trade_no,
+        )
+    )
+    if not payment:
+        return {"code": "FAIL", "message": "订单不存在"}
+
+    payment.raw_response = {
+        "transaction_id": transaction_id,
+        "trade_state": trade_state,
+        "total_fen": total_fen,
+    }
+    if trade_state == "SUCCESS":
+        if not transaction_id:
+            return {"code": "FAIL", "message": "缺少交易号"}
+        settle = settle_payment(
+            db,
+            payment=payment,
+            provider_event_id=transaction_id,
+            event_type=str(payload.get("event_type") or "TRANSACTION.SUCCESS"),
+            paid_amount=(total_fen or 0) / 100 if total_fen is not None else None,
+            currency=(result.get("amount") or {}).get("currency", "CNY"),
+            payload=body,
+        )
+        if not settle.accepted:
+            return {"code": "FAIL", "message": settle.error_code or "结算被拒绝"}
+        return {"code": "SUCCESS", "message": "成功"}
+    if trade_state in {"CLOSED", "REVOKED", "PAYERROR"} and payment.status == "created":
+        payment.status = "expired"
+    db.commit()
+    return {"code": "SUCCESS", "message": "成功"}
+
+
+@router.post("/wechat/query")
+def wechat_query(
+    order_id: uuid.UUID,
+    principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Active query compensation: if WeChat says SUCCESS but the callback has
+    not arrived yet, settle through the same idempotent path."""
+    if not wx.is_wechat_configured():
+        raise HTTPException(status_code=503, detail="WeChat Pay not configured")
+    order = db.scalar(
+        select(Order).where(Order.id == order_id, Order.tenant_id == principal.tenant_id)
+    )
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    payment = db.scalar(
+        select(Payment).where(
+            Payment.provider == "wechat",
+            Payment.provider_trade_no == _wechat_out_trade_no(order),
+        )
+    )
+    if not payment:
+        return {"status": order.status, "queried": False}
+    state = wx.query_order(_wechat_out_trade_no(order))
+    if state is None:
+        return {"status": payment.status, "queried": False}
+    if state["trade_state"] == "SUCCESS" and payment.status != "completed":
+        total_fen = state.get("payer_total")
+        settle = settle_payment(
+            db,
+            payment=payment,
+            provider_event_id=state.get("transaction_id") or f"query:{order.order_no}",
+            event_type="TRANSACTION.SUCCESS.QUERY",
+            paid_amount=(total_fen / 100) if total_fen is not None else payment.amount,
+            currency="CNY",
+            payload=b'{"source":"active_query"}',
+        )
+        return {"status": "paid" if settle.accepted else payment.status, "queried": True}
+    return {"status": payment.status if payment.status != "created" else order.status, "queried": True, "trade_state": state["trade_state"]}
 
 
 @router.post("/checkout")
