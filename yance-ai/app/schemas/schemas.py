@@ -305,7 +305,7 @@ class EligibilityRuleCreate(BaseModel):
     policy_version_id: UUID | None = None
     name: str = Field(min_length=2, max_length=300)
     fact_key: str = Field(min_length=1, max_length=120)
-    operator: Literal["eq", "in", "contains", "gte", "lte", "exists"]
+    operator: Literal["eq", "neq", "in", "not_in", "contains", "gte", "lte", "gt", "lt", "exists"]
     expected_json: dict[str, Any] = Field(default_factory=dict)
     is_hard_gate: bool = True
     source_quote: str = Field(min_length=1)

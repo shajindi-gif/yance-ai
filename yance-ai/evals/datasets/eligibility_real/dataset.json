@@ -1,0 +1,13 @@
+{
+  "key": "eligibility_real_policies",
+  "name": "Real policy eligibility cold-start",
+  "eval_type": "eligibility_eval",
+  "description": "50 hand-labeled cases derived from the 8 production policies' actual clauses (high-tech enterprise, SME evaluation, SRDI giant, Lingang, R&D deduction, district policies). Positive/negative/boundary/insufficient mix.",
+  "version": "2026.10.1",
+  "target_key": "eligibility_rule_contract",
+  "target_version": "deterministic-v1",
+  "scorer_version": "deterministic-v1",
+  "review_status": "reviewed",
+  "case_count": 50,
+  "data_classification": "real_policy_text"
+}

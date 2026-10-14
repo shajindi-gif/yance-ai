@@ -37,8 +37,8 @@ def _register(client: TestClient, prefix: str) -> tuple[dict[str, str], str]:
 def test_five_part_bundle_executes_actual_targets_and_release_gate():
     executions = execute_bundle(DATASET_ROOT)
     assert [item.dataset.eval_type for item in executions] == list(EVAL_TYPES)
-    assert sum(item.requested_cases for item in executions) == 11
-    assert sum(item.completed_cases for item in executions) == 11
+    assert sum(item.requested_cases for item in executions) == 61  # 3 synth + 50 real-policy eligibility + 8 others
+    assert sum(item.completed_cases for item in executions) == 61
     assert sum(item.error_cases for item in executions) == 0
     assert all(item.release_gate_passed for item in executions)
     assert {item.dataset.review_status for item in executions} == {"unreviewed"}
@@ -107,7 +107,7 @@ def test_platform_admin_executes_persists_and_drills_into_evaluations():
         payload = created.json()
         assert payload["release_gate_passed"] is True
         assert len(payload["runs"]) == 5
-        assert sum(item["requested_cases"] for item in payload["runs"]) == 11
+        assert sum(item["requested_cases"] for item in payload["runs"]) == 61
         assert sum(item["error_cases"] for item in payload["runs"]) == 0
 
         overview = client.get("/api/v1/admin/evals/overview", headers=platform_headers)
@@ -120,9 +120,9 @@ def test_platform_admin_executes_persists_and_drills_into_evaluations():
         assert metrics["cards"]["pass_rate"] == 1
         assert metrics["cards"]["average_cost_usd"] == 0
         assert metrics["counts"] == {
-            "requested": 11,
-            "completed": 11,
-            "passed": 11,
+            "requested": 61,
+            "completed": 61,
+            "passed": 61,
             "errors": 0,
         }
         assert metrics["investor_quality_eligible"] is False
@@ -156,7 +156,7 @@ def test_platform_admin_executes_persists_and_drills_into_evaluations():
         )
         assert repeated.status_code == 201
         latest_only = client.get("/api/v1/admin/evals/overview", headers=platform_headers).json()
-        assert latest_only["counts"]["requested"] == 11
+        assert latest_only["counts"]["requested"] == 61
 
         investor = client.get("/api/v1/admin/investor-metrics", headers=platform_headers)
         assert investor.status_code == 200

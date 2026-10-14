@@ -51,20 +51,29 @@ def _evaluate(actual: Any, operator: str, expected: Any) -> bool:
         return actual not in (None, "", [])
     if operator == "eq":
         return actual == expected
+    if operator == "neq":
+        return actual != expected
     if operator == "in":
         return actual in (expected if isinstance(expected, list) else [expected])
+    if operator == "not_in":
+        return actual not in (expected if isinstance(expected, list) else [expected])
     if operator == "contains":
         values = actual if isinstance(actual, list) else [actual]
         targets = expected if isinstance(expected, list) else [expected]
         return any(
             str(target).lower() in str(value).lower() for value in values for target in targets
         )
-    if operator in {"gte", "lte"}:
+    if operator in {"gte", "lte", "gt", "lt"}:
         try:
             left, right = float(actual), float(expected)
         except (TypeError, ValueError):
             return False
-        return left >= right if operator == "gte" else left <= right
+        return {
+            "gte": left >= right,
+            "lte": left <= right,
+            "gt": left > right,
+            "lt": left < right,
+        }[operator]
     return False
 
 
