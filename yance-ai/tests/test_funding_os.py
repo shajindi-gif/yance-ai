@@ -346,3 +346,42 @@ def test_funding_summary_and_amount_backfill():
         assert body["funding_amount_coverage"] == {"eligible": 1, "with_official_amount": 1}
         assert body["missing_evidence_count"] > 0
         assert "pipeline" in body and "recommended_opportunities" in body
+
+
+def test_email_dispatch_disabled_by_default(monkeypatch):
+    from app.services.notifications import email as email_svc
+    from app.core.config import settings
+    monkeypatch.setattr(settings, "email_enabled", False)
+    assert email_svc.is_email_configured() is False
+    with SessionLocal() as db:
+        assert email_svc.dispatch_deadline_emails(db) == 0
+
+
+def test_email_dispatch_sends_high_severity_only(monkeypatch):
+    from app.services.notifications import email as email_svc
+    from app.core.config import settings
+    from app.models.models import Notification, Membership, User
+
+    suffix = uuid.uuid4().hex
+    with TestClient(app) as client:
+        headers, me = _register(client, suffix)
+    # seed one warning + one info deadline notification
+    with SessionLocal() as db:
+        for sev, key in [("warning", f"deadline:test:{suffix}:warn"), ("info", f"deadline:test:{suffix}:info")]:
+            db.add(Notification(
+                tenant_id=uuid.UUID(me["tenant_id"]), kind="deadline", severity=sev,
+                title=f"测试{sev}", body="正文", dedup_key=key,
+            ))
+        db.commit()
+
+    sent = []
+    monkeypatch.setattr(settings, "email_enabled", True)
+    monkeypatch.setattr(settings, "resend_api_key", "re_test_key")
+    monkeypatch.setattr(email_svc, "send_email", lambda to, subject, body: (sent.append((to, subject, body)) or True))
+    with SessionLocal() as db:
+        count = email_svc.dispatch_deadline_emails(db, tenant_id=uuid.UUID(me["tenant_id"]))
+    assert count == 1  # only the warning band
+    assert len(sent) == 1 and "测试warning" in sent[0][1]
+    # idempotent: second dispatch does not re-email (dedup key suffixed)
+    with SessionLocal() as db:
+        assert email_svc.dispatch_deadline_emails(db, tenant_id=uuid.UUID(me["tenant_id"])) == 0

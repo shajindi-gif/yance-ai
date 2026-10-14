@@ -122,6 +122,11 @@ class Settings(BaseSettings):
     company_bank_name: str = ""
     company_bank_account: str = ""
 
+    # 事务邮件（Resend）：截止日 T-7/T-3/T-1 强触达；未配置则仅站内通知
+    resend_api_key: str = ""
+    email_from: str = "衍策引擎AI <notify@yance.ai>"
+    email_enabled: bool = False  # 显式开关，配置密钥后打开
+
     log_level: str = "INFO"
     agent_log_prompts: bool = False
     agent_worker_poll_seconds: float = 1.0

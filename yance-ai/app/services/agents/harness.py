@@ -434,9 +434,11 @@ async def run_agent_worker(*, poll_seconds: float | None = None, once: bool = Fa
                 last_deadline_scan = now
                 try:
                     from app.services.notifications.deadlines import scan_deadlines
+                    from app.services.notifications.email import dispatch_deadline_emails
 
                     with SessionLocal() as db:
                         scan_deadlines(db)
+                        dispatch_deadline_emails(db)
                 except Exception:  # noqa: BLE001 - notifications must never kill the worker
                     pass
             await asyncio.sleep(resolved_poll_seconds)

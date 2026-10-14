@@ -95,17 +95,17 @@ SOURCES: list[Source] = [
         city="上海市",
         issuing_authority="上海市科学技术委员会",
         list_url="https://stcsm.sh.gov.cn/zwgk/kjzc/zcwj/kwzcxwj/index.html",
-        link_pattern=r"/zwgk/kjzc/\d{8}/[0-9a-f]+\.html",
+        link_pattern=r"/zwgk/kjzc/.*/\d{8}/[0-9a-f]+\.html",
     ),
     Source(
-        key="sh_stcsm_zxzj",
-        name="上海市科委·专项资助",
+        key="sh_stcsm_tzgs",
+        name="上海市科委·通知公示",
         level="provincial",
         province="上海市",
         city="上海市",
         issuing_authority="上海市科学技术委员会",
         list_url="https://stcsm.sh.gov.cn/zwgk/kyjhxm/zxzj/index.html",
-        link_pattern=r"/zwgk/kyjhxm/zxzj/\d{8}/[0-9a-f]+\.html",
+        link_pattern=r"/zwgk/tzgs/.*/\d{8}/[0-9a-f]+\.html",
     ),
 ]
 
