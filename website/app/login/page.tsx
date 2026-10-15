@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
 
@@ -10,6 +10,7 @@ function LoginContent() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
   useEffect(() => {
     if (searchParams.get('register') === '1') {
@@ -17,9 +18,21 @@ function LoginContent() {
     }
   }, [searchParams]);
 
-  // Login state
+  // Login state（密码 / 验证码 双方式）
+  const [loginMode, setLoginMode] = useState<'password' | 'code'>('password');
+  const [emailLoginEnabled, setEmailLoginEnabled] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+
+  // Email code state
+  const [codeValue, setCodeValue] = useState('');
+  const [codeSending, setCodeSending] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const [needsProfile, setNeedsProfile] = useState(false);
+  const [profileName, setProfileName] = useState('');
+  const [profileCompany, setProfileCompany] = useState('');
+  const [codeAgreed, setCodeAgreed] = useState(false);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Register state
   const [companyName, setCompanyName] = useState('');
@@ -33,10 +46,37 @@ function LoginContent() {
 
   const TERMS_VERSION = '2026-09-19';
 
+  // 验证码 tab 由后端能力开关控制：Resend 通道未配置时不展示
+  useEffect(() => {
+    let active = true;
+    api.getAuthConfig().then(cfg => {
+      if (active) setEmailLoginEnabled(cfg.email_login_enabled);
+    });
+    return () => {
+      active = false;
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, []);
+
+  const startCountdown = (seconds = 60) => {
+    setCountdown(seconds);
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    countdownRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setNotice('');
     try {
       await api.login(loginEmail, loginPassword);
       router.push('/dashboard');
@@ -47,10 +87,62 @@ function LoginContent() {
     }
   };
 
+  const handleSendCode = async () => {
+    setError('');
+    setNotice('');
+    if (!loginEmail.trim()) {
+      setError('请先输入邮箱');
+      return;
+    }
+    setCodeSending(true);
+    try {
+      await api.sendEmailCode(loginEmail.trim());
+      setNotice('验证码已发送，请查收邮箱（10 分钟内有效）');
+      startCountdown(60);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '验证码发送失败');
+    } finally {
+      setCodeSending(false);
+    }
+  };
+
+  const handleCodeLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setNotice('');
+    try {
+      await api.verifyEmailCode({
+        email: loginEmail.trim(),
+        code: codeValue.trim(),
+        ...(needsProfile
+          ? {
+              owner_name: profileName.trim() || undefined,
+              company_name: profileCompany.trim() || undefined,
+              agreed_terms_version: codeAgreed ? TERMS_VERSION : undefined,
+            }
+          : {}),
+      });
+      router.push('/dashboard');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '验证码校验失败';
+      if (msg.includes('首次登录')) {
+        // 新邮箱：后端要求补充信息（验证码未被消耗，补齐后直接重新提交）
+        setNeedsProfile(true);
+        setError('这是您的首次登录，将自动为您创建工作区，请补充以下信息');
+      } else {
+        setError(msg);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setNotice('');
     try {
       await api.register({
         company_name: companyName,
@@ -81,26 +173,112 @@ function LoginContent() {
           </div>
 
           <div className="yc-auth-tabs">
-            <button className={`yc-auth-tab ${isLogin ? 'active' : ''}`} onClick={() => { setIsLogin(true); setError(''); }}>登录</button>
-            <button className={`yc-auth-tab ${!isLogin ? 'active' : ''}`} onClick={() => { setIsLogin(false); setError(''); }}>免费注册</button>
+            <button className={`yc-auth-tab ${isLogin ? 'active' : ''}`} onClick={() => { setIsLogin(true); setError(''); setNotice(''); }}>登录</button>
+            <button className={`yc-auth-tab ${!isLogin ? 'active' : ''}`} onClick={() => { setIsLogin(false); setError(''); setNotice(''); }}>免费注册</button>
           </div>
 
           {error && <div className="yc-auth-error">{error}</div>}
+          {notice && <div className="yc-auth-notice">{notice}</div>}
 
           {isLogin ? (
-            <form onSubmit={handleLogin} className="yc-auth-form">
-              <div className="yc-form-group">
-                <label>邮箱</label>
-                <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="your@company.com" required />
-              </div>
-              <div className="yc-form-group">
-                <label>密码</label>
-                <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} placeholder="输入密码" required />
-              </div>
-              <button type="submit" className="yc-btn-primary yc-btn-full" disabled={loading}>
-                {loading ? '登录中...' : '登录'}
-              </button>
-            </form>
+            <>
+              {emailLoginEnabled && (
+                <div className="yc-auth-subtabs">
+                  <button
+                    type="button"
+                    className={`yc-auth-subtab ${loginMode === 'password' ? 'active' : ''}`}
+                    onClick={() => { setLoginMode('password'); setError(''); setNotice(''); }}
+                  >
+                    密码登录
+                  </button>
+                  <button
+                    type="button"
+                    className={`yc-auth-subtab ${loginMode === 'code' ? 'active' : ''}`}
+                    onClick={() => { setLoginMode('code'); setError(''); setNotice(''); }}
+                  >
+                    验证码登录
+                  </button>
+                </div>
+              )}
+
+              {loginMode === 'password' ? (
+                <form onSubmit={handleLogin} className="yc-auth-form">
+                  <div className="yc-form-group">
+                    <label>邮箱</label>
+                    <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="your@company.com" required />
+                  </div>
+                  <div className="yc-form-group">
+                    <label>密码</label>
+                    <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} placeholder="输入密码" required />
+                  </div>
+                  <button type="submit" className="yc-btn-primary yc-btn-full" disabled={loading}>
+                    {loading ? '登录中...' : '登录'}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleCodeLogin} className="yc-auth-form">
+                  <div className="yc-form-group">
+                    <label>邮箱</label>
+                    <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="your@company.com" required />
+                  </div>
+                  <div className="yc-form-group">
+                    <label>验证码</label>
+                    <div className="yc-code-row">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={codeValue}
+                        onChange={e => setCodeValue(e.target.value.replace(/\D/g, ''))}
+                        placeholder="6 位验证码"
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="yc-code-send"
+                        onClick={handleSendCode}
+                        disabled={countdown > 0 || codeSending}
+                      >
+                        {codeSending ? '发送中...' : countdown > 0 ? `${countdown}s 后重发` : '获取验证码'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {needsProfile && (
+                    <>
+                      <div className="yc-form-group">
+                        <label>您的姓名 <span className="yc-required">*</span></label>
+                        <input type="text" value={profileName} onChange={e => setProfileName(e.target.value)} placeholder="联系人姓名" required />
+                      </div>
+                      <div className="yc-form-group">
+                        <label>企业名称 <span className="yc-required">*</span></label>
+                        <input type="text" value={profileCompany} onChange={e => setProfileCompany(e.target.value)} placeholder="如：上海某某科技有限公司" required />
+                      </div>
+                      <div className="yc-agree-group">
+                        <label className="yc-agree-label">
+                          <input type="checkbox" checked={codeAgreed} onChange={e => setCodeAgreed(e.target.checked)} />
+                          <span>
+                            我已阅读并同意
+                            <a href="/terms" target="_blank" rel="noopener noreferrer">《服务条款》</a>
+                            与
+                            <a href="/privacy" target="_blank" rel="noopener noreferrer">《隐私政策》</a>
+                          </span>
+                        </label>
+                      </div>
+                    </>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="yc-btn-primary yc-btn-full"
+                    disabled={loading || !codeValue || (needsProfile && (!profileName.trim() || !profileCompany.trim() || !codeAgreed))}
+                  >
+                    {loading ? '登录中...' : needsProfile ? '创建并开始使用' : '登录'}
+                  </button>
+                  <p className="yc-auth-hint">未注册过的邮箱验证后会自动创建工作区</p>
+                </form>
+              )}
+            </>
           ) : (
             <form onSubmit={handleRegister} className="yc-auth-form">
               <div className="yc-form-group">
@@ -182,13 +360,22 @@ function LoginContent() {
         .yc-auth-tabs { display: flex; background: #f1f5f9; border-radius: 10px; padding: 4px; margin-bottom: 20px; }
         .yc-auth-tab { flex: 1; padding: 10px; border: none; background: transparent; border-radius: 8px; font-size: 14px; font-weight: 500; color: #64748b; cursor: pointer; transition: all 0.2s; }
         .yc-auth-tab.active { background: #fff; color: #0d1b2a; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
+        .yc-auth-subtabs { display: flex; gap: 16px; border-bottom: 1px solid #e2e8f0; margin-bottom: 16px; }
+        .yc-auth-subtab { padding: 8px 2px; border: none; background: transparent; font-size: 13px; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+        .yc-auth-subtab.active { color: #126a9a; font-weight: 600; border-bottom-color: #126a9a; }
         .yc-auth-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+        .yc-auth-notice { background: #f0f9ff; border: 1px solid #bae6fd; color: #0369a1; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
         .yc-auth-form { display: flex; flex-direction: column; gap: 14px; }
         .yc-form-group label { display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 4px; }
         .yc-required { color: #f97316; }
         .yc-form-group input, .yc-form-group select { width: 100%; padding: 11px 14px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 14px; outline: none; background: #fff; }
         .yc-form-group input:focus, .yc-form-group select:focus { border-color: #126a9a; box-shadow: 0 0 0 3px rgba(18, 106, 154, 0.12); }
         .yc-form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .yc-code-row { display: flex; gap: 10px; }
+        .yc-code-row input { flex: 1; }
+        .yc-code-send { flex-shrink: 0; padding: 0 16px; border: 1px solid #126a9a; border-radius: 10px; background: #fff; color: #126a9a; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+        .yc-code-send:hover:not(:disabled) { background: #f0f7fb; }
+        .yc-code-send:disabled { border-color: #cbd5e1; color: #94a3b8; cursor: not-allowed; }
         .yc-btn-full { width: 100%; padding: 13px; font-size: 15px; margin-top: 4px; }
         .yc-auth-hint { text-align: center; font-size: 12px; color: #94a3b8; margin: 8px 0 0; }
         .yc-agree-group { margin-top: 2px; }

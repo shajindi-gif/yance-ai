@@ -2,7 +2,7 @@ import re
 import secrets
 import time
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import structlog
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
@@ -16,9 +16,24 @@ from app.core.config import settings
 from app.core.db import get_db
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.models import Company, Membership, Tenant, User, UserRole
-from app.schemas.schemas import BootstrapRequest, RegisterRequest, Token, UserOut
+from app.schemas.schemas import (
+    BootstrapRequest,
+    EmailCodeSendRequest,
+    EmailCodeVerifyRequest,
+    RegisterRequest,
+    Token,
+    UserOut,
+)
 from app.services.analytics.events import record_event
 from app.services.company_profiles import create_company_profile
+from app.services.email_code import (
+    EmailSendError,
+    RateLimited,
+    check_send_limits,
+    consume_login_code,
+    send_login_code,
+)
+from app.services.notifications.email import is_email_configured
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = structlog.get_logger()
@@ -181,7 +196,7 @@ def register(
         properties={
             "terms_version": payload.agreed_terms_version,
             "documents": ["terms", "privacy"],
-            "accepted_at": datetime.now(timezone.utc).isoformat(),
+            "accepted_at": datetime.now(UTC).isoformat(),
         },
     )
     record_event(
@@ -254,6 +269,200 @@ def login(
     return Token(
         access_token=create_access_token(
             user_id=user.id, tenant_id=user.tenant_id, role=user.role.value
+        )
+    )
+
+
+# ── 邮箱验证码登录（无需密码，自动建号）────────────────────────
+
+
+def _client_ip(request: Request) -> str:
+    """Best-effort client IP; Cloudflare Tunnel forwards the real IP via XFF."""
+    xff = request.headers.get("x-forwarded-for")
+    if xff:
+        return xff.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+@router.get("/config")
+def auth_config() -> dict:
+    """Public capability flags so the login page can hide unavailable tabs."""
+    return {"email_login_enabled": is_email_configured()}
+
+
+@router.post("/email/send", status_code=202)
+def email_code_send(
+    request: Request,
+    payload: EmailCodeSendRequest,
+    db: Session = Depends(get_db),
+) -> dict:
+    """Send a 6-digit login code. Unknown emails are provisioned at verify time.
+
+    Deliberately anti-enumeration: the response never reveals whether the
+    address already has an account.
+    """
+    if not is_email_configured():
+        raise HTTPException(
+            status_code=503,
+            detail="邮箱验证码通道尚未开通，请使用密码登录或注册",
+        )
+    email = str(payload.email).lower()
+    client_ip = _client_ip(request)
+    try:
+        check_send_limits(db, email, client_ip)
+    except RateLimited as rl:
+        raise HTTPException(
+            status_code=429,
+            detail=f"验证码发送过于频繁，请 {rl.retry_after} 秒后重试",
+        ) from rl
+    try:
+        send_login_code(db, email, client_ip)
+    except EmailSendError as exc:
+        raise HTTPException(
+            status_code=502, detail="验证码邮件发送失败，请稍后重试"
+        ) from exc
+    return {"message": "验证码已发送，请查收邮箱（10 分钟内有效）"}
+
+
+@router.post("/email/verify", response_model=Token)
+def email_code_verify(
+    payload: EmailCodeVerifyRequest,
+    db: Session = Depends(get_db),
+) -> Token:
+    """Verify a login code; existing users log in, new emails auto-register."""
+    if not is_email_configured():
+        raise HTTPException(
+            status_code=503, detail="邮箱验证码通道尚未开通，请使用密码登录"
+        )
+    email = str(payload.email).lower()
+
+    # Resolve the account BEFORE consuming the code so a missing-field 400
+    # does not burn a valid verification code. Counts every user (active or
+    # not): email is treated as globally unique for self-service registration.
+    users = db.scalars(select(User).where(User.email == email)).all()
+    provisioning = len(users) == 0
+    if len(users) > 1:
+        # Same email across multiple workspaces (admin-provisioned): password
+        # login with X-Tenant-Slug is the only unambiguous path.
+        raise HTTPException(
+            status_code=400,
+            detail="该邮箱关联多个工作区，请使用密码登录",
+        )
+    if provisioning and not (
+        payload.owner_name and payload.company_name and payload.agreed_terms_version
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="首次登录需填写姓名、企业名称并同意《服务条款》与《隐私政策》",
+        )
+
+    result = consume_login_code(db, email, payload.code)
+    if result == "expired":
+        raise HTTPException(status_code=401, detail="验证码已过期，请重新获取")
+    if result == "too_many":
+        raise HTTPException(status_code=429, detail="验证码错误次数过多，请重新获取")
+    if result != "ok":
+        raise HTTPException(status_code=401, detail="验证码不正确")
+
+    if not provisioning:
+        user = users[0]
+        if not user.is_active:
+            raise HTTPException(status_code=403, detail="该账号已被停用，请联系管理员")
+        tenant = db.get(Tenant, user.tenant_id)
+        if not tenant or not tenant.is_active:
+            raise HTTPException(status_code=403, detail="该工作区已被停用，请联系管理员")
+        record_event(
+            db, tenant_id=user.tenant_id, user_id=user.id, name="login_completed"
+        )
+        try:
+            db.commit()
+        except SQLAlchemyError:
+            db.rollback()
+            logger.warning("analytics_event_write_failed", event_name="login_completed")
+        return Token(
+            access_token=create_access_token(
+                user_id=user.id, tenant_id=user.tenant_id, role=user.role.value
+            )
+        )
+
+    # ── Auto-provision: tenant + owner + default company (mirrors /register) ──
+    slug = _make_slug(payload.company_name or "")
+    tenant = Tenant(name=payload.company_name, slug=slug)
+    db.add(tenant)
+    db.flush()
+    owner = User(
+        tenant_id=tenant.id,
+        email=email,
+        full_name=payload.owner_name,
+        # Passwordless account: store a random unusable hash (column is NOT NULL).
+        password_hash=hash_password(secrets.token_urlsafe(24)),
+        role=UserRole.owner,
+    )
+    db.add(owner)
+    db.flush()
+    db.add(
+        Membership(
+            tenant_id=tenant.id,
+            user_id=owner.id,
+            role=UserRole.owner,
+            status="active",
+        )
+    )
+    company = Company(tenant_id=tenant.id, name=payload.company_name)
+    db.add(company)
+    db.flush()
+    create_company_profile(db, company)
+    record_event(
+        db,
+        tenant_id=tenant.id,
+        user_id=owner.id,
+        name="signup_completed",
+        event_key=f"signup_completed:{tenant.id}",
+        properties={"method": "email_code"},
+    )
+    record_event(
+        db,
+        tenant_id=tenant.id,
+        user_id=owner.id,
+        name="terms_accepted",
+        event_key=f"terms_accepted:{owner.id}",
+        properties={
+            "terms_version": payload.agreed_terms_version,
+            "documents": ["terms", "privacy"],
+            "accepted_at": datetime.now(UTC).isoformat(),
+        },
+    )
+    record_event(
+        db,
+        tenant_id=tenant.id,
+        user_id=owner.id,
+        name="company_created",
+        event_key=f"company_created:{company.id}",
+        properties={"company_id": str(company.id)},
+    )
+    record_event(
+        db, tenant_id=tenant.id, user_id=owner.id, name="login_completed"
+    )
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        # Lost a race against a concurrent verify for the same email.
+        db.rollback()
+        existing = db.scalars(
+            select(User).where(User.email == email, User.is_active.is_(True))
+        ).all()
+        if len(existing) == 1:
+            user = existing[0]
+            return Token(
+                access_token=create_access_token(
+                    user_id=user.id, tenant_id=user.tenant_id, role=user.role.value
+                )
+            )
+        raise HTTPException(status_code=409, detail="注册失败，请重试") from exc
+
+    return Token(
+        access_token=create_access_token(
+            user_id=owner.id, tenant_id=tenant.id, role=owner.role.value
         )
     )
 

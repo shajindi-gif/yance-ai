@@ -11,6 +11,7 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Index,
+    Integer,
     Numeric,
     String,
     Text,
@@ -1603,3 +1604,28 @@ class Milestone(Base, TimestampMixin, TenantOwnedMixin):
     status: Mapped[str] = mapped_column(String(40), default="todo", index=True)  # todo/doing/done/blocked
     completion_note: Mapped[str | None] = mapped_column(Text)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class EmailCode(Base):
+    """One-time email verification codes for passwordless login/registration.
+
+    Pre-tenant table: codes exist before the user belongs to any workspace,
+    so this deliberately has no tenant_id. Codes are stored only as SHA-256
+    hashes; rate limiting is enforced against this table (DB-backed, safe
+    across the 4 uvicorn workers, unlike in-memory counters).
+    """
+
+    __tablename__ = "email_codes"
+    __table_args__ = (
+        Index("ix_email_code_email_created", "email", "created_at"),
+        Index("ix_email_code_ip_created", "ip_address", "created_at"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email: Mapped[str] = mapped_column(String(320), index=True)
+    code_hash: Mapped[str] = mapped_column(String(64))
+    purpose: Mapped[str] = mapped_column(String(20), default="login")  # login (register folded in)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    ip_address: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)

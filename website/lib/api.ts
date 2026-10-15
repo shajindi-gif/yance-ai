@@ -1079,6 +1079,49 @@ class ApiClient {
     return this.request<User>('/auth/me');
   }
 
+  // ── Email code login（验证码登录，未注册邮箱自动建号）──────────
+  async getAuthConfig(): Promise<{ email_login_enabled: boolean }> {
+    try {
+      return await this.request<{ email_login_enabled: boolean }>('/auth/config');
+    } catch {
+      // 配置接口不可用时保守回退：只显示密码登录
+      return { email_login_enabled: false };
+    }
+  }
+
+  async sendEmailCode(email: string): Promise<void> {
+    const response = await fetch(`${API_BASE}/auth/email/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: '验证码发送失败' }));
+      throw new Error(error.detail || `验证码发送失败（HTTP ${response.status}）`);
+    }
+  }
+
+  async verifyEmailCode(data: {
+    email: string;
+    code: string;
+    owner_name?: string;
+    company_name?: string;
+    agreed_terms_version?: string;
+  }): Promise<LoginResponse> {
+    const response = await fetch(`${API_BASE}/auth/email/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: '验证码校验失败' }));
+      throw new Error(error.detail || '验证码校验失败');
+    }
+    const result = await response.json();
+    if (result.access_token) this.setToken(result.access_token);
+    return result;
+  }
+
   async getAdminOverview(): Promise<AdminOverview> {
     return this.request<AdminOverview>('/admin/overview');
   }

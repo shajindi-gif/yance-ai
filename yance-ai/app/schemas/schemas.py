@@ -43,6 +43,22 @@ class RegisterRequest(BaseModel):
     )  # 用户显式勾选同意的协议版本（可追溯）
 
 
+class EmailCodeSendRequest(BaseModel):
+    """Request a one-time login code. New emails auto-provision on verify."""
+
+    email: EmailStr
+
+
+class EmailCodeVerifyRequest(BaseModel):
+    """Verify a login code. Provisioning needs name + company + consent."""
+
+    email: EmailStr
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
+    owner_name: str | None = Field(default=None, max_length=160)
+    company_name: str | None = Field(default=None, max_length=160)
+    agreed_terms_version: str | None = Field(default=None, max_length=40)
+
+
 class UserCreate(BaseModel):
     email: EmailStr
     full_name: str = Field(min_length=2, max_length=160)
