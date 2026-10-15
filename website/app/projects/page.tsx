@@ -21,6 +21,11 @@ const STAGES: { key: string; label: string; statuses: string[] }[] = [
 ];
 
 const MILESTONE_TONE = { todo: "neutral", doing: "info", done: "success", blocked: "danger" } as const;
+const MILESTONE_LABEL: Record<string, string> = { todo: "待办", doing: "进行中", done: "已完成", blocked: "受阻" };
+const APP_STATUS_LABEL: Record<string, string> = {
+  draft: "草稿", preparing: "材料准备", review: "内部评审", revision_requested: "待修改",
+  approved: "已批准", submitted: "已提交", completed: "已获批/结项", cancelled: "已取消",
+};
 
 export default function ProjectsPage() {
   const [applications, setApplications] = useState<ApplicationSummary[]>([]);
@@ -161,7 +166,7 @@ export default function ProjectsPage() {
                           </div>
                         </div>
                         <Badge tone={stage.key === "submitted" ? "info" : stage.key === "awarded" ? "success" : "warning"}>
-                          {application.status}
+                          {APP_STATUS_LABEL[application.status] || application.status}
                         </Badge>
                       </button>
                     ))}
@@ -220,7 +225,7 @@ export default function ProjectsPage() {
                         </div>
                       </div>
                       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                        <Badge tone={MILESTONE_TONE[milestone.status] || "neutral"}>{milestone.status}</Badge>
+                        <Badge tone={MILESTONE_TONE[milestone.status] || "neutral"}>{MILESTONE_LABEL[milestone.status] || milestone.status}</Badge>
                         <Button variant="secondary" onClick={() => void cycleStatus(milestone)}>
                           {milestone.status === "todo" ? "开始" : milestone.status === "doing" ? "完成" : "重开"}
                         </Button>

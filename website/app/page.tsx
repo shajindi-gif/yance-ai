@@ -353,16 +353,16 @@ export default function HomePage() {
           </div>
           <div className="yc-shots">
             <figure className="yc-shot">
-              <img src="/product/command-center.png" alt="指挥中心界面：资金管道、截止提醒与行动建议" width={1440} height={900} loading="lazy" />
+              <img src="/product/command-center.webp" alt="指挥中心界面：资金管道、截止提醒与行动建议" width={1440} height={900} loading="lazy" />
               <figcaption>指挥中心 — 可申请资金、30 天截止、待补证据一屏可见</figcaption>
             </figure>
             <div className="yc-shot-row">
               <figure className="yc-shot">
-                <img src="/product/discover.png" alt="发现资金界面：政策目录与筛选" width={1440} height={900} loading="lazy" />
+                <img src="/product/discover.webp" alt="发现资金界面：政策目录与筛选" width={1440} height={900} loading="lazy" />
                 <figcaption>发现资金 — 国家 / 市 / 区政策目录，可查原文</figcaption>
               </figure>
               <figure className="yc-shot">
-                <img src="/product/opportunities.png" alt="我的机会界面：匹配结果与资格状态" width={1440} height={900} loading="lazy" />
+                <img src="/product/opportunities.webp" alt="我的机会界面：匹配结果与资格状态" width={1440} height={900} loading="lazy" />
                 <figcaption>我的机会 — 适配度评分与逐条资格状态</figcaption>
               </figure>
             </div>
