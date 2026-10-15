@@ -134,68 +134,6 @@ const QUICK_EXAMPLES = [
 ];
 
 /* -------------------------------------------
-   Product Modules（与主导航一致的七个模块）
-   ------------------------------------------- */
-const PRODUCTS = [
-  {
-    icon: 'target',
-    name: 'Policy Match',
-    subtitle: '企业政策匹配引擎',
-    desc: '基于企业画像和政策语义理解，自动匹配适用政策并生成适配度评分、材料缺口分析和优先级排序。',
-    tags: ['语义匹配', '适配度评分', '材料缺口'],
-    href: '/login?register=1',
-  },
-  {
-    icon: 'doc',
-    name: 'Grant Copilot',
-    subtitle: '政策补贴申报助手',
-    desc: '从政策解读到材料清单生成，辅助企业完成补贴申报全流程，提供条款级引用和合规性检查。',
-    tags: ['申报辅助', '材料生成', '合规检查'],
-    href: '/pricing',
-  },
-  {
-    icon: 'chart',
-    name: 'Industry Research',
-    subtitle: '新质生产力产业研究系统',
-    desc: '覆盖 AI、机器人、生物医药、集成电路、新能源等赛道的产业格局、价值链、政策趋势分析。',
-    tags: ['产业图谱', '价值链', '趋势分析'],
-    href: '/policy-knowledge-base',
-  },
-  {
-    icon: 'building',
-    name: 'Company Profile',
-    subtitle: '科技企业画像生成器',
-    desc: '整合企业工商、知识产权、财务、团队等多维数据，自动生成结构化企业画像，支持申报资质评估。',
-    tags: ['多维画像', '资质评估', '数据整合'],
-    href: '/company-match',
-  },
-  {
-    icon: 'park',
-    name: 'Park Entry',
-    subtitle: '园区入驻与资源匹配助手',
-    desc: '基于企业行业、发展阶段和资源需求，推荐最优园区入驻方案，匹配产业资源、人才政策和资金支持。',
-    tags: ['园区推荐', '资源匹配', '入驻方案'],
-    href: '/parks',
-  },
-  {
-    icon: 'doc',
-    name: 'Report Studio',
-    subtitle: '产业报告与申报材料生成器',
-    desc: '一键生成产业研究报告、申报书、融资 BP、项目计划书等专业文档，支持 PDF 和 Word 导出。',
-    tags: ['报告生成', 'BP 生成', '多格式导出'],
-    href: '/brief-maker',
-  },
-  {
-    icon: 'bot',
-    name: 'Knowledge Bot',
-    subtitle: '园区政策知识库 Bot',
-    desc: '路线图能力：基于园区政策文件构建可追溯问答，并在完成权限和数据边界验收后接入企业渠道。',
-    tags: ['路线图', '知识问答', '来源追溯'],
-    href: '/policy-knowledge-base',
-  },
-];
-
-/* -------------------------------------------
    Industry Solutions Data
    ------------------------------------------- */
 const SOLUTIONS = [
@@ -257,24 +195,25 @@ export default function HomePage() {
           <div style={{ maxWidth: '800px' }}>
             <div className="yc-hero-badge">
               <span className="yc-hero-badge-dot" />
-              面向新质生产力科技企业 &middot; 衍策引擎AI
+              衍策引擎 AI · 企业政策与资金顾问
             </div>
 
             <h1 className="yc-hero-title">
-              中国新质生产力企业的<br />
-              <span style={{ color: 'var(--teal-bright)' }}>AI 产业研究与政策申报平台</span>
+              让企业更容易<br />
+              <span style={{ color: 'var(--teal-bright)' }}>找到适合自己的政策</span>
             </h1>
 
             <p className="yc-hero-subtitle">
-              衍策引擎AI 帮助科技企业完成产业研究、政策匹配、补贴申报、园区入驻、项目材料生成和企业成长规划，让企业更快找到政策、资金、资源和增长路径。
+              根据企业所在地区、所属行业和经营情况，查找可能适用的扶持政策，
+              核对申报条件，整理所需材料，生成可追溯的初筛报告。
             </p>
 
             <div className="yc-hero-ctas">
               <Link href="/login?register=1" className="yc-btn-primary">
-                免费生成政策匹配报告
+                开始政策匹配
               </Link>
-              <a href="mailto:contact@yance.ai?subject=申报诊断预约" className="yc-btn-outline-white">
-                预约 30 分钟诊断
+              <a href="#report-preview" className="yc-btn-outline-white">
+                查看报告示例
               </a>
             </div>
           </div>
@@ -285,7 +224,7 @@ export default function HomePage() {
       <section className="yc-input-section">
         <div className="container">
           <form className="yc-input-wrapper" onSubmit={submitSearch}>
-            <h2 className="yc-input-title">生成你的企业政策与产业机会初筛报告</h2>
+            <h2 className="yc-input-title">输入企业信息，查看可能适用的政策</h2>
             <div className="yc-search-box">
               <div className="yc-search-icon">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -298,12 +237,12 @@ export default function HomePage() {
                 id="hero-search"
                 className="yc-search-textarea"
                 rows={2}
-                placeholder="请输入企业名称、所在城市、行业或项目方向，例如：上海 AI SaaS 公司、张江机器人企业、生物医药高新技术企业。"
+                placeholder="例如：上海，人工智能，50 人，有 6 项软著和 2 项发明专利——注册后按这些条件核对适用政策与申报要求。"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
               />
               <button type="submit" className="yc-search-submit">
-                生成报告
+                开始匹配
               </button>
             </div>
             <div className="yc-quick-examples">
@@ -324,13 +263,13 @@ export default function HomePage() {
       </section>
 
       {/* ===== REPORT PREVIEW ===== */}
-      <section className="section">
+      <section className="section" id="report-preview">
         <div className="container">
           <div className="section-header">
-            <span className="section-label">报告预览</span>
-            <h2 className="section-title">科技企业政策匹配与产业机会初筛报告</h2>
+            <span className="section-label">报告示例</span>
+            <h2 className="section-title">一份初筛报告里有什么</h2>
             <p className="section-subtitle">
-              输入企业基本信息，AI 自动生成结构化的政策匹配与产业机会分析报告。
+              每条推荐都对应到政策原文条款与企业事实；证据不足的项目会明确标出，而不是猜一个结论。
             </p>
           </div>
 
@@ -402,30 +341,136 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== PRODUCT MODULES ===== */}
+      {/* ===== REAL PRODUCT SCREENSHOTS ===== */}
+      <section className="section section-alt" id="product">
+        <div className="container">
+          <div className="section-header">
+            <span className="section-label">产品界面</span>
+            <h2 className="section-title">登录后你看到的，就是这些</h2>
+            <p className="section-subtitle">
+              以下为示例工作区的真实界面截图（数据为测试数据），不是设计稿。
+            </p>
+          </div>
+          <div className="yc-shots">
+            <figure className="yc-shot">
+              <img src="/product/command-center.png" alt="指挥中心界面：资金管道、截止提醒与行动建议" width={1440} height={900} loading="lazy" />
+              <figcaption>指挥中心 — 可申请资金、30 天截止、待补证据一屏可见</figcaption>
+            </figure>
+            <div className="yc-shot-row">
+              <figure className="yc-shot">
+                <img src="/product/discover.png" alt="发现资金界面：政策目录与筛选" width={1440} height={900} loading="lazy" />
+                <figcaption>发现资金 — 国家 / 市 / 区政策目录，可查原文</figcaption>
+              </figure>
+              <figure className="yc-shot">
+                <img src="/product/opportunities.png" alt="我的机会界面：匹配结果与资格状态" width={1440} height={900} loading="lazy" />
+                <figcaption>我的机会 — 适配度评分与逐条资格状态</figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== WORKFLOW（用户实际工作流程，每步对应真实功能） ===== */}
+      <section className="section">
+        <div className="container">
+          <div className="section-header">
+            <span className="section-label">工作流程</span>
+            <h2 className="section-title">从企业信息到初筛报告，五步完成</h2>
+            <p className="section-subtitle">
+              每一步都在产品里有对应页面，不是概念图。
+            </p>
+          </div>
+          <div className="yc-workflow">
+            {[
+              { step: '01', title: '输入企业信息', desc: '名称、地区、行业、规模、知识产权与研发情况，10 分钟内可完成。' },
+              { step: '02', title: '查找适用政策', desc: '按地区、行业与资质条件在政策库中检索，含国家、市、区三级。' },
+              { step: '03', title: '核对申报条件', desc: '逐条硬性门槛判定：符合 / 不符合 / 证据不足，附政策原文条款。' },
+              { step: '04', title: '整理材料清单', desc: '按政策要求生成待办材料与缺口，标注哪些已具备、哪些需补充。' },
+              { step: '05', title: '生成初筛报告', desc: '汇总匹配结果与依据，导出 PDF，供内部决策或顾问复核。' },
+            ].map((w) => (
+              <div key={w.step} className="yc-workflow-step">
+                <span className="yc-workflow-num">{w.step}</span>
+                <div>
+                  <h3>{w.title}</h3>
+                  <p>{w.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== CAPABILITIES BY USER TASK（按任务分组，区分已上线/开发中） ===== */}
       <section className="section section-alt">
         <div className="container">
           <div className="section-header">
             <span className="section-label">产品能力</span>
-            <h2 className="section-title">从产业研究到申报落地的全链路 AI 引擎</h2>
+            <h2 className="section-title">按你要完成的事来组织</h2>
             <p className="section-subtitle">
-              七个产品模块覆盖政策服务全场景：企业画像、政策匹配、材料生成、园区入驻，每个环节都有对应工具支撑。
+              我们明确区分已上线与开发中的能力，未验证的功能不会出现在可点击入口里。
             </p>
           </div>
-
-          <div className="yc-product-grid">
-            {PRODUCTS.map((p, i) => (
-              <Link key={p.name} href={p.href} className={`yc-product-card${i === 0 ? ' yc-product-featured' : ''}`}>
-                <div className="yc-product-icon"><Icon name={p.icon} size={22} /></div>
-                <div className="yc-product-name">{p.name}</div>
-                <div className="yc-product-subtitle">{p.subtitle}</div>
-                <p className="yc-product-desc">{p.desc}</p>
-                <div className="yc-product-tags">
-                  {p.tags.map((t) => (
-                    <span key={t} className="yc-product-tag">{t}</span>
-                  ))}
+          <div className="yc-task-grid">
+            {[
+              {
+                title: '发现政策机会',
+                status: '已上线',
+                href: '/discover',
+                items: [
+                  { name: '政策知识库检索', desc: '国家 / 市 / 区三级政策，含发布日期与有效期', live: true },
+                  { name: '企业 × 政策匹配', desc: '按画像条件返回适配度与资格状态', live: true },
+                  { name: '截止日提醒', desc: 'T-30 / 14 / 7 / 3 / 1 站内与邮件通知', live: true },
+                ],
+              },
+              {
+                title: '判断申报资格',
+                status: '已上线',
+                href: '/opportunities',
+                items: [
+                  { name: '硬性门槛核对', desc: '注册地、年限、营收、研发占比等逐条判定', live: true },
+                  { name: '证据引用', desc: '每条结论可回溯到政策原文条款', live: true },
+                  { name: '缺失信息清单', desc: '明确标出无法判定的条件与所需证明', live: true },
+                ],
+              },
+              {
+                title: '准备申报材料',
+                status: '已上线',
+                href: '/applications',
+                items: [
+                  { name: '材料清单与缺口', desc: '按政策要求生成待办与已具备项', live: true },
+                  { name: '申报书草稿', desc: '结合企业事实生成初稿，人工复核后导出', live: true },
+                  { name: '分章节智能改写', desc: '按评审意见逐节扩写、精简、补证据', live: false },
+                ],
+              },
+              {
+                title: '了解产业与园区资源',
+                status: '部分上线',
+                href: '/parks',
+                items: [
+                  { name: '园区政策资料', desc: '张江 / 临港 / 徐汇等重点载体公开政策整理', live: true },
+                  { name: '产业研究报告', desc: '赛道格局与政策趋势分析（样例）', live: true },
+                  { name: '园区知识库 Bot', desc: '面向园区运营方的问答部署', live: false },
+                ],
+              },
+            ].map((group) => (
+              <div key={group.title} className="yc-task-card">
+                <div className="yc-task-head">
+                  <h3>{group.title}</h3>
+                  <span className={`yc-live-badge ${group.status === '已上线' ? 'on' : 'partial'}`}>{group.status}</span>
                 </div>
-              </Link>
+                <ul className="yc-task-list">
+                  {group.items.map((item) => (
+                    <li key={item.name}>
+                      <span className={item.live ? '' : 'yc-item-dev'}>
+                        <strong>{item.name}</strong>
+                        <small>{item.desc}</small>
+                      </span>
+                      {!item.live && <span className="yc-dev-tag">开发中</span>}
+                    </li>
+                  ))}
+                </ul>
+                <Link href={group.href} className="yc-task-link">进入使用 &rarr;</Link>
+              </div>
             ))}
           </div>
         </div>
@@ -466,7 +511,7 @@ export default function HomePage() {
               人工复核
             </span>
             <span className="yc-trust-banner-text">
-              &mdash; 所有 AI 输出均支持人工复核和结果修正流程，确保服务质量
+              &mdash; 系统给出的每条结论都支持人工复核与修正；申报结果以主管部门审核为准，我们不承诺获批
             </span>
           </div>
         </div>
@@ -477,9 +522,9 @@ export default function HomePage() {
         <div className="container">
           <div className="section-header">
             <span className="section-label">行业解决方案</span>
-            <h2 className="section-title">深耕新质生产力六大核心赛道</h2>
+            <h2 className="section-title">我们重点服务的六个行业</h2>
             <p className="section-subtitle">
-              为每个行业定制政策匹配逻辑和产业研究框架，提供精准的申报辅助服务。
+              不同行业的资助口径差异很大。我们按行业整理条件与材料要求，减少通用检索遗漏的专项政策。
             </p>
           </div>
 

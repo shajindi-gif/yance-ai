@@ -119,8 +119,8 @@
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-card-hover: 0 10px 25px rgba(0, 0, 0, 0.08),
     0 4px 10px rgba(0, 0, 0, 0.04);
-  --shadow-glow-teal: 0 0 20px rgba(18, 106, 154, 0.2);
-  --shadow-glow-coral: 0 0 20px rgba(249, 115, 22, 0.2);
+  --shadow-glow-teal: 0 0 0 transparent; /* 去霓虹：发光效果统一移除 */
+  --shadow-glow-coral: 0 0 0 transparent;
 
   /* Transitions */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -716,9 +716,8 @@ code {
 .hero-badge-dot {
   width: 6px;
   height: 6px;
-  background: var(--teal);
+  background: var(--teal-bright);
   border-radius: 50%;
-  animation: pulse-dot 2s ease-in-out infinite;
 }
 
 @keyframes pulse-dot {
@@ -2671,20 +2670,19 @@ main {
    Hero Section
    ------------------------------------------- */
 .yc-hero {
-  padding: 160px 0 100px;
-  background: linear-gradient(135deg, #0d1b2a 0%, #1b2d44 40%, #142842 100%);
+  padding: 140px 0 96px;
+  background: #0d1b2a;
   color: #fff;
   position: relative;
   overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/* 编辑式安静背景：仅保留极淡的方向性渐变，无彩色光斑 */
 .yc-hero-mesh {
   position: absolute;
   inset: 0;
-  background-image:
-    radial-gradient(circle at 20% 50%, rgba(18,106,154,0.10) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(249,115,22,0.06) 0%, transparent 50%),
-    radial-gradient(circle at 60% 80%, rgba(18,106,154,0.06) 0%, transparent 50%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025) 0%, transparent 60%);
 }
 
 .yc-hero-badge {
@@ -2704,9 +2702,8 @@ main {
 .yc-hero-badge-dot {
   width: 6px;
   height: 6px;
-  background: var(--teal);
+  background: var(--teal-bright);
   border-radius: 50%;
-  animation: pulse-dot 2s ease-in-out infinite;
 }
 
 .yc-hero-title {
@@ -3106,6 +3103,160 @@ main {
 /* -------------------------------------------
    Product Matrix Grid
    ------------------------------------------- */
+/* -------------------------------------------
+   Workflow & Task Groups（编辑式，去模板感）
+   ------------------------------------------- */
+.yc-workflow {
+  max-width: 760px;
+  margin: 0 auto;
+  border-top: 1px solid var(--border);
+}
+.yc-workflow-step {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 24px;
+  padding: 26px 8px;
+  border-bottom: 1px solid var(--border);
+  align-items: baseline;
+}
+.yc-workflow-num {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--teal);
+  letter-spacing: 0.08em;
+}
+.yc-workflow-step h3 {
+  margin: 0 0 6px;
+  font-size: 1.0625rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.yc-workflow-step p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+/* 真实产品截图 */
+.yc-shots { max-width: 960px; margin: 0 auto; }
+.yc-shot { margin: 0 0 20px; }
+.yc-shot img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+}
+.yc-shot figcaption {
+  margin-top: 10px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+.yc-shot-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 768px) { .yc-shot-row { grid-template-columns: 1fr; } }
+
+.yc-task-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+.yc-task-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+}
+.yc-task-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.yc-task-head h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.yc-live-badge {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+.yc-live-badge.on {
+  color: #067647;
+  border-color: #abefc6;
+  background: #ecfdf3;
+}
+.yc-live-badge.partial {
+  color: #b54708;
+  border-color: #fedf89;
+  background: #fffaeb;
+}
+.yc-task-list {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  flex: 1;
+}
+.yc-task-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-light);
+}
+.yc-task-list strong {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.yc-task-list small {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.yc-item-dev {
+  opacity: 0.62;
+}
+.yc-dev-tag {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border: 1px dashed var(--border-dark);
+  border-radius: 4px;
+  padding: 2px 7px;
+  margin-top: 2px;
+}
+.yc-task-link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--teal);
+  text-decoration: none;
+}
+.yc-task-link:hover {
+  color: var(--teal-dark);
+}
+
+@media (max-width: 768px) {
+  .yc-task-grid { grid-template-columns: 1fr; }
+  .yc-workflow-step { grid-template-columns: 56px 1fr; gap: 14px; padding: 20px 4px; }
+}
+
 .yc-product-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -3240,7 +3391,7 @@ main {
    ------------------------------------------- */
 .yc-trust-section {
   padding: var(--section-gap) 0;
-  background: linear-gradient(135deg, #0d1b2a 0%, #162a45 100%);
+  background: #0d1b2a;
   color: #fff;
 }
 
