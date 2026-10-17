@@ -1,4 +1,4 @@
-"""Email verification codes for passwordless login (DB-backed rate limiting).
+"""Email verification codes: passwordless login + password reset (DB-backed limits).
 
 Security posture (ported rules from the fengyuxueye audit fixes):
 - Codes are stored only as SHA-256 hashes, 10-minute TTL, single-use.
@@ -78,8 +78,15 @@ def check_send_limits(db: Session, email: str, ip: str | None) -> None:
             raise RateLimited(3600)
 
 
-def send_login_code(db: Session, email: str, ip: str | None) -> None:
-    """Invalidate outstanding codes for this email, issue and deliver a new one.
+def send_code(
+    db: Session,
+    email: str,
+    ip: str | None,
+    purpose: str,
+    subject: str,
+    body: str,
+) -> None:
+    """Invalidate outstanding codes of the SAME purpose, issue and deliver one.
 
     Commits only after successful delivery; a failed send rolls back so the
     cooldown slot is not consumed.
@@ -88,6 +95,7 @@ def send_login_code(db: Session, email: str, ip: str | None) -> None:
     stale = db.scalars(
         select(EmailCode).where(
             EmailCode.email == email,
+            EmailCode.purpose == purpose,
             EmailCode.used_at.is_(None),
             EmailCode.expires_at > now,
         )
@@ -100,26 +108,50 @@ def send_login_code(db: Session, email: str, ip: str | None) -> None:
         EmailCode(
             email=email,
             code_hash=hash_code(email, code),
-            purpose="login",
+            purpose=purpose,
             expires_at=now + CODE_TTL,
             ip_address=ip,
         )
     )
     db.flush()
-    delivered = send_email(
-        email,
-        "登录衍策引擎AI 的验证码",
-        f"您的登录验证码是：{code}\n\n验证码 10 分钟内有效，仅可使用一次。\n"
-        "如果这不是您本人的操作，请忽略本邮件，并检查账号安全。",
-    )
+    delivered = send_email(email, subject, body.format(code=code))
     if not delivered:
         db.rollback()
         raise EmailSendError("verification email could not be delivered")
     db.commit()
 
 
-def consume_login_code(db: Session, email: str, code: str) -> str:
-    """Try to consume the newest live code for ``email``.
+def send_login_code(db: Session, email: str, ip: str | None) -> None:
+    send_code(
+        db,
+        email,
+        ip,
+        purpose="login",
+        subject="登录衍策引擎AI 的验证码",
+        body=(
+            "您的登录验证码是：{code}\n\n验证码 10 分钟内有效，仅可使用一次。\n"
+            "如果这不是您本人的操作，请忽略本邮件，并检查账号安全。"
+        ),
+    )
+
+
+def send_reset_code(db: Session, email: str, ip: str | None) -> None:
+    send_code(
+        db,
+        email,
+        ip,
+        purpose="reset",
+        subject="重置衍策引擎AI 密码的验证码",
+        body=(
+            "您正在重置衍策引擎AI 账号密码，验证码是：{code}\n\n"
+            "验证码 10 分钟内有效，仅可使用一次。\n"
+            "如果这不是您本人的操作，请忽略本邮件，您的密码不会被修改。"
+        ),
+    )
+
+
+def consume_code(db: Session, email: str, code: str, purpose: str = "login") -> str:
+    """Try to consume the newest live code of ``purpose`` for ``email``.
 
     Returns "ok" | "invalid" | "expired" | "too_many". Commits its own state
     changes (attempt counter / used marker) so failed verifications cannot be
@@ -130,7 +162,7 @@ def consume_login_code(db: Session, email: str, code: str) -> str:
         select(EmailCode)
         .where(
             EmailCode.email == email,
-            EmailCode.purpose == "login",
+            EmailCode.purpose == purpose,
             EmailCode.used_at.is_(None),
         )
         .order_by(EmailCode.created_at.desc())
@@ -154,3 +186,7 @@ def consume_login_code(db: Session, email: str, code: str) -> str:
     row.used_at = now  # single-use: commit before provisioning so replay is impossible
     db.commit()
     return "ok"
+
+
+def consume_login_code(db: Session, email: str, code: str) -> str:
+    return consume_code(db, email, code, purpose="login")

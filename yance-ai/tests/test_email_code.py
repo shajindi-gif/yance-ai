@@ -398,3 +398,148 @@ def test_multi_workspace_email_asks_for_password_login(email_on):
     assert response.status_code == 400
     assert "多个工作区" in response.json()["detail"]
     assert _latest_row(email).used_at is None  # code preserved, no auto choice made
+
+
+# ── 找回密码（password reset）────────────────────────────────────────
+
+
+def _register_user(email: str, password: str = "old-password-12345") -> str:
+    resp = client.post(
+        "/api/v1/auth/register",
+        json={
+            "company_name": f"Reset {uuid.uuid4().hex[:6]}",
+            "owner_email": email,
+            "owner_name": "重置测试",
+            "owner_password": password,
+            "agreed_terms_version": "test-terms",
+        },
+    )
+    assert resp.status_code == 201, resp.text
+    return password
+
+
+def _reset_request(email: str, ip: str | None = None):
+    headers = {"X-Forwarded-For": ip or _ip()}
+    return client.post(
+        "/api/v1/auth/password/reset/request", json={"email": email}, headers=headers
+    )
+
+
+def _reset_confirm(email: str, code: str, new_password: str):
+    return client.post(
+        "/api/v1/auth/password/reset/confirm",
+        json={"email": email, "code": code, "new_password": new_password},
+    )
+
+
+def test_reset_request_503_when_unconfigured(monkeypatch):
+    monkeypatch.setattr(settings, "email_enabled", False)
+    resp = _reset_request(_email())
+    assert resp.status_code == 503
+    assert "尚未开通" in resp.json()["detail"]
+
+
+def test_reset_confirm_503_when_unconfigured(monkeypatch):
+    monkeypatch.setattr(settings, "email_enabled", False)
+    resp = _reset_confirm(_email(), "123456", "brand-new-password-1")
+    assert resp.status_code == 503
+
+
+def test_reset_unknown_email_no_send_but_202(email_on):
+    unknown = _email()
+    resp = _reset_request(unknown)
+    assert resp.status_code == 202  # anti-enumeration: same reply
+    assert len(email_on) == 0  # but no code was actually delivered
+    with SessionLocal() as db:
+        assert db.scalar(
+            select(func.count()).select_from(EmailCode).where(EmailCode.email == unknown)
+        ) == 0
+
+
+def test_reset_flow_changes_password_and_logs_in(email_on):
+    email = _email()
+    _register_user(email)
+    resp = _reset_request(email)
+    assert resp.status_code == 202
+    assert len(email_on) == 1
+    code = email_on[-1][1]
+
+    confirm = _reset_confirm(email, code, "brand-new-password-1")
+    assert confirm.status_code == 200
+    token = confirm.json()["access_token"]
+    me = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert me.status_code == 200
+    assert me.json()["email"] == email
+
+    # new password works, old password rejected
+    ok = client.post("/api/v1/auth/login", data={"username": email, "password": "brand-new-password-1"})
+    assert ok.status_code == 200
+    bad = client.post("/api/v1/auth/login", data={"username": email, "password": "old-password-12345"})
+    assert bad.status_code == 401
+
+    with SessionLocal() as db:
+        assert "password_reset" in set(
+            db.scalars(
+                select(AnalyticsEvent.name).where(AnalyticsEvent.name == "password_reset")
+            ).all()
+        )
+
+
+def test_reset_wrong_code_does_not_change_password(email_on):
+    email = _email()
+    _register_user(email)
+    _reset_request(email)
+    real = email_on[-1][1]
+    wrong = "000000" if real != "000000" else "000001"
+    resp = _reset_confirm(email, wrong, "attacker-password-123")
+    assert resp.status_code == 401
+    # old password still valid
+    login = client.post("/api/v1/auth/login", data={"username": email, "password": "old-password-12345"})
+    assert login.status_code == 200
+
+
+def test_reset_code_replay_rejected(email_on):
+    email = _email()
+    _register_user(email)
+    _reset_request(email)
+    code = email_on[-1][1]
+    first = _reset_confirm(email, code, "new-password-one-123")
+    assert first.status_code == 200
+    replay = _reset_confirm(email, code, "new-password-two-123")
+    assert replay.status_code == 401
+
+
+def test_purpose_isolation_login_code_cannot_reset(email_on):
+    email = _email()
+    _register_user(email)
+    # issue a LOGIN code
+    _send(email)
+    login_code = email_on[-1][1]
+    # try to use the login code for a password reset -> must fail
+    resp = _reset_confirm(email, login_code, "cross-purpose-pw-123")
+    assert resp.status_code == 401
+    # old password still valid
+    login = client.post("/api/v1/auth/login", data={"username": email, "password": "old-password-12345"})
+    assert login.status_code == 200
+
+
+def test_reset_multi_workspace_email_asks_admin(email_on):
+    email = _email()
+    suffix = uuid.uuid4().hex[:6]
+    with SessionLocal() as db:
+        for index in (1, 2):
+            auth.create_tenant_and_owner(
+                BootstrapRequest(
+                    tenant_name=f"重置多租户 {suffix}-{index}",
+                    tenant_slug=f"resetmulti-{suffix}-{index}",
+                    owner_email=email,
+                    owner_name="多面手",
+                    owner_password="integration-password-123",
+                ),
+                db,
+            )
+    _reset_request(email)
+    code = email_on[-1][1]
+    resp = _reset_confirm(email, code, "new-password-xyz-123")
+    assert resp.status_code == 400
+    assert "多个工作区" in resp.json()["detail"]

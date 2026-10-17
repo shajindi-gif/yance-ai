@@ -24,6 +24,12 @@ function LoginContent() {
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
 
+  // Password reset state（忘记密码：邮箱验证码重置）
+  const [resetMode, setResetMode] = useState(false);
+  const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
   // Email code state
   const [codeValue, setCodeValue] = useState('');
   const [codeSending, setCodeSending] = useState(false);
@@ -82,6 +88,52 @@ function LoginContent() {
       router.push('/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendResetCode = async () => {
+    setError('');
+    setNotice('');
+    if (!loginEmail.trim()) {
+      setError('请先输入注册邮箱');
+      return;
+    }
+    setCodeSending(true);
+    try {
+      await api.requestPasswordReset(loginEmail.trim());
+      setNotice('如果该邮箱已注册，重置验证码已发送，请查收邮箱（10 分钟内有效）');
+      startCountdown(60);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '验证码发送失败');
+    } finally {
+      setCodeSending(false);
+    }
+  };
+
+  const handleResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 12) {
+      setError('新密码至少 12 位');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError('两次输入的密码不一致');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setNotice('');
+    try {
+      await api.resetPassword({
+        email: loginEmail.trim(),
+        code: resetCode.trim(),
+        new_password: newPassword,
+      });
+      router.push('/dashboard');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '密码重置失败');
     } finally {
       setLoading(false);
     }
@@ -194,14 +246,14 @@ function LoginContent() {
                   <button
                     type="button"
                     className={`yc-auth-subtab ${loginMode === 'code' ? 'active' : ''}`}
-                    onClick={() => { setLoginMode('code'); setError(''); setNotice(''); }}
+                    onClick={() => { setLoginMode('code'); setResetMode(false); setError(''); setNotice(''); }}
                   >
                     验证码登录
                   </button>
                 </div>
               )}
 
-              {loginMode === 'password' ? (
+              {loginMode === 'password' && !resetMode ? (
                 <form onSubmit={handleLogin} className="yc-auth-form">
                   <div className="yc-form-group">
                     <label>邮箱</label>
@@ -214,8 +266,64 @@ function LoginContent() {
                   <button type="submit" className="yc-btn-primary yc-btn-full" disabled={loading}>
                     {loading ? '登录中...' : '登录'}
                   </button>
+                  {emailLoginEnabled && (
+                    <p className="yc-auth-hint">
+                      <button type="button" className="yc-link-btn" onClick={() => { setResetMode(true); setError(''); setNotice(''); }}>
+                        忘记密码？
+                      </button>
+                    </p>
+                  )}
                 </form>
-              ) : (
+              ) : loginMode === 'password' && resetMode ? (
+                <form onSubmit={handleResetSubmit} className="yc-auth-form">
+                  <div className="yc-form-group">
+                    <label>注册邮箱</label>
+                    <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="your@company.com" required />
+                  </div>
+                  <div className="yc-form-group">
+                    <label>重置验证码</label>
+                    <div className="yc-code-row">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={resetCode}
+                        onChange={e => setResetCode(e.target.value.replace(/\D/g, ''))}
+                        placeholder="6 位验证码"
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="yc-code-send"
+                        onClick={handleSendResetCode}
+                        disabled={countdown > 0 || codeSending}
+                      >
+                        {codeSending ? '发送中...' : countdown > 0 ? `${countdown}s 后重发` : '获取验证码'}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="yc-form-group">
+                    <label>新密码 <span className="yc-required">*</span></label>
+                    <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="至少 12 位，含字母和数字" minLength={12} required />
+                  </div>
+                  <div className="yc-form-group">
+                    <label>确认新密码 <span className="yc-required">*</span></label>
+                    <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="再次输入新密码" required />
+                  </div>
+                  <button
+                    type="submit"
+                    className="yc-btn-primary yc-btn-full"
+                    disabled={loading || !resetCode || newPassword.length < 12 || newPassword !== confirmPassword}
+                  >
+                    {loading ? '重置中...' : '重置密码并登录'}
+                  </button>
+                  <p className="yc-auth-hint">
+                    <button type="button" className="yc-link-btn" onClick={() => { setResetMode(false); setError(''); setNotice(''); }}>
+                      返回登录
+                    </button>
+                  </p>
+                </form>
+              ) : loginMode === 'code' ? (
                 <form onSubmit={handleCodeLogin} className="yc-auth-form">
                   <div className="yc-form-group">
                     <label>邮箱</label>
@@ -277,7 +385,7 @@ function LoginContent() {
                   </button>
                   <p className="yc-auth-hint">未注册过的邮箱验证后会自动创建工作区</p>
                 </form>
-              )}
+              ) : null}
             </>
           ) : (
             <form onSubmit={handleRegister} className="yc-auth-form">
@@ -376,6 +484,8 @@ function LoginContent() {
         .yc-code-send { flex-shrink: 0; padding: 0 16px; border: 1px solid #126a9a; border-radius: 10px; background: #fff; color: #126a9a; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
         .yc-code-send:hover:not(:disabled) { background: #f0f7fb; }
         .yc-code-send:disabled { border-color: #cbd5e1; color: #94a3b8; cursor: not-allowed; }
+        .yc-link-btn { background: none; border: none; color: #126a9a; font-size: 12px; cursor: pointer; padding: 0; text-decoration: underline; }
+        .yc-link-btn:hover { color: #0d4f74; }
         .yc-btn-full { width: 100%; padding: 13px; font-size: 15px; margin-top: 4px; }
         .yc-auth-hint { text-align: center; font-size: 12px; color: #94a3b8; margin: 8px 0 0; }
         .yc-agree-group { margin-top: 2px; }

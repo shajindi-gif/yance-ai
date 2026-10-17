@@ -20,6 +20,8 @@ from app.schemas.schemas import (
     BootstrapRequest,
     EmailCodeSendRequest,
     EmailCodeVerifyRequest,
+    PasswordResetConfirm,
+    PasswordResetRequest,
     RegisterRequest,
     Token,
     UserOut,
@@ -30,8 +32,10 @@ from app.services.email_code import (
     EmailSendError,
     RateLimited,
     check_send_limits,
+    consume_code,
     consume_login_code,
     send_login_code,
+    send_reset_code,
 )
 from app.services.notifications.email import is_email_configured
 
@@ -463,6 +467,95 @@ def email_code_verify(
     return Token(
         access_token=create_access_token(
             user_id=owner.id, tenant_id=tenant.id, role=owner.role.value
+        )
+    )
+
+
+# ── 找回密码（邮箱验证码重置密码）───────────────────────────────────
+
+
+@router.post("/password/reset/request", status_code=202)
+def password_reset_request(
+    request: Request,
+    payload: PasswordResetRequest,
+    db: Session = Depends(get_db),
+) -> dict:
+    """Send a reset code if the email has an account; identical reply either way.
+
+    Anti-enumeration: unknown emails get the same 202 but no email is sent.
+    """
+    if not is_email_configured():
+        raise HTTPException(
+            status_code=503,
+            detail="邮箱验证码通道尚未开通，请联系管理员协助重置密码",
+        )
+    email = str(payload.email).lower()
+    client_ip = _client_ip(request)
+    has_account = db.scalar(select(func.count()).select_from(User).where(User.email == email))
+    if has_account:
+        try:
+            check_send_limits(db, email, client_ip)
+        except RateLimited as rl:
+            raise HTTPException(
+                status_code=429,
+                detail=f"验证码发送过于频繁，请 {rl.retry_after} 秒后重试",
+            ) from rl
+        try:
+            send_reset_code(db, email, client_ip)
+        except EmailSendError as exc:
+            raise HTTPException(
+                status_code=502, detail="重置邮件发送失败，请稍后重试"
+            ) from exc
+    return {"message": "如果该邮箱已注册，重置验证码已发送（10 分钟内有效）"}
+
+
+@router.post("/password/reset/confirm", response_model=Token)
+def password_reset_confirm(
+    payload: PasswordResetConfirm,
+    db: Session = Depends(get_db),
+) -> Token:
+    """Consume a reset code, set the new password, and log the user in."""
+    if not is_email_configured():
+        raise HTTPException(
+            status_code=503, detail="邮箱验证码通道尚未开通，请联系管理员协助重置密码"
+        )
+    email = str(payload.email).lower()
+    users = db.scalars(select(User).where(User.email == email)).all()
+    if len(users) > 1:
+        raise HTTPException(
+            status_code=400,
+            detail="该邮箱关联多个工作区，请联系管理员协助重置密码",
+        )
+    if not users:
+        raise HTTPException(status_code=400, detail="该邮箱未注册，请先注册账号")
+
+    result = consume_code(db, email, payload.code, purpose="reset")
+    if result == "expired":
+        raise HTTPException(status_code=401, detail="验证码已过期，请重新获取")
+    if result == "too_many":
+        raise HTTPException(status_code=429, detail="验证码错误次数过多，请重新获取")
+    if result != "ok":
+        raise HTTPException(status_code=401, detail="验证码不正确")
+
+    user = users[0]
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="该账号已被停用，请联系管理员")
+    user.password_hash = hash_password(payload.new_password)
+    record_event(
+        db,
+        tenant_id=user.tenant_id,
+        user_id=user.id,
+        name="password_reset",
+        event_key=f"password_reset:{user.id}:{int(time.time())}",
+    )
+    try:
+        db.commit()
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="密码重置失败，请重试") from exc
+    return Token(
+        access_token=create_access_token(
+            user_id=user.id, tenant_id=user.tenant_id, role=user.role.value
         )
     )
 

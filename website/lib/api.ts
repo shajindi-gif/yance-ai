@@ -1122,6 +1122,38 @@ class ApiClient {
     return result;
   }
 
+  // ── 找回密码（邮箱验证码重置）────────────────────────────────────
+  async requestPasswordReset(email: string): Promise<void> {
+    const response = await fetch(`${API_BASE}/auth/password/reset/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: '重置邮件发送失败' }));
+      throw new Error(error.detail || `重置邮件发送失败（HTTP ${response.status}）`);
+    }
+  }
+
+  async resetPassword(data: {
+    email: string;
+    code: string;
+    new_password: string;
+  }): Promise<LoginResponse> {
+    const response = await fetch(`${API_BASE}/auth/password/reset/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: '密码重置失败' }));
+      throw new Error(error.detail || '密码重置失败');
+    }
+    const result = await response.json();
+    if (result.access_token) this.setToken(result.access_token);
+    return result;
+  }
+
   async getAdminOverview(): Promise<AdminOverview> {
     return this.request<AdminOverview>('/admin/overview');
   }
