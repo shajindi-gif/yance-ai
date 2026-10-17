@@ -41,13 +41,6 @@ pytestmark = [
 client = TestClient(app)
 
 
-@pytest.fixture(autouse=True)
-def reset_registration_rate_limit():
-    auth._register_rate.clear()
-    yield
-    auth._register_rate.clear()
-
-
 @pytest.fixture()
 def email_on(monkeypatch):
     """Enable the channel and capture outgoing code emails (no Resend call)."""

@@ -1,7 +1,6 @@
 import re
 import secrets
 import time
-from collections import defaultdict
 from datetime import UTC, datetime
 
 import structlog
@@ -27,6 +26,12 @@ from app.schemas.schemas import (
     UserOut,
 )
 from app.services.analytics.events import record_event
+from app.services.auth_rate_limit import (
+    login_failure,
+    login_is_limited,
+    login_success,
+    register_attempt,
+)
 from app.services.company_profiles import create_company_profile
 from app.services.email_code import (
     EmailSendError,
@@ -43,18 +48,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 logger = structlog.get_logger()
 
 
-# ── 简单 IP 限流（内存，重启重置；商业上线前换 Redis）────────
-_register_rate: dict[str, list[float]] = defaultdict(list)
-_RATE_LIMIT_PER_HOUR = 5
-
-
-def _check_rate_limit(client_ip: str) -> None:
-    now = time.time()
-    window = 3600
-    _register_rate[client_ip] = [t for t in _register_rate[client_ip] if now - t < window]
-    if len(_register_rate[client_ip]) >= _RATE_LIMIT_PER_HOUR:
-        raise HTTPException(status_code=429, detail="注册过于频繁，请稍后再试")
-    _register_rate[client_ip].append(now)
+# ── 限流：DB 计数（跨 4 个 uvicorn worker 共享，重启不清零）────────
+# 见 app/services/auth_rate_limit.py（S1 修复：原内存计数在多 worker 下失效）
 
 
 def _make_slug(company_name: str) -> str:
@@ -133,8 +128,9 @@ def register(
     db: Session = Depends(get_db),
 ) -> Token:
     """Public self-service registration: creates tenant + owner + default company."""
-    client_ip = request.client.host if request.client else "unknown"
-    _check_rate_limit(client_ip)
+    client_ip = _client_ip(request)
+    if not register_attempt(db, client_ip):
+        raise HTTPException(status_code=429, detail="注册过于频繁，请稍后再试")
 
     # Require explicit consent to the current terms/privacy policy version.
     if not payload.agreed_terms_version:
@@ -227,10 +223,16 @@ def register(
 
 @router.post("/login", response_model=Token)
 def login(
+    request: Request,
     form: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
     x_tenant_slug: str | None = Header(default=None, alias="X-Tenant-Slug"),
 ) -> Token:
+    client_ip = _client_ip(request)
+    if login_is_limited(db, client_ip):
+        raise HTTPException(
+            status_code=429, detail="登录失败次数过多，请 15 分钟后再试"
+        )
     query = (
         select(User)
         .join(Tenant, Tenant.id == User.tenant_id)
@@ -254,11 +256,13 @@ def login(
         None,
     )
     if not user:
+        login_failure(db, client_ip)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    login_success(db, client_ip)
     record_event(
         db,
         tenant_id=user.tenant_id,

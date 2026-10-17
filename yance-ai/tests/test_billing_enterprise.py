@@ -4,17 +4,10 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from app.api.routes import auth
 from app.core.db import SessionLocal
 from app.main import app
 from app.models.models import ApiKey, Membership, UsageRecord, User, UserRole
 
-
-@pytest.fixture(autouse=True)
-def reset_registration_rate_limit():
-    auth._register_rate.clear()
-    yield
-    auth._register_rate.clear()
 
 
 def _register(client: TestClient, prefix: str) -> tuple[dict[str, str], dict]:

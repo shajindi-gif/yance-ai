@@ -6,7 +6,6 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import delete, select
 
-from app.api.routes import auth
 from app.core.db import SessionLocal
 from app.main import app
 from app.models.models import CompanyFact, Tenant
@@ -94,7 +93,6 @@ def test_document_ingestion_review_and_profile_provenance():
     app.dependency_overrides[get_oss_storage] = lambda: storage
     url_content = b"<html><body><p>Current needs: policy scan</p></body></html>"
     app.dependency_overrides[get_safe_url_fetcher] = lambda: StubURLFetcher(url_content)
-    auth._register_rate.clear()
     tenant_ids: list[uuid.UUID] = []
     try:
         with TestClient(app) as client:

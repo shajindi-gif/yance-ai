@@ -7,7 +7,6 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from app.api.routes import auth
 from app.core.db import SessionLocal
 from app.main import app
 from app.models.models import (
@@ -21,12 +20,6 @@ from app.models.models import (
 from app.services.funding.amounts import infer_funding_type, parse_support_amount
 from app.services.notifications.deadlines import scan_deadlines
 
-
-@pytest.fixture(autouse=True)
-def reset_registration_rate_limit():
-    auth._register_rate.clear()
-    yield
-    auth._register_rate.clear()
 
 
 def _register(client: TestClient, prefix: str) -> tuple[dict, dict]:

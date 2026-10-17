@@ -7,7 +7,6 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import delete, func, select
 
-from app.api.routes import auth
 from app.core.db import SessionLocal
 from app.main import app
 from app.models.models import (
@@ -106,7 +105,6 @@ def test_persisted_company_to_application_workflow(monkeypatch):
     cleanup_tenant_ids: set[uuid.UUID] = set()
     fake_storage = FakeStorage()
     app.dependency_overrides[get_oss_storage] = lambda: fake_storage
-    auth._register_rate.clear()
 
     async def fake_embed(_inputs: list[str]) -> list[list[float]]:
         return [[0.25] * 1024]

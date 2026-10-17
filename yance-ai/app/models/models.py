@@ -1629,3 +1629,17 @@ class EmailCode(Base):
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     ip_address: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class AuthRateLimit(Base):
+    """Shared, DB-backed fixed-window counters for auth endpoints.
+
+    Replaces the in-memory _register_rate dict, which counted independently in
+    each of the 4 uvicorn workers (effective threshold x4, reset on restart).
+    Key format: "<action>:<client-ip>", e.g. "register:1.2.3.4".
+    """
+
+    __tablename__ = "auth_rate_limit"
+    key: Mapped[str] = mapped_column(String(160), primary_key=True)
+    window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    count: Mapped[int] = mapped_column(Integer, default=1)
