@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # yance.ai uptime watchdog (S4 fix): 5-min probe of site + API with email alert.
 #
-# Installed as cron: */5 * * * * /opt/yance/yance-ai/ops/uptime_watchdog.sh >> /var/log/yance-watchdog.log 2>&1
+# Installed as cron (ubuntu user cannot write /var/log):
+# */5 * * * * /opt/yance/yance-ai/ops/uptime_watchdog.sh >> /var/tmp/yance-watchdog.log 2>&1
 # - Checks https://www.yance.ai/ and https://api.yance.ai/health
 # - On failure: sends alert email via the SMTP creds in .env.prod (163), then a
 #   30-minute cooldown file prevents alert storms; a recovery email is sent once
