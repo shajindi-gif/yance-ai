@@ -134,8 +134,8 @@ def create_invoice(
                 "spec": "",
                 "unit": "次",
                 "qty": 1,
-                "price": order.amount,
-                "amount": order.amount,
+                "price": float(order.amount),
+                "amount": float(order.amount),
                 "tax_rate": 0,
                 "tax": 0,
             }
@@ -144,7 +144,8 @@ def create_invoice(
         tax_amount=0,
         total_amount=order.amount,
         invoice_type=payload.invoice_type or "vat_normal",
-        status="generated",
+        # 数电票人工闭环：申请即进入后台待办，运营在电子税务局开票后上传凭证
+        status="requested",
     )
     db.add(invoice)
     db.commit()
@@ -172,7 +173,10 @@ async def generate_invoice(
 
     pdf_path = await generate_invoice_pdf(invoice)
     invoice.pdf_path = pdf_path
-    invoice.status = "generated"
+    # 付款凭证 PDF 与数电票状态解耦：生成凭证不再改变开票流程状态
+    # （requested/issued/rejected 由后台开具/驳回驱动）。
+    if invoice.status not in ("requested", "issued", "rejected"):
+        invoice.status = "generated"
     db.commit()
 
     return {"pdf_path": pdf_path, "invoice_no": invoice.invoice_no}
@@ -202,6 +206,40 @@ async def download_invoice(
         invoice.pdf_path,
         media_type="application/pdf",
         filename=f"付款凭证_{invoice.invoice_no}.pdf",
+    )
+
+
+@router.get("/invoices/{invoice_id}/voucher")
+async def download_invoice_voucher(
+    invoice_id: str,
+    principal: Principal = Depends(get_principal),
+    db: Session = Depends(get_db),
+):
+    """Download the issued e-invoice file (数电票) uploaded by the operator."""
+    from uuid import UUID
+
+    invoice = db.scalar(
+        select(Invoice).where(
+            Invoice.id == UUID(invoice_id),
+            Invoice.tenant_id == principal.tenant_id,
+        )
+    )
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    if invoice.status != "issued" or not invoice.voucher_data:
+        raise HTTPException(status_code=404, detail="发票尚未开具")
+
+    from urllib.parse import quote
+
+    from fastapi.responses import Response
+
+    filename = quote(invoice.voucher_filename or f"einvoice_{invoice.invoice_no}")
+    return Response(
+        content=invoice.voucher_data,
+        media_type=invoice.voucher_content_type or "application/octet-stream",
+        headers={
+            "Content-Disposition": f"attachment; filename*=UTF-8''{filename}"
+        },
     )
 
 

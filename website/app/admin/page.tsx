@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -12,7 +12,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import AppShell from "@/components/workspace/AppShell";
 import styles from "@/components/workspace/AdminDashboard.module.css";
-import type { AdminOverview, AdminResourcePage } from "@/lib/api";
+import type { AdminInvoicePage, AdminOverview, AdminResourcePage } from "@/lib/api";
 import api from "@/lib/api";
 
 const RESOURCES = [
@@ -21,6 +21,7 @@ const RESOURCES = [
   ["costs", "Costs"], ["documents", "Documents"], ["policies", "Policies"],
   ["document_ingestion_runs", "Document Ingestion"],
   ["evals", "Evals"], ["errors", "Errors"], ["billing", "Billing"],
+  ["invoices", "发票待办"],
   ["feedback", "Feedback"], ["analytics", "Analytics"],
 ] as const;
 
@@ -40,6 +41,7 @@ const COLUMNS: Record<Resource, string[]> = {
   evals: ["eval_type", "status", "target_key", "target_version", "scorer_version", "requested_cases", "passed_cases", "error_cases", "release_gate_passed", "created_at"],
   errors: ["code", "category", "safe_message", "retryable", "agent_run_id", "tenant_id", "occurred_at"],
   billing: ["order_no", "product_code", "amount", "currency", "status", "tenant_id", "created_at"],
+  invoices: ["invoice_no", "title", "tax_number", "total_amount", "invoice_type", "status", "voucher_filename", "tenant_id", "created_at"],
   feedback: ["category", "message", "route", "status", "tenant_id", "created_at"],
   analytics: ["name", "source", "event_key", "request_id", "tenant_id", "occurred_at"],
 };
@@ -56,6 +58,53 @@ function displayValue(value: unknown): string {
   }
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);
+}
+
+function InvoiceQueue() {
+  const [items, setItems] = useState<AdminInvoicePage["items"]>([]);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const filesRef = useRef<Record<string, File | null>>({});
+  const reload = useCallback(() => {
+    api.getAdminInvoices("requested").then((page) => setItems(page.items)).catch(() => undefined);
+  }, []);
+  useEffect(reload, [reload]);
+  const issue = async (id: string) => {
+    const file = filesRef.current[id];
+    if (!file) { setError("请先选择从电子税务局下载的数电票文件（PDF/OFD 截图）"); return; }
+    setBusy(id); setError(""); setNotice("");
+    try {
+      await api.issueInvoice(id, file);
+      setNotice(`发票 ${id.slice(0, 8)}… 已开具，用户会收到站内通知和邮件。`);
+      reload();
+    } catch (e) { setError(e instanceof Error ? e.message : "开具失败"); }
+    finally { setBusy(null); }
+  };
+  const reject = async (id: string) => {
+    const reason = window.prompt("驳回原因（会展示给用户）", "请核对抬头与税号后重新申请");
+    if (!reason) return;
+    setBusy(id); setError("");
+    try { await api.rejectInvoice(id, reason); reload(); }
+    catch (e) { setError(e instanceof Error ? e.message : "驳回失败"); }
+    finally { setBusy(null); }
+  };
+  return <section className={styles.panel}>
+    <div className={styles.panelHeader}><div><h2>数电票开具待办</h2><p>流程：用户在账单页申请 → 你在电子税务局开票 → 在此上传发票文件并开具（自动通知用户）。</p></div><Badge tone={items.length ? "warning" : "success"}>{items.length ? `${items.length} 待处理` : "无待办"}</Badge></div>
+    {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}
+    {notice ? <InlineAlert tone="info">{notice}</InlineAlert> : null}
+    {items.length ? <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 10 }}>
+      {items.map((inv) => <li key={inv.id} style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, padding: "10px 12px", border: "1px solid #e2e8f0", borderRadius: 10 }}>
+        <strong>{inv.title}</strong>
+        <span className={styles.muted}>{inv.tax_number} · ¥{inv.total_amount.toFixed(2)} · {inv.invoice_no} · {new Date(inv.created_at).toLocaleString("zh-CN")}</span>
+        <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+          <input type="file" accept=".pdf,.ofd,.png,.jpg,.jpeg" aria-label={`选择 ${inv.title} 的发票文件`} onChange={(e) => { filesRef.current[inv.id] = e.target.files?.[0] || null; }} />
+          <Button type="button" disabled={busy === inv.id} onClick={() => issue(inv.id)}>{busy === inv.id ? "处理中…" : "上传并开具"}</Button>
+          <Button type="button" variant="secondary" disabled={busy === inv.id} onClick={() => reject(inv.id)}>驳回</Button>
+        </span>
+      </li>)}
+    </ul> : <EmptyState icon="✓" title="暂无开票申请" description="用户提交申请后会出现在这里。" />}
+  </section>;
 }
 
 export default function AdminPage() {
@@ -154,6 +203,8 @@ export default function AdminPage() {
         </dl>
       </section>
     </div>
+
+    <InvoiceQueue />
 
     <section className={styles.panel}>
       <div className={styles.panelHeader}><div><h2>Platform Resources</h2><p>Safe operational projections; raw secrets, payment payloads and Agent inputs are excluded.</p></div><Badge tone="info">{page?.total || 0} records</Badge></div>

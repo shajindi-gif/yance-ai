@@ -658,6 +658,32 @@ export interface Order {
   created_at: string;
 }
 
+export interface InvoiceItem {
+  id: string;
+  order_id: string;
+  tenant_id: string;
+  invoice_no: string | null;
+  title: string;
+  tax_number: string;
+  amount: number;
+  tax_amount: number;
+  total_amount: number;
+  invoice_type: string;
+  pdf_path: string | null;
+  status: string; // requested / issued / rejected / generated / sent
+  voucher_filename: string | null;
+  issued_at: string | null;
+  review_note: string | null;
+  created_at: string;
+}
+
+export interface AdminInvoicePage {
+  total: number;
+  limit: number;
+  offset: number;
+  items: Array<InvoiceItem & { tenant_id: string; tenant_name: string }>;
+}
+
 export interface BillingOverview {
   subscription: {
     id: string;
@@ -1783,6 +1809,49 @@ class ApiClient {
   // ── Team ───────────────────────────────────────────────────────────
   async getUsers(): Promise<TeamMember[]> {
     return this.request<TeamMember[]>('/users');
+  }
+
+  // ── 发票（数电票人工闭环）─────────────────────────────────────────
+  async getInvoices(): Promise<InvoiceItem[]> {
+    return this.request<InvoiceItem[]>('/invoices');
+  }
+
+  async createInvoice(data: { order_id: string; title: string; tax_number: string; invoice_type?: string }): Promise<InvoiceItem> {
+    return this.request<InvoiceItem>('/invoices', { method: 'POST', body: JSON.stringify(data) });
+  }
+
+  async downloadInvoiceVoucher(invoiceId: string): Promise<Blob> {
+    return this.requestBlob(`/invoices/${encodeURIComponent(invoiceId)}/voucher`);
+  }
+
+  async getAdminInvoices(status?: string): Promise<AdminInvoicePage> {
+    const query = status ? `?status=${encodeURIComponent(status)}` : '';
+    return this.request<AdminInvoicePage>(`/admin/invoices${query}`);
+  }
+
+  async issueInvoice(invoiceId: string, file: File, note?: string): Promise<{ status: string }> {
+    const form = new FormData();
+    form.append('file', file);
+    if (note) form.append('note', note);
+    const headers: Record<string, string> = {};
+    if (this.token) headers.Authorization = `Bearer ${this.token}`;
+    const response = await fetch(`${API_BASE}/admin/invoices/${encodeURIComponent(invoiceId)}/issue`, {
+      method: 'POST',
+      headers,
+      body: form,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: '开具失败' }));
+      throw new Error(typeof error.detail === 'string' ? error.detail : '开具失败');
+    }
+    return response.json();
+  }
+
+  async rejectInvoice(invoiceId: string, reason: string): Promise<{ status: string }> {
+    return this.request(`/admin/invoices/${encodeURIComponent(invoiceId)}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
   }
 
   async createUser(body: {

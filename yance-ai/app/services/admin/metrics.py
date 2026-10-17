@@ -5,6 +5,7 @@ from sqlalchemy import Date, cast, distinct, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.models import (
+    Invoice,
     AgentRun,
     AgentRunError,
     AnalyticsEvent,
@@ -303,6 +304,7 @@ def admin_overview(db: Session) -> dict:
             "policies": _real_policy_count(db),
             "errors": _real_tenant_count(db, AgentRunError),
             "billing": _real_tenant_count(db, Order),
+            "invoices": _real_tenant_count(db, Invoice),
             "feedback": _real_tenant_count(db, Feedback),
             "analytics": _real_tenant_count(db, AnalyticsEvent),
             "evals": _real_tenant_count(db, EvalRun),

@@ -12,6 +12,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     Numeric,
     String,
     Text,
@@ -815,6 +816,12 @@ class Invoice(Base, TimestampMixin, TenantOwnedMixin):
     )  # vat_normal/vat_special
     pdf_path: Mapped[str | None] = mapped_column(String(700))  # 生成的PDF文件路径
     status: Mapped[str] = mapped_column(String(40), default="requested")  # requested/generated/sent
+    # 数电票人工闭环：运营在电子税务局开票后上传的发票文件与审核信息
+    voucher_filename: Mapped[str | None] = mapped_column(String(255))
+    voucher_content_type: Mapped[str | None] = mapped_column(String(120))
+    voucher_data: Mapped[bytes | None] = mapped_column(LargeBinary)
+    issued_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    review_note: Mapped[str | None] = mapped_column(Text)
 
 
 class AnalyticsEvent(Base, TenantOwnedMixin):

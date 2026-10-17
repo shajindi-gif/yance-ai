@@ -2,7 +2,7 @@ import re
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
@@ -19,12 +19,16 @@ from app.models.models import (
     EvalRun,
     FeatureFlag,
     Feedback,
+    Invoice,
+    Membership,
+    Notification,
     Order,
     Policy,
     Tenant,
     TenantFeatureFlag,
     User,
     WorkflowRun,
+    now_utc,
 )
 from app.schemas.schemas import FeedbackStatusUpdate, TenantAccountStageUpdate
 from app.services.admin.metrics import admin_overview, investor_metrics, system_health
@@ -78,6 +82,7 @@ AdminResource = Literal[
     "evals",
     "errors",
     "billing",
+    "invoices",
     "feedback",
     "analytics",
 ]
@@ -331,6 +336,25 @@ def list_admin_resources(
                 "created_at": item.created_at,
             },
         )
+    if resource == "invoices":
+        return _page(
+            db,
+            select(Invoice).order_by(Invoice.created_at.desc()),
+            limit=limit,
+            offset=offset,
+            serializer=lambda item: {
+                "id": str(item.id),
+                "tenant_id": str(item.tenant_id),
+                "invoice_no": item.invoice_no,
+                "title": item.title,
+                "tax_number": item.tax_number,
+                "total_amount": float(item.total_amount),
+                "invoice_type": item.invoice_type,
+                "status": item.status,
+                "voucher_filename": item.voucher_filename,
+                "created_at": item.created_at,
+            },
+        )
     if resource == "feedback":
         return _page(
             db,
@@ -538,3 +562,154 @@ def remove_tenant_feature_flag(
         details={"key": key, "platform_admin": True},
     )
     db.commit()
+
+
+# ── 数电票人工闭环：后台待办 / 开具（上传发票文件）/ 驳回 ──────────────
+
+
+class InvoiceRejectRequest(BaseModel):
+    reason: str = Field(min_length=2, max_length=500)
+
+
+def _invoice_row(invoice, owner_email: str | None) -> dict:
+    return {
+        "id": str(invoice.id),
+        "tenant_id": str(invoice.tenant_id),
+        "tenant_name": owner_email or "",
+        "invoice_no": invoice.invoice_no,
+        "title": invoice.title,
+        "tax_number": invoice.tax_number,
+        "invoice_type": invoice.invoice_type,
+        "amount": float(invoice.amount or 0),
+        "total_amount": float(invoice.total_amount or 0),
+        "status": invoice.status,
+        "review_note": invoice.review_note,
+        "issued_at": invoice.issued_at.isoformat() if invoice.issued_at else None,
+        "voucher_filename": invoice.voucher_filename,
+        "created_at": invoice.created_at.isoformat() if invoice.created_at else None,
+    }
+
+
+def _notify_invoice(db: Session, invoice, *, issued: bool, reason: str | None = None) -> None:
+    """Create an in-app notification for the tenant and email the owners."""
+    from app.services.notifications.email import is_email_configured, send_email
+
+    if issued:
+        title = f"您的发票已开具（{invoice.invoice_no}）"
+        body = (
+            f"您好，订单对应发票（抬头：{invoice.title}，金额 ¥{invoice.total_amount:.2f}）"
+            "已通过数电票开具，请登录工作台在「账单与发票」中下载。"
+        )
+        dedup_key = f"invoice_issued:{invoice.id}"
+    else:
+        title = f"您的开票申请未通过（{invoice.invoice_no}）"
+        body = f"很抱歉，您的开票申请未通过审核。原因：{reason or '信息不全'}。请核对抬头与税号后重新申请。"
+        dedup_key = f"invoice_rejected:{invoice.id}"
+    db.add(
+        Notification(
+            tenant_id=invoice.tenant_id,
+            kind="invoice",
+            severity="info",
+            title=title,
+            body=body,
+            entity_type="invoice",
+            entity_id=str(invoice.id),
+            dedup_key=dedup_key,
+        )
+    )
+    if is_email_configured():
+        owners = db.scalars(
+            select(User.email)
+            .join(Membership, Membership.user_id == User.id)
+            .where(Membership.tenant_id == invoice.tenant_id)
+        ).all()
+        for email in set(owners):
+            send_email(email, title, body)
+    db.commit()
+
+
+@router.get("/invoices")
+def admin_list_invoices(
+    status: str | None = Query(default=None),
+    limit: int = Query(default=50, le=200),
+    offset: int = Query(default=0, ge=0),
+    principal: Principal = Depends(require_platform_admin),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Backoffice invoice work queue (数电票人工待办)."""
+    query = select(Invoice).order_by(Invoice.created_at.desc())
+    if status:
+        query = query.where(Invoice.status == status)
+    invoices = db.scalars(query.limit(limit).offset(offset)).all()
+    total = db.scalar(
+        select(func.count()).select_from(Invoice).where(Invoice.status == status) if status
+        else select(func.count()).select_from(Invoice)
+    )
+    rows = []
+    for invoice in invoices:
+        owner_email = db.scalar(
+            select(User.email).where(User.tenant_id == invoice.tenant_id).order_by(User.created_at).limit(1)
+        )
+        rows.append(_invoice_row(invoice, owner_email))
+    return {"total": total, "limit": limit, "offset": offset, "items": rows}
+
+
+@router.post("/invoices/{invoice_id}/issue")
+async def admin_issue_invoice(
+    invoice_id: UUID,
+    file: UploadFile = File(...),
+    note: str | None = Form(default=None),
+    principal: Principal = Depends(require_platform_admin),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Mark an invoice issued and attach the e-invoice file (数电票 PDF/OFD)."""
+    invoice = db.get(Invoice, invoice_id)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    if invoice.status == "issued":
+        raise HTTPException(status_code=409, detail="该发票已开具，如需重开请先驳回再重新申请")
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="发票文件为空")
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="发票文件超过 5MB")
+    content_type = file.content_type or "application/octet-stream"
+    allowed = (
+        "application/pdf",
+        "application/octet-stream",
+        "image/jpeg",
+        "image/png",
+    )
+    if content_type not in allowed and not file.filename:
+        raise HTTPException(status_code=400, detail="不支持的文件类型")
+    invoice.voucher_filename = file.filename or f"einvoice_{invoice.invoice_no}.pdf"
+    invoice.voucher_content_type = content_type
+    invoice.voucher_data = content
+    invoice.status = "issued"
+    invoice.issued_at = now_utc()
+    if note:
+        invoice.review_note = note
+    record_audit(db, tenant_id=invoice.tenant_id, actor_user_id=principal.user.id, action="invoice.issue", resource_type="invoice", resource_id=str(invoice.id))
+    db.commit()
+    _notify_invoice(db, invoice, issued=True)
+    return {"id": str(invoice.id), "status": invoice.status, "voucher_filename": invoice.voucher_filename}
+
+
+@router.post("/invoices/{invoice_id}/reject")
+def admin_reject_invoice(
+    invoice_id: UUID,
+    payload: InvoiceRejectRequest,
+    principal: Principal = Depends(require_platform_admin),
+    db: Session = Depends(get_db),
+) -> dict:
+    invoice = db.get(Invoice, invoice_id)
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    if invoice.status == "issued":
+        raise HTTPException(status_code=409, detail="该发票已开具，无法驳回")
+    invoice.status = "rejected"
+    invoice.review_note = payload.reason
+    record_audit(db, tenant_id=invoice.tenant_id, actor_user_id=principal.user.id, action="invoice.reject", resource_type="invoice", resource_id=str(invoice.id))
+    db.commit()
+    _notify_invoice(db, invoice, issued=False, reason=payload.reason)
+    return {"id": str(invoice.id), "status": invoice.status}

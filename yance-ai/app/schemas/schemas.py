@@ -496,6 +496,9 @@ class InvoiceOut(ORMModel):
     invoice_type: str
     pdf_path: str | None = None
     status: str
+    voucher_filename: str | None = None
+    issued_at: datetime | None = None
+    review_note: str | None = None
     created_at: datetime
 
 
