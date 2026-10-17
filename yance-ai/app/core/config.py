@@ -122,10 +122,16 @@ class Settings(BaseSettings):
     company_bank_name: str = ""
     company_bank_account: str = ""
 
-    # 事务邮件（Resend）：截止日 T-7/T-3/T-1 强触达；未配置则仅站内通知
+    # 事务邮件：截止日 T-7/T-3/T-1 强触达 + 登录验证码；未配置则仅站内通知/接口503
+    # email_provider: resend | smtp（腾讯企业邮箱等 SMTP 通道）
+    email_provider: str = "resend"
     resend_api_key: str = ""
     email_from: str = "衍策引擎AI <notify@yance.ai>"
     email_enabled: bool = False  # 显式开关，配置密钥后打开
+    smtp_host: str = "smtp.exmail.qq.com"
+    smtp_port: int = 465
+    smtp_user: str = ""  # 发信邮箱（须与登录账号一致）
+    smtp_password: str = ""  # 客户端专用授权密码，非网页登录密码
 
     log_level: str = "INFO"
     agent_log_prompts: bool = False
