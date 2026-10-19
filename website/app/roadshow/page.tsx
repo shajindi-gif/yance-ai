@@ -252,7 +252,7 @@ export default function RoadshowPage() {
             >
               预约演示
             </Link>
-            <a href="mailto:contact@yance.ai" className="btn btn-outline-white btn-lg">
+            <a href="mailto:yanceai@163.com" className="btn btn-outline-white btn-lg">
               联系合作
             </a>
           </div>

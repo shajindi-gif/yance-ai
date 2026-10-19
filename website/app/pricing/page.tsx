@@ -163,7 +163,7 @@ export default function PricingPage() {
           <p className="cta-subtitle">免费注册即可体验政策匹配，无需信用卡。</p>
           <div className="cta-actions">
             <button onClick={() => api.isAuthenticated() ? router.push('/dashboard') : router.push('/login?register=1')} className="btn btn-lg" style={{ background: '#f97316', color: '#fff', borderColor: '#f97316', borderRadius: '12px', cursor: 'pointer' }}>免费开始</button>
-            <a href="mailto:contact@yance.ai" className="btn btn-outline-white btn-lg">企业定制咨询</a>
+            <a href="mailto:yanceai@163.com" className="btn btn-outline-white btn-lg">企业定制咨询</a>
           </div>
         </div>
       </section>

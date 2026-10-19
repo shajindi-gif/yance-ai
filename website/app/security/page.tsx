@@ -49,7 +49,7 @@ export default function SecurityPage() {
             </ul>
 
             <h2>5. 漏洞报告</h2>
-            <p>请勿公开披露疑似漏洞。请通过 contact@yance.ai 私下联系，并从复现材料中移除凭据和客户数据。</p>
+            <p>请勿公开披露疑似漏洞。请通过 yanceai@163.com 私下联系，并从复现材料中移除凭据和客户数据。</p>
           </div>
         </div>
       </section>

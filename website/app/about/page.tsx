@@ -297,7 +297,7 @@ export default function AboutPage() {
               </div>
               <h4 className="card-title">邮件联系</h4>
               <p className="card-desc">
-                <a href="mailto:contact@yance.ai">contact@yance.ai</a>
+                <a href="mailto:yanceai@163.com">yanceai@163.com</a>
               </p>
             </div>
             <div className="card" style={{ textAlign: 'center', padding: '32px' }}>
@@ -313,7 +313,7 @@ export default function AboutPage() {
               </div>
               <h4 className="card-title">联系邮箱</h4>
               <p className="card-desc">
-                <a href="mailto:contact@yance.ai">contact@yance.ai</a>
+                <a href="mailto:yanceai@163.com">yanceai@163.com</a>
               </p>
             </div>
           </div>
@@ -340,7 +340,7 @@ export default function AboutPage() {
             >
               免费注册
             </Link>
-            <a href="mailto:contact@yance.ai" className="btn btn-outline-white btn-lg">
+            <a href="mailto:yanceai@163.com" className="btn btn-outline-white btn-lg">
               发送邮件
             </a>
           </div>

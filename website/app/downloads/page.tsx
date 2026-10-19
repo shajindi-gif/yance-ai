@@ -65,7 +65,7 @@ const GUIDES = [
   },
   {
     q: '可以提前申请客户端试用吗？',
-    a: '可以通过 contact@yance.ai 提交场景需求，但这不代表客户端已有可交付版本或确定发布时间。',
+    a: '可以通过 yanceai@163.com 提交场景需求，但这不代表客户端已有可交付版本或确定发布时间。',
   },
 ];
 
@@ -119,7 +119,7 @@ export default function DownloadsPage() {
             <span className="section-label">帮助中心</span>
             <h2 className="section-title">安装指南</h2>
             <p className="section-subtitle">
-              各平台安装与使用方法，如有问题可联系 contact@yance.ai
+              各平台安装与使用方法，如有问题可联系 yanceai@163.com
             </p>
           </div>
 
@@ -160,7 +160,7 @@ export default function DownloadsPage() {
           </p>
           <div className="yc-cta-actions" style={{ justifyContent: 'center' }}>
             <a href="/login?register=1" className="yc-btn-primary">打开 Web 工作区</a>
-            <a href="mailto:contact@yance.ai" className="yc-btn-outline-white">联系销售</a>
+            <a href="mailto:yanceai@163.com" className="yc-btn-outline-white">联系销售</a>
           </div>
         </div>
       </div>

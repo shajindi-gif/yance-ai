@@ -16,7 +16,7 @@ export default function PaymentCancelPage() {
         </p>
         <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
           <Link href="/orders" className="yc-btn-primary">返回订单</Link>
-          <a href="mailto:contact@yance.ai" style={{ padding: '10px 16px', color: '#126a9a' }}>
+          <a href="mailto:yanceai@163.com" style={{ padding: '10px 16px', color: '#126a9a' }}>
             联系我们
           </a>
         </div>

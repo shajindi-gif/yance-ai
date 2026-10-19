@@ -119,7 +119,7 @@ const FAQ_ITEMS = [
   },
   {
     q: '如何开始使用？',
-    a: '注册后完善企业画像，即可生成政策匹配初筛报告。如需 30 分钟专属诊断，发送邮件至 contact@yance.ai 预约，我们将根据企业实际场景进行针对性讲解。',
+    a: '注册后完善企业画像，即可生成政策匹配初筛报告。如需 30 分钟专属诊断，发送邮件至 yanceai@163.com 预约，我们将根据企业实际场景进行针对性讲解。',
   },
 ];
 
@@ -600,12 +600,12 @@ export default function HomePage() {
             <Link href="/login?register=1" className="yc-btn-primary">
               免费生成政策匹配报告
             </Link>
-            <a href="mailto:contact@yance.ai?subject=产品咨询" className="yc-btn-outline-white">
+            <a href="mailto:yanceai@163.com?subject=产品咨询" className="yc-btn-outline-white">
               联系我们
             </a>
           </div>
           <div className="yc-cta-info">
-            <span>contact@yance.ai</span>
+            <span>yanceai@163.com</span>
             <span className="yc-cta-sep">|</span>
             <span>衍策引擎AI</span>
           </div>

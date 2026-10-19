@@ -33,7 +33,7 @@ const resourceLinks = [
 const companyLinks = [
   { href: '/about', label: '关于我们' },
   { href: '/security', label: '安全合规' },
-  { href: 'mailto:contact@yance.ai', label: '联系我们' },
+  { href: 'mailto:yanceai@163.com', label: '联系我们' },
   { href: '/privacy', label: '隐私政策' },
   { href: '/terms', label: '服务条款' },
 ];
@@ -76,7 +76,7 @@ export default function Footer() {
               面向中国新质生产力科技企业的 AI 产业研究与政策申报服务平台。为 AI、机器人、生物医药、集成电路、新能源等科技企业及产业园区提供智能化政策匹配、申报辅助和产业研究服务。
             </p>
             <div className="footer-social">
-              <a href="mailto:contact@yance.ai" aria-label="邮件联系" title="contact@yance.ai">
+              <a href="mailto:yanceai@163.com" aria-label="邮件联系" title="yanceai@163.com">
                 <MailIcon />
               </a>
             </div>
