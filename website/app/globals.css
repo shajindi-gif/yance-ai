@@ -1608,6 +1608,16 @@ code {
   color: var(--text-muted);
 }
 
+.footer-copyright a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.footer-copyright a:hover {
+  color: var(--text-body, inherit);
+}
+
 .footer-legal {
   display: flex;
   gap: var(--space-6);

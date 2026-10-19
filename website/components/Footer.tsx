@@ -140,7 +140,9 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="footer-bottom">
           <p className="footer-copyright">
-            &copy; {year} 上海衍策引擎人工智能科技有限公司 | 衍策引擎AI
+            &copy; {year} 上海衍策引擎人工智能科技有限公司 | 衍策引擎AI | 客服邮箱：
+            <a href="mailto:yanceai@163.com">yanceai@163.com</a>
+            {/* 备案号待挂载：yance.ai（.ai）无法 ICP 备案；yance.cn 备案通过后在此行邮箱旁展示 */}
           </p>
           <div className="footer-legal">
             <span className="footer-deploy-tag">部署地域以实际环境为准</span>
