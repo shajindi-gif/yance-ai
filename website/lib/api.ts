@@ -1,7 +1,14 @@
 // Yance.ai API Client
 // Connects the Next.js frontend to the FastAPI backend
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+
+export interface AuthConfig {
+  email_login_enabled: boolean;
+  logout_all_devices_enabled?: boolean;
+  agent_cancellation_enabled?: boolean;
+  district_profile_enabled?: boolean;
+}
 
 export interface LoginResponse {
   access_token: string;
@@ -318,6 +325,7 @@ export interface CompanyProfileData {
   industry: string | null;
   province: string | null;
   city: string | null;
+  district?: string | null;
   registered_address: string | null;
   founded_date: string | null;
   company_scale: string | null;
@@ -994,6 +1002,19 @@ class ApiClient {
     }
   }
 
+  async cancelAgentRun(id: string): Promise<void> {
+    await this.request(`/agent-runs/${id}/cancel`, { method: 'POST' });
+  }
+
+  async logout(revokeAllDevices = true): Promise<void> {
+    if (revokeAllDevices) {
+      await this.request<void>('/auth/logout', {
+        method: 'POST', signal: AbortSignal.timeout(15000),
+      });
+    }
+    this.clearToken();
+  }
+
   getToken(): string | null {
     return this.token;
   }
@@ -1106,9 +1127,9 @@ class ApiClient {
   }
 
   // ── Email code login（验证码登录，未注册邮箱自动建号）──────────
-  async getAuthConfig(): Promise<{ email_login_enabled: boolean }> {
+  async getAuthConfig(): Promise<AuthConfig> {
     try {
-      return await this.request<{ email_login_enabled: boolean }>('/auth/config');
+      return await this.request<AuthConfig>('/auth/config');
     } catch {
       // 配置接口不可用时保守回退：只显示密码登录
       return { email_login_enabled: false };

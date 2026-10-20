@@ -134,6 +134,7 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [canRevokeAllDevices, setCanRevokeAllDevices] = useState(false);
   const allItems = [...WORKSPACE_NAVIGATION, ...WORKSPACE_BOTTOM_NAVIGATION, ADMIN_NAVIGATION];
   const activeItem = allItems.find((item) => item.match(pathname));
 
@@ -151,6 +152,9 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
   useEffect(() => {
     let active = true;
     if (!api.isAuthenticated()) return;
+    api.getAuthConfig().then((config) => {
+      if (active) setCanRevokeAllDevices(config.logout_all_devices_enabled === true);
+    });
     api.getMe().then((user) => {
       if (active) setIsPlatformAdmin(user.is_platform_admin);
     }).catch(() => {
@@ -172,9 +176,20 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
     return () => { active = false; clearInterval(timer); };
   }, [pathname]);
 
-  const logout = () => {
-    api.clearToken();
-    router.push("/login");
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
+  const logout = async () => {
+    setLoggingOut(true);
+    setLogoutError("");
+    try {
+      await api.logout(canRevokeAllDevices);
+      router.push("/login");
+    } catch {
+      if (!api.isAuthenticated()) router.push("/login");
+      else setLogoutError("退出失败，会话尚未撤销，请重试。");
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   const renderNavItem = (item: WorkspaceNavItem) => {
@@ -244,9 +259,11 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
           <Link href="/" className={styles.secondaryAction}>
             返回产品官网
           </Link>
-          <button type="button" className={styles.logout} onClick={logout}>
-            退出登录
+          {logoutError ? <p role="alert">{logoutError}</p> : null}
+          <button type="button" className={styles.logout} onClick={logout} disabled={loggingOut}>
+            {loggingOut ? "正在退出…" : canRevokeAllDevices ? "退出所有设备" : "退出当前设备"}
           </button>
+          {!canRevokeAllDevices ? <small>当前服务仅支持本机退出，其他设备会话不受影响。</small> : null}
         </div>
       </aside>
 

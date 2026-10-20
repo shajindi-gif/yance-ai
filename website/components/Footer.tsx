@@ -6,9 +6,9 @@ import Image from 'next/image';
    ------------------------------------------- */
 const productLinks = [
   { href: '/login?register=1', label: '政策匹配' },
-  { href: '/pricing', label: '申报助手' },
-  { href: '/policy-knowledge-base', label: '产业研究' },
-  { href: '/company-match', label: '企业画像' },
+  { href: '/applications', label: '申报工作台' },
+  { href: '/policy-knowledge-base', label: '政策库介绍' },
+  { href: '/companies', label: '企业画像' },
   { href: '/parks', label: '园区入驻' },
   { href: '/brief-maker', label: '报告生成' },
 ];

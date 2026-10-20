@@ -22,6 +22,7 @@ const EMPTY_PROFILE: CompanyProfileData = {
   industry: null,
   province: null,
   city: null,
+  district: null,
   registered_address: null,
   founded_date: null,
   company_scale: null,
@@ -59,17 +60,20 @@ export default function CompanyProfilePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [supportsDistrict, setSupportsDistrict] = useState(false);
 
   const load = async () => {
-    const [companyResult, profileResult, versionResult] = await Promise.all([
+    const [companyResult, profileResult, versionResult, capabilities] = await Promise.all([
       api.getCompany(companyId),
       api.getCompanyProfile(companyId),
       api.getCompanyProfileVersions(companyId),
+      api.getAuthConfig(),
     ]);
     setCompany(companyResult);
     setProfile(profileResult);
     setDraft({ ...EMPTY_PROFILE, ...profileResult.draft_json });
     setVersions(versionResult);
+    setSupportsDistrict(capabilities.district_profile_enabled === true);
   };
 
   useEffect(() => {
@@ -97,12 +101,20 @@ export default function CompanyProfilePage() {
     setMessage("");
   };
 
+  const profilePayload = (): CompanyProfileData => {
+    if (supportsDistrict) return draft;
+    if (draft.district) throw new Error("暂未确认服务端支持区县字段，为保留已有资料，请刷新后重试。");
+    const legacy = { ...draft };
+    delete legacy.district;
+    return legacy;
+  };
+
   const save = async () => {
     setSaving(true);
     setError("");
     setMessage("");
     try {
-      const result = await api.updateCompanyProfile(companyId, draft);
+      const result = await api.updateCompanyProfile(companyId, profilePayload());
       setProfile(result);
       setMessage(`画像草稿已保存，完整度 ${result.completeness_score}%`);
       return result;
@@ -119,7 +131,7 @@ export default function CompanyProfilePage() {
     setError("");
     setMessage("");
     try {
-      await api.updateCompanyProfile(companyId, draft);
+      await api.updateCompanyProfile(companyId, profilePayload());
       const version = await api.publishCompanyProfile(companyId);
       await load();
       setMessage(`企业画像 V${version.version} 已发布，后续扫描会固定使用该版本。`);
@@ -201,6 +213,10 @@ export default function CompanyProfilePage() {
             <label htmlFor="profile-city">城市</label>
             <input id="profile-city" value={draft.city || ""} onChange={(event) => setValue("city", event.target.value || null)} />
           </div>
+          {supportsDistrict ? <div className={flow.field}>
+            <label htmlFor="profile-district">区县</label>
+            <input id="profile-district" value={draft.district || ""} onChange={(event) => setValue("district", event.target.value || null)} />
+          </div> : null}
           <div className={flow.fieldWide}>
             <label htmlFor="profile-address">注册地址</label>
             <input id="profile-address" value={draft.registered_address || ""} onChange={(event) => setValue("registered_address", event.target.value || null)} />

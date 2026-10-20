@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -28,6 +29,21 @@ export default function AgentRunPage() {
   const [run, setRun] = useState<AgentRunDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+  const [canCancel, setCanCancel] = useState(false);
+
+  const cancel = async () => {
+    setCancelling(true);
+    try {
+      await api.cancelAgentRun(params.runId);
+      setRun(await api.getAgentRun(params.runId));
+      setError("");
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "取消失败，请重试");
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   useEffect(() => {
     if (!api.isAuthenticated()) {
@@ -35,6 +51,9 @@ export default function AgentRunPage() {
       return;
     }
     let active = true;
+    api.getAuthConfig().then((config) => {
+      if (active) setCanCancel(config.agent_cancellation_enabled === true);
+    });
     let timer: number | undefined;
     const load = async () => {
       try {
@@ -63,6 +82,8 @@ export default function AgentRunPage() {
     <AppShell>
       <PageHeader eyebrow="Execution Trace" title={`${run.agent_name} · ${run.workflow_key || "未命名工作流"}`} description={`Run ID: ${run.id}`} actions={<ButtonLink href="/agents" variant="secondary">返回列表</ButtonLink>} />
       {error && <InlineAlert>{error}</InlineAlert>}
+      {canCancel && ["queued", "planning", "running", "waiting"].includes(run.status) ? <Button variant="secondary" onClick={cancel} disabled={cancelling}>{cancelling ? "正在取消…" : "取消任务"}</Button> : null}
+      {run.status === "cancelled" ? <InlineAlert>任务已取消。正在进行的供应商请求可能仍产生费用；后续步骤与最终交付已停止。</InlineAlert> : null}
       <div className={flow.metricGrid}>
         <div className={flow.metric}><strong><Badge tone={statusTone(run.status)}>{run.status}</Badge></strong><span>运行状态</span></div>
         <div className={flow.metric}><strong>{run.current_step || "—"}</strong><span>当前步骤</span></div>

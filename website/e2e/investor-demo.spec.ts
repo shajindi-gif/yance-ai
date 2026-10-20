@@ -4,6 +4,7 @@ test('investor demo proves the persisted evidence-first workflow and downloads a
   page,
 }) => {
   const failedResponses: string[] = [];
+  page.on('requestfailed', (request) => failedResponses.push(`NETWORK ${request.url()}`));
   page.on('response', (response) => {
     if (response.status() >= 400) failedResponses.push(`${response.status()} ${response.url()}`);
   });
