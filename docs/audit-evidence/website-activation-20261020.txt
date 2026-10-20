@@ -1,0 +1,13 @@
+/tmp/yance-website-web-20261020-01.tar.gz: OK
+cp: warning: behavior of -n is non-portable and may change in future; use --update=none instead
+curl: (7) Failed to connect to 127.0.0.1 port 3000 after 0 ms: Couldn't connect to server
+ACTIVE / 200
+ACTIVE /pricing 200
+ACTIVE /login 200
+ACTIVE /security 200
+ACTIVE /policy-knowledge-base 200
+ACTIVE /api/v1/auth/config 200
+ACTIVE /api/v1/products 200
+MainPID=1008607
+WorkingDirectory=/opt/yance/releases/website-web-20261020-01/website
+ACTIVATED 2026-10-20T14:16:39Z
