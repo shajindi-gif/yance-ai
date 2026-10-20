@@ -4,9 +4,9 @@ import time
 from datetime import UTC, datetime
 
 import structlog
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -61,6 +61,12 @@ def _make_slug(company_name: str) -> str:
     return f"{ascii_part[:30]}-{secrets.token_hex(3)}"
 
 
+def _lock_public_email(db: Session, email: str) -> None:
+    # Global uniqueness is intentionally not imposed on admin-provisioned
+    # multi-workspace users. Serialize self-service provisioning per email.
+    db.execute(select(func.pg_advisory_xact_lock(func.hashtextextended(f"public-email:{email}", 0))))
+
+
 def create_tenant_and_owner(payload: BootstrapRequest, db: Session) -> Token:
     tenant = Tenant(name=payload.tenant_name, slug=payload.tenant_slug)
     db.add(tenant)
@@ -91,7 +97,7 @@ def create_tenant_and_owner(payload: BootstrapRequest, db: Session) -> Token:
         ) from exc
     return Token(
         access_token=create_access_token(
-            user_id=owner.id, tenant_id=tenant.id, role=owner.role.value
+            user_id=owner.id, tenant_id=tenant.id, role=owner.role.value, auth_version=owner.auth_version
         )
     )
 
@@ -140,6 +146,7 @@ def register(
         )
 
     # Check email uniqueness across all users
+    _lock_public_email(db, str(payload.owner_email).lower())
     existing_user = db.scalar(select(User).where(User.email == str(payload.owner_email).lower()))
     if existing_user:
         raise HTTPException(status_code=409, detail="该邮箱已注册，请直接登录")
@@ -216,7 +223,7 @@ def register(
 
     return Token(
         access_token=create_access_token(
-            user_id=owner.id, tenant_id=tenant.id, role=owner.role.value
+            user_id=owner.id, tenant_id=tenant.id, role=owner.role.value, auth_version=owner.auth_version
         )
     )
 
@@ -276,7 +283,7 @@ def login(
         logger.warning("analytics_event_write_failed", event_name="login_completed")
     return Token(
         access_token=create_access_token(
-            user_id=user.id, tenant_id=user.tenant_id, role=user.role.value
+            user_id=user.id, tenant_id=user.tenant_id, role=user.role.value, auth_version=user.auth_version
         )
     )
 
@@ -285,17 +292,23 @@ def login(
 
 
 def _client_ip(request: Request) -> str:
-    """Best-effort client IP; Cloudflare Tunnel forwards the real IP via XFF."""
-    xff = request.headers.get("x-forwarded-for")
-    if xff:
-        return xff.split(",")[0].strip()
+    """Use ASGI's peer, normalized only by the configured trusted proxy layer.
+
+    Uvicorn/Nginx must restrict and sanitize forwarded headers. Reading raw
+    XFF here allows a direct caller to create unlimited rate-limit identities.
+    """
     return request.client.host if request.client else "unknown"
 
 
 @router.get("/config")
 def auth_config() -> dict:
     """Public capability flags so the login page can hide unavailable tabs."""
-    return {"email_login_enabled": is_email_configured()}
+    return {
+        "email_login_enabled": is_email_configured(),
+        "logout_all_devices_enabled": True,
+        "agent_cancellation_enabled": True,
+        "district_profile_enabled": True,
+    }
 
 
 @router.post("/email/send", status_code=202)
@@ -372,6 +385,15 @@ def email_code_verify(
     if result != "ok":
         raise HTTPException(status_code=401, detail="验证码不正确")
 
+    # consume_login_code commits its single-use marker. Re-acquire the
+    # provisioning lock afterwards and re-read accounts rather than using a
+    # stale pre-consumption absence check.
+    _lock_public_email(db, email)
+    users = db.scalars(select(User).where(User.email == email)).all()
+    provisioning = not users
+    if len(users) > 1:
+        raise HTTPException(status_code=400, detail="该邮箱关联多个工作区，请使用密码登录")
+
     if not provisioning:
         user = users[0]
         if not user.is_active:
@@ -389,7 +411,7 @@ def email_code_verify(
             logger.warning("analytics_event_write_failed", event_name="login_completed")
         return Token(
             access_token=create_access_token(
-                user_id=user.id, tenant_id=user.tenant_id, role=user.role.value
+                user_id=user.id, tenant_id=user.tenant_id, role=user.role.value, auth_version=user.auth_version
             )
         )
 
@@ -463,14 +485,14 @@ def email_code_verify(
             user = existing[0]
             return Token(
                 access_token=create_access_token(
-                    user_id=user.id, tenant_id=user.tenant_id, role=user.role.value
+                    user_id=user.id, tenant_id=user.tenant_id, role=user.role.value, auth_version=user.auth_version
                 )
             )
         raise HTTPException(status_code=409, detail="注册失败，请重试") from exc
 
     return Token(
         access_token=create_access_token(
-            user_id=owner.id, tenant_id=tenant.id, role=owner.role.value
+            user_id=owner.id, tenant_id=tenant.id, role=owner.role.value, auth_version=owner.auth_version
         )
     )
 
@@ -544,7 +566,15 @@ def password_reset_confirm(
     user = users[0]
     if not user.is_active:
         raise HTTPException(status_code=403, detail="该账号已被停用，请联系管理员")
-    user.password_hash = hash_password(payload.new_password)
+    tenant = db.get(Tenant, user.tenant_id)
+    if not tenant or not tenant.is_active:
+        raise HTTPException(status_code=403, detail="该工作区已被停用，请联系管理员")
+    db.execute(
+        update(User).where(User.id == user.id).values(
+            password_hash=hash_password(payload.new_password), auth_version=User.auth_version + 1
+        )
+    )
+    db.refresh(user)
     record_event(
         db,
         tenant_id=user.tenant_id,
@@ -559,7 +589,7 @@ def password_reset_confirm(
         raise HTTPException(status_code=500, detail="密码重置失败，请重试") from exc
     return Token(
         access_token=create_access_token(
-            user_id=user.id, tenant_id=user.tenant_id, role=user.role.value
+            user_id=user.id, tenant_id=user.tenant_id, role=user.role.value, auth_version=user.auth_version
         )
     )
 
@@ -567,3 +597,17 @@ def password_reset_confirm(
 @router.get("/me", response_model=UserOut)
 def me(principal: Principal = Depends(get_principal)) -> User:
     return principal.user
+
+
+@router.post("/logout", status_code=204)
+def logout(
+    principal: Principal = Depends(get_principal), db: Session = Depends(get_db)
+) -> Response:
+    """Revoke every JWT session for this user; API-key lifecycle is separate."""
+    if principal.auth_kind != "jwt":
+        raise HTTPException(status_code=403, detail="JWT authentication required")
+    db.execute(
+        update(User).where(User.id == principal.user.id).values(auth_version=User.auth_version + 1)
+    )
+    db.commit()
+    return Response(status_code=204)

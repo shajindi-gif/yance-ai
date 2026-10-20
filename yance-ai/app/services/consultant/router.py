@@ -7,6 +7,7 @@ guessing. No bare-LLM answers by design.
 """
 
 import re
+from datetime import UTC
 from typing import Any
 from uuid import UUID
 
@@ -21,7 +22,6 @@ from app.models.models import (
     CompanyProfile,
     CompanyProfileVersion,
     EligibilityResult,
-    Evidence,
     Opportunity,
     Policy,
 )
@@ -234,11 +234,11 @@ def _answer_missing_materials(db: Session, company: Company) -> dict[str, Any]:
 
 
 def _answer_deadlines(db: Session, company: Company) -> dict[str, Any]:
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from app.models.models import Milestone
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     blocks = []
     applications = list(
         db.scalars(
@@ -252,7 +252,7 @@ def _answer_deadlines(db: Session, company: Company) -> dict[str, Any]:
     for application in applications:
         due = application.due_at
         if due.tzinfo is None:
-            due = due.replace(tzinfo=timezone.utc)
+            due = due.replace(tzinfo=UTC)
         days = (due - now).days
         blocks.append(
             {
@@ -273,7 +273,7 @@ def _answer_deadlines(db: Session, company: Company) -> dict[str, Any]:
     for milestone in milestones:
         due = milestone.due_at
         if due.tzinfo is None:
-            due = due.replace(tzinfo=timezone.utc)
+            due = due.replace(tzinfo=UTC)
         blocks.append(
             {
                 "kind": "deadline",

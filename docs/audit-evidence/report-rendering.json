@@ -1,0 +1,10 @@
+{
+  "classification": "synthetic only",
+  "pages": 7,
+  "page_size": "A4",
+  "producer": "WeasyPrint 70.0",
+  "font": "Noto Sans CJK SC, embedded/subset/unicode",
+  "visual_review": "7-page contact sheet inspected; no obvious clipping, overlap or missing Chinese glyphs in this sample",
+  "report_sha256": "8fe0725c97bdf12acdfb4b7611e7d1adbbd5521faaacf56b00ee52f678d5d9e1",
+  "production_font_validation": false
+}

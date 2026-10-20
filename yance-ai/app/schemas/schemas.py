@@ -117,6 +117,7 @@ class CompanyProfileData(BaseModel):
     industry: str | None = Field(default=None, max_length=160)
     province: str | None = Field(default=None, max_length=80)
     city: str | None = Field(default=None, max_length=80)
+    district: str | None = Field(default=None, max_length=80)
     registered_address: str | None = Field(default=None, max_length=500)
     founded_date: date | None = None
     company_scale: str | None = Field(default=None, max_length=80)
@@ -289,6 +290,7 @@ class PolicyCreate(BaseModel):
     published_at: datetime | None = None
     effective_at: datetime | None = None
     deadline: datetime | None = None
+    expires_at: datetime | None = None
     source: str | None = Field(default=None, max_length=160)
     support_amount: str | None = Field(default=None, max_length=120)
     support_type: str | None = Field(default=None, max_length=120)

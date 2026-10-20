@@ -81,3 +81,9 @@ def test_is_wechat_configured_rejects_placeholders(monkeypatch):
     monkeypatch.setattr(settings, "wxpay_serial_no", "x")
     monkeypatch.setattr(settings, "wxpay_apiv3_key", "x")
     assert wx.is_wechat_configured() is False
+
+
+def test_transaction_identity_must_match_merchant_and_app(wechat_test_keys):
+    assert wx.trade_identity_matches({"mchid":"1900000001", "appid":"wxtestappid"})
+    assert not wx.trade_identity_matches({"mchid":"foreign", "appid":"wxtestappid"})
+    assert not wx.trade_identity_matches({"mchid":"1900000001", "appid":"foreign"})

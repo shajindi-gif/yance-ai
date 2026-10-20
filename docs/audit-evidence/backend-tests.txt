@@ -1,0 +1,5 @@
+Command: pytest --cov=app --cov-report=term --cov-fail-under=50 --tb=short
+Environment: new synthetic local PG18 yance_audit_acceptance_test
+TOTAL                                              8671   1782    79%
+Required test coverage of 50% reached. Total coverage: 79.45%
+182 passed, 6 warnings in 26.25s

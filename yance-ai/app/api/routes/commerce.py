@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, get_principal, require_roles
+from app.core.config import settings
 from app.core.db import get_db
 from app.models.models import Company, Invoice, Opportunity, Order, Payment, Product, UserRole
 from app.schemas.schemas import (
@@ -63,7 +64,7 @@ def create_order(
         tenant_id=principal.tenant_id,
         order_no=f"Y{secrets.token_hex(8).upper()}",
         product_code=product.code,
-        amount=product.promotional_price or product.price,
+        amount=product.promotional_price if product.promotional_price is not None else product.price,
         currency="CNY",
         resource_type=product.entitlement_type,
         resource_id=payload.resource_id,
@@ -108,12 +109,18 @@ def create_invoice(
     NOT a tax invoice. Formal tax invoices are issued via manual review.
     """
     order = db.scalar(
-        select(Order).where(Order.id == payload.order_id, Order.tenant_id == principal.tenant_id)
+        select(Order).where(Order.id == payload.order_id, Order.tenant_id == principal.tenant_id).with_for_update()
     )
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     if order.status != "paid":
         raise HTTPException(status_code=400, detail="Order must be paid before invoicing")
+
+    existing = db.scalar(select(Invoice).where(Invoice.order_id == order.id, Invoice.tenant_id == principal.tenant_id, Invoice.status != "rejected").order_by(Invoice.created_at.desc()))
+    if existing:
+        if (existing.title, existing.tax_number, existing.invoice_type) != (payload.title, payload.tax_number, payload.invoice_type or "vat_normal"):
+            raise HTTPException(status_code=409, detail="该订单已有开票申请，请联系管理员核实后更正")
+        return existing
 
     invoice_no = _generate_invoice_no()
 
@@ -125,10 +132,9 @@ def create_invoice(
         tax_number=payload.tax_number,
         address_phone=payload.address_phone,
         bank_account=payload.bank_account,
-        seller_name=payload.seller_name or "",
-        seller_tax_number=payload.seller_tax_number or "",
-        items_json=payload.items
-        or [
+        seller_name=settings.company_name,
+        seller_tax_number=settings.company_tax_id,
+        items_json=[
             {
                 "name": order.product_code,
                 "spec": "",

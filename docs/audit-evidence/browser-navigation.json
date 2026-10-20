@@ -1,0 +1,10 @@
+{
+  "ttfbMs": 5,
+  "domContentLoadedMs": 80.89999997615814,
+  "loadMs": 116.60000002384186,
+  "viewport": "1280x720",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.8010.12 Safari/537.36",
+  "network": "loopback, no throttling",
+  "samples": 1,
+  "productionPerformanceClaim": false
+}

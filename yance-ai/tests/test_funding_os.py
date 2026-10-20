@@ -1,9 +1,8 @@
 """Funding OS: structured funding facts, notifications, milestones, consultant."""
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
@@ -11,15 +10,12 @@ from app.core.db import SessionLocal
 from app.main import app
 from app.models.models import (
     Application,
-    Company,
-    Milestone,
     Notification,
     Opportunity,
     Policy,
 )
 from app.services.funding.amounts import infer_funding_type, parse_support_amount
 from app.services.notifications.deadlines import scan_deadlines
-
 
 
 def _register(client: TestClient, prefix: str) -> tuple[dict, dict]:
@@ -62,7 +58,7 @@ def test_deadline_scan_emits_band_notifications_once_each():
     with TestClient(app) as client:
         headers, me = _register(client, suffix)
         company = client.get("/api/v1/companies", headers=headers).json()[0]
-        due = datetime.now(timezone.utc) + timedelta(days=6)
+        due = datetime.now(UTC) + timedelta(days=6)
         application = Application(
             tenant_id=me["tenant_id"],
             company_id=company["id"],
@@ -118,7 +114,7 @@ def test_milestones_crud_and_tenant_isolation():
         created = client.post(
             f"/api/v1/applications/{application_id}/milestones",
             headers=headers_a,
-            json={"title": "提交软著申请", "due_at": (datetime.now(timezone.utc) + timedelta(days=3)).isoformat()},
+            json={"title": "提交软著申请", "due_at": (datetime.now(UTC) + timedelta(days=3)).isoformat()},
         )
         assert created.status_code == 201, created.text
         milestone_id = created.json()["id"]
@@ -176,7 +172,7 @@ def test_consultant_answers_with_citations_or_insufficient():
                 funding_type="grant",
                 source_url="https://example.gov.cn/p/1",
                 issuing_authority="测试局",
-                deadline=datetime.now(timezone.utc) + timedelta(days=20),
+                deadline=datetime.now(UTC) + timedelta(days=20),
                 status="published",
             )
             db.add(policy)
@@ -216,7 +212,7 @@ def test_application_inherits_policy_deadline_and_notifies():
     with TestClient(app) as client:
         headers, me = _register(client, suffix)
         company = client.get("/api/v1/companies", headers=headers).json()[0]
-        deadline = datetime.now(timezone.utc) + timedelta(days=10)
+        deadline = datetime.now(UTC) + timedelta(days=10)
         with SessionLocal() as db:
             policy = Policy(
                 title=f"截止联动测试政策 {suffix}",
@@ -257,7 +253,7 @@ def test_application_inherits_policy_deadline_and_notifies():
         application_id = application.json()["id"]
 
         # Manual override via PATCH.
-        new_due = (datetime.now(timezone.utc) + timedelta(days=2)).isoformat()
+        new_due = (datetime.now(UTC) + timedelta(days=2)).isoformat()
         patched = client.patch(
             f"/api/v1/applications/{application_id}",
             headers=headers,
@@ -303,8 +299,8 @@ def test_funding_summary_and_amount_backfill():
 
         # Owner cannot manage the global knowledge base; use a direct service call
         # to exercise the same deterministic backfill logic the admin endpoint uses.
-        from app.api.routes.policies import parse_support_amounts
         from app.api.deps import Principal as _P
+        from app.api.routes.policies import parse_support_amounts
         from app.models.models import User, UserRole
 
         with SessionLocal() as db:
@@ -342,8 +338,8 @@ def test_funding_summary_and_amount_backfill():
 
 
 def test_email_dispatch_disabled_by_default(monkeypatch):
-    from app.services.notifications import email as email_svc
     from app.core.config import settings
+    from app.services.notifications import email as email_svc
     monkeypatch.setattr(settings, "email_enabled", False)
     assert email_svc.is_email_configured() is False
     with SessionLocal() as db:
@@ -351,9 +347,9 @@ def test_email_dispatch_disabled_by_default(monkeypatch):
 
 
 def test_email_dispatch_sends_high_severity_only(monkeypatch):
-    from app.services.notifications import email as email_svc
     from app.core.config import settings
-    from app.models.models import Notification, Membership, User
+    from app.models.models import Notification
+    from app.services.notifications import email as email_svc
 
     suffix = uuid.uuid4().hex
     with TestClient(app) as client:

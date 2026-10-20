@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-20",
+  "timezone": "Asia/Shanghai",
+  "os": "Darwin",
+  "machine": "arm64",
+  "python": "3.12.13",
+  "node": "26.8.1",
+  "postgres": "18",
+  "production_postgres_tested": false,
+  "docker_daemon_available": false,
+  "browser": "Chromium 153.0.8010.12 / Playwright 1.63.0",
+  "data": "synthetic",
+  "production_changed": false
+}

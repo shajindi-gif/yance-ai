@@ -12,9 +12,9 @@ table (migration downgrade) is a safe rollback.
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import UTC, timedelta
 
-from sqlalchemy import case, select
+from sqlalchemy import case, or_, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -26,7 +26,7 @@ LOGIN_FAIL_WINDOW_SECONDS = 900
 LOGIN_FAIL_LIMIT = 10  # failed logins per IP per 15 minutes
 
 
-def _upsert_hit(db: Session, key: str, window_seconds: int) -> int:
+def _upsert_hit(db: Session, key: str, window_seconds: int, limit: int) -> int | None:
     """Atomically start/extend a fixed window and return the new count."""
     now = now_utc()
     stale_before = now - timedelta(seconds=window_seconds)
@@ -43,10 +43,11 @@ def _upsert_hit(db: Session, key: str, window_seconds: int) -> int:
                 else_=AuthRateLimit.window_start,
             ),
         },
+        where=or_(AuthRateLimit.window_start < stale_before, AuthRateLimit.count < limit),
     )
-    db.execute(stmt)
+    count = db.scalar(stmt.returning(AuthRateLimit.count))
     db.commit()
-    return db.scalar(select(AuthRateLimit.count).where(AuthRateLimit.key == key))
+    return count
 
 
 def is_allowed(db: Session, key: str, *, limit: int, window_seconds: int) -> bool:
@@ -56,7 +57,7 @@ def is_allowed(db: Session, key: str, *, limit: int, window_seconds: int) -> boo
     if window_start is None:
         return True
     if window_start.tzinfo is None:
-        window_start = window_start.replace(tzinfo=now.timezone)
+        window_start = window_start.replace(tzinfo=UTC)
     if now - window_start >= timedelta(seconds=window_seconds):
         return True  # stale window will reset on next hit
     count = db.scalar(select(AuthRateLimit.count).where(AuthRateLimit.key == key)) or 0
@@ -66,10 +67,7 @@ def is_allowed(db: Session, key: str, *, limit: int, window_seconds: int) -> boo
 def register_attempt(db: Session, client_ip: str) -> bool:
     """Record a registration attempt; False means over limit (429)."""
     key = f"register:{client_ip}"
-    if not is_allowed(db, key, limit=REGISTER_LIMIT, window_seconds=REGISTER_WINDOW_SECONDS):
-        return False
-    _upsert_hit(db, key, REGISTER_WINDOW_SECONDS)
-    return True
+    return _upsert_hit(db, key, REGISTER_WINDOW_SECONDS, REGISTER_LIMIT) is not None
 
 
 def login_is_limited(db: Session, client_ip: str) -> bool:
@@ -82,10 +80,7 @@ def login_is_limited(db: Session, client_ip: str) -> bool:
 def login_failure(db: Session, client_ip: str) -> bool:
     """Record a failed login; False means over limit (429)."""
     key = f"loginfail:{client_ip}"
-    if not is_allowed(db, key, limit=LOGIN_FAIL_LIMIT, window_seconds=LOGIN_FAIL_WINDOW_SECONDS):
-        return False
-    _upsert_hit(db, key, LOGIN_FAIL_WINDOW_SECONDS)
-    return True
+    return _upsert_hit(db, key, LOGIN_FAIL_WINDOW_SECONDS, LOGIN_FAIL_LIMIT) is not None
 
 
 def login_success(db: Session, client_ip: str) -> None:

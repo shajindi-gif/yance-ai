@@ -32,6 +32,7 @@ def _principal(role: UserRole = UserRole.owner) -> Principal:
         email="security@example.com",
         full_name="Security Test",
         password_hash="unused",
+        auth_version=0,
         role=role,
         is_active=True,
     )

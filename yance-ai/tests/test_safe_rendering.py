@@ -76,3 +76,22 @@ def test_invoice_renderer_escapes_fields_and_denies_fetch(monkeypatch, tmp_path)
     assert "&lt;script&gt;bad()&lt;/script&gt;" in CapturingHTML.last_string
     assert '<img src="file:///etc/passwd">' not in CapturingHTML.last_string
     assert CapturingHTML.last_url_fetcher is deny_external_url_fetcher
+
+
+def test_report_handles_aware_deadline_and_does_not_invent_eligibility(monkeypatch):
+    from datetime import UTC, datetime, timedelta
+
+    from app.models.models import Opportunity, Policy
+    monkeypatch.setattr(report_pdf, "HTML", CapturingHTML)
+    company = Company(id=uuid.uuid4(), tenant_id=uuid.uuid4(), name="合成企业", metadata_json={})
+    policy = Policy(id=uuid.uuid4(), title="合成政策", deadline=datetime.now(UTC)+timedelta(days=5), status="published")
+    opportunity = Opportunity(id=uuid.uuid4(), tenant_id=company.tenant_id, company_id=company.id, policy_id=policy.id, title="合成机会", score=0.9, evidence_json={}, eligibility_status="NEED_MORE_INFORMATION")
+    assert report_pdf.generate_match_report_pdf(company, [opportunity], [policy]).startswith(b"%PDF")
+    assert "✓ 资质满足" not in CapturingHTML.last_string
+    assert "✓ 地区匹配" not in CapturingHTML.last_string
+    assert "不是获批概率" in CapturingHTML.last_string
+    assert "暂无逐字核验的条款证据" in CapturingHTML.last_string
+    policy.deadline = None
+    report_pdf.generate_match_report_pdf(company, [opportunity], [policy])
+    assert "长期有效" not in CapturingHTML.last_string
+    assert "截止日待核实" in CapturingHTML.last_string

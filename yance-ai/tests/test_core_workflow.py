@@ -2,6 +2,7 @@ import asyncio
 import hashlib
 import os
 import uuid
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -140,6 +141,9 @@ def test_persisted_company_to_application_workflow(monkeypatch):
                     source_url="https://policy.example.invalid/source",
                     content="支持人工智能企业研发费用投入，申报需提供知识产权与研发费用材料。",
                     support_amount="以政策原文为准",
+                    effective_at=datetime.now(UTC) - timedelta(days=30),
+                    expires_at=datetime.now(UTC) + timedelta(days=365),
+                    deadline=datetime.now(UTC) + timedelta(days=60),
                     status="published",
                     embedding=[0.25] * 1024,
                 )

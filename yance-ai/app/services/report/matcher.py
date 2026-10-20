@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.models.models import Company, CompanyProfileVersion, Opportunity, Policy
 from app.services.llm.registry import embed_texts
+from app.services.policies.applicability import applicable_region_clauses, current_policy_clauses
 from app.services.policies.ingestion import latest_policy_version
 from app.services.policies.retrieval import hybrid_policy_candidates
 from app.services.policies.visibility import visible_policy_clause
@@ -60,6 +61,7 @@ async def match_policies_for_company(
         if not profile_version:
             raise ValueError("Company profile version is outside the scan scope")
     meta = profile_version.snapshot_json if profile_version else (company.metadata_json or {})
+    region = {key: meta.get(key) or getattr(company, key, None) for key in ("province", "city", "district")}
 
     def _string_list(value) -> list[str]:
         return [str(item) for item in value] if isinstance(value, list) else []
@@ -86,6 +88,7 @@ async def match_policies_for_company(
         query=profile_text,
         query_vector=company_vector,
         limit=50,
+        region=region,
     )
     retrieval_chunks = {item.policy.id: item.chunk_ids for item in candidates}
     results = [(item.policy, item.similarity) for item in candidates]
@@ -100,7 +103,8 @@ async def match_policies_for_company(
             .where(
                 visible_policy_clause(tenant_id),
                 Policy.embedding.isnot(None),
-                Policy.status == "published",
+                *current_policy_clauses(),
+                *applicable_region_clauses(region),
             )
             .order_by(Policy.embedding.cosine_distance(company_vector))
             .limit(50)

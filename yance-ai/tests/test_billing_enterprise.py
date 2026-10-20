@@ -1,13 +1,11 @@
 import uuid
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from app.core.db import SessionLocal
 from app.main import app
 from app.models.models import ApiKey, Membership, UsageRecord, User, UserRole
-
 
 
 def _register(client: TestClient, prefix: str) -> tuple[dict[str, str], dict]:

@@ -77,3 +77,9 @@ def test_production_document_ingestion_accepts_fail_closed_ocr_configuration():
     )
     assert config.document_ocr_provider == "tesseract"
     assert config.document_url_import_enabled is True
+
+
+@pytest.mark.parametrize("secret", ["", "short", "REPLACE_WITH_OPENSSL_RAND_HEX_32"])
+def test_production_rejects_weak_or_placeholder_jwt(secret):
+    with pytest.raises(ValidationError, match="Production secrets must be replaced"):
+        Settings(app_env="production", jwt_secret=secret, demo_features_enabled=False)

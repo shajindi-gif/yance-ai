@@ -1,0 +1,21 @@
+{
+  "scope": "bounded_http_smoke_not_capacity_benchmark",
+  "url": "http://127.0.0.1:8018/health",
+  "requests": 50,
+  "concurrency": 5,
+  "successful": 50,
+  "failed": 0,
+  "errors": {},
+  "elapsed_seconds": 0.068,
+  "requests_per_second": 740.7,
+  "latency_ms": {
+    "mean": 2.23,
+    "p50": 1.88,
+    "p95": 4.68,
+    "p99": 5.02
+  },
+  "thresholds": {
+    "success_rate": 1.0,
+    "max_p95_ms": 750.0
+  }
+}

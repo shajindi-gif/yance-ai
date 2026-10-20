@@ -663,12 +663,12 @@ async def admin_issue_invoice(
     db: Session = Depends(get_db),
 ) -> dict:
     """Mark an invoice issued and attach the e-invoice file (数电票 PDF/OFD)."""
-    invoice = db.get(Invoice, invoice_id)
+    invoice = db.scalar(select(Invoice).where(Invoice.id == invoice_id).with_for_update())
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
     if invoice.status == "issued":
         raise HTTPException(status_code=409, detail="该发票已开具，如需重开请先驳回再重新申请")
-    content = await file.read()
+    content = await file.read(5 * 1024 * 1024 + 1)
     if not content:
         raise HTTPException(status_code=400, detail="发票文件为空")
     if len(content) > 5 * 1024 * 1024:
@@ -680,7 +680,7 @@ async def admin_issue_invoice(
         "image/jpeg",
         "image/png",
     )
-    if content_type not in allowed and not file.filename:
+    if content_type not in allowed:
         raise HTTPException(status_code=400, detail="不支持的文件类型")
     invoice.voucher_filename = file.filename or f"einvoice_{invoice.invoice_no}.pdf"
     invoice.voucher_content_type = content_type
@@ -702,7 +702,7 @@ def admin_reject_invoice(
     principal: Principal = Depends(require_platform_admin),
     db: Session = Depends(get_db),
 ) -> dict:
-    invoice = db.get(Invoice, invoice_id)
+    invoice = db.scalar(select(Invoice).where(Invoice.id == invoice_id).with_for_update())
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
     if invoice.status == "issued":

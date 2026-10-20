@@ -14,6 +14,7 @@ from app.models.models import (
     Company,
     CompanyProfile,
     CompanyProfileVersion,
+    Membership,
     PolicyScan,
     Task,
     Tenant,
@@ -40,6 +41,8 @@ def _queued_run(db, *, suffix: str) -> tuple[AgentRun, PolicyScan, Task]:
         role="owner",
     )
     db.add(user)
+    db.flush()
+    db.add(Membership(tenant_id=tenant.id, user_id=user.id, role="owner", status="active"))
     db.flush()
     company = Company(
         tenant_id=tenant.id,

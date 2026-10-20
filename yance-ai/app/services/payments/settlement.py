@@ -49,7 +49,10 @@ def _commit_or_resolve_replay(db: Session, *, event: PaymentEvent) -> Settlement
 
 def _money(value: object) -> Decimal:
     try:
-        return Decimal(str(value)).quantize(Decimal("0.01"))
+        amount = Decimal(str(value))
+        if not amount.is_finite() or amount < 0 or amount != amount.quantize(Decimal("0.01")):
+            raise ValueError("invalid_amount")
+        return amount
     except (InvalidOperation, TypeError, ValueError) as exc:
         raise ValueError("invalid_amount") from exc
 
@@ -67,7 +70,10 @@ def validate_settlement(
         return "invalid_amount"
     if expected != recorded or expected != received:
         return "amount_mismatch"
-    if (currency or "").upper() != (order.currency or "").upper():
+    expected_currency = (order.currency or "").upper()
+    if not expected_currency or any(
+        (item or "").upper() != expected_currency for item in (currency, payment.currency)
+    ):
         return "currency_mismatch"
     return None
 
@@ -127,6 +133,17 @@ def settle_payment(
         event.error_code = error
         replay = _commit_or_resolve_replay(db, event=event)
         return replay or SettlementResult(False, error_code=error)
+
+    # A late success is a reconciliation event, never permission to undo a
+    # cancellation/refund. An expired payment can still receive a valid late
+    # notification while its order remains open.
+    if order.status not in {"pending", "created", "paid"} or payment.status not in {
+        "created", "pending", "expired", "completed",
+    }:
+        event.status = "rejected"
+        event.error_code = "invalid_state_transition"
+        replay = _commit_or_resolve_replay(db, event=event)
+        return replay or SettlementResult(False, error_code=event.error_code)
 
     product = db.scalar(select(Product).where(Product.code == order.product_code))
     if not product:

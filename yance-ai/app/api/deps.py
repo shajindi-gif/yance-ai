@@ -89,6 +89,8 @@ def get_principal(
     )
     if not user:
         raise credentials_error
+    if payload.get("auth_version", 0) != user.auth_version:
+        raise credentials_error
     membership = db.scalar(
         select(Membership).where(
             Membership.tenant_id == tenant_id,

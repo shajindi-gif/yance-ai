@@ -55,6 +55,7 @@ def initial_profile_data(company: Company) -> dict[str, Any]:
         "industry": company.industry,
         "province": company.province,
         "city": company.city,
+        "district": legacy.get("district"),
         "registered_address": legacy.get("registered_address"),
         "founded_date": legacy.get("founded_date"),
         "company_scale": legacy.get("company_scale") or legacy.get("scale"),

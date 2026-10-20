@@ -1,3 +1,5 @@
+> 历史文档：以下为早期 Mac / Tunnel 环境记录，未经本轮核实，不应作为当前生产事实或直接执行依据。当前源码位置由用户明确为 ~/yance-backup/yance；生产副本目标为腾讯云 /opt/yance，发布前必须按 [release-runbook](../../docs/release-runbook.md) 重新验收。
+
 # yance.ai 生产运行手册（Mac + Cloudflare Tunnel 架构）
 
 上线日期：2026-08-09　版本：v0.2.0

@@ -65,7 +65,8 @@ async def version_and_chunk_policy(db: Session, policy: Policy) -> PolicyVersion
         policy_type=policy.policy_type,
         publish_date=policy.published_at,
         effective_date=policy.effective_at,
-        expiry_date=policy.deadline,
+        expiry_date=policy.expires_at,
+        application_deadline=policy.deadline,
         source_url=policy.source_url,
         source_name=policy.source,
         content=content,
@@ -107,7 +108,8 @@ async def version_and_chunk_policy(db: Session, policy: Policy) -> PolicyVersion
                     "effective_date": policy.effective_at.isoformat()
                     if policy.effective_at
                     else None,
-                    "expiry_date": policy.deadline.isoformat() if policy.deadline else None,
+                    "expiry_date": policy.expires_at.isoformat() if policy.expires_at else None,
+                    "application_deadline": policy.deadline.isoformat() if policy.deadline else None,
                     "document_id": str(policy.id),
                     "article": article,
                     "url": policy.source_url,

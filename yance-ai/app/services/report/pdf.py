@@ -3,7 +3,7 @@
 Master task section 7: 报告必须包含 10 个章节。
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from io import BytesIO
 
 from weasyprint import HTML
@@ -76,10 +76,12 @@ def generate_match_report_pdf(
     company: Company,
     opportunities: list[Opportunity],
     policies: list[Policy],
+    *,
+    decision_evidence: dict | None = None,
 ) -> bytes:
     """生成 10 章节企业政策机会分析报告 PDF。"""
     policy_map = {p.id: p for p in policies}
-    now = datetime.now()
+    now = datetime.now(UTC)
     meta = company.metadata_json or {}
 
     # ── 统计数据 ──
@@ -154,7 +156,7 @@ def generate_match_report_pdf(
           <td>{i}</td>
           <td>{escape_html(p.title[:40])}{"..." if len(p.title) > 40 else ""}</td>
           <td>{escape_html(_level_cn(p.level))}</td>
-          <td>{escape_html(p.province or "全国")}</td>
+          <td>{escape_html(p.province or ("全国" if p.level == "national" else "地域待核实"))}</td>
           <td>{escape_html(p.support_amount or "—")}</td>
           <td class="{_score_class(pct)}">{pct}%</td>
           <td>{grade}</td>
@@ -180,9 +182,9 @@ def generate_match_report_pdf(
             资质 {escape_html(bd.get("qualification", 0))}/20 · 技术 {escape_html(bd.get("tech", 0))}/15 · 财务 {escape_html(bd.get("finance", 0))}/10 · 语义 {escape_html(bd.get("semantic", 0))}/10
           </div>
           <div style="font-size:10px;margin-top:4px">
-            <span class="tag tag-green">✓ 地区匹配</span>
-            <span class="tag tag-green">✓ 行业匹配</span>
-            {'<span class="tag tag-yellow">△ 资质待获取</span>' if bd.get("qualification", 0) < 15 else '<span class="tag tag-green">✓ 资质满足</span>'}
+            <span class="tag tag-gray">地区与行业分数仅用于排序</span>
+            <span class="tag tag-yellow">资质须核验证明材料</span>
+            <span class="tag tag-gray">资格状态：{escape_html(opp.eligibility_status or 'NEED_MORE_INFORMATION')}</span>
           </div>
         </div>"""
 
@@ -236,7 +238,10 @@ def generate_match_report_pdf(
         pct = round(opp.score * 100)
         item = f"{escape_html(p.title[:30])}（{pct}%）"
         if p.deadline:
-            days_left = (p.deadline - now).days
+            deadline = p.deadline.replace(tzinfo=UTC) if p.deadline.tzinfo is None else p.deadline
+            days_left = (deadline - now).days
+            if days_left < 0:
+                continue
             if days_left <= 30:
                 p0.append(item)
             elif days_left <= 90:
@@ -255,8 +260,8 @@ def generate_match_report_pdf(
 
     roadmap_html = ""
     for label, items, cls, desc in [
-        ("P0：立即行动", p0, "priority-p0", "30天内截止，需立即启动申报"),
-        ("P1：未来3个月", p1, "priority-p1", "90天内截止或高匹配度，尽快启动"),
+        ("P0：优先复核", p0, "priority-p0", "30天内截止，先核实资格与当前批次"),
+        ("P1：未来3个月", p1, "priority-p1", "优先核实条件、来源和申报窗口"),
         ("P2：未来6个月", p2, "priority-p2", "中期规划，开始准备材料"),
         ("P3：未来12个月", p3, "priority-p3", "长期布局，逐步补齐条件"),
     ]:
@@ -273,7 +278,7 @@ def generate_match_report_pdf(
         p = policy_map.get(opp.policy_id)
         if not p:
             continue
-        deadline_str = p.deadline.strftime("%Y-%m-%d") if p.deadline else "长期有效"
+        deadline_str = p.deadline.strftime("%Y-%m-%d") if p.deadline else "申报截止日待核实"
         start_str = p.start_date.strftime("%Y-%m-%d") if p.start_date else "—"
         calendar_rows.append(f"""<tr>
           <td>{escape_html(p.title[:30])}</td>
@@ -320,6 +325,24 @@ def generate_match_report_pdf(
     </p>
     """
 
+    citations = []
+    for opp in opportunities:
+        details = (decision_evidence or {}).get(opp.id, {})
+        quotes = details.get("quotes", [])
+        citations.append(
+            f"<h2>{escape_html(opp.title)}</h2>"
+            f"<p>资格状态：{escape_html(opp.eligibility_status or 'NEED_MORE_INFORMATION')}；"
+            f"政策来源版本：{escape_html(opp.policy_version_id or '待核实')}；"
+            f"企业画像版本：{escape_html(opp.profile_version_id or '待核实')}；人工复核：待完成</p>"
+            + ("".join(
+                f"<blockquote>{escape_html(q['quote'])}<br>条款：{escape_html(q.get('article') or '未标明')}；"
+                f"来源：{escape_html(q.get('source_url') or '待核实')}；"
+                f"原文字符区间：{escape_html(q.get('start'))}–{escape_html(q.get('end'))}</blockquote>"
+                for q in quotes
+            ) if quotes else "<p>暂无逐字核验的条款证据，不能确认符合。</p>")
+        )
+    citations_html = "".join(citations) or "<p>暂无政策资格证据。</p>"
+
     # ── 组装完整 HTML ──
     html_content = f"""<!DOCTYPE html>
 <html lang="zh-CN">
@@ -334,13 +357,14 @@ def generate_match_report_pdf(
   <div class="company">{escape_html(company.name)}</div>
   <div class="meta">
     报告编号：YR-{now.strftime("%Y%m%d")}-{company.id.hex[:8].upper()}<br>
-    生成时间：{now.strftime("%Y-%m-%d %H:%M")}<br>
-    政策库版本：{now.strftime("%Y.%m")}<br>
+    生成时间（UTC）：{now.strftime("%Y-%m-%d %H:%M")}<br>
+    来源版本：见逐条资格证据<br>
     匹配政策数：{total} 项
   </div>
   <div class="disclaimer">
     <strong>免责声明：</strong>本报告由衍策引擎AI基于公开政策数据和企业画像自动生成，仅供参考。
     具体申报条件、结果和金额以主管部门审核为准。Yance 不承诺申报成功率或补贴金额。
+    匹配分仅为检索排序，不是获批概率。本文为待人工复核的初筛报告。
   </div>
 </div>
 
@@ -368,6 +392,8 @@ def generate_match_report_pdf(
 <h1>05 企业政策资格矩阵</h1>
 <p class="section-intro">企业现状与政策要求的逐项对比。</p>
 {matrix_html}
+<h2>逐条资格证据与版本</h2>
+{citations_html}
 
 <!-- 06 企业当前差距 -->
 <h1 class="page-break">06 企业当前差距</h1>

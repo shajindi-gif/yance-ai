@@ -11,6 +11,10 @@ yance/
 └── benchmark/    # Policy Engine evaluation benchmarks
 ```
 
+## 2026-10-20 audit and release status
+
+The current audit and local changes are documented in [docs/audit.md](docs/audit.md), [upgrade-plan](docs/upgrade-plan.md), [test-report](docs/test-report.md) and [release-runbook](docs/release-runbook.md). Local/staging evidence does not mean production was deployed. The release workflow now only verifies and packages source.
+
 ## Quick Start
 
 ### Option A — Docker (recommended, one command)
@@ -46,8 +50,9 @@ uvicorn app.main:app --reload
 
 ```bash
 cd yance-ai
-pytest  # full suite (101 e2e tests) against a migrated test database:
-        # APP_ENV=test DATABASE_URL=postgresql+psycopg://... pytest
+APP_ENV=test DATABASE_URL=postgresql+psycopg://.../yance_test \
+YANCE_TEST_DATABASE_ACK=yance_test pytest
+# Use a freshly created, migrated, disposable database; fixtures mutate it.
 ```
 
 > Note: core API and database run out of the box. LLM-powered agents, payments

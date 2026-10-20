@@ -1,0 +1,9 @@
+{
+  "source": "yance_audit_final_test",
+  "restore": "yance_audit_restore_test",
+  "sha256": "9b9b5ed6cea8b5e42f8e47ffab8534ec89d81c53e49cb5b52bbf5543ed2ad576",
+  "bytes": 452948,
+  "dump_seconds": 0.177,
+  "restore_seconds": 0.401,
+  "classification": "synthetic-local-PG18-not-production-RTO"
+}

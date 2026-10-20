@@ -5,7 +5,6 @@ from sqlalchemy import Date, cast, distinct, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.models import (
-    Invoice,
     AgentRun,
     AgentRunError,
     AnalyticsEvent,
@@ -18,6 +17,7 @@ from app.models.models import (
     EvalDatasetVersion,
     EvalRun,
     Feedback,
+    Invoice,
     Order,
     Policy,
     PolicyScan,

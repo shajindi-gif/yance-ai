@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.models import (
@@ -10,15 +10,18 @@ from app.models.models import (
     EligibilityRule,
     Evidence,
     Opportunity,
+    Policy,
     PolicyBenefit,
     PolicyChunk,
     PolicyVersion,
     RequiredMaterial,
 )
+from app.services.policies.applicability import policy_context_issues
 from app.services.policies.ingestion import latest_policy_version
+from app.services.policies.visibility import visible_policy_clause
 
 ENGINE_VERSION = "deterministic-v1"
-ALLOWED_OPERATORS = {"eq", "in", "contains", "gte", "lte", "exists"}
+ALLOWED_OPERATORS = {"eq", "neq", "in", "not_in", "contains", "gte", "lte", "gt", "lt", "exists"}
 
 
 def exact_quote_span(content: str, quote: str) -> tuple[int, int] | None:
@@ -137,6 +140,7 @@ def evaluate_opportunity(
                 select(EligibilityRule).where(
                     EligibilityRule.policy_version_id == version.id,
                     EligibilityRule.status == "active",
+                    or_(EligibilityRule.tenant_id.is_(None), EligibilityRule.tenant_id == opportunity.tenant_id),
                 )
             ).all()
         )
@@ -144,7 +148,8 @@ def evaluate_opportunity(
         else []
     )
     criteria: list[dict[str, Any]] = []
-    missing: list[str] = []
+    policy = db.scalar(select(Policy).where(Policy.id == opportunity.policy_id, visible_policy_clause(opportunity.tenant_id)))
+    missing: list[str] = policy_context_issues(policy, version, snapshot)
     hard_failed = False
     evidence_rows: list[tuple[EligibilityRule, PolicyChunk, int, int]] = []
 
@@ -152,6 +157,8 @@ def evaluate_opportunity(
         missing.append("政策尚无不可变来源版本")
     if version and not rules:
         missing.append("政策尚无已审核的结构化资格规则")
+    if rules and not any(rule.is_hard_gate for rule in rules):
+        missing.append("政策仅包含参考条件，缺少已核验硬门槛")
     for rule in rules:
         actual = snapshot.get(rule.fact_key)
         source = _exact_source(db, version, rule)

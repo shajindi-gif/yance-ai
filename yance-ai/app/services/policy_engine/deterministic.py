@@ -496,6 +496,12 @@ def final_gate(criteria_results: list[str], blocking: list[bool] | None = None) 
         return "INSUFFICIENT_INFO"
     if blocking is None:
         blocking = [True] * len(criteria_results)
+    if len(blocking) != len(criteria_results) or any(
+        r not in {"PASS", "FAIL", "INSUFFICIENT"} for r in criteria_results
+    ):
+        return "INSUFFICIENT_INFO"
+    if not any(blocking):
+        return "INSUFFICIENT_INFO"
     if any(r == "FAIL" and b for r, b in zip(criteria_results, blocking, strict=False)):
         return "NOT_ELIGIBLE"
     if any(r == "INSUFFICIENT" and b for r, b in zip(criteria_results, blocking, strict=False)):
@@ -519,6 +525,8 @@ def _is_blocking(text: str, kind: str | None = None) -> bool:
     - 其它语义条件 → 默认阻断（保守）
     """
     t = text or ""
+    if re.search(r"须|必须|应当|不得|应|安全事故|环境违法|社会信用", t):
+        return True
     if _SOFT_PAT.search(t):
         return False
     if re.search(r"须|必须|应当|不得|应", t):

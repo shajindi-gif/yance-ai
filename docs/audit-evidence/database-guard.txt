@@ -1,0 +1,2 @@
+ERROR: Integration tests require an explicit DATABASE_URL and YANCE_TEST_DATABASE_ACK equal to the isolated database name; production database names are forbidden.
+

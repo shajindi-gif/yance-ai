@@ -11,7 +11,6 @@ from datetime import timedelta
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import select
 
 from app.core.db import SessionLocal
 from app.main import app

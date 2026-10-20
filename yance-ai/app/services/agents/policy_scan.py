@@ -55,9 +55,13 @@ async def execute_policy_scan(db: Session, run: AgentRun, harness: "AgentHarness
 
     started = perf_counter()
     payload = PolicyScanWorkflowInput.model_validate(run.input_json)
+    if (payload.tenant_id, payload.user_id, payload.task_id) != (run.tenant_id, run.user_id, run.task_id):
+        raise VerificationFailed("agent_input_scope_mismatch")
     scan = harness._owned(db, PolicyScan, payload.scan_id, payload.tenant_id)
     task = harness._owned(db, Task, payload.task_id, payload.tenant_id)
     company = harness._owned(db, Company, payload.company_id, payload.tenant_id)
+    if (scan.company_id, scan.profile_version_id, scan.task_id) != (company.id, payload.profile_version_id, task.id):
+        raise VerificationFailed("scan_input_scope_mismatch")
     workflow_run = harness._workflow_run(db, run)
     started_at = datetime.now(UTC)
     scan.status = "running"
@@ -230,6 +234,7 @@ async def execute_policy_scan(db: Session, run: AgentRun, harness: "AgentHarness
         input_json={"verification_passed": True},
         output_json=output.model_dump(mode="json"),
     )
+    harness._checkpoint(db, run.id)
     finished = datetime.now(UTC)
     latency_ms = round((perf_counter() - started) * 1000)
     run.status = "completed"
@@ -315,7 +320,14 @@ def _create_report_artifact(
         {"company_id": str(company.id), "opportunity_count": len(opportunities)},
     )
     tool_started = perf_counter()
-    pdf_bytes = generate_match_report_pdf(company, opportunities, policies)
+    evidence_rows = db.scalars(select(Evidence).where(Evidence.tenant_id == run.tenant_id, Evidence.opportunity_id.in_([item.id for item in opportunities]), Evidence.verified.is_(True))).all()
+    decision_evidence = {}
+    for evidence in evidence_rows:
+        decision_evidence.setdefault(evidence.opportunity_id, {"quotes": []})["quotes"].append({
+            "quote": evidence.quote, "article": evidence.article, "source_url": evidence.source_url,
+            "start": evidence.quote_start, "end": evidence.quote_end,
+        })
+    pdf_bytes = generate_match_report_pdf(company, opportunities, policies, decision_evidence=decision_evidence)
     summary = {
         "total_matches": len(opportunities),
         "policy_ids": [str(item.id) for item in policies],

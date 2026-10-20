@@ -14,12 +14,20 @@ from app.models.models import (
     AgentRun,
     AgentRunError,
     AgentStep,
+    Membership,
     PolicyScan,
     Task,
+    Tenant,
     ToolCall,
+    User,
+    UserRole,
     WorkflowRun,
 )
-from app.services.agents.contracts import PolicyScanWorkflowInput, VerificationFailed
+from app.services.agents.contracts import (
+    AgentCancelled,
+    PolicyScanWorkflowInput,
+    VerificationFailed,
+)
 from app.services.agents.definitions import (
     ORCHESTRATOR_AGENT_ID,
     POLICY_SCAN_WORKFLOW_ID,
@@ -147,7 +155,7 @@ class AgentHarness:
 
     async def execute(self, db: Session, run_id: uuid.UUID) -> None:
         run = db.scalar(select(AgentRun).where(AgentRun.id == run_id))
-        if not run:
+        if not run or run.status in {"completed", "failed", "cancelled"}:
             return
         structlog.contextvars.bind_contextvars(
             run_id=str(run.id),
@@ -155,7 +163,10 @@ class AgentHarness:
             workflow_run_id=str(run.workflow_run_id),
         )
         try:
-            await execute_policy_scan(db, run, self)
+            self._checkpoint(db, run.id)
+            await asyncio.wait_for(execute_policy_scan(db, run, self), timeout=settings.agent_run_timeout_seconds)
+        except AgentCancelled:
+            db.rollback()
         except Exception as exc:
             db.rollback()
             self._record_failure(db, run_id, exc)
@@ -199,6 +210,7 @@ class AgentHarness:
         agent_id: uuid.UUID,
         input_json: dict,
     ) -> AgentStep:
+        self._checkpoint(db, run.id)
         existing = db.scalar(
             select(AgentStep).where(
                 AgentStep.agent_run_id == run.id,
@@ -255,6 +267,7 @@ class AgentHarness:
         output_json: dict,
         verification_json: dict | None = None,
     ) -> None:
+        AgentHarness._checkpoint(db, step.agent_run_id)
         finished = datetime.now(UTC)
         step.output_json = output_json
         step.verification_json = verification_json or {}
@@ -272,6 +285,7 @@ class AgentHarness:
         name: str,
         arguments: dict,
     ) -> ToolCall:
+        AgentHarness._checkpoint(db, run.id)
         tool = ToolCall(
             tenant_id=run.tenant_id,
             agent_run_id=run.id,
@@ -288,6 +302,7 @@ class AgentHarness:
 
     @staticmethod
     def _finish_tool(db: Session, tool: ToolCall, result: dict, started: float) -> None:
+        AgentHarness._checkpoint(db, tool.agent_run_id)
         tool.status = "completed"
         tool.result_json = result
         tool.finished_at = datetime.now(UTC)
@@ -297,6 +312,8 @@ class AgentHarness:
     def _record_failure(self, db: Session, run_id: uuid.UUID, exc: Exception) -> None:
         run = db.scalar(select(AgentRun).where(AgentRun.id == run_id))
         if not run:
+            return
+        if run.status == "cancelled":
             return
         code = (
             "invalid_agent_input" if isinstance(exc, ValidationError) else "agent_execution_failed"
@@ -334,10 +351,10 @@ class AgentHarness:
                 else "execution",
                 safe_message=safe_message,
                 details_json={"exception_type": type(exc).__name__},
-                retryable=not isinstance(exc, ValidationError),
+                retryable=not isinstance(exc, (ValidationError, VerificationFailed)),
             )
         )
-        if not isinstance(exc, ValidationError) and run.retry_count < run.max_retries:
+        if not isinstance(exc, (ValidationError, VerificationFailed)) and run.retry_count < run.max_retries:
             run.retry_count += 1
             delay_seconds = min(60, 2**run.retry_count)
             run.status = "queued"
@@ -358,7 +375,7 @@ class AgentHarness:
             )
             workflow = self._workflow_run(db, run)
             workflow.status = "queued"
-            task = db.scalar(select(Task).where(Task.id == run.task_id)) if run.task_id else None
+            task = db.scalar(select(Task).where(Task.id == run.task_id, Task.tenant_id == run.tenant_id)) if run.task_id else None
             if task:
                 task.status = "queued"
                 task.current_stage = "等待重试"
@@ -366,6 +383,19 @@ class AgentHarness:
             self._terminal_failure(db, run, code=code, safe_message=safe_message)
         db.commit()
         logger.error("agent_run_failed", error_code=code, retry_count=run.retry_count)
+
+    @staticmethod
+    def _checkpoint(db: Session, run_id: uuid.UUID) -> None:
+        run = db.scalar(select(AgentRun).where(AgentRun.id == run_id).with_for_update().execution_options(populate_existing=True))
+        if not run or run.status == "cancelled":
+            raise AgentCancelled("agent_cancelled")
+        authorized = db.scalar(select(User.id).join(Membership, Membership.user_id == User.id).join(Tenant, Tenant.id == User.tenant_id).where(
+            User.id == run.user_id, User.tenant_id == run.tenant_id, User.is_active.is_(True),
+            Tenant.is_active.is_(True), Membership.tenant_id == run.tenant_id,
+            Membership.status == "active", Membership.role.in_([UserRole.owner, UserRole.admin, UserRole.member]),
+        ))
+        if not authorized:
+            raise VerificationFailed("agent_requester_no_longer_authorized")
 
     def _terminal_failure(
         self,
@@ -386,7 +416,7 @@ class AgentHarness:
         workflow.status = "failed"
         workflow.error_code = code
         workflow.finished_at = finished
-        task = db.scalar(select(Task).where(Task.id == run.task_id)) if run.task_id else None
+        task = db.scalar(select(Task).where(Task.id == run.task_id, Task.tenant_id == run.tenant_id)) if run.task_id else None
         if task:
             task.status = "failed"
             task.failure_reason = code

@@ -1,0 +1,1187 @@
+{
+  "candidate": "audit-20261020-rc1",
+  "base_commit": "a31f157e7fe789237ed1b5dc276388b1aaad0e71",
+  "branch": "feature/investor-grade-upgrade",
+  "code_fingerprint_sha256": "953bc215c1f6f0deaea8e66eac034fa7eaf6dc93241b797f6f4a94a66824cc05",
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "761933bc8966a66ec782d1df1ed9b8af14a49dcf31b8f8aa1d4eef570c4f0f5f"
+    },
+    {
+      "path": ".github/workflows/codeql.yml",
+      "sha256": "45be7a4bb3c53b35e3cef5d87d73d40072655c69d1c9f999b0265e2b9ef2f7d9"
+    },
+    {
+      "path": ".github/workflows/deploy.yml",
+      "sha256": "0f74ce77b6bc2568a6ae3ba976fc439ba0e16b8712b06d4a7d0ee5fa42874fae"
+    },
+    {
+      "path": "website/Dockerfile",
+      "sha256": "07cf7b3469cf3095dca9e5575a6cc9096ca4c8e48e5a6ffe43e999d680521c82"
+    },
+    {
+      "path": "website/app/about/page.tsx",
+      "sha256": "3a646f4bf7949bc80c811f00aff3c0a168ad2bcb2ae791d1535339c471f177e6"
+    },
+    {
+      "path": "website/app/admin/evals/[runId]/page.tsx",
+      "sha256": "df25987494fc259ea88318519e60e3f2548430c480ee057447724a290fbac5f8"
+    },
+    {
+      "path": "website/app/admin/evals/page.tsx",
+      "sha256": "cfd151d8d68cf5b7e97c03032f48925ae83417b191ac56c3ec31ee7d58e04bf1"
+    },
+    {
+      "path": "website/app/admin/investor-metrics/page.tsx",
+      "sha256": "014a8e40aad7fe832bd7a4f3cf6cda45e905ece47d0359fdda2ca496651bdf94"
+    },
+    {
+      "path": "website/app/admin/page.tsx",
+      "sha256": "695fc9b6fe97050005031da60efc112bdb27a5bb8c883fb65319c56fdb9a9d77"
+    },
+    {
+      "path": "website/app/agents/[runId]/page.tsx",
+      "sha256": "f444358c97aa63e748649653e10bb579fb2e0b841379fa89fe403e5a1486da7e"
+    },
+    {
+      "path": "website/app/agents/page.tsx",
+      "sha256": "1a9c6144998c34f69924c3d5b9b28033b6bbb8a1b8ad6518ca3fa3ab5f41debc"
+    },
+    {
+      "path": "website/app/applications/[applicationId]/page.tsx",
+      "sha256": "336b037061ed4eee6e0719599fe427a3ab2d98a03abc805d0d47c88e7737b2e5"
+    },
+    {
+      "path": "website/app/applications/page.tsx",
+      "sha256": "4dab9621eddb40bfad9827ec568bbe44de67f7cc19c3e98bf4c90a9dbdf915fe"
+    },
+    {
+      "path": "website/app/billing/page.tsx",
+      "sha256": "00a20b8e73cafba1c03f9efe8e542dbcccdefb084f9ce72d9904577f281739ae"
+    },
+    {
+      "path": "website/app/brief-maker/page.tsx",
+      "sha256": "4833c56e712f3d5ec05c6a061000147649a5d10aca8f09b9af9240d61eace03d"
+    },
+    {
+      "path": "website/app/cancel/page.tsx",
+      "sha256": "9a23e7581244d207911f887bdfd441dd04c6412c1b6b232bb99be74d8740e262"
+    },
+    {
+      "path": "website/app/checkout/page.tsx",
+      "sha256": "d5ae7ba84e25838501b22faebbe5e33663c8a27da1be1cfb8a7e0a92bf314338"
+    },
+    {
+      "path": "website/app/chrome-extension/layout.tsx",
+      "sha256": "92c21a47a51ab9208d03267949cf1f081f3606b0cf27a7fbf51216be3d0a1cdd"
+    },
+    {
+      "path": "website/app/chrome-extension/page.tsx",
+      "sha256": "f2d1ae8ca9d02b114e3b36a6ed365b1a10f71c9ecfae3bd06e1fe6dcec5a90e1"
+    },
+    {
+      "path": "website/app/companies/[companyId]/page.tsx",
+      "sha256": "3c12843b55e07dd93e7c5924f5a0634aa8889d8214ed717815f75829cad14c16"
+    },
+    {
+      "path": "website/app/companies/page.tsx",
+      "sha256": "c84d7485d09443b42001c19d90c423ea01e09d1696fc76ef1c6fdb674757a2f6"
+    },
+    {
+      "path": "website/app/company-match/page.tsx",
+      "sha256": "1b61247a7856744659da178f8c07772ae627c5380ec5b3ee6bfa451a2b03f1bf"
+    },
+    {
+      "path": "website/app/consultant/page.tsx",
+      "sha256": "2f4cf65d0b2b82e6acca7ea2719a30af81ead2dd3c4afa3d05c9530dcd4a9569"
+    },
+    {
+      "path": "website/app/dashboard/page.tsx",
+      "sha256": "afb8fedc996ab6c1c282861da39678c263a11f26e913c563e64b42ca74dfce20"
+    },
+    {
+      "path": "website/app/demo/DemoExperience.tsx",
+      "sha256": "80a42144cfeec74ea3d68693d0efcfad1e553da732bc553e4ae378215173ac34"
+    },
+    {
+      "path": "website/app/demo/page.tsx",
+      "sha256": "2f0da2be274462452b44708cff55623644b2b4062e184e039a41ad7a77aea258"
+    },
+    {
+      "path": "website/app/discover/page.tsx",
+      "sha256": "b0cfd491d4bce902bc775ea325153e3893a5f197d4725ddf9fec428601f961ed"
+    },
+    {
+      "path": "website/app/documents/page.tsx",
+      "sha256": "5075778365e663f8f5bc2383e5c41606eacdda02c413f126a2f8826e36b1ccbd"
+    },
+    {
+      "path": "website/app/downloads/layout.tsx",
+      "sha256": "1c59654502f06cfb6248785d09240a4a35234c8cfd08a6ae4d3d26a401384138"
+    },
+    {
+      "path": "website/app/downloads/page.tsx",
+      "sha256": "fff6309001c02f3b43272501682f37edf796c9cf18ee2c4957dd20c4798fbe23"
+    },
+    {
+      "path": "website/app/layout.tsx",
+      "sha256": "2a135842920aa8850469378b0a05c6a99288bdb6d00b81a7804acb22644fff62"
+    },
+    {
+      "path": "website/app/login/layout.tsx",
+      "sha256": "31d29c08a048b8c75e34c2a0aa65d314ea2ccb1cc29354adc57f8cea084dfeda"
+    },
+    {
+      "path": "website/app/login/page.tsx",
+      "sha256": "855124070b1bef7a339253a2631834c5c15db0b9a28518592cc75b8410268d1a"
+    },
+    {
+      "path": "website/app/not-found.tsx",
+      "sha256": "72e96629485282bb27a178bf8bbe871af77693d65d7e63ca3c615099aac26c9f"
+    },
+    {
+      "path": "website/app/notifications/page.tsx",
+      "sha256": "0d23db2c75b65cb64684ec493e028edb604b8d419ff6abacc9025b179686a324"
+    },
+    {
+      "path": "website/app/onboarding/page.tsx",
+      "sha256": "fc6bc7fd4b2820d09c0cb80dd35320b2dd12fa80f19342b5a8eb79dd71c8f6ef"
+    },
+    {
+      "path": "website/app/opportunities/[opportunityId]/page.tsx",
+      "sha256": "f6392a336ffb4ff30df7fa783bd3a59cb638f3c8027cdfc64d9900d4d5c6f861"
+    },
+    {
+      "path": "website/app/opportunities/page.tsx",
+      "sha256": "9541c312ad01de98be62abc83332f894fd363884fd3f368e5f5d997142caef92"
+    },
+    {
+      "path": "website/app/orders/page.tsx",
+      "sha256": "0c9f15124d8d9a60612c78be0bfcad2564935d5199d3d984f9d6372f59c20494"
+    },
+    {
+      "path": "website/app/page.tsx",
+      "sha256": "9e13dc0334bca47fdad33bea8f578dde5d1824a57b4aa628f7aaa3c56a528d04"
+    },
+    {
+      "path": "website/app/parks/page.tsx",
+      "sha256": "3da41b66e285f2b01326ee50b6b5cca313a5142bcbd792990fb3fdd75ebcdc1a"
+    },
+    {
+      "path": "website/app/policies/page.tsx",
+      "sha256": "554470fd692cf87234bd75a7bba90dc48235eadc4985dcdd90226379f13f810e"
+    },
+    {
+      "path": "website/app/policy-knowledge-base/page.tsx",
+      "sha256": "2ba885bd845b7186eb0f2b3a3c6be8ff054f84555b4b06330d4d17aedcf5ab45"
+    },
+    {
+      "path": "website/app/pricing/layout.tsx",
+      "sha256": "3a2491d9c35d29a76bf282cb82ebbf7bfa9784b39f537a1055229b4bf858bae7"
+    },
+    {
+      "path": "website/app/pricing/page.tsx",
+      "sha256": "981e45b807d2916530365f27e0c3d419c2e7c2dfb289b3646a531a25d2f393e3"
+    },
+    {
+      "path": "website/app/privacy/page.tsx",
+      "sha256": "3f372e33c4a0f86638fb5a0f02dba4e38919f1a5ff390a3232cbc35540a630fb"
+    },
+    {
+      "path": "website/app/projects/page.tsx",
+      "sha256": "5bf020148d1a62373d13e8cdae947670d2508114df4c96243ab2ff9b60705844"
+    },
+    {
+      "path": "website/app/reports/page.tsx",
+      "sha256": "3efcd1df4d062bbb99d8b05492e9f7e32d5c76bdbf69879143627906130baf65"
+    },
+    {
+      "path": "website/app/roadshow/page.tsx",
+      "sha256": "2445a937f79729b96dfee6122d4f4637436924f5e979b70356b0986bedc3699a"
+    },
+    {
+      "path": "website/app/security/page.tsx",
+      "sha256": "7c96cdbae7cc0e66fa8332e489e5d804f7b4613369550524a0719df90929a25e"
+    },
+    {
+      "path": "website/app/settings/page.tsx",
+      "sha256": "6cdbc811089556f0d53e88296be7ceb823ea9c3a50176ef29bad6774dea20977"
+    },
+    {
+      "path": "website/app/success/page.tsx",
+      "sha256": "611c9e4ea4594e8b5edf8cc927b1b2240147f35d2e0558017cd60953adf05520"
+    },
+    {
+      "path": "website/app/tasks/[taskId]/page.tsx",
+      "sha256": "45cdb10730c624f40ddd82e8ca7a0f849b053d9a4c4a1ad082956ab6e5989c2b"
+    },
+    {
+      "path": "website/app/tasks/page.tsx",
+      "sha256": "42bc698c35e2a6d8c7c19fa58645505096cabf8e46802fe0e9ac4156c8207b45"
+    },
+    {
+      "path": "website/app/team/page.tsx",
+      "sha256": "7a8732e2b896d44926364e9aaf868c3c956bca11608f645dcc1f6d4abecb733e"
+    },
+    {
+      "path": "website/app/terms/page.tsx",
+      "sha256": "2daf6502d94629ba35e788f98f399801bff5223796858b5a9c3b0c6f22936319"
+    },
+    {
+      "path": "website/components/Footer.tsx",
+      "sha256": "4e749819521f31d59f24e425a0e67f89d73e98ed643fa57e929bc465c73f03da"
+    },
+    {
+      "path": "website/components/Header.tsx",
+      "sha256": "21333ba9c1df1adfd6e1ebf10fb0728b1ccf1b2b960c42e6a15177155a1a31e3"
+    },
+    {
+      "path": "website/components/SiteChrome.tsx",
+      "sha256": "5bf9f2928e9dfd4fd10ce3eb9270f867efdf56d6af2ba22d673b63c7d205c9cf"
+    },
+    {
+      "path": "website/components/SmartAgent.tsx",
+      "sha256": "3b7dbf73e50543038b69a81aff21f49d363f380ae6aa5f3d32fd5cd540448ac5"
+    },
+    {
+      "path": "website/components/ui/Badge.tsx",
+      "sha256": "25bd6973cd8f0ad915d4de689fb2e31f19abc23152c1f9f0ad5e77433b7cc756"
+    },
+    {
+      "path": "website/components/ui/Button.tsx",
+      "sha256": "9b99321be39db361a68ed26d239b11ec41c352a718a2ad65513f9b03fdd83b95"
+    },
+    {
+      "path": "website/components/ui/ButtonLink.tsx",
+      "sha256": "49df57658775a60d7df72e2a6e9eddc8295402d357f24836776a158db0fd7db6"
+    },
+    {
+      "path": "website/components/ui/DataTable.tsx",
+      "sha256": "6bda5e386fedc1c9cacfe7aae8d560014e73df87406c27aa039ca701b6f6ea6c"
+    },
+    {
+      "path": "website/components/ui/EmptyState.tsx",
+      "sha256": "96a8f46951871db1c6a7ddff1884af4bf0ac9700e92c47958f308df5e6aea938"
+    },
+    {
+      "path": "website/components/ui/InlineAlert.tsx",
+      "sha256": "ec9a12afcedc8bc8ef8e57b0dc12a5e09ee1841bd7e395409a6028e1c625d32e"
+    },
+    {
+      "path": "website/components/ui/LoadingState.tsx",
+      "sha256": "9b38cb552d412702934089d25c67b7e44c86ca0b7e0fa0bfc553807b1234fe8b"
+    },
+    {
+      "path": "website/components/ui/PageHeader.tsx",
+      "sha256": "efcafb7625edcd1209376ea66a48cd74e6c608b296d7764c00fe5a597b9ed445"
+    },
+    {
+      "path": "website/components/ui/Surface.tsx",
+      "sha256": "e5410712036cd1a5ee5c0c23d56a15002b7786747409edf9d47802b32cccea59"
+    },
+    {
+      "path": "website/components/workspace/AppShell.tsx",
+      "sha256": "f80a6ee05bd787316bebed6556bb9e83d4310c98b1edfd1747f7352b804f3551"
+    },
+    {
+      "path": "website/e2e/audit-journey.spec.ts",
+      "sha256": "fda9b6c361911b4c1e51c22c84c100e48d79bcb683197f47ba052c3072bdfa15"
+    },
+    {
+      "path": "website/e2e/documents.spec.ts",
+      "sha256": "f5eb480bea8a0133bcf585b89703af485a63f7af05a8e9eadca524c382e7cd64"
+    },
+    {
+      "path": "website/e2e/investor-demo.spec.ts",
+      "sha256": "5960410da35c34fd64aa6010b228f1fdafdccc68302b572ed75b2830c78fde3d"
+    },
+    {
+      "path": "website/lib/api.ts",
+      "sha256": "3d0b2e99d1afb4d46aedeacc33dcc1a994c946c0f2275a637908efe71e699b07"
+    },
+    {
+      "path": "website/lib/navigation.ts",
+      "sha256": "672cb2feb0564408e02658fb0b1166d4d91b7c5901b15506c9cc2e8a2b9a7bef"
+    },
+    {
+      "path": "website/next-env.d.ts",
+      "sha256": "1862ac4bbbc5192d4bf562161df66ea547ed3e67173100656ab606ae9797db2b"
+    },
+    {
+      "path": "website/next.config.js",
+      "sha256": "e11e82f0519518e87a25587304579f334f6b1bc0ef2357a4b6580bce23de2e61"
+    },
+    {
+      "path": "website/package-lock.json",
+      "sha256": "1b31196f5e9f34af631819a7d2fb1e3cfd9ccd258b2ce0fabbcf6bdff2540c2f"
+    },
+    {
+      "path": "website/package.json",
+      "sha256": "ffee8896276586b32071177e013a70e55119356ed0737ea4dfbf9252dcb85f01"
+    },
+    {
+      "path": "website/playwright.config.ts",
+      "sha256": "3f6d72b822f09214db2f7bc9b6b77f14e3576492701519b79aae57a8ff10d932"
+    },
+    {
+      "path": "website/tsconfig.json",
+      "sha256": "b24da0d173a0cef45decc36feb63fa189fb87f31cbe5f96c7902ed4ec973396f"
+    },
+    {
+      "path": "yance-ai/.github/ISSUE_TEMPLATE/bug_report.yml",
+      "sha256": "c7e5589d124496c3c36f5ce66204a2797b5f7293a8a2ad506aaf27d0d20c6a39"
+    },
+    {
+      "path": "yance-ai/.github/ISSUE_TEMPLATE/config.yml",
+      "sha256": "dd8f7ab68e13de4e86ac750779711ef4b017b84ae551386b47210c08a099e5ba"
+    },
+    {
+      "path": "yance-ai/.github/ISSUE_TEMPLATE/customer_request.yml",
+      "sha256": "70062b1dbc3fea9bb398d0ecadab4604e9d5340f822a80696f6bfcb3667f247c"
+    },
+    {
+      "path": "yance-ai/.github/ISSUE_TEMPLATE/feature_request.yml",
+      "sha256": "0c0d8a6622fec5733e2f469b45c5115eac8c5a12358c379977ccf30e0262477a"
+    },
+    {
+      "path": "yance-ai/.github/ISSUE_TEMPLATE/technical_debt.yml",
+      "sha256": "d0f4aba7cf0c1a635438354cdbdab6a36d32374254cf91fcb93bb9f25470c5c3"
+    },
+    {
+      "path": "yance-ai/.github/workflows/deploy-example.yml",
+      "sha256": "a8735fd2aa2426e801c53bfb9b7785dc69779ca0abd17d23524c8046f6eddd43"
+    },
+    {
+      "path": "yance-ai/Dockerfile",
+      "sha256": "add31f0d12c06774c1a0297d15c31fcea1cdf57fbd985c00dbb0c96d4a026488"
+    },
+    {
+      "path": "yance-ai/alembic.ini",
+      "sha256": "a00283b6bdd3418363ef77c338e65ea0280749d5933086c75d6c0f739c3db26e"
+    },
+    {
+      "path": "yance-ai/alembic/env.py",
+      "sha256": "868b81077eab8f0199284bc44a28ce2330a2de1968839670dad2be4a802de2ad"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260809_0001_initial_schema.py",
+      "sha256": "a0ae6890078d5295112200fa3a70ce595f95e33158958049133d4695355f194b"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260809_0002_stripe_session_id.py",
+      "sha256": "3a4dcd0c0fe43ad544119623ebce6ed11bab786aff81f0cbebe9a54dfbd35395"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260809_0003_alipay_invoice.py",
+      "sha256": "9fb80493356c9f0eb1760bcd6a76cef77bceb22b576ca91a341c1b83520f0490"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260809_0004_bank_receipt.py",
+      "sha256": "7e199bc03c5b1caa1637b0dd83eb4c4666efc3c7f5b42391dfbb362d5fad3a3c"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260809_0005_fix_embedding_dim.py",
+      "sha256": "e495b71dc2c427964fb10ab7c4ad5a61ec64e1c8ea35c3dbb02a505a642d6046"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260814_0006_global_policy_kb.py",
+      "sha256": "65dafad8be684ca143fd2c83b61cbdc0cfcc2d921d7e024e2f87189c1cb157e8"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260814_0007_product_entitlement.py",
+      "sha256": "60a04f98a30856ae39c014732cb2475917fac6ab5006fb9912828073d8c96640"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260817_0008_task_deliverable.py",
+      "sha256": "5392d26fe4d8ac4c37156bd3c60b194650a4878a576d3034166a70624c7323dd"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260902_0009_task_deliverable_schema_alignment.py",
+      "sha256": "e2ac16b57941595bf7c279ce3609cf155c91858c299ef370e909000e088490c5"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260902_0010_payment_event_ledger.py",
+      "sha256": "421c40493bf1f068ca9f04de52af15b3bdcd1a98bb49a1d7d88c6e8df0715b16"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260903_0011_order_resource_scope.py",
+      "sha256": "44117229369267d72b08bf9bd3ba579b62351a2b4cf39145c72b05bbdccbe9e5"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260903_0012_schema_constraint_alignment.py",
+      "sha256": "5c383f03bedcbee919da876623b61e333b8ecce2610f04d654d36629d517bc05"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260903_0013_core_workflow.py",
+      "sha256": "2069fa1fdbe69712467b879b5f8357d6156664a0c72c5e3472f3d17761fcd294"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260903_0014_agent_harness.py",
+      "sha256": "7f4ad3cbb4f5b891d63884d68bff8bfe6339d79115306b3c0a420c674a71b374"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260903_0015_rag_evidence.py",
+      "sha256": "e63ad0b341fac6b827c79419686f452dd0af18a3856a3a223271b3a89f3d4cf5"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260904_0016_application_workspace.py",
+      "sha256": "cd8bf8369fd45d192fb1231ce842384b03423141b98c87f8f6ae8359e687a7e8"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260904_0017_admin_analytics.py",
+      "sha256": "1665adc082701579b2f8fecc7ba9390e98aa658d7c4b8805c74a6d2e730c12b6"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260905_0018_evaluation.py",
+      "sha256": "284313766d04c49b6966275fd6bceec8508cd95b16c4cd29f2d9dcbe948907ee"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260905_0019_billing_enterprise.py",
+      "sha256": "e645fa52ebe7693054446a080680a137eb184a3a7d120683cf4e464cb25a1176"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260905_0020_investor_demo.py",
+      "sha256": "a0344623204430cb75457759a285b47466b8e27f8e237950240dfccf2276edd0"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260906_0021_document_intelligence.py",
+      "sha256": "600621712000727b31ee6b8563ffd34d0d9403d51a97e19f87d51b76d282c0c7"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20260927_0022_funding_os.py",
+      "sha256": "f0911ec7a89fe07edf72d5e44e0c9180336fc20ceb008037d049f1939258bb7e"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20261015_0023_email_codes.py",
+      "sha256": "6b8ae758559a91e9c5818fe04935996eba10ac655910df8ad1baf4efc7f7fc41"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20261017_0024_auth_rate_limit.py",
+      "sha256": "005643d246f3ae639cc33a1135c0e4005a469e180f5d60b847cc98d7fa518254"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20261017_0025_invoice_einvoice.py",
+      "sha256": "824a88593979aca9918c28734ceca8df6fde77b8cb1f9bf81220e9338564f420"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20261020_0026_auth_revocation.py",
+      "sha256": "cc2cebfb38187e6f32573119d57b58701004cc13883e798c4a3a35e33aecb91f"
+    },
+    {
+      "path": "yance-ai/alembic/versions/20261020_0027_policy_validity.py",
+      "sha256": "676c51741ab40e887f9410a675ca37611fdb75f9bfcfdb09472f8a60940b7527"
+    },
+    {
+      "path": "yance-ai/app/__init__.py",
+      "sha256": "91447944015cec709e8aa7655f7e9d64e1e4508e7023a57fe3746911c0fc6fed"
+    },
+    {
+      "path": "yance-ai/app/api/__init__.py",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "yance-ai/app/api/deps.py",
+      "sha256": "ded7486ec1a0156cc587d7a046975557abe55290a0c792425b68b8663e51ef1a"
+    },
+    {
+      "path": "yance-ai/app/api/router.py",
+      "sha256": "5006dec6c987984253dc0027a72f50b899c61977b869c258f5956757c590caa5"
+    },
+    {
+      "path": "yance-ai/app/api/routes/__init__.py",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "yance-ai/app/api/routes/admin.py",
+      "sha256": "44e98f291b71918a9109a9b90515d72e43af0a86697ad7f9d597c0e3194d4e8d"
+    },
+    {
+      "path": "yance-ai/app/api/routes/admin_evals.py",
+      "sha256": "59427677f92b3c86e8c537d0313a8af0b4423290c8af1c78524ca53fe5fa6b2f"
+    },
+    {
+      "path": "yance-ai/app/api/routes/agents.py",
+      "sha256": "41b21b5a067ac2142564e79f8e6a7bf787db0fc06373ba0e3fa69aaa588bc252"
+    },
+    {
+      "path": "yance-ai/app/api/routes/analytics.py",
+      "sha256": "eb2260a3c1454b583caca2834a432d3f4bb440081927eb304e4c035277906bb3"
+    },
+    {
+      "path": "yance-ai/app/api/routes/auth.py",
+      "sha256": "09f054c534f41727617ee6f641400248bd3f3ea7b7c903d72183e7b5780a5b91"
+    },
+    {
+      "path": "yance-ai/app/api/routes/billing.py",
+      "sha256": "fcd1a7378c4acd50c9a65c2d86f14109c0c97816b8685dcc0ce4092c93dd4244"
+    },
+    {
+      "path": "yance-ai/app/api/routes/commerce.py",
+      "sha256": "03b44c95e72b5026fdb72e26c2f4392b11bd83ee32d48246f377c59147b32292"
+    },
+    {
+      "path": "yance-ai/app/api/routes/companies.py",
+      "sha256": "a79e8ede710e89654480e31adfca80d0d1546cda603af9dbe64253bd64318fcd"
+    },
+    {
+      "path": "yance-ai/app/api/routes/demo.py",
+      "sha256": "768c2f4e7af6428c643f0abb49bb8c98e103b76a8ac88eea2d7fad35adfd1b8f"
+    },
+    {
+      "path": "yance-ai/app/api/routes/demo_match.py",
+      "sha256": "3cc9917167ccef8f8eb67021d93554063ffe01c7d73650b637e0974fa0768699"
+    },
+    {
+      "path": "yance-ai/app/api/routes/documents.py",
+      "sha256": "47d03665bf3787e42e12abdadc92ccd8c91265159cda9af7f1ae32590a38afc6"
+    },
+    {
+      "path": "yance-ai/app/api/routes/enterprise.py",
+      "sha256": "13c7fc7f05d6cb70e14b602ab01bd133927e92ff9a1c4d00f135216b4ac6b1b9"
+    },
+    {
+      "path": "yance-ai/app/api/routes/funding_os.py",
+      "sha256": "8aa7ceab3ab8cfe49b35310be096cf3a2efb91c3168f1c84987b80500c6bc53a"
+    },
+    {
+      "path": "yance-ai/app/api/routes/health.py",
+      "sha256": "8d734a67e478c44f743f4392ac9df90309b059bacc59ebb02b412ca5d18a0b07"
+    },
+    {
+      "path": "yance-ai/app/api/routes/payments.py",
+      "sha256": "b32d06fc21bafb5845911f07dd1789c8be362b8f52e4bf02ee15403448da095a"
+    },
+    {
+      "path": "yance-ai/app/api/routes/policies.py",
+      "sha256": "cdec68147c47a3ea63b0ffd3059af8366f1ea4c9ceb69091d757ff19acee2f6f"
+    },
+    {
+      "path": "yance-ai/app/api/routes/policy_engine.py",
+      "sha256": "52128f63101cd61d6f481f2a0c68524be5eb71dcd303ab8c4ed611dc53e1e79e"
+    },
+    {
+      "path": "yance-ai/app/api/routes/reports.py",
+      "sha256": "9e285891a73c44e6b175f394867f10fd8e3a100f178fbde9329cdc1ed59bc1f3"
+    },
+    {
+      "path": "yance-ai/app/api/routes/tasks.py",
+      "sha256": "7b525622e783997e0b3de1371549de08fd072100bf6a5636b8b1efc5fa3eb58c"
+    },
+    {
+      "path": "yance-ai/app/api/routes/telemetry.py",
+      "sha256": "9dfa23266d94b501639254002cfd851a2c878ab04ed2d5b26f82e3c3ac630398"
+    },
+    {
+      "path": "yance-ai/app/api/routes/tenants.py",
+      "sha256": "56af693fafc53fc5a7c29a74f13fb7972db937b72f9b62c110f3fb0ac4490728"
+    },
+    {
+      "path": "yance-ai/app/api/routes/workflow.py",
+      "sha256": "e80ab36144489a3b8e1188df60850fbc35249e62210f015bf99e65da8eff89ef"
+    },
+    {
+      "path": "yance-ai/app/core/config.py",
+      "sha256": "b4cd750e232e13ca39fabe81694ccca0417d6f82cfc98908e6f64727a82d89a4"
+    },
+    {
+      "path": "yance-ai/app/core/db.py",
+      "sha256": "5ba61be8b658e60e10545cddae597925319317b11cd175a6d6244c33f84c2af2"
+    },
+    {
+      "path": "yance-ai/app/core/logging.py",
+      "sha256": "0bc1eeedf80fb371bc757b66fdd312e2bd9fe483d30be0d60b9cd9a51945c0cf"
+    },
+    {
+      "path": "yance-ai/app/core/security.py",
+      "sha256": "1e407282206248575d9cdd4605db7fb2bea4a1964e34274366c3cd21a07d9a79"
+    },
+    {
+      "path": "yance-ai/app/main.py",
+      "sha256": "71dcea214adb13362b549ed60ffdce1d9a086f1e5eb39d1dd45e63d058b4c0ef"
+    },
+    {
+      "path": "yance-ai/app/models/__init__.py",
+      "sha256": "36e3a1ef26d83e7aabef74f42f0749df24f272fe38c6b1d0e3d805ae37caa13f"
+    },
+    {
+      "path": "yance-ai/app/models/models.py",
+      "sha256": "c48d720c3c5e2b51bff8fc8851d731e4b9a77dcbd253e5707df32414ad706493"
+    },
+    {
+      "path": "yance-ai/app/schemas/__init__.py",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "yance-ai/app/schemas/schemas.py",
+      "sha256": "ffd642366088499211f5f2153417ee425a674f7e6b43f99e307a58d71f716acf"
+    },
+    {
+      "path": "yance-ai/app/services/__init__.py",
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "yance-ai/app/services/admin/__init__.py",
+      "sha256": "7af85c12bbbc582f630529d626f38dbbd7a27d13a1caf30bd111cbfb2f8b1674"
+    },
+    {
+      "path": "yance-ai/app/services/admin/metrics.py",
+      "sha256": "0bcafbc42289a4d17486bc0f66cf41289eb6acefea2f1830c2096c0dec4e1882"
+    },
+    {
+      "path": "yance-ai/app/services/agents/__init__.py",
+      "sha256": "370b336545a85b6e7301d1fb84da21289487a60769c07de2f2b7bc5e7895d0ea"
+    },
+    {
+      "path": "yance-ai/app/services/agents/contracts.py",
+      "sha256": "b378b064cfed29a19cf32c467d8ca4d0e54236b2804b307c949e44afbaeccac2"
+    },
+    {
+      "path": "yance-ai/app/services/agents/definitions.py",
+      "sha256": "f2854ee00d619095acfc4c0ddf9bc432316605bbb6fca85e7d35dc6bdbb0c404"
+    },
+    {
+      "path": "yance-ai/app/services/agents/harness.py",
+      "sha256": "a3d72693b5179a764e1eacbcf923153d20404062cfe58110782899bc0fb15547"
+    },
+    {
+      "path": "yance-ai/app/services/agents/policy_scan.py",
+      "sha256": "c49a9b9237eceb1ca38e99cf0a74c53c11344972e99e4cfce2913ff7b8997c43"
+    },
+    {
+      "path": "yance-ai/app/services/analytics/__init__.py",
+      "sha256": "63db780cbc5423a6ecdfd4821d9bfb68c0b5a2d05037fa0b97ede6fba03c8ebc"
+    },
+    {
+      "path": "yance-ai/app/services/analytics/events.py",
+      "sha256": "3fc948c65ebf311ac73975bc8ecdf92120909eb46340d24045f68f23dda04ba3"
+    },
+    {
+      "path": "yance-ai/app/services/applications/__init__.py",
+      "sha256": "600691ea25e1bc740e84d5a7697e5521233f6ae681c597b62bb8033b7c083fa7"
+    },
+    {
+      "path": "yance-ai/app/services/applications/artifacts.py",
+      "sha256": "e2c09e5f9b3b4079d10bde9b0dc45c85c0860d20b5ccea8c859bd8598febdce4"
+    },
+    {
+      "path": "yance-ai/app/services/applications/workspace.py",
+      "sha256": "ee908604a5090ea431fe7e3d117453860afa1d6d47311188bbe9a61ecabbe090"
+    },
+    {
+      "path": "yance-ai/app/services/auth_rate_limit.py",
+      "sha256": "bd483141a8d37b7bc252c6d93a9721159acafe32ea2be6b14860e852dc02d3b4"
+    },
+    {
+      "path": "yance-ai/app/services/billing/__init__.py",
+      "sha256": "8d06a848199dc68991b63d4d69c3b57030684ad60a60d4cf1820fa5035dd4b89"
+    },
+    {
+      "path": "yance-ai/app/services/billing/catalog.py",
+      "sha256": "5fabf85cbc5b90f47e4e113cc705d1967aae0897401d8a3a3b65e0f6f2429e83"
+    },
+    {
+      "path": "yance-ai/app/services/billing/usage.py",
+      "sha256": "74801d26e9704e40039b754f3d8dec30064ce4712e59d633250e7419caaa8b9d"
+    },
+    {
+      "path": "yance-ai/app/services/company_profiles.py",
+      "sha256": "f207536d13bc904fcf0122acf977ede50badb597e2f9a8b7bd3ebd47461e1fab"
+    },
+    {
+      "path": "yance-ai/app/services/consultant/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "yance-ai/app/services/consultant/router.py",
+      "sha256": "3ba960c48683a78fb6458c17849a87777b0d76206930513eb74a3a1abef76155"
+    },
+    {
+      "path": "yance-ai/app/services/demo/__init__.py",
+      "sha256": "076518efd65c6bdf835aecf9aaaf5e8ccf3d66ea5c6db5f0a2e95a091f687d00"
+    },
+    {
+      "path": "yance-ai/app/services/demo/scenarios.py",
+      "sha256": "4eb5ef04f83a65413b0354f0213e64aac816357f0e5b944918015ea2b29c82e8"
+    },
+    {
+      "path": "yance-ai/app/services/documents/__init__.py",
+      "sha256": "2fa8d4fce10d7704544ea0b24ae1e239ac5c422f9bfe9642f9154c589f15defe"
+    },
+    {
+      "path": "yance-ai/app/services/documents/ingestion.py",
+      "sha256": "4a3ae381330b2fe12a581f8a48d65e759a9d789887e3e4c12e115a1a98177ac5"
+    },
+    {
+      "path": "yance-ai/app/services/documents/intelligence.py",
+      "sha256": "42360b29bfce208c6855650902575880c3283c6b028c65793c06d7eac3002938"
+    },
+    {
+      "path": "yance-ai/app/services/documents/ocr.py",
+      "sha256": "121a7b25cdcbfb3bc4814ba73beb981e6eb0b9c4ca7f4e8378a54a8ab40fa00e"
+    },
+    {
+      "path": "yance-ai/app/services/documents/parsers.py",
+      "sha256": "27b1d891bd5ba649d5b7e2d1ac4f7aa6ca0fd39aa70c300f9af747942ae8aab7"
+    },
+    {
+      "path": "yance-ai/app/services/documents/security.py",
+      "sha256": "081767bb16cd18093d18e64e3ccdafa360d4d9a4ae693bc506dfd3b84272d342"
+    },
+    {
+      "path": "yance-ai/app/services/documents/url_fetcher.py",
+      "sha256": "91511bb9753e9219463e0f96d9bff0ed3fe13b30c601c5c3787541a08f65dbf5"
+    },
+    {
+      "path": "yance-ai/app/services/email_code.py",
+      "sha256": "4fda1c6cec4c971a66d6b77c99d0dab68c3ab31fd3306495edee65005a2ce123"
+    },
+    {
+      "path": "yance-ai/app/services/enterprise/__init__.py",
+      "sha256": "392b3f842277aa27b24e2e918120010e091b20e1d69938dabe50204b8d678ac6"
+    },
+    {
+      "path": "yance-ai/app/services/enterprise/api_keys.py",
+      "sha256": "47a5e3708bffdf6565ffaa08271d49ded190708c3ef12fefb0bd311f363c02dd"
+    },
+    {
+      "path": "yance-ai/app/services/enterprise/audit.py",
+      "sha256": "bce67fc0d8c48b58a22a7bd7c95ab6710fe60d1dfaf73f857a76a84eecd042cb"
+    },
+    {
+      "path": "yance-ai/app/services/enterprise/exports.py",
+      "sha256": "6ef48bdb486db3df4ed1a9a304f1ce8fac3c496b8a77da023fcb1343ca591783"
+    },
+    {
+      "path": "yance-ai/app/services/enterprise/flags.py",
+      "sha256": "9fd50a6b50e97a0d9b0632160224ea10992df96b83fc4771cadd353b813e38c7"
+    },
+    {
+      "path": "yance-ai/app/services/evaluations/__init__.py",
+      "sha256": "d826a97f882ed63a41573a5acd8476c73b0299511a59a260dad966684eb9026b"
+    },
+    {
+      "path": "yance-ai/app/services/evaluations/contracts.py",
+      "sha256": "470baa60d6f83dac1bf328c75e348e32918cc4254b0ac4e34ba91c8209dcf34e"
+    },
+    {
+      "path": "yance-ai/app/services/evaluations/loader.py",
+      "sha256": "9dc2f00faed11aacec7a8f58e62bd8c4754ecc9cd2bd7ce085e0cbb3b2cf3c22"
+    },
+    {
+      "path": "yance-ai/app/services/evaluations/metrics.py",
+      "sha256": "841ee97959c16d5f0c290ff85098c2733f73cdceada9f15fbde67b68c42de447"
+    },
+    {
+      "path": "yance-ai/app/services/evaluations/runner.py",
+      "sha256": "ff9b9decdfa0f4443680a3add5ae699dac8b9d2bb9ac065ae4ff8b45bb40ada2"
+    },
+    {
+      "path": "yance-ai/app/services/evaluations/scorers.py",
+      "sha256": "7df10979d8aee802311bc1753fd8de83a92e0028be560530b5109842cd0e863b"
+    },
+    {
+      "path": "yance-ai/app/services/evaluations/targets.py",
+      "sha256": "f2a5b9a71c755fa9204f33eb53cbda961dce28551efe3dc0142f24498e369606"
+    },
+    {
+      "path": "yance-ai/app/services/funding/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "yance-ai/app/services/funding/amounts.py",
+      "sha256": "6007ec5b31a29dde2f0e1b50963095b6325a2651c56aa29c7e0b70866985a692"
+    },
+    {
+      "path": "yance-ai/app/services/invoice/__init__.py",
+      "sha256": "e9a52898d69ce2287a67b3c03b69475c4b5fb2aa905af84ec8dbd11716abb664"
+    },
+    {
+      "path": "yance-ai/app/services/invoice/generator.py",
+      "sha256": "3858803797b40b61276e124446a92382bbfaf486a2aa3853d2230181bc4de160"
+    },
+    {
+      "path": "yance-ai/app/services/llm/__init__.py",
+      "sha256": "55bd7b6313c4b8c17c198d56c18132e50b8a1fd37e55635a01c7e4ff95c56ee0"
+    },
+    {
+      "path": "yance-ai/app/services/llm/base.py",
+      "sha256": "530d00179a69628cffbd88ed155bdb6c5b416bd6e4f06f0d84c8d5a69a9aa23a"
+    },
+    {
+      "path": "yance-ai/app/services/llm/providers/anthropic.py",
+      "sha256": "671d6fa7c51430b05c9337efe627aef0537a7d4990c275e15c6f9877bd5a7a48"
+    },
+    {
+      "path": "yance-ai/app/services/llm/providers/mock.py",
+      "sha256": "4b194151c31036b0a34fd9b579bbe62af061bf6b3c0d3f7f451aaaa38b3e79f4"
+    },
+    {
+      "path": "yance-ai/app/services/llm/providers/openai_compatible.py",
+      "sha256": "294b8b78feff9ad1c64092f001c2f761801299d8b661684bb646d25c8d14e434"
+    },
+    {
+      "path": "yance-ai/app/services/llm/registry.py",
+      "sha256": "34071de6e0ee90bec9db792c55e4187b8a37e60e34feccbe06187ddde6c3eab6"
+    },
+    {
+      "path": "yance-ai/app/services/llm/router.py",
+      "sha256": "89e5a25a2e0313a59d9f5c44b24f6c7da712ddc95f7dace716558b4ecef7f204"
+    },
+    {
+      "path": "yance-ai/app/services/notifications/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "yance-ai/app/services/notifications/deadlines.py",
+      "sha256": "40a0bb79d46817233eca147f2690559c582ddfabb675bd7a87a8266b89bea395"
+    },
+    {
+      "path": "yance-ai/app/services/notifications/email.py",
+      "sha256": "99fd4119e0f3c7ee796d04397b26d3ddb8a9d023bec4ffe864d2556292ec9f2e"
+    },
+    {
+      "path": "yance-ai/app/services/oss.py",
+      "sha256": "db8afaf8347305f43c6978426b57c0104312a5e67209dc22683504e5f3f0607f"
+    },
+    {
+      "path": "yance-ai/app/services/payments/__init__.py",
+      "sha256": "87274c079a0a10c32a03cb6fe5dbb9dd44b18100a000374825837a7b0a231387"
+    },
+    {
+      "path": "yance-ai/app/services/payments/settlement.py",
+      "sha256": "6291df44546f7b51d0cf26d431486206d4ebe3a4c89fb344a31e1de5f17eb908"
+    },
+    {
+      "path": "yance-ai/app/services/payments/wechat.py",
+      "sha256": "9b5df3cabe01ee70ce8d3e7b499ed708c6d299d18b2bf1a48f275945d263d372"
+    },
+    {
+      "path": "yance-ai/app/services/policies/__init__.py",
+      "sha256": "78973564e4589934d235364dd37660d5ec70e451463f5c3c421a2fb0b2c39823"
+    },
+    {
+      "path": "yance-ai/app/services/policies/applicability.py",
+      "sha256": "065de8e2d1ac9255a0ed4d28e1aaa6fc6dec0dcd9f41ba6a710f26d02819098a"
+    },
+    {
+      "path": "yance-ai/app/services/policies/eligibility.py",
+      "sha256": "fccbd0ad8eb80582b1c980d12a8b9aaaa9ff85b1f59df109dec2c9de38e46727"
+    },
+    {
+      "path": "yance-ai/app/services/policies/ingestion.py",
+      "sha256": "fd0f360292db09540e7bebd87ff13ef9c544c52e558e05c3a31dd5a8e1112e42"
+    },
+    {
+      "path": "yance-ai/app/services/policies/retrieval.py",
+      "sha256": "c6a5f3587f7b58a390505a2a8e31644c9194f37b1aedf1357de088a7be813dba"
+    },
+    {
+      "path": "yance-ai/app/services/policies/visibility.py",
+      "sha256": "2a10051fc2709c0c3f5a4eeeb86544e25164d55e38c71b91a1ecd9602dac271e"
+    },
+    {
+      "path": "yance-ai/app/services/policy_engine/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "yance-ai/app/services/policy_engine/deterministic.py",
+      "sha256": "1437b561211808bad96d0a5472001b8c82578e9a12eed9b474b5e6f083ca5a8e"
+    },
+    {
+      "path": "yance-ai/app/services/policy_engine/evaluator.py",
+      "sha256": "1ae185d14c0773c59a080e2d2673271953299c25c7bdcd8a6d8fceca040f65d1"
+    },
+    {
+      "path": "yance-ai/app/services/policy_engine/schemas.py",
+      "sha256": "d73407c09ba8111dd5264ebc38533380a1482bb918df9e3e4d2a01d81c03ebd8"
+    },
+    {
+      "path": "yance-ai/app/services/report/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "yance-ai/app/services/report/matcher.py",
+      "sha256": "0f5bf01ac6e0b1ca44bb05dbcb60521f9e0cbfaa9d98df880dfe68a184d235d2"
+    },
+    {
+      "path": "yance-ai/app/services/report/pdf.py",
+      "sha256": "e38bb13a6cfe665efe4cfed78e76df7d2ab3aa9e00cb9542a08c0d9d518e4b7f"
+    },
+    {
+      "path": "yance-ai/app/services/safe_rendering.py",
+      "sha256": "812c25fe185fc671f7c838c15322f8a23f4c229c35bf80675d04829dbc554b96"
+    },
+    {
+      "path": "yance-ai/app/services/vectorstores/__init__.py",
+      "sha256": "10d301949e18713f9254c82537c6e5b036bc6a8cc2c2b8003de74350a7325e6f"
+    },
+    {
+      "path": "yance-ai/app/services/vectorstores/base.py",
+      "sha256": "779dac82f33d3fc7cd8992238064ac511a495a1e0237495e7fffe56fb1ddec36"
+    },
+    {
+      "path": "yance-ai/app/services/vectorstores/pgvector.py",
+      "sha256": "df8bbc0c96b1fb496286e5e15646b894001edde0373f0aa5f4c67cee60ec9770"
+    },
+    {
+      "path": "yance-ai/app/workers/__init__.py",
+      "sha256": "17ad4773604d7b90d0dcb0fe4f5b7f173cc7f7a30ba12528d22958753ee81703"
+    },
+    {
+      "path": "yance-ai/app/workers/agent_worker.py",
+      "sha256": "d27710dba89aea06819e3737f76ec80c621196fbb0ef7bb75a32b1d68d219588"
+    },
+    {
+      "path": "yance-ai/app/workers/document_worker.py",
+      "sha256": "4c35934802b634f0280ff0c9b886688aff5545c2c7dc06e796b9a1fed4b7df4b"
+    },
+    {
+      "path": "yance-ai/docker-compose.dev.yml",
+      "sha256": "c2a39a3ad8542a74e2c93220a8d3d11644924c4c1f1fc3a1db5adf40a791bff8"
+    },
+    {
+      "path": "yance-ai/docker-compose.prod.yml",
+      "sha256": "371234f64c542f73c8ea7b0a2fd4224e3f1e6c61ae8769710a2f234958c5ab9f"
+    },
+    {
+      "path": "yance-ai/docs/openapi.json",
+      "sha256": "b18513f712f1bf0a3635c6f34d5ab0cac9803b68f3f3e8e67ee456fe728b84ce"
+    },
+    {
+      "path": "yance-ai/evals/datasets/audit_safety_v1/cases.json",
+      "sha256": "95a9c114250283ba0e1c55337e6efd9ec836c98d054032ac70801dd85d693d80"
+    },
+    {
+      "path": "yance-ai/evals/datasets/citation_eval/dataset.json",
+      "sha256": "00dc324b297baf24bb5b155b09f0849dafba636d043b0907f939c6a2c6773092"
+    },
+    {
+      "path": "yance-ai/evals/datasets/document_generation_eval/dataset.json",
+      "sha256": "f7efbdec91c3d958c9499c0e9d7c41592be66f69a3712b3451020a9c1cffa0d3"
+    },
+    {
+      "path": "yance-ai/evals/datasets/eligibility_eval/dataset.json",
+      "sha256": "bb0b34353abffd01c543b2833dc0f0811a702dec3c8ad975ecf274c2c2e5a85a"
+    },
+    {
+      "path": "yance-ai/evals/datasets/eligibility_real/dataset.json",
+      "sha256": "1758f6a16145f9899b2263160aafc491e881bc24050fc83d2d2739f12241503b"
+    },
+    {
+      "path": "yance-ai/evals/datasets/hallucination_eval/dataset.json",
+      "sha256": "cc8cda7586f850c2ef3caa869352d1df0a7159287ae2de3abcf8a36c2a38af46"
+    },
+    {
+      "path": "yance-ai/evals/datasets/policy_retrieval_eval/dataset.json",
+      "sha256": "c9fbdda0ca336331c39d8965c70a49ea3f66c861a22a466ca772945e3ff551bc"
+    },
+    {
+      "path": "yance-ai/evals/run_evals.py",
+      "sha256": "07698f59d99b1fda37f09f4889e7ed16529590b2c5cd2ff7468f0cd20c9824f0"
+    },
+    {
+      "path": "yance-ai/ops/aliyun/oss-ram-policy.example.json",
+      "sha256": "eac81b5250d6bc8517c923663d1a59321ff46e3e5fabf1e779dff475d6659060"
+    },
+    {
+      "path": "yance-ai/ops/backup.sh",
+      "sha256": "54f7eaf13267def340ca7d22b27965c8bf48bc7c7e215673887fef61024b52a6"
+    },
+    {
+      "path": "yance-ai/ops/uptime_watchdog.sh",
+      "sha256": "c70e1ebee0c2a5393f41ee4c07641f43df3ca10f808648f12fd960da3fe8f012"
+    },
+    {
+      "path": "yance-ai/pyproject.toml",
+      "sha256": "b4179cc6e3ae2ba592e9ffef38c632b54d8007de67a1fcb6413aa88ae5278e09"
+    },
+    {
+      "path": "yance-ai/requirements-dev.txt",
+      "sha256": "134f32506fb60702e632303328c8babf875b4737491ac54fd1124a8af32d742e"
+    },
+    {
+      "path": "yance-ai/requirements.txt",
+      "sha256": "0673d69ff78439adfb40182f626c701aa63586c0f636a134a72a8cd425151a29"
+    },
+    {
+      "path": "yance-ai/scripts/bootstrap_tenant.sh",
+      "sha256": "b069bedecca3383edabc0f7f41f18ef6641784fc5da7cbbe37c130d4a71bea7a"
+    },
+    {
+      "path": "yance-ai/scripts/export_openapi.py",
+      "sha256": "4a4138630ec826829b0b913894104bbeb4c8c1e2fbc3e80d39fcbc194535626a"
+    },
+    {
+      "path": "yance-ai/scripts/load_smoke.py",
+      "sha256": "d79a4bd3e4d3229941bb13c36a94efeae16ccf0bdd7ef0897907f4cb7b9f6503"
+    },
+    {
+      "path": "yance-ai/scripts/policy_crawler/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "yance-ai/scripts/policy_crawler/crawler.py",
+      "sha256": "b7c9cac9f69e5703938b4b85b4d38e3a90433cdf16926ab94c4c12f748045a76"
+    },
+    {
+      "path": "yance-ai/scripts/policy_crawler/import_jsonl.py",
+      "sha256": "26dc794fd4fa4fd5ea27a98d62f7f808e769c0d562d228a439b9f6eafc988e99"
+    },
+    {
+      "path": "yance-ai/scripts/seed_demo_companies.py",
+      "sha256": "417541974a84c42c6d36fe90165289c411a12b6b09d636d65704960a9f2fb77f"
+    },
+    {
+      "path": "yance-ai/scripts/seed_investor_demo.py",
+      "sha256": "80ef834f0be5bb6788292874ad3d8445d440f3950369f8c4eaed8d12d611dffc"
+    },
+    {
+      "path": "yance-ai/scripts/set_platform_admin.py",
+      "sha256": "99780943f4f8505ea65ac82961f3b1085a3eab329b68d0b031fa365f16663bdf"
+    },
+    {
+      "path": "yance-ai/scripts/smoke_test.sh",
+      "sha256": "d986ab45282914e7e3fbffa12ee78db24ed23af6c6b7f6120abfc788a63faac3"
+    },
+    {
+      "path": "yance-ai/scripts/verify_database_snapshot.py",
+      "sha256": "91eb6bd1326ca1d6155547f3ee7d3139962fd05868b7808d763af74b85c7e6db"
+    },
+    {
+      "path": "yance-ai/scripts/verify_document_staging.py",
+      "sha256": "9a082bdfde6c4361eb0110bf0e0fbe633a1169ca3ef421eecc5e6f34faf3186f"
+    },
+    {
+      "path": "yance-ai/tests/conftest.py",
+      "sha256": "81f135ac89d233941dcd74fec51b009af84c2a837a7c97faeabef10258405a52"
+    },
+    {
+      "path": "yance-ai/tests/test_admin_analytics.py",
+      "sha256": "87c29575b8ff4056a61dc8b48225c9eec267098339aa85599e0409fa369c070a"
+    },
+    {
+      "path": "yance-ai/tests/test_agent_harness.py",
+      "sha256": "5e9c174bd4b93c930de8b1b79db24c7a11e086ce44d4cf24045c4bb2de2085cd"
+    },
+    {
+      "path": "yance-ai/tests/test_application_workspace.py",
+      "sha256": "d2edf096157fe74e0daea1208814040e10d8876e9c5cdc1c43ad06b5b39d2d8c"
+    },
+    {
+      "path": "yance-ai/tests/test_audit_agent_control.py",
+      "sha256": "a7546630c50078b458c00efdbd968a8f02b795a43f1478c9e7b25626af445778"
+    },
+    {
+      "path": "yance-ai/tests/test_audit_auth_lifecycle.py",
+      "sha256": "a9983b31e301a8c2fc4c59e6ce09d8b28f17ae8237cbd7884997f08143a90cdd"
+    },
+    {
+      "path": "yance-ai/tests/test_audit_policy_context.py",
+      "sha256": "e85e5b8a3026211f0014ed54b219a0c1aa85e0e7d921f2ebc34e14f8ca858cc9"
+    },
+    {
+      "path": "yance-ai/tests/test_audit_release_safety.py",
+      "sha256": "6a076eacc0158ef85dca063f1b3da24472cd2a5091f6a7631ecaef266a05b93b"
+    },
+    {
+      "path": "yance-ai/tests/test_audit_tenant_matrix.py",
+      "sha256": "9a5cd0a8b60d57d3dd5dce87914cf6c192d49755098c90bd2d49c6d9bfd6e15c"
+    },
+    {
+      "path": "yance-ai/tests/test_audit_transactions.py",
+      "sha256": "9ea8dacb396ac4b6642776a8b7d98bc30b8c5e0e9698e72415b11f77afeb46fc"
+    },
+    {
+      "path": "yance-ai/tests/test_auth_rate_limit.py",
+      "sha256": "84b9948a78aa07d254fdf8eadd453d235b28e0e7ccc347b4a3dd3b1b15aee296"
+    },
+    {
+      "path": "yance-ai/tests/test_billing_enterprise.py",
+      "sha256": "622d0daed1c49034cb4759c3e8e2b02143a8eeacd89b6bcfd9a77828726def76"
+    },
+    {
+      "path": "yance-ai/tests/test_config.py",
+      "sha256": "9ce300952e95ae01491c487ef2d30d64e81f315cb245f8b810cc1fb7e66dd0cd"
+    },
+    {
+      "path": "yance-ai/tests/test_core_workflow.py",
+      "sha256": "ea5ad330a243a5c2c62042f24dc67e19ef10a8d338cafaadc36bea1a1598c3ad"
+    },
+    {
+      "path": "yance-ai/tests/test_document_ingestion_workflow.py",
+      "sha256": "38e506d07767cb4a0d8836b8984d4a9671b9f1b0356249a814ec6e8541e03b9b"
+    },
+    {
+      "path": "yance-ai/tests/test_document_intelligence.py",
+      "sha256": "4761c1b8e0af96b19d51392a9910620dda27a18c5e7feb6b5f158b95e99206fc"
+    },
+    {
+      "path": "yance-ai/tests/test_document_ocr.py",
+      "sha256": "fbc57cad0b407476bed29745a5675a2c8d5da739b7b6a512fd6ec7e11f4dbed8"
+    },
+    {
+      "path": "yance-ai/tests/test_email_code.py",
+      "sha256": "b7316bd3df1908cf1268e69048f60452a4aba0b577763852ae6857f4476fb8b7"
+    },
+    {
+      "path": "yance-ai/tests/test_email_provider.py",
+      "sha256": "0d75af455d6c96c41ff240711e41f49c20db8f117c1d8b53fb681097c9fbaf88"
+    },
+    {
+      "path": "yance-ai/tests/test_evaluations.py",
+      "sha256": "eb29ef04e9972deda1300d51180f06a5aaa00a1e7f7b827ca2180d848786eecc"
+    },
+    {
+      "path": "yance-ai/tests/test_funding_os.py",
+      "sha256": "f798e13452d3a412e5bf7adcbf40e2eab2916bf6c1242627d086f86d3264f467"
+    },
+    {
+      "path": "yance-ai/tests/test_health.py",
+      "sha256": "316dae8d92b13c0b672cd2d29060b6ac958a83b4b470aeaf54141f3e8ae28da3"
+    },
+    {
+      "path": "yance-ai/tests/test_investor_demo.py",
+      "sha256": "1d6e7ef71a83482b2ce1c5f5ade09bd69f0a613de9301e082a92603bc8e04fb0"
+    },
+    {
+      "path": "yance-ai/tests/test_invoice_flow.py",
+      "sha256": "d9d208daa537863d52d846fa40bd727b21e282f3087c9867483675700bffcf0d"
+    },
+    {
+      "path": "yance-ai/tests/test_payment_settlement.py",
+      "sha256": "8667e273706f9c720a8a010663135e8fc2ec44e3955a24714a0d28126943253a"
+    },
+    {
+      "path": "yance-ai/tests/test_phase1_security_boundaries.py",
+      "sha256": "c9a0c622de6214bca28a3a19ebc827563fa5821d3f8ef16e730ad24de5d380de"
+    },
+    {
+      "path": "yance-ai/tests/test_policy_engine_hard_gates.py",
+      "sha256": "848b7ff3c2c0a72c82ce36b853ba58c4a15b7a035027aa43352df988548bb769"
+    },
+    {
+      "path": "yance-ai/tests/test_rag_evidence.py",
+      "sha256": "74f8c37987ea7f653475a99078c5e2b1ac83ef91a4c56c3e06abfaee0c54b0a9"
+    },
+    {
+      "path": "yance-ai/tests/test_safe_rendering.py",
+      "sha256": "5e5ae62b1825fbbd8af6c29069da0bc06704b63bc429f5b59fbffca872d4d488"
+    },
+    {
+      "path": "yance-ai/tests/test_safe_url_ingestion.py",
+      "sha256": "dac859ffb34e7eb37d26e9726b26b47073014bc3065964332af0ea5551960263"
+    },
+    {
+      "path": "yance-ai/tests/test_security.py",
+      "sha256": "d0d7d47a11c6ed971be9dfc70dafbc0698f204e41011acee80704364ff525d49"
+    },
+    {
+      "path": "yance-ai/tests/test_wechat_pay.py",
+      "sha256": "1fe71b4b9638d8ecc2aa36cfa7e4781f9d89064399a7582967ff460e1137e635"
+    }
+  ],
+  "scope": "tracked and new code/config/test/contracts only; excludes prose documents, binaries, ignored runtime files",
+  "git_status": "local changes not yet committed; no remote push",
+  "production_changed": false
+}

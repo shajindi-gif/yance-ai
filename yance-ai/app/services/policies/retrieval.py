@@ -6,6 +6,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.models import Policy, PolicyChunk, PolicyVersion
+from app.services.policies.applicability import applicable_region_clauses, current_policy_clauses
 from app.services.policies.visibility import visible_policy_clause
 
 
@@ -37,6 +38,7 @@ def hybrid_policy_candidates(
     query: str,
     query_vector: list[float],
     limit: int = 50,
+    region: dict | None = None,
 ) -> list[PolicyCandidate]:
     """Character/term lexical retrieval + vector retrieval + deterministic RRF."""
     latest = (
@@ -55,7 +57,9 @@ def hybrid_policy_candidates(
         .join(Policy, Policy.id == PolicyChunk.policy_id)
         .where(
             visible_policy_clause(tenant_id),
-            Policy.status == "published",
+            *current_policy_clauses(),
+            *applicable_region_clauses(region or {}),
+            PolicyVersion.status == "published",
             or_(PolicyChunk.tenant_id.is_(None), PolicyChunk.tenant_id == tenant_id),
         )
     )

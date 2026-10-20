@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any, Literal
 from uuid import UUID
@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import Principal, get_principal
+from app.api.deps import Principal, get_principal, require_roles
 from app.core.db import get_db
 from app.models.models import (
     Agent,
@@ -17,12 +17,58 @@ from app.models.models import (
     AgentRunError,
     AgentStep,
     Artifact,
+    PolicyScan,
+    Task,
     ToolCall,
+    UserRole,
     Workflow,
     WorkflowRun,
 )
 
 router = APIRouter(tags=["agents"])
+
+
+@router.post("/agent-runs/{run_id}/cancel")
+def cancel_agent_run(
+    run_id: UUID,
+    principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
+    db: Session = Depends(get_db),
+):
+    run = db.scalar(select(AgentRun).where(AgentRun.id == run_id, AgentRun.tenant_id == principal.tenant_id).with_for_update())
+    if not run:
+        raise HTTPException(status_code=404, detail="Agent Run not found")
+    if principal.role == UserRole.member and run.user_id != principal.user.id:
+        raise HTTPException(status_code=403, detail="Only the requester or an administrator may cancel")
+    if run.status == "cancelled":
+        return {"id": str(run.id), "status": "cancelled"}
+    if run.status in {"completed", "failed"}:
+        raise HTTPException(status_code=409, detail="Run is already terminal")
+    now = datetime.now(UTC)
+    run.status = "cancelled"
+    run.finished_at = now
+    run.lease_owner = None
+    run.lease_expires_at = None
+    workflow = db.scalar(select(WorkflowRun).where(WorkflowRun.id == run.workflow_run_id, WorkflowRun.tenant_id == principal.tenant_id))
+    if workflow:
+        workflow.status = "cancelled"
+        workflow.finished_at = now
+    task = db.scalar(select(Task).where(Task.id == run.task_id, Task.tenant_id == principal.tenant_id))
+    if task:
+        task.status = "cancelled"
+        task.current_stage = "已取消"
+        task.completed_at = now
+    scans = db.scalars(select(PolicyScan).where(PolicyScan.workflow_run_id == run.workflow_run_id, PolicyScan.tenant_id == principal.tenant_id)).all()
+    for scan in scans:
+        scan.status = "cancelled"
+        scan.completed_at = now
+    # In-flight remote requests may finish, but the worker checks cancellation
+    # before publishing tool results or starting another step.
+    for model in (AgentStep, ToolCall):
+        for item in db.scalars(select(model).where(model.agent_run_id == run.id, model.tenant_id == principal.tenant_id, model.status == "running")).all():
+            item.status = "cancelled"
+            item.finished_at = now
+    db.commit()
+    return {"id": str(run.id), "status": "cancelled"}
 
 RunStatus = Literal[
     "queued", "planning", "running", "waiting", "review", "completed", "failed", "cancelled"

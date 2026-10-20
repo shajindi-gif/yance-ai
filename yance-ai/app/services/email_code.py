@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import secrets
-from datetime import timedelta
+from datetime import UTC, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -54,7 +54,7 @@ def check_send_limits(db: Session, email: str, ip: str | None) -> None:
     )
     if last_created is not None:
         if last_created.tzinfo is None:
-            last_created = last_created.replace(tzinfo=now.timezone)
+            last_created = last_created.replace(tzinfo=UTC)
         elapsed = now - last_created
         if elapsed < SEND_COOLDOWN:
             raise RateLimited(int((SEND_COOLDOWN - elapsed).total_seconds()) or 1)
@@ -167,12 +167,13 @@ def consume_code(db: Session, email: str, code: str, purpose: str = "login") -> 
         )
         .order_by(EmailCode.created_at.desc())
         .limit(1)
+        .with_for_update()
     )
     if row is None:
         return "invalid"
     expires_at = row.expires_at
     if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=now.timezone)
+        expires_at = expires_at.replace(tzinfo=UTC)
     if expires_at < now:
         row.used_at = now  # burn expired code so it never lingers
         db.commit()

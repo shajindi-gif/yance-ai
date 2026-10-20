@@ -16,6 +16,7 @@ class OverallResult(StrEnum):
     ELIGIBLE = "ELIGIBLE"
     NOT_ELIGIBLE = "NOT_ELIGIBLE"
     INSUFFICIENT_INFO = "INSUFFICIENT_INFO"
+    REQUIRES_REVIEW = "REQUIRES_REVIEW"
 
 
 class CriterionEvaluation(BaseModel):

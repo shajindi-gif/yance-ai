@@ -23,6 +23,20 @@ from app.services.payments.settlement import settle_payment
 router = APIRouter(prefix="/payments", tags=["payments"])
 
 
+def _checkout_payment(db: Session, order: Order, provider: str) -> Payment | None:
+    """Call while holding the order lock; one provider intent per order.
+
+    Switching channels requires provider-confirmed closure/reconciliation.
+    Issuing another payable link can charge twice even if entitlements dedupe.
+    """
+    if order.status not in {"created", "pending"}:
+        raise HTTPException(status_code=409, detail="Order is not open for payment")
+    existing = db.scalar(select(Payment).where(Payment.order_id == order.id, Payment.tenant_id == order.tenant_id).order_by(Payment.created_at.desc()))
+    if existing and (existing.provider != provider or existing.status not in {"created", "pending"}):
+        raise HTTPException(status_code=409, detail="该订单已有支付记录，请先核实原渠道交易状态，不会自动创建第二笔支付")
+    return existing
+
+
 # ── Stripe (legacy, kept for reference) ──────────────────────────────
 def _stripe_checkout_available() -> bool:
     return bool(settings.stripe_secret_key and settings.stripe_webhook_secret)
@@ -131,7 +145,7 @@ def alipay_page_pay(
         raise HTTPException(status_code=503, detail="Alipay not configured")
 
     order = db.scalar(
-        select(Order).where(Order.id == order_id, Order.tenant_id == principal.tenant_id)
+        select(Order).where(Order.id == order_id, Order.tenant_id == principal.tenant_id).with_for_update()
     )
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -140,7 +154,8 @@ def alipay_page_pay(
     if order.currency.upper() != "CNY":
         raise HTTPException(status_code=400, detail="Alipay checkout requires CNY")
 
-    out_trade_no = f"{order.order_no}_{int(time.time())}"
+    existing = _checkout_payment(db, order, "alipay")
+    out_trade_no = existing.provider_trade_no if existing else order.order_no
     subject = f"yance.ai - {order.product_code}"
     total_amount = f"{order.amount:.2f}"
 
@@ -181,7 +196,8 @@ def alipay_page_pay(
         currency=order.currency,
         status="created",
     )
-    db.add(payment)
+    if not existing:
+        db.add(payment)
     db.commit()
 
     gateway = _alipay_gateway_url()
@@ -314,7 +330,7 @@ def wechat_native(
         raise HTTPException(status_code=503, detail="WeChat Pay not configured")
 
     order = db.scalar(
-        select(Order).where(Order.id == order_id, Order.tenant_id == principal.tenant_id)
+        select(Order).where(Order.id == order_id, Order.tenant_id == principal.tenant_id).with_for_update()
     )
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -324,16 +340,13 @@ def wechat_native(
         raise HTTPException(status_code=400, detail="WeChat checkout requires CNY")
 
     out_trade_no = _wechat_out_trade_no(order)
-    existing = db.scalar(
-        select(Payment).where(
-            Payment.provider == "wechat",
-            Payment.provider_trade_no == out_trade_no,
-        )
-    )
+    existing = _checkout_payment(db, order, "wechat")
     if existing and existing.status == "completed":
         raise HTTPException(status_code=400, detail="Order already paid")
 
-    total_fen = int(round(float(order.amount) * 100))
+    total_fen = int(Decimal(str(order.amount)) * 100)
+    if existing and existing.raw_response and existing.raw_response.get("code_url"):
+        return {"code_url": existing.raw_response["code_url"], "out_trade_no": existing.provider_trade_no, "amount_fen": total_fen}
     description = f"yance.ai - {order.product_code}"
     code_url, error = wx.create_native_order(out_trade_no, total_fen, description, settings.wxpay_notify_url)
     if not code_url:
@@ -383,7 +396,9 @@ async def wechat_notify(request: Request, db: Session = Depends(get_db)) -> dict
     out_trade_no = result.get("out_trade_no", "")
     trade_state = result.get("trade_state", "")
     transaction_id = result.get("transaction_id", "")
-    total_fen = (result.get("amount") or {}).get("payer_total") or (result.get("amount") or {}).get("total")
+    if not wx.trade_identity_matches(result):
+        return {"code": "FAIL", "message": "商户或应用不匹配"}
+    total_fen = (result.get("amount") or {}).get("total")
 
     payment = db.scalar(
         select(Payment).where(
@@ -407,8 +422,8 @@ async def wechat_notify(request: Request, db: Session = Depends(get_db)) -> dict
             payment=payment,
             provider_event_id=transaction_id,
             event_type=str(payload.get("event_type") or "TRANSACTION.SUCCESS"),
-            paid_amount=(total_fen or 0) / 100 if total_fen is not None else None,
-            currency=(result.get("amount") or {}).get("currency", "CNY"),
+            paid_amount=Decimal(str(total_fen)) / 100 if isinstance(total_fen, int) and not isinstance(total_fen, bool) else None,
+            currency=(result.get("amount") or {}).get("currency", ""),
             payload=body,
         )
         if not settle.accepted:
@@ -431,10 +446,11 @@ def wechat_query(
     if not wx.is_wechat_configured():
         raise HTTPException(status_code=503, detail="WeChat Pay not configured")
     order = db.scalar(
-        select(Order).where(Order.id == order_id, Order.tenant_id == principal.tenant_id)
+        select(Order).where(Order.id == order_id, Order.tenant_id == principal.tenant_id).with_for_update()
     )
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+
     payment = db.scalar(
         select(Payment).where(
             Payment.provider == "wechat",
@@ -447,14 +463,14 @@ def wechat_query(
     if state is None:
         return {"status": payment.status, "queried": False}
     if state["trade_state"] == "SUCCESS" and payment.status != "completed":
-        total_fen = state.get("payer_total")
+        total_fen = state.get("total")
         settle = settle_payment(
             db,
             payment=payment,
             provider_event_id=state.get("transaction_id") or f"query:{order.order_no}",
             event_type="TRANSACTION.SUCCESS.QUERY",
-            paid_amount=(total_fen / 100) if total_fen is not None else payment.amount,
-            currency="CNY",
+            paid_amount=Decimal(str(total_fen)) / 100 if isinstance(total_fen, int) and not isinstance(total_fen, bool) else None,
+            currency=state.get("currency") or "",
             payload=b'{"source":"active_query"}',
         )
         return {"status": "paid" if settle.accepted else payment.status, "queried": True}
@@ -480,13 +496,18 @@ def create_checkout_session(
     stripe.api_key = settings.stripe_secret_key
 
     order = db.scalar(
-        select(Order).where(Order.id == order_id, Order.tenant_id == principal.tenant_id)
+        select(Order).where(Order.id == order_id, Order.tenant_id == principal.tenant_id).with_for_update()
     )
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
+    existing = _checkout_payment(db, order, "stripe")
+    if existing:
+        session = stripe.checkout.Session.retrieve(existing.stripe_session_id)
+        return {"url": session.url, "session_id": session.id}
     unit_amount = int(order.amount * 100)
     session = stripe.checkout.Session.create(
+        idempotency_key=f"yance-checkout:{order.id}",
         mode="payment",
         currency=order.currency.lower(),
         line_items=[

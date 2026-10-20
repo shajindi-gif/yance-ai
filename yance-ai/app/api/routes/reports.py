@@ -7,12 +7,14 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, require_roles
+from app.core.config import settings
 from app.core.db import get_db
 from app.models.models import Policy, UserRole
 from app.services.analytics.events import record_event
 from app.services.billing.usage import QuotaExceeded, consume_usage_once
 from app.services.llm.registry import embed_texts
 from app.services.llm.router import LLMRouter
+from app.services.policies.applicability import current_policy_clauses
 from app.services.policies.visibility import visible_policy_clause
 
 router = APIRouter(tags=["reports"])
@@ -37,6 +39,8 @@ async def generate_report(
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key", max_length=128),
 ):
     """生成 AI 政策分析报告：语义搜索 + LLM 综合分析"""
+    if settings.app_env == "production":
+        raise HTTPException(status_code=503, detail="自由生成报告尚未通过逐条引用核验，请使用政策扫描与人工复核流程")
     report_key = f"report:{idempotency_key or uuid.uuid4()}"
     try:
         _, created = consume_usage_once(
@@ -69,10 +73,11 @@ async def generate_report(
         db.query(Policy)
         .filter(
             visible_policy_clause(principal.tenant_id),
+            *current_policy_clauses(),
             Policy.embedding.isnot(None),
         )
         .order_by(Policy.embedding.cosine_distance(query_vector))
-        .limit(limit)
+        .limit(max(1, min(limit, 50)))
         .all()
     )
 

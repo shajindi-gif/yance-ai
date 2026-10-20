@@ -42,7 +42,7 @@ from app.services.policy_engine.schemas import (
 
 _llm = LLMRouter()
 
-ENGINE_VERSION = "policy-engine-v2.1"
+ENGINE_VERSION = "policy-engine-v2.3-evidence-gate"
 PROMPT_VERSION = "PE-PROMPT-v2.1"
 
 
@@ -280,6 +280,16 @@ def validate_evidence(
         return re.sub(r",(?=\d)", "", s or "")
 
     for criterion in result.criteria:
+        # Numbers appearing somewhere in the document do not support a claim.
+        # Both the actual requirement and its quote must be literal source spans.
+        # Normalize only thousands separators, not comparators or region names.
+        fields = [criterion.policy_requirement, criterion.evidence_quote]
+        if any(not field or exact_quote_span(full_norm, _norm_field(field)) is None for field in fields):
+            hallucinations.append(f"条件 [{criterion.criterion[:30]}] 缺少逐字支持要求的原文引用")
+            criterion.result = CriterionResult.INSUFFICIENT
+            criterion.reason = (criterion.reason or "") + "｜[Evidence Gate] 引用未获原文逐字支持，需人工复核"
+            criterion.missing_information = "请补充支持该条件的政策原文条款并人工复核"
+            criterion.confidence = min(criterion.confidence, 0.3)
         checked_fields = [criterion.policy_requirement or "", criterion.evidence_quote or ""]
         for field in checked_fields:
             fn = _norm_field(field)
@@ -338,6 +348,8 @@ def generate_recommendations(
                 action="完善企业画像", description="补充缺失信息以获得准确判定", cta="更新画像"
             )
         )
+    if result.overall_result == OverallResult.REQUIRES_REVIEW:
+        next_actions.append(NextBestAction(action="人工复核", description="逐条核验条件完整性、企业事实来源与当期申报要求。", cta="复核证据"))
     if result.overall_result == OverallResult.ELIGIBLE:
         next_actions.append(
             NextBestAction(
@@ -433,6 +445,12 @@ async def evaluate_policy(
                 )
             )
         elif llm_ce is not None:
+            # A model assertion alone is not an auditable hard-condition check.
+            # Preserve its proposal as text, but require human verification.
+            llm_ce.result = CriterionResult.INSUFFICIENT
+            llm_ce.reason += "｜语义条件尚无确定性事实核验，需人工复核"
+            llm_ce.missing_information = "请核验企业事实与该政策条件的对应证据"
+            llm_ce.confidence = min(llm_ce.confidence, 0.3)
             merged.append(llm_ce)
         else:
             merged.append(
@@ -456,7 +474,19 @@ async def evaluate_policy(
     # Step 3.5: Final Eligibility Gate（D3 程序聚合，V2.2 区分阻断性/软性条件）
     blocking = [_is_blocking(cn["criterion"], cn.get("kind")) for cn in criteria_norm]
     overall_str = final_gate([c.result.value for c in judgment.criteria], blocking)
+    if len(policy_content) > 6000 and overall_str == "ELIGIBLE":
+        overall_str = "INSUFFICIENT_INFO"
+    elif overall_str == "ELIGIBLE":
+        # Extraction completeness and fact provenance have not been reviewed.
+        # This legacy LLM path cannot issue a final eligibility certificate.
+        overall_str = "REQUIRES_REVIEW"
     judgment.overall_result = OverallResult(overall_str)
+    judgment.summary = {
+        "ELIGIBLE": "已提取条件通过程序核验；仍需人工复核原文条件完整性，不代表主管部门确认。",
+        "NOT_ELIGIBLE": "至少一项已核验硬条件不满足。",
+        "INSUFFICIENT_INFO": "证据、条件完整性或企业事实不足，需补充资料并人工复核。",
+        "REQUIRES_REVIEW": "已提取条件通过程序核验；条件完整性与企业事实来源仍需人工复核。",
+    }[overall_str]
     logic_failures = logic_validate(judgment)
     telemetry["validation_failure_count"] += len(logic_failures)
 
@@ -466,11 +496,12 @@ async def evaluate_policy(
     evidence = [
         EvidenceItem(
             source_title=policy_title,
-            publisher="政府发布",
+            publisher="来源机构待核验",
             quote=c.get("policy_quote", "")[:200],
             confidence=0.9,
         )
         for c in criteria_raw[:6]
+        if exact_quote_span(policy_content, c.get("policy_quote", "")) is not None
     ]
 
     end = datetime.now(UTC)

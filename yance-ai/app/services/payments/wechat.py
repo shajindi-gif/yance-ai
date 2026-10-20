@@ -141,7 +141,10 @@ def query_order(out_trade_no: str) -> dict | None:
     """Active query (callback-loss compensation). Returns trade_state payload or None."""
     if not is_wechat_configured():
         return None
-    url_path = f"/v3/pay/transactions/out-trade-no/{out_trade_no}?mchid={settings.wxpay_mch_id}"
+    if settings.wxpay_mode == "partner":
+        url_path = f"/v3/pay/partner/transactions/out-trade-no/{out_trade_no}?sp_mchid={settings.wxpay_sp_mch_id}&sub_mchid={settings.wxpay_sub_mch_id}"
+    else:
+        url_path = f"/v3/pay/transactions/out-trade-no/{out_trade_no}?mchid={settings.wxpay_mch_id}"
     try:
         response = httpx.get(
             f"{settings.wxpay_gateway}{url_path}",
@@ -150,15 +153,33 @@ def query_order(out_trade_no: str) -> dict | None:
         )
         if response.status_code != 200:
             return None
+        if not verify_notify_signature(
+            response.headers.get("Wechatpay-Timestamp", ""), response.headers.get("Wechatpay-Nonce", ""),
+            response.text, response.headers.get("Wechatpay-Signature", ""), response.headers.get("Wechatpay-Serial", ""),
+        ):
+            return None
         data = response.json()
+        if data.get("out_trade_no") != out_trade_no or not trade_identity_matches(data):
+            return None
         amount = data.get("amount") or {}
         return {
             "trade_state": data.get("trade_state"),
             "transaction_id": data.get("transaction_id"),
             "payer_total": amount.get("payer_total") or amount.get("total"),
+            "total": amount.get("total"),
+            "currency": amount.get("currency"),
         }
     except (httpx.HTTPError, ValueError, KeyError):
         return None
+
+
+def trade_identity_matches(data: dict) -> bool:
+    expected = (
+        {"sp_mchid": settings.wxpay_sp_mch_id, "sp_appid": settings.wxpay_sp_app_id, "sub_mchid": settings.wxpay_sub_mch_id}
+        if settings.wxpay_mode == "partner"
+        else {"mchid": settings.wxpay_mch_id, "appid": settings.wxpay_app_id}
+    )
+    return all(value and data.get(key) == value for key, value in expected.items())
 
 
 def _verify_with_key(message: str, signature_b64: str) -> bool:

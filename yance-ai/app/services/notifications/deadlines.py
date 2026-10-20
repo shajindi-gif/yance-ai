@@ -5,7 +5,7 @@ approaching, and overdue milestones; emits deduplicated in-app notifications.
 Deterministic by design: no LLM, no invented dates — only existing records.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -19,7 +19,7 @@ DEADLINE_BANDS = (30, 14, 7, 3, 1)
 
 
 def now_utc() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _band_for(days_left: float) -> int | None:
@@ -88,7 +88,7 @@ def scan_deadlines(db: Session, *, tenant_id=None, now: datetime | None = None) 
     for application in db.scalars(app_stmt).all():
         due = application.due_at
         if due.tzinfo is None:
-            due = due.replace(tzinfo=timezone.utc)
+            due = due.replace(tzinfo=UTC)
         days_left = (due - ref).days + (due - ref).seconds / 86400
         if days_left < 0:
             band = 0  # overdue
@@ -131,7 +131,7 @@ def scan_deadlines(db: Session, *, tenant_id=None, now: datetime | None = None) 
     for opportunity, policy in db.execute(opp_stmt).all():
         due = policy.deadline
         if due.tzinfo is None:
-            due = due.replace(tzinfo=timezone.utc)
+            due = due.replace(tzinfo=UTC)
         if due < ref:
             continue  # policy window already closed; no nagging for past deadlines
         band = _band_for((due - ref).days + (due - ref).seconds / 86400)
@@ -160,7 +160,7 @@ def scan_deadlines(db: Session, *, tenant_id=None, now: datetime | None = None) 
     for milestone in db.scalars(mile_stmt).all():
         due = milestone.due_at
         if due.tzinfo is None:
-            due = due.replace(tzinfo=timezone.utc)
+            due = due.replace(tzinfo=UTC)
         if due >= ref - timedelta(days=1):
             continue  # overdue notifications only, one per milestone
         application = db.get(Application, milestone.application_id)

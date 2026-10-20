@@ -1,12 +1,12 @@
 """Funding OS APIs: notifications, AI consultant, funding command center, milestones."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, get_principal, require_roles
@@ -145,7 +145,7 @@ def mark_read(
     if not notification:
         raise HTTPException(status_code=404, detail="Notification not found")
     if notification.read_at is None:
-        notification.read_at = datetime.now(timezone.utc)
+        notification.read_at = datetime.now(UTC)
         db.commit()
         db.refresh(notification)
     return notification
@@ -161,7 +161,7 @@ def mark_all_read(
             Notification.tenant_id == principal.tenant_id, Notification.read_at.is_(None)
         )
     ).all()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     for row in rows:
         row.read_at = now
     db.commit()
@@ -178,7 +178,7 @@ def ask_consultant(
     company = _get_company(db, principal, payload.company_id)
     result = consultant_answer(db, company=company, question=payload.question)
     result["company_id"] = str(company.id)
-    result["asked_at"] = datetime.now(timezone.utc).isoformat()
+    result["asked_at"] = datetime.now(UTC).isoformat()
     return result
 
 
@@ -197,8 +197,8 @@ def funding_summary(
     if company is None:
         raise HTTPException(status_code=404, detail="Company not found")
 
-    now = datetime.now(timezone.utc)
-    horizon = datetime.fromtimestamp(now.timestamp() + 30 * 86400, tz=timezone.utc)
+    now = datetime.now(UTC)
+    horizon = datetime.fromtimestamp(now.timestamp() + 30 * 86400, tz=UTC)
 
     opportunities = list(
         db.scalars(
@@ -225,7 +225,7 @@ def funding_summary(
     )
     active_apps = [a for a in applications if a.status not in {"submitted", "completed", "cancelled"}]
     deadlines_30d = [
-        a for a in active_apps if a.due_at and a.due_at.replace(tzinfo=timezone.utc) <= horizon
+        a for a in active_apps if a.due_at and a.due_at.replace(tzinfo=UTC) <= horizon
     ]
 
     profile = db.scalar(select(CompanyProfile).where(CompanyProfile.company_id == company.id))
@@ -393,7 +393,7 @@ def update_milestone(
     if "status" in data and data["status"] is not None:
         milestone.status = data["status"]
         if data["status"] == "done":
-            milestone.completed_at = datetime.now(timezone.utc)
+            milestone.completed_at = datetime.now(UTC)
         else:
             milestone.completed_at = None
     for field in ("title", "description", "due_at", "completion_note", "owner_user_id"):

@@ -4,6 +4,7 @@
 # the database — copy the output off-box (rclone / scp / object storage) as a
 # separate step; this script produces local dumps and prunes old ones.
 set -euo pipefail
+umask 077
 
 CONTAINER="${YANCE_DB_CONTAINER:-yance-prod-db-1}"
 DB_USER="${POSTGRES_USER:-yance}"
@@ -22,8 +23,14 @@ docker exec "$CONTAINER" pg_dump -U "$DB_USER" -Fc "$DB_NAME" > "$OUT"
 docker exec -i "$CONTAINER" pg_restore --list < "$OUT" > /dev/null
 
 gzip "$OUT"
+sha256sum "${OUT}.gz" > "${OUT}.gz.sha256"
 echo "backup ok: ${OUT}.gz ($(du -h "${OUT}.gz" | cut -f1))"
 
 # retention: prune dumps older than RETENTION_DAYS (our prefix only)
-find "$BACKUP_DIR" -maxdepth 1 -name 'yance_*.dump.gz' -type f -mtime "+$RETENTION_DAYS" -delete
-echo "retention: kept last ${RETENTION_DAYS} days"
+if [[ "${YANCE_BACKUP_PRUNE_ENABLED:-false}" == "true" ]]; then
+  # Enable only after an operator verifies off-box copies and restore evidence.
+  find "$BACKUP_DIR" -maxdepth 1 -name 'yance_*.dump.gz' -type f -mtime "+$RETENTION_DAYS" -delete
+  echo "retention: kept last ${RETENTION_DAYS} days (explicit opt-in)"
+else
+  echo "retention: pruning disabled; verify off-box recovery before enabling"
+fi

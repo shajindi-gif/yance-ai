@@ -13,6 +13,10 @@ class VerificationFailed(RuntimeError):
     pass
 
 
+class AgentCancelled(RuntimeError):
+    pass
+
+
 class PolicyScanWorkflowInput(BaseModel):
     tenant_id: UUID
     user_id: UUID

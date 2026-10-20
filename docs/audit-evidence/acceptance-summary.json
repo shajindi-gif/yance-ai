@@ -1,0 +1,29 @@
+{
+  "candidate": "audit-20261020-rc1",
+  "date": "2026-10-20",
+  "timezone": "Asia/Shanghai",
+  "base_commit": "a31f157e7fe789237ed1b5dc276388b1aaad0e71",
+  "backend": {
+    "passed": 182,
+    "coverage_percent": 79.45,
+    "database": "new synthetic PG18"
+  },
+  "browser": {
+    "passed": 6,
+    "duration_seconds": 4.6,
+    "scope": "Chromium localhost; synthetic data"
+  },
+  "evaluations": {
+    "passed": 61,
+    "classification": "synthetic adapters, unreviewed, not production accuracy"
+  },
+  "production_changed": false,
+  "production_release_gate": "NO-GO",
+  "blockers": [
+    "PG16 container and CI execution",
+    "provider sandbox and historic payment reconciliation",
+    "production-equivalent offsite restore/monitoring",
+    "reviewed real policy and company evaluation dataset"
+  ],
+  "code_fingerprint_sha256": "953bc215c1f6f0deaea8e66eac034fa7eaf6dc93241b797f6f4a94a66824cc05"
+}

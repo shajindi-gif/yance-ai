@@ -138,7 +138,9 @@ class Settings(BaseSettings):
     agent_worker_poll_seconds: float = 1.0
     agent_lease_seconds: int = 180
     agent_max_retries: int = 2
+    agent_run_timeout_seconds: float = 120.0
     trusted_proxy_count: int = 1
+    forwarded_allow_ips: str = "127.0.0.1"
 
     @property
     def cors_origin_list(self) -> list[str]:
@@ -150,14 +152,21 @@ class Settings(BaseSettings):
             if self.demo_features_enabled:
                 raise ValueError("Demo features must be disabled in production")
             bad = {
-                "jwt_secret": self.jwt_secret.startswith("change-"),
-                "bootstrap_token": self.bootstrap_token.startswith("change-"),
-                "tenant_provisioning_token": self.tenant_provisioning_token.startswith("change-"),
-                "api_key_pepper": self.api_key_pepper.startswith("change-"),
+                name: len(value.strip()) < minimum or value.lower().startswith(("change-", "replace", "example"))
+                for name, value, minimum in (
+                    ("jwt_secret", self.jwt_secret, 32),
+                    ("bootstrap_token", self.bootstrap_token, 24),
+                    ("tenant_provisioning_token", self.tenant_provisioning_token, 24),
+                    ("api_key_pepper", self.api_key_pepper, 32),
+                )
             }
             invalid = [name for name, value in bad.items() if value]
             if invalid:
                 raise ValueError(f"Production secrets must be replaced: {', '.join(invalid)}")
+            if "*" in self.forwarded_allow_ips:
+                raise ValueError("Production FORWARDED_ALLOW_IPS must list trusted proxies explicitly")
+            if not 0 < self.agent_run_timeout_seconds < self.agent_lease_seconds:
+                raise ValueError("Agent run timeout must be positive and shorter than its lease")
             if self.malware_scan_mode != "required":
                 raise ValueError("Production document ingestion requires MALWARE_SCAN_MODE=required")
             if not self.clamd_host:
