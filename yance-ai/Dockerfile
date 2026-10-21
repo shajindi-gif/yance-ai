@@ -11,6 +11,10 @@ FROM python:3.12-slim AS runtime
 
 ENV PATH="/opt/venv/bin:$PATH" PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
+# The runtime uses /opt/venv. Remove the base image's unused pip and its
+# stale vendored libraries; the builder retains its own package manager.
+RUN /usr/local/bin/python -m pip uninstall --yes pip
+
 # WeasyPrint system dependencies, Chinese fonts and local OCR runtime.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 \

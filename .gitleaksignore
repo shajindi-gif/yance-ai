@@ -1,0 +1,17 @@
+# Reviewed exact historical findings only; new matches remain blocking.
+# SHA256 digest of encrypted-key envelope; not a key.
+c0bbf555bdbd1945c4b3585d8db6f5867accafdd:docs/audit-evidence/backend-recovery-final-20261021.json:generic-api-key:13
+# SHA256 digest of encrypted-key envelope; not a key.
+c0bbf555bdbd1945c4b3585d8db6f5867accafdd:docs/audit-evidence/backend-recovery-preflight-20261021.json:generic-api-key:13
+# PEM header/footer template around a runtime variable; no key body.
+ea0c27e66b328bed0264e2954efe35caf0ac81d7:yance-ai/app/services/payments/wechat.py:private-key:31
+# Historical PEM header/footer template around a runtime variable; no key body.
+a2c03defb34ee90f2f63dede1fcc198cf708434a:yance-ai/app/api/routes/payments.py:private-key:72
+# Synthetic 32-character sequential test fixture; never production credentials.
+ea0c27e66b328bed0264e2954efe35caf0ac81d7:yance-ai/tests/test_wechat_pay.py:generic-api-key:29
+# Historical localhost bootstrap example uses change-bootstrap-token placeholder.
+74be4643826c6afdf60f63622e8bd57dd4292a3e:yance-ai/README.md:curl-auth-header:38
+# Historical Stripe test example placeholder containing xxxx.
+30753ba6c0b245783c76eafa36b3ab233f91ae14:yance-ai/.env.example:stripe-access-token:28
+# Historical PEM header/footer template around a runtime variable; no key body.
+74be4643826c6afdf60f63622e8bd57dd4292a3e:yance-ai/app/api/routes/payments.py:private-key:49
