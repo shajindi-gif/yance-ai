@@ -45,7 +45,7 @@ jobs:
           cache: npm
           cache-dependency-path: website/package-lock.json
       - name: Install backend dependencies
-        run: python -m pip install -e 'yance-ai[dev]'
+        run: python -m pip install -c yance-ai/constraints-release.txt -e 'yance-ai[dev]'
       - name: Verify backend
         working-directory: yance-ai
         run: |

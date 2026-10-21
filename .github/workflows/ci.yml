@@ -54,7 +54,7 @@ jobs:
           cache-dependency-path: yance-ai/pyproject.toml
 
       - name: Install backend and test dependencies
-        run: python -m pip install --disable-pip-version-check -e ".[dev]"
+        run: python -m pip install --disable-pip-version-check -c constraints-release.txt -e ".[dev]"
 
       - name: Lint
         run: ruff check app tests alembic
@@ -159,7 +159,7 @@ jobs:
           cache-dependency-path: yance-ai/pyproject.toml
 
       - name: Install application and auditor
-        run: python -m pip install --disable-pip-version-check -e . "pip-audit>=2.9,<3"
+        run: python -m pip install --disable-pip-version-check -c constraints-release.txt -e . "pip-audit>=2.9,<3"
 
       - name: Audit installed dependencies
         run: pip-audit --local --skip-editable
@@ -281,7 +281,7 @@ jobs:
 
       - name: Install locked application dependencies
         run: |
-          python -m pip install --disable-pip-version-check -e "./yance-ai[dev]"
+          python -m pip install --disable-pip-version-check -c yance-ai/constraints-release.txt -e "./yance-ai[dev]"
           npm ci --prefix website
 
       - name: Migrate and seed synthetic demo dataset
