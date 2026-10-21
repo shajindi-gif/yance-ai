@@ -1,0 +1,26 @@
+services:
+  migrate:
+    image: yance-backend:7f466d0
+    environment:
+      APP_VERSION: 7f466d0b34e0f52a64058d64d6406b7132bca775
+      FORWARDED_ALLOW_IPS: 127.0.0.1,172.18.0.1
+  api:
+    image: yance-backend:7f466d0
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--proxy-headers", "--forwarded-allow-ips", "127.0.0.1,172.18.0.1"]
+    environment:
+      APP_VERSION: 7f466d0b34e0f52a64058d64d6406b7132bca775
+      FORWARDED_ALLOW_IPS: 127.0.0.1,172.18.0.1
+    labels:
+      io.yance.release: 7f466d0b34e0f52a64058d64d6406b7132bca775
+  agent-worker:
+    image: yance-backend:7f466d0
+    environment:
+      APP_VERSION: 7f466d0b34e0f52a64058d64d6406b7132bca775
+      FORWARDED_ALLOW_IPS: 127.0.0.1,172.18.0.1
+    labels:
+      io.yance.release: 7f466d0b34e0f52a64058d64d6406b7132bca775
+  document-worker:
+    image: yance-backend:7f466d0
+    environment:
+      APP_VERSION: 7f466d0b34e0f52a64058d64d6406b7132bca775
+      FORWARDED_ALLOW_IPS: 127.0.0.1,172.18.0.1

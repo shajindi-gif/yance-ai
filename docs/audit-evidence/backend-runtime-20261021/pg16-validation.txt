@@ -1,0 +1,181 @@
+All checks passed!
+OpenAPI contract is current
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 20260809_0001, Initial yance.ai schema with pgvector.
+INFO  [alembic.runtime.migration] Running upgrade 20260809_0001 -> 20260809_0002, Add stripe_session_id to payments table.
+INFO  [alembic.runtime.migration] Running upgrade 20260809_0002 -> 20260809_0003, Add Alipay + invoice fields
+INFO  [alembic.runtime.migration] Running upgrade 20260809_0003 -> 20260809_0004, Add bank receipt fields to payments
+INFO  [alembic.runtime.migration] Running upgrade 20260809_0004 -> 20260809_0005, Fix policies.embedding dimension 1536 -> 1024 (B1).
+INFO  [alembic.runtime.migration] Running upgrade 20260809_0005 -> 20260814_0006_global_policy_kb, Make Policy global (remove tenant scoping) + add Global Policy KB fields.
+INFO  [alembic.runtime.migration] Running upgrade 20260814_0006_global_policy_kb -> 20260814_0007, Add Product SKU table and Entitlement table for unified pricing.
+INFO  [alembic.runtime.migration] Running upgrade 20260814_0007 -> 20260817_0008, Add Task, Deliverable, RevisionRequest tables for Outcome-based Agent SaaS.
+INFO  [alembic.runtime.migration] Running upgrade 20260817_0008 -> 20260902_0009, Align task and deliverable columns with the current ORM.
+INFO  [alembic.runtime.migration] Running upgrade 20260902_0009 -> 20260902_0010, Add replay-safe payment provider event ledger.
+INFO  [alembic.runtime.migration] Running upgrade 20260902_0010 -> 20260903_0011, Bind purchased entitlements to an explicit tenant resource.
+INFO  [alembic.runtime.migration] Running upgrade 20260903_0011 -> 20260903_0012, Align ORM invariants with the additive legacy schema.
+INFO  [alembic.runtime.migration] Running upgrade 20260903_0012 -> 20260903_0013, Add the persistent core product workflow spine.
+INFO  [alembic.runtime.migration] Running upgrade 20260903_0013 -> 20260903_0014, Add durable Agent Harness execution and trace records.
+INFO  [alembic.runtime.migration] Running upgrade 20260903_0014 -> 20260903_0015, Add immutable policy sources, typed rules, decisions, and evidence.
+INFO  [alembic.runtime.migration] Running upgrade 20260903_0015 -> 20260904_0016, Add Application document, artifact, review, and comment records.
+INFO  [alembic.runtime.migration] Running upgrade 20260904_0016 -> 20260904_0017, Add platform admin, analytics provenance, account stage and feedback.
+INFO  [alembic.runtime.migration] Running upgrade 20260904_0017 -> 20260905_0018, Add versioned evaluation datasets, runs and case evidence.
+INFO  [alembic.runtime.migration] Running upgrade 20260905_0018 -> 20260905_0019, Add subscription billing, usage metering and enterprise controls.
+INFO  [alembic.runtime.migration] Running upgrade 20260905_0019 -> 20260905_0020, Add isolated investor demo scenarios.
+INFO  [alembic.runtime.migration] Running upgrade 20260905_0020 -> 20260906_0021, Add durable document ingestion and reviewable company intelligence.
+INFO  [alembic.runtime.migration] Running upgrade 20260906_0021 -> 20260927_0022, Funding OS: structured funding facts, notifications, milestones.
+INFO  [alembic.runtime.migration] Running upgrade 20260927_0022 -> 20261015_0023, Email verification codes for passwordless login.
+INFO  [alembic.runtime.migration] Running upgrade 20261015_0023 -> 20261017_0024, Shared DB-backed auth rate limiting.
+INFO  [alembic.runtime.migration] Running upgrade 20261017_0024 -> 20261017_0025, Invoice e-invoice manual issuance loop (数电票人工闭环).
+INFO  [alembic.runtime.migration] Running upgrade 20261017_0025 -> 20261020_0026, Add a backwards-compatible JWT revocation counter.
+INFO  [alembic.runtime.migration] Running upgrade 20261020_0026 -> 20261020_0027, Separate policy validity from an application-window deadline.
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.schemas
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.tables
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.types
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.constraints
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.defaults
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.comments
+INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.checkconstraint_byname
+No new upgrade operations detected.
+........................................................................ [ 39%]
+........................................................................ [ 79%]
+......................................                                   [100%]
+=============================== warnings summary ===============================
+../opt/venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /opt/venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+../opt/venv/lib/python3.12/site-packages/weasyprint/text/ffi.py:528
+  /opt/venv/lib/python3.12/site-packages/weasyprint/text/ffi.py:528: DeprecationWarning: HarfBuzz-Subset will be required by future versions of WeasyPrint. Please install this library with your package manager.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.15-final-0 _______________
+
+Name                                              Stmts   Miss  Cover
+---------------------------------------------------------------------
+app/__init__.py                                       1      0   100%
+app/api/__init__.py                                   0      0   100%
+app/api/deps.py                                      63      4    94%
+app/api/router.py                                    25      0   100%
+app/api/routes/__init__.py                            0      0   100%
+app/api/routes/admin.py                             212     36    83%
+app/api/routes/admin_evals.py                        46      7    85%
+app/api/routes/agents.py                            178      5    97%
+app/api/routes/analytics.py                          14      0   100%
+app/api/routes/auth.py                              253     48    81%
+app/api/routes/billing.py                            52      5    90%
+app/api/routes/commerce.py                           96     23    76%
+app/api/routes/companies.py                          87      7    92%
+app/api/routes/demo.py                               61      4    93%
+app/api/routes/demo_match.py                        136     88    35%
+app/api/routes/documents.py                         206     38    82%
+app/api/routes/enterprise.py                        135     10    93%
+app/api/routes/funding_os.py                        177     18    90%
+app/api/routes/health.py                             13      2    85%
+app/api/routes/payments.py                          311    221    29%
+app/api/routes/policies.py                          139     49    65%
+app/api/routes/policy_engine.py                      35     16    54%
+app/api/routes/reports.py                            47     23    51%
+app/api/routes/tasks.py                             143     90    37%
+app/api/routes/telemetry.py                          16      1    94%
+app/api/routes/tenants.py                            39     20    49%
+app/api/routes/workflow.py                          374     52    86%
+app/core/config.py                                  138      3    98%
+app/core/db.py                                       11      0   100%
+app/core/logging.py                                   7      0   100%
+app/core/security.py                                 16      0   100%
+app/main.py                                          42      5    88%
+app/models/__init__.py                                1      0   100%
+app/models/models.py                               1043      0   100%
+app/schemas/__init__.py                               0      0   100%
+app/schemas/schemas.py                              421      1    99%
+app/services/__init__.py                              0      0   100%
+app/services/admin/__init__.py                        0      0   100%
+app/services/admin/metrics.py                        48      4    92%
+app/services/agents/__init__.py                       2      0   100%
+app/services/agents/contracts.py                     45      0   100%
+app/services/agents/definitions.py                   12      0   100%
+app/services/agents/harness.py                      235     36    85%
+app/services/agents/policy_scan.py                  127     13    90%
+app/services/analytics/__init__.py                    0      0   100%
+app/services/analytics/events.py                     12      0   100%
+app/services/applications/__init__.py                 0      0   100%
+app/services/applications/artifacts.py               76      0   100%
+app/services/applications/workspace.py               48      4    92%
+app/services/auth_rate_limit.py                      40      2    95%
+app/services/billing/__init__.py                      0      0   100%
+app/services/billing/catalog.py                      28      2    93%
+app/services/billing/usage.py                        91      8    91%
+app/services/company_profiles.py                     54      3    94%
+app/services/consultant/__init__.py                   0      0   100%
+app/services/consultant/router.py                   125     65    48%
+app/services/demo/__init__.py                         0      0   100%
+app/services/demo/scenarios.py                      145      3    98%
+app/services/documents/__init__.py                    0      0   100%
+app/services/documents/ingestion.py                 138     56    59%
+app/services/documents/intelligence.py               80      6    92%
+app/services/documents/ocr.py                        57     29    49%
+app/services/documents/parsers.py                   201     32    84%
+app/services/documents/security.py                   85     26    69%
+app/services/documents/url_fetcher.py               156     36    77%
+app/services/email_code.py                           79      4    95%
+app/services/enterprise/__init__.py                   0      0   100%
+app/services/enterprise/api_keys.py                  34      3    91%
+app/services/enterprise/audit.py                     12      0   100%
+app/services/enterprise/exports.py                   18      0   100%
+app/services/enterprise/flags.py                      6      0   100%
+app/services/evaluations/__init__.py                  0      0   100%
+app/services/evaluations/contracts.py                86      2    98%
+app/services/evaluations/loader.py                   47     10    79%
+app/services/evaluations/metrics.py                  36      0   100%
+app/services/evaluations/runner.py                   91      3    97%
+app/services/evaluations/scorers.py                  59      0   100%
+app/services/evaluations/targets.py                  93      3    97%
+app/services/funding/__init__.py                      0      0   100%
+app/services/funding/amounts.py                      66      9    86%
+app/services/invoice/__init__.py                      2      0   100%
+app/services/invoice/generator.py                    53     12    77%
+app/services/llm/__init__.py                          2      0   100%
+app/services/llm/base.py                             26      2    92%
+app/services/llm/providers/anthropic.py              19     11    42%
+app/services/llm/providers/mock.py                    7      2    71%
+app/services/llm/providers/openai_compatible.py      30     20    33%
+app/services/llm/registry.py                          5      1    80%
+app/services/llm/router.py                           13      4    69%
+app/services/notifications/__init__.py                0      0   100%
+app/services/notifications/deadlines.py              76     15    80%
+app/services/notifications/email.py                  85      2    98%
+app/services/oss.py                                  28     16    43%
+app/services/payments/__init__.py                     0      0   100%
+app/services/payments/settlement.py                  88     12    86%
+app/services/payments/wechat.py                     106     47    56%
+app/services/policies/__init__.py                     0      0   100%
+app/services/policies/applicability.py               37      3    92%
+app/services/policies/eligibility.py                137     27    80%
+app/services/policies/ingestion.py                   50      2    96%
+app/services/policies/retrieval.py                   42      1    98%
+app/services/policies/visibility.py                   6      0   100%
+app/services/policy_engine/__init__.py                0      0   100%
+app/services/policy_engine/deterministic.py         266    222    17%
+app/services/policy_engine/evaluator.py             187     89    52%
+app/services/policy_engine/schemas.py                62      0   100%
+app/services/report/__init__.py                       0      0   100%
+app/services/report/matcher.py                      161     49    70%
+app/services/report/pdf.py                          111     14    87%
+app/services/safe_rendering.py                        6      0   100%
+app/services/vectorstores/__init__.py                 3      3     0%
+app/services/vectorstores/base.py                    20     20     0%
+app/services/vectorstores/pgvector.py                25     25     0%
+app/workers/__init__.py                               0      0   100%
+app/workers/agent_worker.py                          21     21     0%
+app/workers/document_worker.py                       27     27     0%
+---------------------------------------------------------------------
+TOTAL                                              8671   1782    79%
+Required test coverage of 50% reached. Total coverage: 79.45%
+182 passed, 2 warnings in 199.44s (0:03:19)
+{"datasets": 5, "requested_cases": 61, "completed_cases": 61, "passed_cases": 61, "error_cases": 0, "release_gate_passed": true, "runs": [{"eval_type": "policy_retrieval_eval", "dataset": "policy_retrieval_synthetic", "version": "2026.09.1", "review_status": "unreviewed", "data_classification": "synthetic", "target": "policy_lexical_retrieval@v1", "scorer": "deterministic-v1", "requested": 2, "passed": 2, "errors": 0, "release_gate_passed": true}, {"eval_type": "eligibility_eval", "dataset": "eligibility_rules_synthetic", "version": "2026.10.1", "review_status": "unreviewed", "data_classification": "synthetic", "target": "eligibility_rule_contract@deterministic-v1", "scorer": "deterministic-v1", "requested": 53, "passed": 53, "errors": 0, "release_gate_passed": true}, {"eval_type": "citation_eval", "dataset": "citation_exact_span_synthetic", "version": "2026.09.1", "review_status": "unreviewed", "data_classification": "synthetic", "target": "citation_exact_span@v1", "scorer": "deterministic-v1", "requested": 2, "passed": 2, "errors": 0, "release_gate_passed": true}, {"eval_type": "hallucination_eval", "dataset": "hallucination_claim_gate_synthetic", "version": "2026.09.1", "review_status": "unreviewed", "data_classification": "synthetic", "target": "evidence_claim_gate@exact-span-v1", "scorer": "deterministic-v1", "requested": 2, "passed": 2, "errors": 0, "release_gate_passed": true}, {"eval_type": "document_generation_eval", "dataset": "document_generation_synthetic", "version": "2026.09.1", "review_status": "unreviewed", "data_classification": "synthetic", "target": "application_brief_renderer@deterministic-evidence-v1", "scorer": "deterministic-v1", "requested": 2, "passed": 2, "errors": 0, "release_gate_passed": true}]}
+No broken requirements found.

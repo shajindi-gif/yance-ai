@@ -1,0 +1,18 @@
+{
+  "verified": true,
+  "consistent_snapshot": true,
+  "recovery_container": "yance-recovery-release-67c59a2-preflight2",
+  "recovery_database": "yance_recovery_verify",
+  "network": "none",
+  "table_count": 77,
+  "row_count": 1427,
+  "backup_seconds": 1.064,
+  "restore_seconds": 3.475,
+  "plain_sha256": "66c7f85b3240d7313be310bb190ab8dd509ca31c84504c3a62b19091c95700d0",
+  "cipher_sha256": "7a60c89e60037c60e1362fe869704845706da3efa20461a7debbce9b4bdd64a2",
+  "wrapped_key_sha256": "3f9bb5a779828a7f84e3d3fe86c6bd8e34f1cc44d95c76522d3d272dcf47d532",
+  "off_box_copy_verified": true,
+  "decryption_roundtrip_verified": true,
+  "migration_rehearsal_revision": "20261020_0027",
+  "migration_existing_business_tables_verified": 76
+}

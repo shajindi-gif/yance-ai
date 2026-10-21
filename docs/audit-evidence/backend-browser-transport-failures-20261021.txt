@@ -1,0 +1,110 @@
+
+> yance-website@0.1.0 test:e2e
+> playwright test --grep-invert investor demo
+
+
+Running 6 tests using 1 worker
+
+(node:89618) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 [chromium] › e2e/audit-journey.spec.ts:5:5 › password login recovers from an error and logout revokes the saved session (18.4s)
+(node:89641) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 [chromium] › e2e/audit-journey.spec.ts:30:5 › pricing hydrates with the server catalogue and records a local timing sample (5.2s)
+  ✓  3 [chromium] › e2e/audit-journey.spec.ts:46:5 › mobile login has no horizontal page overflow and the first keyboard target is visible (407ms)
+  ✓  4 [chromium] › e2e/audit-journey.spec.ts:55:5 › district evidence survives saving and refreshing a company profile (4.6s)
+  ✓  5 [chromium] › e2e/documents.spec.ts:3:5 › authenticated documents workspace renders the verified ingestion controls (1.6s)
+  ✘  6 [chromium] › e2e/legacy-api.spec.ts:5:5 › older API supports profile saving and local logout without new endpoints (8.4s)
+
+
+  1) [chromium] › e2e/audit-journey.spec.ts:5:5 › password login recovers from an error and logout revokes the saved session 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('Incorrect email or password')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText('Incorrect email or password') with timeout 5000ms
+      - waiting for getByText('Incorrect email or password')
+
+
+      16 |   await form.locator('input[type=password]').fill('wrong-test-password');
+      17 |   await form.getByRole('button', { name: '登录', exact: true }).click();
+    > 18 |   await expect(page.getByText('Incorrect email or password')).toBeVisible();
+         |                                                               ^
+      19 |   await form.locator('input[type=password]').fill(password);
+      20 |   await form.locator('input[type=password]').press('Enter');
+      21 |   await expect(page).toHaveURL(/\/dashboard$/);
+        at /Users/shajindi/yance-backup/yance/website/e2e/audit-journey.spec.ts:18:63
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/audit-journey-password-log-d90f9-t-revokes-the-saved-session-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/audit-journey-password-log-d90f9-t-revokes-the-saved-session-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/audit-journey-password-log-d90f9-t-revokes-the-saved-session-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/audit-journey-password-log-d90f9-t-revokes-the-saved-session-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/audit-journey-password-log-d90f9-t-revokes-the-saved-session-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e/legacy-api.spec.ts:5:5 › older API supports profile saving and local logout without new endpoints 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByLabel('所属行业', { exact: true })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByLabel('所属行业', { exact: true }) with timeout 5000ms
+      - waiting for getByLabel('所属行业', { exact: true })
+
+
+      19 |   page.on('request', (req) => { if (req.url().endsWith('/auth/logout')) logoutRequests++; });
+      20 |   await page.goto(`/companies/${company.id}`);
+    > 21 |   await expect(page.getByLabel('所属行业', { exact: true })).toBeVisible();
+         |                                                          ^
+      22 |   await expect(page.getByLabel('区县', { exact: true })).toHaveCount(0);
+      23 |   await page.getByLabel('所属行业', { exact: true }).fill('人工智能');
+      24 |   const saveRequest = page.waitForRequest((req) => req.method() === 'PUT' && req.url().endsWith(`/companies/${company.id}/profile`));
+        at /Users/shajindi/yance-backup/yance/website/e2e/legacy-api.spec.ts:21:58
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/legacy-api-older-API-suppo-02c9e-ogout-without-new-endpoints-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/legacy-api-older-API-suppo-02c9e-ogout-without-new-endpoints-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/legacy-api-older-API-suppo-02c9e-ogout-without-new-endpoints-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/legacy-api-older-API-suppo-02c9e-ogout-without-new-endpoints-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/legacy-api-older-API-suppo-02c9e-ogout-without-new-endpoints-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium] › e2e/audit-journey.spec.ts:5:5 › password login recovers from an error and logout revokes the saved session 
+    [chromium] › e2e/legacy-api.spec.ts:5:5 › older API supports profile saving and local logout without new endpoints 
+  4 passed (41.3s)
+npm notice
+npm notice New major version of npm available! 11.19.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice

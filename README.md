@@ -13,7 +13,7 @@ yance/
 
 ## 2026-10-20 audit and release status
 
-The current audit and local changes are documented in [docs/audit.md](docs/audit.md), [upgrade-plan](docs/upgrade-plan.md), [test-report](docs/test-report.md) and [release-runbook](docs/release-runbook.md). Local/staging evidence does not mean production was deployed. The release workflow now only verifies and packages source.
+The current audit and local changes are documented in [docs/audit.md](docs/audit.md), [upgrade-plan](docs/upgrade-plan.md), [test-report](docs/test-report.md) and [release-runbook](docs/release-runbook.md). The backend and database migrations were authorized and deployed on 2026-10-21; see [production release evidence](docs/backend-release-20261021.md). The current website source is also live. The release workflow only verifies/packages source; production is activated through an explicit reviewed release procedure.
 
 ## Quick Start
 

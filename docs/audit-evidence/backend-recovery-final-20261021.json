@@ -1,0 +1,16 @@
+{
+  "verified": true,
+  "consistent_snapshot": true,
+  "recovery_container": "yance-recovery-release-7f466d0-final",
+  "recovery_database": "yance_recovery_verify",
+  "network": "none",
+  "table_count": 77,
+  "row_count": 1427,
+  "backup_seconds": 1.652,
+  "restore_seconds": 3.448,
+  "plain_sha256": "75c5e4ade4102f930247ad898975af148e26286d377ecfa252fec694ef23c375",
+  "cipher_sha256": "83ae47195b6d952824707c4eec0b6e1aec0ae2c04d09c25cb6bb8567baf0aaa3",
+  "wrapped_key_sha256": "4230482ef5127fbea66d0c008b74e5f0c283b956f94704d6ac325259b8fadb81",
+  "off_box_copy_verified": true,
+  "decryption_roundtrip_verified": true
+}

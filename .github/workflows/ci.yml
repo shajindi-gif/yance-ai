@@ -80,7 +80,14 @@ jobs:
         run: pytest --cov=app --cov-report=term-missing --cov-fail-under=50
 
       - name: Run explicit API and worker golden-journey gate
-        run: pytest -m e2e --no-cov
+        env:
+          DATABASE_URL: postgresql+psycopg://yance:ci_password@localhost:5432/yance_golden_ci
+          YANCE_TEST_DATABASE_ACK: yance_golden_ci
+          PGPASSWORD: ci_password
+        run: |
+          createdb --host localhost --username yance yance_golden_ci
+          alembic upgrade head
+          pytest -m e2e --no-cov
 
       - name: Run five-part deterministic evaluation gate
         run: python evals/run_evals.py run --no-persist
