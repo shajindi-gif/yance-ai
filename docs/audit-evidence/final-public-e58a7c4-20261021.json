@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-21T11:57:42.215Z",
+  "base": "https://yance.ai",
+  "candidateOrigin": null,
+  "release": "web-20261020-01",
+  "status": "passed",
+  "checks": [
+    {
+      "path": "/",
+      "navigationAndVisibleContentMs": 3767
+    },
+    {
+      "path": "/pricing",
+      "navigationAndVisibleContentMs": 1994
+    },
+    {
+      "path": "/login",
+      "navigationAndVisibleContentMs": 1462
+    },
+    {
+      "path": "/security",
+      "navigationAndVisibleContentMs": 935
+    },
+    {
+      "path": "/policy-knowledge-base",
+      "navigationAndVisibleContentMs": 712
+    }
+  ],
+  "failures": [],
+  "errors": [],
+  "blockedMethods": [
+    "POST",
+    "POST",
+    "POST",
+    "POST"
+  ],
+  "sample": "one desktop Chromium visit per page; no throttling; not SLA",
+  "productionBusinessWrites": false
+}
