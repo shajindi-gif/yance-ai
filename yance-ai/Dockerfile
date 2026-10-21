@@ -30,7 +30,12 @@ COPY alembic ./alembic
 COPY app ./app
 COPY scripts ./scripts
 COPY evals ./evals
-RUN mkdir -p /app/invoices && chown -R yance:yance /app
+# pip's own vendored dependency tree is independent of application constraints.
+# Serving containers do not install packages; remove both copies and bundled
+# bootstrap wheels after the virtual environment has been assembled.
+RUN /opt/venv/bin/python -m pip uninstall --yes pip \
+    && rm -rf /usr/local/lib/python3.12/ensurepip \
+    && mkdir -p /app/invoices && chown -R yance:yance /app
 USER yance
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
