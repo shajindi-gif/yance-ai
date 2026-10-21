@@ -2,10 +2,10 @@ FROM python:3.12-slim AS builder
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 PIP_NO_CACHE_DIR=1
 WORKDIR /build
-COPY pyproject.toml requirements.txt ./
+COPY pyproject.toml requirements.txt constraints-release.txt ./
 COPY app ./app
 RUN python -m venv /opt/venv && /opt/venv/bin/pip install --upgrade pip && \
-    /opt/venv/bin/pip install .
+    /opt/venv/bin/pip install -c constraints-release.txt .
 
 FROM python:3.12-slim AS runtime
 
