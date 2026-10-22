@@ -8532,6 +8532,70 @@
         ]
       }
     },
+    "/api/v1/applications/{application_id}/evidence-tasks": {
+      "post": {
+        "operationId": "create_evidence_tasks_api_v1_applications__application_id__evidence_tasks_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Evidence Tasks",
+        "tags": [
+          "policy-scan",
+          "opportunity",
+          "application"
+        ]
+      }
+    },
     "/api/v1/applications/{application_id}/milestones": {
       "get": {
         "operationId": "list_milestones_api_v1_applications__application_id__milestones_get",

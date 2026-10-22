@@ -9,17 +9,35 @@ from app.models.models import (
     ApplicationDocumentLink,
     ApplicationRequirement,
     Company,
+    CompanyProfileVersion,
+    Document,
     EligibilityResult,
+    EligibilityRule,
     Evidence,
     Opportunity,
+    Policy,
+    PolicyVersion,
 )
 from app.services.applications.artifacts import content_checksum
+from app.services.policies.applicability import policy_context_issues
+from app.services.policies.visibility import visible_policy_clause
 
 
 def workspace_records(db: Session, application: Application) -> dict[str, Any]:
-    company = db.get(Company, application.company_id)
+    company = db.scalar(
+        select(Company).where(
+            Company.id == application.company_id, Company.tenant_id == application.tenant_id
+        )
+    )
     opportunity = (
-        db.get(Opportunity, application.opportunity_id) if application.opportunity_id else None
+        db.scalar(
+            select(Opportunity).where(
+                Opportunity.id == application.opportunity_id,
+                Opportunity.tenant_id == application.tenant_id,
+            )
+        )
+        if application.opportunity_id
+        else None
     )
     eligibility = (
         db.scalar(
@@ -65,7 +83,96 @@ def workspace_records(db: Session, application: Application) -> dict[str, Any]:
             .order_by(ApplicationDocumentLink.created_at)
         ).all()
     )
+    profile = db.scalar(
+        select(CompanyProfileVersion)
+        .where(
+            CompanyProfileVersion.company_id == application.company_id,
+            CompanyProfileVersion.tenant_id == application.tenant_id,
+        )
+        .order_by(CompanyProfileVersion.version.desc())
+    )
+    policy = (
+        db.scalar(
+            select(Policy).where(
+                Policy.id == opportunity.policy_id,
+                visible_policy_clause(application.tenant_id),
+            )
+        )
+        if opportunity
+        else None
+    )
+    version = (
+        db.scalar(
+            select(PolicyVersion).where(
+                PolicyVersion.id == opportunity.policy_version_id,
+                PolicyVersion.policy_id == policy.id,
+                PolicyVersion.tenant_id.in_([application.tenant_id])
+                | PolicyVersion.tenant_id.is_(None),
+            )
+        )
+        if policy
+        else None
+    )
+    latest_version = (
+        db.scalar(
+            select(PolicyVersion.id)
+            .where(
+                PolicyVersion.policy_id == policy.id,
+                PolicyVersion.tenant_id.in_([application.tenant_id])
+                | PolicyVersion.tenant_id.is_(None),
+            )
+            .order_by(PolicyVersion.version.desc())
+        )
+        if policy
+        else None
+    )
+    documents = (
+        list(
+            db.scalars(
+                select(Document)
+                .where(
+                    Document.id.in_([link.document_id for link in links]),
+                    Document.tenant_id == application.tenant_id,
+                )
+                .order_by(Document.id)
+            ).all()
+        )
+        if links
+        else []
+    )
+    rules = (
+        list(
+            db.scalars(
+                select(EligibilityRule)
+                .where(
+                    EligibilityRule.policy_version_id == version.id,
+                    EligibilityRule.tenant_id.in_([application.tenant_id])
+                    | EligibilityRule.tenant_id.is_(None),
+                )
+                .order_by(EligibilityRule.id)
+            ).all()
+        )
+        if version
+        else []
+    )
+    context_issues = policy_context_issues(
+        policy, version, profile.snapshot_json if profile else {}
+    )
+    if opportunity and (not profile or profile.id != opportunity.profile_version_id):
+        context_issues.append("企业已发布资料版本变化或缺失，请重新扫描资格")
+    if version and version.id != latest_version:
+        context_issues.append("政策已有新版本，请重新扫描并复核")
+    context_issues.extend(
+        qualification_source_issues(eligibility, rules, profile, version, evidence)
+    )
     return {
+        "application": application,
+        "profile": profile,
+        "policy": policy,
+        "policy_version": version,
+        "documents": documents,
+        "rules": rules,
+        "context_issues": context_issues,
         "company": company,
         "opportunity": opportunity,
         "eligibility": eligibility,
@@ -85,11 +192,16 @@ def readiness(records: dict[str, Any]) -> dict[str, Any]:
     missing = [item.title for item in requirements if item.status in {"missing", "collecting"}]
     eligibility = records["eligibility"]
     evidence_count = sum(bool(item.verified) for item in records["evidence"])
-    blockers = list(hard_blockers)
+    blockers = list(hard_blockers) + records.get("context_issues", [])
     if not eligibility:
         blockers.append("缺少资格判断")
-    elif eligibility.status in {"NOT_ELIGIBLE", "NEED_MORE_INFORMATION"}:
+    elif eligibility.status not in {"ELIGIBLE", "POTENTIALLY_ELIGIBLE"}:
         blockers.append(f"资格状态为 {eligibility.status}")
+    if eligibility and any(
+        row.get("is_hard_gate") and row.get("status") != "PASS"
+        for row in (eligibility.criteria_json or [])
+    ):
+        blockers.append("仍有未满足或未核验的资格硬条件")
     if (
         eligibility
         and eligibility.status in {"ELIGIBLE", "POTENTIALLY_ELIGIBLE"}
@@ -162,6 +274,7 @@ def build_content(
         "revision_note": revision_note,
     }
     source_snapshot = {
+        "workspace_fingerprint": workspace_fingerprint(records),
         "application_id": str(application.id),
         "company_id": str(application.company_id),
         "opportunity_id": str(opportunity.id) if opportunity else None,
@@ -225,3 +338,139 @@ def create_artifact(
     db.add(artifact)
     db.flush()
     return artifact
+
+
+def _values(row, fields: str) -> dict[str, Any] | None:
+    if row is None:
+        return None
+    import json
+
+    return json.loads(
+        json.dumps({key: getattr(row, key, None) for key in fields.split()}, default=str)
+    )
+
+
+def workspace_fingerprint(records: dict[str, Any]) -> str:
+    """Versioned semantic inputs, excluding volatile timestamps and review state."""
+    payload = {
+        "contract": "workspace-inputs-v1",
+        "application": _values(
+            records.get("application"), "id company_id opportunity_id title due_at form_data"
+        ),
+        "company": _values(records.get("company"), "id name"),
+        "profile": _values(records.get("profile"), "id snapshot_json"),
+        "policy": _values(
+            records.get("policy"), "id status effective_at expires_at deadline content"
+        ),
+        "policy_version": _values(
+            records.get("policy_version"),
+            "id status content_sha256 content effective_date expiry_date application_deadline",
+        ),
+        "eligibility": _values(
+            records.get("eligibility"),
+            "id status criteria_json missing_information_json profile_version_id policy_version_id",
+        ),
+    }
+    for key, fields in {
+        "requirements": "id title description status is_hard_gate source_json",
+        "evidence": "id eligibility_rule_id quote verified policy_version_id policy_chunk_id quote_start quote_end source_title source_url issuer article",
+        "links": "id document_id requirement_id status",
+        "documents": "id status ingestion_status checksum_sha256 size_bytes",
+        "rules": "id status fact_key operator expected_json is_hard_gate source_quote",
+    }.items():
+        payload[key] = [
+            _values(row, fields)
+            for row in sorted(records.get(key, []), key=lambda item: str(item.id))
+        ]
+    return content_checksum(payload)
+
+
+def artifact_source_state(artifact: ApplicationArtifact, records: dict[str, Any]) -> dict[str, Any]:
+    fingerprint = (artifact.source_snapshot_json or {}).get("workspace_fingerprint")
+    reasons = list(records.get("context_issues", []))
+    if not fingerprint:
+        reasons.append("历史工作稿缺少输入指纹，请重新生成后复核")
+    elif fingerprint != workspace_fingerprint(records):
+        reasons.append("企业资料、政策规则、材料或证据已变化，请重新生成并复核")
+    if artifact.checksum_sha256 != content_checksum(artifact.content_json):
+        reasons.append("工作稿内容校验失败")
+    return {"current": not reasons, "reasons": list(dict.fromkeys(reasons))}
+
+
+def evidence_matrix(records: dict[str, Any]) -> dict[str, Any]:
+    result = records.get("eligibility")
+    rows = []
+    for criterion in (result.criteria_json or []) if result else []:
+        rule_id = criterion.get("rule_id")
+        sources = [
+            item
+            for item in records["evidence"]
+            if rule_id and str(item.eligibility_rule_id) == rule_id
+        ]
+        rows.append(
+            {
+                **criterion,
+                "policy_evidence": [
+                    {
+                        "id": str(item.id),
+                        "quote": item.quote,
+                        "article": item.article,
+                        "source_url": item.source_url,
+                        "verified": item.verified,
+                    }
+                    for item in sources
+                ],
+                "profile_version_id": str(result.profile_version_id)
+                if result.profile_version_id
+                else None,
+                "fact_source": "已发布企业画像；企业自述，不代表第三方鉴证",
+            }
+        )
+    return {
+        "rows": rows,
+        "status": result.status if result else "NEED_MORE_INFORMATION",
+        "context_issues": records.get("context_issues", []),
+        "missing_information": result.missing_information_json if result else ["缺少资格判断"],
+    }
+
+
+def qualification_source_issues(eligibility, rules, profile, version, evidence) -> list[str]:
+    """Check the stored decision contract without making a new eligibility decision."""
+    if not eligibility:
+        return []
+    active = {str(rule.id): rule for rule in rules if rule.status == "active"}
+    criteria = {row.get("rule_id"): row for row in (eligibility.criteria_json or [])}
+    issues = []
+    if not any(rule.is_hard_gate for rule in active.values()):
+        issues.append("缺少已审核的资格硬条件，请重新核验")
+    if set(criteria) != set(active):
+        issues.append("资格规则集合已变化，请重新扫描")
+    snapshot = profile.snapshot_json if profile else {}
+    for rule_id, rule in active.items():
+        row = criteria.get(rule_id, {})
+        expected = (
+            rule.expected_json.get("value")
+            if "value" in rule.expected_json
+            else rule.expected_json.get("values")
+        )
+        if (
+            row.get("fact_key") != rule.fact_key
+            or row.get("operator") != rule.operator
+            or row.get("expected") != expected
+            or row.get("actual") != snapshot.get(rule.fact_key)
+            or row.get("is_hard_gate") != rule.is_hard_gate
+        ):
+            issues.append("资格规则或企业事实与原判断不一致，请重新扫描")
+        if rule.is_hard_gate and row.get("status") == "PASS":
+            supported = any(
+                item.verified
+                and str(item.eligibility_rule_id) == rule_id
+                and version
+                and item.policy_version_id == version.id
+                and item.quote == rule.source_quote
+                and version.content[item.quote_start : item.quote_end] == item.quote
+                for item in evidence
+            )
+            if not supported:
+                issues.append("资格硬条件缺少当前版本的逐条原文证据")
+    return list(dict.fromkeys(issues))

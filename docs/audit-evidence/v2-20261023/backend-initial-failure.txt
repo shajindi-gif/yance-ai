@@ -1,0 +1,164 @@
+........................................................................ [ 37%]
+...........................................................F............ [ 75%]
+..............................................                           [100%]
+=================================== FAILURES ===================================
+____________ test_application_inherits_policy_deadline_and_notifies ____________
+tests/test_funding_os.py:263: in test_application_inherits_policy_deadline_and_notifies
+    assert patched.json()["due_at"][:10] == new_due[:10]
+E   AssertionError: assert '2026-10-25' == '2026-10-24'
+E
+E     - 2026-10-24
+E     ?          ^
+E     + 2026-10-25
+E     ?          ^
+----------------------------- Captured stdout call -----------------------------
+{"method": "POST", "path": "/api/v1/auth/register", "status_code": 201, "duration_ms": 41.49, "event": "request_completed", "request_id": "1052f7ea-d312-48a2-b305-3c37e42c55a3", "level": "info", "timestamp": "2026-10-22T22:54:58.302531Z"}
+{"method": "GET", "path": "/api/v1/auth/me", "status_code": 200, "duration_ms": 2.86, "event": "request_completed", "request_id": "2a5abf85-99c6-49bf-be4c-ae2608f0e55c", "level": "info", "timestamp": "2026-10-22T22:54:58.306284Z"}
+{"method": "GET", "path": "/api/v1/companies", "status_code": 200, "duration_ms": 3.01, "event": "request_completed", "request_id": "cf5a9835-ddb2-4798-ba57-6ba353056ebe", "level": "info", "timestamp": "2026-10-22T22:54:58.310190Z"}
+{"method": "POST", "path": "/api/v1/applications", "status_code": 201, "duration_ms": 8.79, "event": "request_completed", "request_id": "ea1ce195-877b-4d4a-b605-53817d7ada14", "level": "info", "timestamp": "2026-10-22T22:54:58.323625Z"}
+{"method": "PATCH", "path": "/api/v1/applications/b92909db-cb66-4f2a-a685-048a3b02c0d1", "status_code": 200, "duration_ms": 5.28, "event": "request_completed", "request_id": "44beb3ef-6313-47bf-ae92-5dc7b31810fe", "level": "info", "timestamp": "2026-10-22T22:54:58.329831Z"}
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /Users/shajindi/yance-backup/yance/yance-ai/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+______________ coverage: platform darwin, python 3.12.13-final-0 _______________
+
+Name                                              Stmts   Miss  Cover
+---------------------------------------------------------------------
+app/__init__.py                                       1      0   100%
+app/api/__init__.py                                   0      0   100%
+app/api/deps.py                                      63      4    94%
+app/api/router.py                                    25      0   100%
+app/api/routes/__init__.py                            0      0   100%
+app/api/routes/admin.py                             212     36    83%
+app/api/routes/admin_evals.py                        46      7    85%
+app/api/routes/agents.py                            178      5    97%
+app/api/routes/analytics.py                          14      0   100%
+app/api/routes/auth.py                              253     48    81%
+app/api/routes/billing.py                            52      5    90%
+app/api/routes/commerce.py                           96     23    76%
+app/api/routes/companies.py                          87      7    92%
+app/api/routes/demo.py                               61      4    93%
+app/api/routes/demo_match.py                        136     88    35%
+app/api/routes/documents.py                         206     38    82%
+app/api/routes/enterprise.py                        135     10    93%
+app/api/routes/funding_os.py                        177     20    89%
+app/api/routes/health.py                             13      2    85%
+app/api/routes/payments.py                          311    221    29%
+app/api/routes/policies.py                          139     49    65%
+app/api/routes/policy_engine.py                      35     16    54%
+app/api/routes/reports.py                            47     23    51%
+app/api/routes/tasks.py                             143     90    37%
+app/api/routes/telemetry.py                          16      1    94%
+app/api/routes/tenants.py                            39     20    49%
+app/api/routes/workflow.py                          416     53    87%
+app/core/config.py                                  138      3    98%
+app/core/db.py                                       11      0   100%
+app/core/logging.py                                   7      0   100%
+app/core/security.py                                 16      0   100%
+app/main.py                                          42      5    88%
+app/models/__init__.py                                1      0   100%
+app/models/models.py                               1043      0   100%
+app/schemas/__init__.py                               0      0   100%
+app/schemas/schemas.py                              421      1    99%
+app/services/__init__.py                              0      0   100%
+app/services/admin/__init__.py                        0      0   100%
+app/services/admin/metrics.py                        48      4    92%
+app/services/agents/__init__.py                       2      0   100%
+app/services/agents/contracts.py                     45      0   100%
+app/services/agents/definitions.py                   12      0   100%
+app/services/agents/harness.py                      235     36    85%
+app/services/agents/policy_scan.py                  127     13    90%
+app/services/analytics/__init__.py                    0      0   100%
+app/services/analytics/events.py                     12      0   100%
+app/services/applications/__init__.py                 0      0   100%
+app/services/applications/artifacts.py               76      0   100%
+app/services/applications/workspace.py               89      5    94%
+app/services/auth_rate_limit.py                      40      2    95%
+app/services/billing/__init__.py                      0      0   100%
+app/services/billing/catalog.py                      28      2    93%
+app/services/billing/usage.py                        91      8    91%
+app/services/company_profiles.py                     54      3    94%
+app/services/consultant/__init__.py                   0      0   100%
+app/services/consultant/router.py                   125     65    48%
+app/services/demo/__init__.py                         0      0   100%
+app/services/demo/scenarios.py                      145      3    98%
+app/services/documents/__init__.py                    0      0   100%
+app/services/documents/ingestion.py                 138     56    59%
+app/services/documents/intelligence.py               80      6    92%
+app/services/documents/ocr.py                        57     29    49%
+app/services/documents/parsers.py                   201     32    84%
+app/services/documents/security.py                   85     26    69%
+app/services/documents/url_fetcher.py               156     36    77%
+app/services/email_code.py                           79      4    95%
+app/services/enterprise/__init__.py                   0      0   100%
+app/services/enterprise/api_keys.py                  34      3    91%
+app/services/enterprise/audit.py                     12      0   100%
+app/services/enterprise/exports.py                   18      0   100%
+app/services/enterprise/flags.py                      6      0   100%
+app/services/evaluations/__init__.py                  0      0   100%
+app/services/evaluations/contracts.py                86      2    98%
+app/services/evaluations/loader.py                   47     10    79%
+app/services/evaluations/metrics.py                  36      0   100%
+app/services/evaluations/runner.py                   91      3    97%
+app/services/evaluations/scorers.py                  59      0   100%
+app/services/evaluations/targets.py                  93      3    97%
+app/services/funding/__init__.py                      0      0   100%
+app/services/funding/amounts.py                      66      9    86%
+app/services/invoice/__init__.py                      2      0   100%
+app/services/invoice/generator.py                    53     12    77%
+app/services/llm/__init__.py                          2      0   100%
+app/services/llm/base.py                             26      2    92%
+app/services/llm/providers/anthropic.py              19     11    42%
+app/services/llm/providers/mock.py                    7      2    71%
+app/services/llm/providers/openai_compatible.py      30     20    33%
+app/services/llm/registry.py                          5      1    80%
+app/services/llm/router.py                           13      4    69%
+app/services/notifications/__init__.py                0      0   100%
+app/services/notifications/deadlines.py              76     25    67%
+app/services/notifications/email.py                  85      2    98%
+app/services/oss.py                                  28     16    43%
+app/services/payments/__init__.py                     0      0   100%
+app/services/payments/settlement.py                  88     12    86%
+app/services/payments/wechat.py                     106     47    56%
+app/services/policies/__init__.py                     0      0   100%
+app/services/policies/applicability.py               37      3    92%
+app/services/policies/eligibility.py                137     27    80%
+app/services/policies/ingestion.py                   50      2    96%
+app/services/policies/retrieval.py                   42      1    98%
+app/services/policies/visibility.py                   6      0   100%
+app/services/policy_engine/__init__.py                0      0   100%
+app/services/policy_engine/deterministic.py         266    222    17%
+app/services/policy_engine/evaluator.py             187     89    52%
+app/services/policy_engine/schemas.py                62      0   100%
+app/services/report/__init__.py                       0      0   100%
+app/services/report/matcher.py                      161     49    70%
+app/services/report/pdf.py                          111     14    87%
+app/services/safe_rendering.py                        6      0   100%
+app/services/vectorstores/__init__.py                 3      3     0%
+app/services/vectorstores/base.py                    20     20     0%
+app/services/vectorstores/pgvector.py                25     25     0%
+app/workers/__init__.py                               0      0   100%
+app/workers/agent_worker.py                          21     21     0%
+app/workers/document_worker.py                       27     27     0%
+---------------------------------------------------------------------
+TOTAL                                              8754   1796    79%
+Required test coverage of 50% reached. Total coverage: 79.48%
+=========================== short test summary info ============================
+FAILED tests/test_funding_os.py::test_application_inherits_policy_deadline_and_notifies
+1 failed, 189 passed, 6 warnings in 24.01s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

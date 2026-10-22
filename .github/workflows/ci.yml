@@ -303,6 +303,12 @@ jobs:
           alembic upgrade head
           python scripts/seed_investor_demo.py
 
+      - name: Seed isolated evidence workspace fixture
+        working-directory: yance-ai
+        run: |
+          python tests/seed_v2_browser.py "$RUNNER_TEMP/yance-v2-browser-fixture.json"
+          echo "YANCE_V2_FIXTURE=$RUNNER_TEMP/yance-v2-browser-fixture.json" >> "$GITHUB_ENV"
+
       - name: Install Chromium runtime
         working-directory: website
         run: npx playwright install --with-deps chromium

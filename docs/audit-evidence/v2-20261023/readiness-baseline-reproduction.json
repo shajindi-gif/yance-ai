@@ -1,0 +1,7 @@
+{
+  "baseline": "4adefc7",
+  "synthetic": true,
+  "case": "REQUIRES_REVIEW must block review",
+  "before_can_submit_for_review": true,
+  "expected_can_submit_for_review": false
+}

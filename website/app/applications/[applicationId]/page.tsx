@@ -8,12 +8,13 @@ import { ButtonLink } from "@/components/ui/ButtonLink";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { EvidenceMatrix } from "@/components/workspace/EvidenceMatrix";
 import AppShell from "@/components/workspace/AppShell";
 import flow from "@/components/workspace/CoreWorkflow.module.css";
 import content from "@/components/workspace/WorkspaceContent.module.css";
 import api, { type ApplicationAgentResponse, type ApplicationDetail, type DocumentRecord } from "@/lib/api";
 
-type Tab = "overview" | "requirements" | "documents" | "generated" | "tasks" | "evidence" | "activity";
+type Tab = "matrix" | "overview" | "requirements" | "documents" | "generated" | "tasks" | "evidence" | "activity";
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "草稿", preparing: "材料准备", review: "待复核", revision_requested: "需修改",
@@ -24,7 +25,7 @@ const NEXT_STATUS: Record<string, { status: string; label: string }[]> = {
   preparing: [{ status: "review", label: "提交复核" }],
   review: [{ status: "approved", label: "批准项目" }, { status: "revision_requested", label: "退回修改" }],
   revision_requested: [{ status: "preparing", label: "继续准备" }],
-  approved: [{ status: "submitted", label: "标记已提交" }],
+  approved: [{ status: "submitted", label: "标记已提交" }, { status: "revision_requested", label: "返回修改" }],
   submitted: [{ status: "completed", label: "标记已完成" }],
 };
 const REQUIREMENT_STATUS = [
@@ -32,10 +33,10 @@ const REQUIREMENT_STATUS = [
   ["approved", "已核准"], ["not_applicable", "不适用"],
 ] as const;
 const TABS: { key: Tab; label: string }[] = [
-  { key: "overview", label: "Overview" }, { key: "requirements", label: "Requirements" },
-  { key: "documents", label: "Documents" }, { key: "generated", label: "Generated" },
-  { key: "tasks", label: "Tasks" }, { key: "evidence", label: "Evidence" },
-  { key: "activity", label: "Activity" },
+  { key: "matrix", label: "资格矩阵" }, { key: "overview", label: "项目概览" }, { key: "requirements", label: "材料清单" },
+  { key: "documents", label: "企业资料" }, { key: "generated", label: "工作稿" },
+  { key: "tasks", label: "任务" }, { key: "evidence", label: "证据" },
+  { key: "activity", label: "动态" },
 ];
 const ARTIFACT_WRITE_STATES = new Set(["draft", "preparing", "revision_requested"]);
 
@@ -45,7 +46,7 @@ export default function ApplicationWorkspacePage() {
   const applicationId = params.applicationId;
   const [application, setApplication] = useState<ApplicationDetail | null>(null);
   const [availableDocuments, setAvailableDocuments] = useState<DocumentRecord[]>([]);
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useState<Tab>("matrix");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -128,17 +129,18 @@ export default function ApplicationWorkspacePage() {
       <div className={flow.metric}><strong>{application.readiness.verified_evidence}</strong><span>已核验证据</span></div>
       <div className={flow.metric}><Badge tone={application.status === "completed" ? "success" : "info"}>{STATUS_LABELS[application.status] || application.status}</Badge><span>项目状态</span></div>
     </div>
-    <div className={flow.applicationLayout}>
+    <div className={`${flow.applicationLayout} ${tab === "matrix" ? flow.evidenceLayout : ""}`}>
       <div className={flow.applicationMain}>
         <div className={flow.tabs} role="tablist" aria-label="申报工作区">{TABS.map(({ key, label }) => <button key={key} type="button" role="tab" aria-selected={tab === key} className={`${flow.tab} ${tab === key ? flow.tabActive : ""}`} onClick={() => setTab(key)}>{label}{key === "requirements" ? ` (${application.requirements.length})` : key === "generated" ? ` (${application.generated.length})` : ""}</button>)}</div>
 
+        {tab === "matrix" ? <EvidenceMatrix matrix={application.evidence_matrix} busy={saving} canWrite={canWriteArtifacts} onCollect={() => perform(async () => { await api.createEvidenceTasks(applicationId); setTab("requirements"); }, "创建补证待办失败")} /> : null}
         {tab === "overview" ? <div className={flow.gridTwo} role="tabpanel"><section className={content.card}><h2>项目概览</h2><dl className={flow.definitionList}><div><dt>企业</dt><dd>{application.company_name}</dd></div><div><dt>状态</dt><dd>{STATUS_LABELS[application.status] || application.status}</dd></div><div><dt>截止日期</dt><dd>{application.due_at ? new Date(application.due_at).toLocaleDateString("zh-CN") : "尚未设置"}</dd></div><div><dt>复核状态</dt><dd>{application.review_status}</dd></div><div><dt>资料关联</dt><dd>{application.documents.length} 份</dd></div><div><dt>工作稿版本</dt><dd>{latestArtifact ? `v${latestArtifact.version}` : "尚未生成"}</dd></div></dl></section><section className={content.card}><h2>Readiness</h2><Badge tone={application.readiness.can_submit_for_review ? "success" : "warning"}>{application.readiness.can_submit_for_review ? "可提交复核" : "仍有阻塞项"}</Badge><div className={flow.gapList}>{application.readiness.blockers.length ? application.readiness.blockers.map((item) => <span key={item}>• {item}</span>) : <span>资格与硬门槛检查已通过。</span>}</div></section></div> : null}
 
         {tab === "requirements" ? <section className={content.card} role="tabpanel"><h2>Required Documents</h2><p className={content.cardIntro}>政策来源清单保留条款证据；关键词候选项会继续标注为未核验。</p>{application.requirements.length === 0 ? <p className={content.cardIntro}>暂无材料要求。</p> : application.requirements.map((item) => <div className={flow.requirement} key={item.id}><div><strong>{item.title}</strong><p>{item.description || "无说明"}</p><div className={flow.inlineMeta}>{item.is_hard_gate ? <Badge tone="warning">硬门槛</Badge> : null}<Badge tone={item.source.policy_version_id ? "success" : "neutral"}>{item.source.policy_version_id ? "政策原文" : "候选项"}</Badge></div></div><select aria-label={`更新 ${item.title} 的状态`} value={item.status} onChange={(event) => updateRequirement(item.id, event.target.value)} disabled={saving}>{REQUIREMENT_STATUS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>)}</section> : null}
 
         {tab === "documents" ? <section className={content.card} role="tabpanel"><h2>Company Documents</h2><p className={content.cardIntro}>只显示真实上传与摄取状态；关联不代表内容已经解析。</p><div className={flow.linkDocumentForm}><select aria-label="选择企业资料" value={selectedDocument} onChange={(event) => setSelectedDocument(event.target.value)}><option value="">选择尚未关联的资料</option>{availableDocuments.filter((item) => !linkedDocumentIds.has(item.id)).map((item) => <option key={item.id} value={item.id}>{item.filename}</option>)}</select><select aria-label="关联材料要求" value={selectedRequirement} onChange={(event) => setSelectedRequirement(event.target.value)}><option value="">不关联特定要求</option>{application.requirements.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select><Button type="button" onClick={() => perform(() => api.linkApplicationDocument(applicationId, selectedDocument, selectedRequirement || undefined), "资料关联失败")} disabled={saving || !selectedDocument}>关联资料</Button></div>{application.documents.length === 0 ? <p className={content.cardIntro}>暂无已关联资料。</p> : application.documents.map((item) => <div className={flow.requirement} key={item.link_id}><div><strong>{item.filename}</strong><p>{item.content_type}</p></div><div className={flow.inlineMeta}><Badge tone={item.status === "uploaded" ? "success" : "neutral"}>{item.status}</Badge><Badge tone="neutral">摄取：{item.ingestion_status}</Badge></div></div>)}</section> : null}
 
-        {tab === "generated" ? <section className={content.card} role="tabpanel"><div className={flow.sectionHeading}><div><h2>Generated Documents</h2><p className={content.cardIntro}>生成、修复或编辑都会创建新版本，旧版本不会被覆盖。</p></div><Button type="button" onClick={() => runAgentAction("generate")} disabled={saving || !canWriteArtifacts}>重新生成</Button></div>{application.generated.length === 0 ? <p className={content.cardIntro}>尚无工作稿。可使用右侧 Generate 创建证据型草稿。</p> : application.generated.map((artifact, index) => <article className={flow.artifactCard} key={artifact.id}><div><strong>{artifact.title}</strong><p>v{artifact.version} · {artifact.generation_method} · 校验和 {artifact.checksum_sha256.slice(0, 12)}</p></div><div className={flow.inlineMeta}><Badge tone={artifact.status === "approved" ? "success" : artifact.status === "rejected" ? "danger" : "neutral"}>{artifact.status}</Badge>{(["docx", "pdf", "xlsx", "json"] as const).map((format) => <button className={flow.textButton} type="button" key={format} onClick={() => download(artifact.id, format)} disabled={saving}>{format.toUpperCase()}</button>)}</div>{index === 0 ? <div className={flow.artifactActions}><textarea aria-label="人工编辑摘要" value={editSummary} placeholder={String(artifact.content.executive_summary || "编辑摘要后创建新版本")} onChange={(event) => setEditSummary(event.target.value)} /><Button type="button" variant="secondary" disabled={saving || !canWriteArtifacts || !editSummary.trim()} onClick={() => perform(() => api.editApplicationArtifact(applicationId, artifact.id, editSummary), "编辑失败")}>Edit</Button><Button type="button" variant="secondary" disabled={saving || application.status !== "review" || !reviewNote.trim()} onClick={() => perform(() => api.reviewApplicationArtifact(applicationId, artifact.id, "reject", reviewNote), "退回失败")}>Reject</Button><Button type="button" disabled={saving || application.status !== "review"} onClick={() => perform(() => api.reviewApplicationArtifact(applicationId, artifact.id, "approve", reviewNote), "批准失败")}>Approve</Button></div> : null}</article>)}</section> : null}
+        {tab === "generated" ? <section className={content.card} role="tabpanel"><div className={flow.sectionHeading}><div><h2>Generated Documents</h2><p className={content.cardIntro}>生成、修复或编辑都会创建新版本，旧版本不会被覆盖。</p></div><Button type="button" onClick={() => runAgentAction("generate")} disabled={saving || !canWriteArtifacts}>重新生成</Button></div>{application.generated.length === 0 ? <p className={content.cardIntro}>尚无工作稿。可使用右侧 Generate 创建证据型草稿。</p> : application.generated.map((artifact, index) => <article className={flow.artifactCard} key={artifact.id}><div><strong>{artifact.title}</strong><p>v{artifact.version} · {artifact.generation_method} · 校验和 {artifact.checksum_sha256.slice(0, 12)}</p></div>{artifact.source_state && !artifact.source_state.current ? <InlineAlert tone="info">来源需重新复核：{artifact.source_state.reasons.join("；")}</InlineAlert> : null}<div className={flow.inlineMeta}><Badge tone={artifact.status === "approved" ? "success" : artifact.status === "rejected" ? "danger" : "neutral"}>{artifact.status}</Badge>{(["docx", "pdf", "xlsx", "json"] as const).map((format) => <button className={flow.textButton} type="button" key={format} onClick={() => download(artifact.id, format)} disabled={saving}>{format.toUpperCase()}</button>)}</div>{index === 0 ? <div className={flow.artifactActions}><textarea aria-label="人工编辑摘要" value={editSummary} placeholder={String(artifact.content.executive_summary || "编辑摘要后创建新版本")} onChange={(event) => setEditSummary(event.target.value)} /><Button type="button" variant="secondary" disabled={saving || !canWriteArtifacts || !editSummary.trim()} onClick={() => perform(() => api.editApplicationArtifact(applicationId, artifact.id, editSummary), "编辑失败")}>保存为新版本</Button><Button type="button" variant="secondary" disabled={saving || application.status !== "review" || !reviewNote.trim()} onClick={() => perform(() => api.reviewApplicationArtifact(applicationId, artifact.id, "reject", reviewNote), "退回失败")}>退回修改</Button><Button type="button" disabled={saving || application.status !== "review" || artifact.source_state?.current === false} onClick={() => perform(() => api.reviewApplicationArtifact(applicationId, artifact.id, "approve", reviewNote), "批准失败")}>批准工作稿</Button></div> : null}</article>)}</section> : null}
 
         {tab === "tasks" ? <section className={content.card} role="tabpanel"><h2>Tasks</h2>{application.tasks.length === 0 ? <p className={content.cardIntro}>暂无执行任务。</p> : application.tasks.map((task) => <div className={flow.requirement} key={task.id}><div><strong>{task.title}</strong><p>{task.current_stage || "未设置阶段"}</p></div><Badge tone="neutral">{task.status} · {task.progress}%</Badge></div>)}</section> : null}
         {tab === "evidence" ? <section className={content.card} role="tabpanel"><h2>Evidence</h2>{application.evidence.length === 0 ? <p className={content.cardIntro}>暂无可核验证据，不会展示无来源结论。</p> : application.evidence.map((item) => <blockquote className={flow.evidenceQuote} key={item.id}><p>“{item.quote}”</p><footer>{[item.issuer, item.article].filter(Boolean).join(" · ") || item.source_title}<Badge tone={item.verified ? "success" : "warning"}>{item.verified ? "原文已核验" : "未核验"}</Badge></footer></blockquote>)}</section> : null}

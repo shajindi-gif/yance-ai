@@ -260,7 +260,7 @@ def test_application_inherits_policy_deadline_and_notifies():
             json={"due_at": new_due},
         )
         assert patched.status_code == 200
-        assert patched.json()["due_at"][:10] == new_due[:10]
+        assert datetime.fromisoformat(patched.json()["due_at"]) == datetime.fromisoformat(new_due)
 
         scan = client.post("/api/v1/notifications/scan", headers=headers)
         assert scan.status_code == 200 and scan.json()["created"] >= 1

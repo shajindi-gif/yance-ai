@@ -574,7 +574,19 @@ export interface ApplicationActivity {
   occurred_at: string;
 }
 
+export interface EvidenceMatrix {
+  status: string;
+  context_issues: string[];
+  missing_information: string[];
+  rows: Array<{
+    rule_id?: string; name: string; fact_key?: string; actual?: unknown; expected?: unknown;
+    status: string; is_hard_gate?: boolean; fact_source: string; profile_version_id: string | null;
+    policy_evidence: Array<{ id: string; quote: string; article: string | null; source_url: string | null; verified: boolean }>;
+  }>;
+}
+
 export interface ApplicationDetail extends ApplicationSummary {
+  evidence_matrix?: EvidenceMatrix;
   company_name: string;
   opportunity: Opportunity | null;
   requirements: ApplicationRequirement[];
@@ -634,6 +646,7 @@ export interface ApplicationArtifact {
   generation_method: string;
   checksum_sha256: string;
   source_snapshot: Record<string, unknown>;
+  source_state?: { current: boolean; reasons: string[] };
   content: {
     executive_summary?: string;
     disclaimer?: string;
@@ -1471,6 +1484,10 @@ class ApiClient {
     await this.request(`/applications/${encodeURIComponent(applicationId)}/comments`, {
       method: 'POST', body: JSON.stringify({ body }),
     });
+  }
+
+  async createEvidenceTasks(applicationId: string): Promise<{ created_requirement_ids: string[] }> {
+    return this.request(`/applications/${encodeURIComponent(applicationId)}/evidence-tasks`, { method: 'POST' });
   }
 
   async runApplicationAction(applicationId: string, action: ApplicationAgentResponse['action'], input?: { question?: string; instruction?: string }): Promise<ApplicationAgentResponse> {

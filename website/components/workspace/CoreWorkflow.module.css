@@ -657,3 +657,7 @@
     max-width: none;
   }
 }
+
+/* Give the evidence columns full workspace width before the action panel. */
+.evidenceLayout { grid-template-columns: minmax(0, 1fr); }
+.evidenceLayout .agentPanel { position: static; }
