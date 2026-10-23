@@ -1,0 +1,9 @@
+.panel { padding: 18px; margin: 20px 0; border: 1px solid #dce4ed; border-radius: 10px; background: #f6f9fc; }
+.panel p { line-height: 1.7; font-size: 13px; }
+.panel select { padding: 8px; max-width: 100%; background: white; color: #253247; border: 1px solid #8293a8; border-radius: 5px; }
+.panel details { margin: 12px 0; padding: 10px; background: white; border-radius: 5px; }
+.panel summary { cursor: pointer; font-weight: 600; }
+.columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.columns pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 13px; line-height: 1.7; }
+.panel :focus-visible { outline: 3px solid #4a9dc4; outline-offset: 3px; }
+@media (max-width: 700px) { .columns { grid-template-columns: 1fr; } }
