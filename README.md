@@ -19,6 +19,8 @@ The current audit and local changes are documented in [docs/audit.md](docs/audit
 
 The first batch adds a source-bound eligibility matrix, persistent evidence-gap checklist, and stale-approval/concurrent-edit safeguards. Local isolated tests passed; this batch has not been deployed. See [implementation and validation](docs/v2-first-batch-report-20261023.md), [gap map](docs/v2-gap-map-20261023.md), and [data contract](docs/v2-evidence-contract.md).
 
+Second local batch: fenced Agent attempts, per-recipient deadline email outbox and worker shutdown checks. 220 backend tests passed; additive migration 0028 is **not deployed**. See [validation](docs/v2-reliability-report-20261023.md) and [release constraints](docs/v2-reliability-runbook-20261023.md).
+
 ## Quick Start
 
 ### Option A — Docker (recommended, one command)

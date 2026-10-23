@@ -16,10 +16,18 @@ def main() -> int:
     args = parser.parse_args()
     configure_logging()
     logger = structlog.get_logger()
+    received = {"signal": signal.SIGINT}
+
+    def stop(signum, _frame):
+        received["signal"] = signum
+        raise KeyboardInterrupt
+
     try:
+        signal.signal(signal.SIGTERM, stop)
+        logger.info("agent_worker_started")
         asyncio.run(run_agent_worker(poll_seconds=max(0.1, args.poll_seconds), once=args.once))
     except KeyboardInterrupt:
-        logger.info("agent_worker_stopped", signal=signal.Signals.SIGINT.name)
+        logger.info("agent_worker_stopped", signal=signal.Signals(received["signal"]).name)
     return 0
 
 

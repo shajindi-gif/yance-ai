@@ -1348,6 +1348,7 @@ class AgentRun(Base, TimestampMixin, TenantOwnedMixin):
     queued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     next_attempt_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     lease_owner: Mapped[str | None] = mapped_column(String(160))
+    lease_token: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_heartbeat_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
@@ -1653,3 +1654,26 @@ class AuthRateLimit(Base):
     key: Mapped[str] = mapped_column(String(160), primary_key=True)
     window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     count: Mapped[int] = mapped_column(Integer, default=1)
+
+
+class NotificationDelivery(Base, TenantOwnedMixin):
+    """One immutable notification/recipient intent; ambiguous sends require review."""
+
+    __tablename__ = "notification_deliveries"
+    __table_args__ = (
+        UniqueConstraint("notification_id", "recipient_user_id", name="uq_notification_delivery_recipient"),
+        Index("ix_notification_delivery_claim", "status", "next_attempt_at"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    notification_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("notifications.id", ondelete="CASCADE"))
+    recipient_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"))
+    recipient_email: Mapped[str] = mapped_column(String(320))
+    payload_json: Mapped[dict] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(String(30), default="pending")
+    attempt_count: Mapped[int] = mapped_column(Integer, default=0)
+    next_attempt_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    lease_token: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(80))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)

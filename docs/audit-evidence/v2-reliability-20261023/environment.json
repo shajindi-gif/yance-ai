@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-23",
+  "base_commit": "adb2aea",
+  "branch": "feature/investor-grade-upgrade",
+  "scope": "local-isolated-only",
+  "database": "PostgreSQL 18 + pgvector, localhost:55440",
+  "data": "synthetic",
+  "backend_tests_passed": 220,
+  "coverage_percent": 79.52,
+  "eval_cases": 61,
+  "eval_review_status": "unreviewed synthetic",
+  "production_accessed": false,
+  "external_email_enabled": false,
+  "frontend_changed": false,
+  "migration": "20261023_0028"
+}

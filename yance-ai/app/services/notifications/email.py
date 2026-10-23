@@ -13,15 +13,14 @@ from __future__ import annotations
 import html
 import re
 import smtplib
+from dataclasses import dataclass
 from email.message import EmailMessage
 from email.utils import formataddr
 
 import httpx
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.models.models import Membership, Notification, User, UserRole
 
 RESEND_API = "https://api.resend.com/emails"
 # Only these bands warrant an email; T-30/T-14 remain in-app to avoid noise.
@@ -66,13 +65,19 @@ def _smtp_from_pair() -> tuple[str, str]:
     name is taken from EMAIL_FROM when present.
     """
     display = settings.smtp_user.split("@", 1)[0]
-    match = re.match(r'^(.*?)<([^>]+)>$', settings.email_from.strip())
+    match = re.match(r"^(.*?)<([^>]+)>$", settings.email_from.strip())
     if match and match.group(1).strip().strip('"'):
         display = match.group(1).strip().strip('"')
     return display, settings.smtp_user
 
 
-def _send_via_smtp(to: str, subject: str, body_text: str) -> bool:
+@dataclass(frozen=True)
+class DeliveryOutcome:
+    status: str  # sent / retryable / failed / uncertain / deferred
+    code: str | None = None
+
+
+def _deliver_smtp(to: str, subject: str, body_text: str) -> DeliveryOutcome:
     display, address = _smtp_from_pair()
     message = EmailMessage()
     message["From"] = formataddr((display, address))
@@ -80,16 +85,26 @@ def _send_via_smtp(to: str, subject: str, body_text: str) -> bool:
     message["Subject"] = subject
     message.set_content(body_text)
     message.add_alternative(_html_body(body_text), subtype="html")
+    phase = "connect"
     try:
         with smtplib.SMTP_SSL(settings.smtp_host, settings.smtp_port, timeout=15) as server:
             server.login(address, settings.smtp_password)
+            phase = "send"
             server.send_message(message)
-        return True
+        return DeliveryOutcome("sent")
+    except (smtplib.SMTPAuthenticationError, smtplib.SMTPRecipientsRefused):
+        return DeliveryOutcome("failed", "smtp_rejected")
+    except smtplib.SMTPDataError as exc:
+        return DeliveryOutcome(
+            "retryable" if 400 <= exc.smtp_code < 500 else "failed", "smtp_data_rejected"
+        )
     except (smtplib.SMTPException, OSError):
-        return False
+        return DeliveryOutcome(
+            "uncertain" if phase == "send" else "retryable", "smtp_transport_error"
+        )
 
 
-def _send_via_resend(to: str, subject: str, body_text: str) -> bool:
+def _deliver_resend(to: str, subject: str, body_text: str) -> DeliveryOutcome:
     try:
         response = httpx.post(
             RESEND_API,
@@ -105,62 +120,35 @@ def _send_via_resend(to: str, subject: str, body_text: str) -> bool:
             },
             timeout=15,
         )
-        return 200 <= response.status_code < 300
+        if 200 <= response.status_code < 300:
+            return DeliveryOutcome("sent")
+        if response.status_code == 429:
+            return DeliveryOutcome("retryable", "provider_rate_limited")
+        if response.status_code >= 500 or response.status_code in {408, 409}:
+            return DeliveryOutcome("uncertain", "provider_result_unknown")
+        return DeliveryOutcome("failed", "provider_rejected")
     except httpx.HTTPError:
-        return False
+        return DeliveryOutcome("uncertain", "provider_transport_error")
+
+
+def send_notification_email(to: str, subject: str, body_text: str) -> DeliveryOutcome:
+    if not is_email_configured():
+        return DeliveryOutcome("deferred", "email_not_configured")
+    return (
+        _deliver_smtp(to, subject, body_text)
+        if settings.email_provider == "smtp"
+        else _deliver_resend(to, subject, body_text)
+    )
 
 
 def send_email(to: str, subject: str, body_text: str) -> bool:
-    """Send one email through the configured provider. True on success. Never raises."""
-    if not is_email_configured():
-        return False
-    if settings.email_provider == "smtp":
-        return _send_via_smtp(to, subject, body_text)
-    return _send_via_resend(to, subject, body_text)
+    """Compatibility API for synchronous login-code and existing invoice callers."""
+    return send_notification_email(to, subject, body_text).status == "sent"
 
 
-def _recipient_emails(db: Session, tenant_id) -> list[str]:
-    rows = db.execute(
-        select(User.email)
-        .join(Membership, Membership.user_id == User.id)
-        .where(
-            Membership.tenant_id == tenant_id,
-            Membership.role.in_([UserRole.owner, UserRole.admin]),
-            Membership.status == "active",
-            User.is_active.is_(True),
-        )
-    ).all()
-    return sorted({row[0] for row in rows})
+def dispatch_deadline_emails(db: Session, *, tenant_id=None, limit: int = 20) -> int:
+    """Persist per-recipient intents, then process a bounded batch. Never mutate dedup keys."""
+    from app.services.notifications.outbox import dispatch_outbox, enqueue_deadline_emails
 
-
-def dispatch_deadline_emails(db: Session, *, tenant_id=None) -> int:
-    """Email unread deadline notifications in high-severity bands.
-
-    Marks each emailed notification with an email_sent_at timestamp via a
-    dedup key suffix so a notification is emailed at most once. Returns count
-    of notifications emailed.
-    """
-    if not is_email_configured():
-        return 0
-    query = select(Notification).where(
-        Notification.kind == "deadline",
-        Notification.read_at.is_(None),
-        Notification.severity.in_(EMAIL_BANDS),
-    )
-    if tenant_id:
-        query = query.where(Notification.tenant_id == tenant_id)
-    sent = 0
-    for notification in db.scalars(query).all():
-        if notification.dedup_key.endswith(":emailed"):
-            continue
-        recipients = _recipient_emails(db, notification.tenant_id)
-        delivered = False
-        for email in recipients:
-            if send_email(email, notification.title, notification.body or notification.title):
-                delivered = True
-        if delivered:
-            notification.dedup_key = notification.dedup_key + ":emailed"
-            sent += 1
-    if sent:
-        db.commit()
-    return sent
+    enqueue_deadline_emails(db, tenant_id=tenant_id)
+    return dispatch_outbox(db, tenant_id=tenant_id, limit=limit)

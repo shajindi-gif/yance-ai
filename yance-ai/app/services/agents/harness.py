@@ -5,7 +5,7 @@ from time import perf_counter
 
 import structlog
 from pydantic import ValidationError
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, event, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -25,6 +25,7 @@ from app.models.models import (
 )
 from app.services.agents.contracts import (
     AgentCancelled,
+    AgentLeaseLost,
     PolicyScanWorkflowInput,
     VerificationFailed,
 )
@@ -91,7 +92,9 @@ class AgentHarness:
         scan.workflow_run_id = workflow_run.id
         return run
 
-    def claim_next(self, db: Session, worker_id: str) -> uuid.UUID | None:
+    def claim_next(
+        self, db: Session, worker_id: str, *, run_id: uuid.UUID | None = None
+    ) -> uuid.UUID | None:
         now = datetime.now(UTC)
         candidate = db.scalar(
             select(AgentRun)
@@ -105,6 +108,7 @@ class AgentHarness:
                     ),
                 )
             )
+            .where(AgentRun.id == run_id if run_id else True)
             .order_by(AgentRun.next_attempt_at, AgentRun.queued_at)
             .with_for_update(skip_locked=True)
             .limit(1)
@@ -137,6 +141,7 @@ class AgentHarness:
 
         candidate.status = "planning"
         candidate.lease_owner = worker_id[:160]
+        candidate.lease_token = uuid.uuid4()
         candidate.lease_expires_at = now + timedelta(seconds=self.lease_seconds)
         candidate.last_heartbeat_at = now
         candidate.started_at = candidate.started_at or now
@@ -144,6 +149,7 @@ class AgentHarness:
         workflow_run.status = "planning"
         workflow_run.started_at = workflow_run.started_at or now
         db.commit()
+        db.info.setdefault("agent_lease_tokens", {})[candidate.id] = candidate.lease_token
         return candidate.id
 
     async def run_once(self, db: Session, worker_id: str) -> uuid.UUID | None:
@@ -157,6 +163,18 @@ class AgentHarness:
         run = db.scalar(select(AgentRun).where(AgentRun.id == run_id))
         if not run or run.status in {"completed", "failed", "cancelled"}:
             return
+        if run_id not in db.info.get("agent_lease_tokens", {}):
+            # Inline callers may claim queued work, but cannot adopt a running lease.
+            if run.status != "queued" or not self.claim_next(
+                db, f"inline-{uuid.uuid4()}", run_id=run_id
+            ):
+                return
+
+        def guard(session, *_args):
+            self._checkpoint(session, run_id, check_authorization=False)
+
+        event.listen(db, "before_flush", guard)
+        event.listen(db, "before_commit", guard)
         structlog.contextvars.bind_contextvars(
             run_id=str(run.id),
             tenant_id=str(run.tenant_id),
@@ -164,13 +182,21 @@ class AgentHarness:
         )
         try:
             self._checkpoint(db, run.id)
-            await asyncio.wait_for(execute_policy_scan(db, run, self), timeout=settings.agent_run_timeout_seconds)
+            await asyncio.wait_for(
+                execute_policy_scan(db, run, self), timeout=settings.agent_run_timeout_seconds
+            )
         except AgentCancelled:
             db.rollback()
         except Exception as exc:
             db.rollback()
-            self._record_failure(db, run_id, exc)
+            try:
+                self._record_failure(db, run_id, exc)
+            except AgentCancelled:
+                db.rollback()
         finally:
+            event.remove(db, "before_flush", guard)
+            event.remove(db, "before_commit", guard)
+            db.info.get("agent_lease_tokens", {}).pop(run_id, None)
             structlog.contextvars.clear_contextvars()
 
     def _complete_step(
@@ -310,6 +336,7 @@ class AgentHarness:
         db.commit()
 
     def _record_failure(self, db: Session, run_id: uuid.UUID, exc: Exception) -> None:
+        self._checkpoint(db, run_id, check_authorization=False)
         run = db.scalar(select(AgentRun).where(AgentRun.id == run_id))
         if not run:
             return
@@ -354,13 +381,17 @@ class AgentHarness:
                 retryable=not isinstance(exc, (ValidationError, VerificationFailed)),
             )
         )
-        if not isinstance(exc, (ValidationError, VerificationFailed)) and run.retry_count < run.max_retries:
+        if (
+            not isinstance(exc, (ValidationError, VerificationFailed))
+            and run.retry_count < run.max_retries
+        ):
             run.retry_count += 1
             delay_seconds = min(60, 2**run.retry_count)
             run.status = "queued"
             run.next_attempt_at = datetime.now(UTC) + timedelta(seconds=delay_seconds)
             run.error_code = code
             run.error_json = {"exception_type": type(exc).__name__}
+            run.lease_token = None
             run.lease_owner = None
             run.lease_expires_at = None
             db.add(
@@ -375,7 +406,13 @@ class AgentHarness:
             )
             workflow = self._workflow_run(db, run)
             workflow.status = "queued"
-            task = db.scalar(select(Task).where(Task.id == run.task_id, Task.tenant_id == run.tenant_id)) if run.task_id else None
+            task = (
+                db.scalar(
+                    select(Task).where(Task.id == run.task_id, Task.tenant_id == run.tenant_id)
+                )
+                if run.task_id
+                else None
+            )
             if task:
                 task.status = "queued"
                 task.current_stage = "等待重试"
@@ -385,17 +422,48 @@ class AgentHarness:
         logger.error("agent_run_failed", error_code=code, retry_count=run.retry_count)
 
     @staticmethod
-    def _checkpoint(db: Session, run_id: uuid.UUID) -> None:
-        run = db.scalar(select(AgentRun).where(AgentRun.id == run_id).with_for_update().execution_options(populate_existing=True))
-        if not run or run.status == "cancelled":
-            raise AgentCancelled("agent_cancelled")
-        authorized = db.scalar(select(User.id).join(Membership, Membership.user_id == User.id).join(Tenant, Tenant.id == User.tenant_id).where(
-            User.id == run.user_id, User.tenant_id == run.tenant_id, User.is_active.is_(True),
-            Tenant.is_active.is_(True), Membership.tenant_id == run.tenant_id,
-            Membership.status == "active", Membership.role.in_([UserRole.owner, UserRole.admin, UserRole.member]),
-        ))
-        if not authorized:
-            raise VerificationFailed("agent_requester_no_longer_authorized")
+    def _checkpoint(db: Session, run_id: uuid.UUID, *, check_authorization: bool = True) -> None:
+        with db.no_autoflush:
+            owned = db.execute(
+                select(
+                    AgentRun.status,
+                    AgentRun.lease_token,
+                    AgentRun.lease_expires_at,
+                    AgentRun.user_id,
+                    AgentRun.tenant_id,
+                )
+                .where(AgentRun.id == run_id)
+                .with_for_update()
+            ).one_or_none()
+            if not owned or owned.status == "cancelled":
+                raise AgentCancelled("agent_cancelled")
+            expected = db.info.get("agent_lease_tokens", {}).get(run_id)
+            if (
+                not expected
+                or owned.lease_token != expected
+                or owned.status not in {"planning", "running"}
+                or not owned.lease_expires_at
+                or owned.lease_expires_at <= datetime.now(UTC)
+            ):
+                raise AgentLeaseLost("agent_lease_lost")
+            if not check_authorization:
+                return
+            authorized = db.scalar(
+                select(User.id)
+                .join(Membership, Membership.user_id == User.id)
+                .join(Tenant, Tenant.id == User.tenant_id)
+                .where(
+                    User.id == owned.user_id,
+                    User.tenant_id == owned.tenant_id,
+                    User.is_active.is_(True),
+                    Tenant.is_active.is_(True),
+                    Membership.tenant_id == owned.tenant_id,
+                    Membership.status == "active",
+                    Membership.role.in_([UserRole.owner, UserRole.admin, UserRole.member]),
+                )
+            )
+            if not authorized:
+                raise VerificationFailed("agent_requester_no_longer_authorized")
 
     def _terminal_failure(
         self,
@@ -410,13 +478,18 @@ class AgentHarness:
         run.error_code = code
         run.error_json = {"message": safe_message}
         run.finished_at = finished
+        run.lease_token = None
         run.lease_owner = None
         run.lease_expires_at = None
         workflow = self._workflow_run(db, run)
         workflow.status = "failed"
         workflow.error_code = code
         workflow.finished_at = finished
-        task = db.scalar(select(Task).where(Task.id == run.task_id, Task.tenant_id == run.tenant_id)) if run.task_id else None
+        task = (
+            db.scalar(select(Task).where(Task.id == run.task_id, Task.tenant_id == run.tenant_id))
+            if run.task_id
+            else None
+        )
         if task:
             task.status = "failed"
             task.failure_reason = code
