@@ -731,6 +731,15 @@ class ApplicationArtifact(Base, TimestampMixin, TenantOwnedMixin):
 
 class ApplicationComment(Base, TenantOwnedMixin):
     __tablename__ = "application_comments"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id",
+            "application_id",
+            "client_request_id",
+            name="uq_application_comment_request",
+        ),
+    )
+    client_request_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     application_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("applications.id", ondelete="CASCADE"), index=True
@@ -739,7 +748,9 @@ class ApplicationComment(Base, TenantOwnedMixin):
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
     )
     artifact_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("application_artifacts.id", ondelete="RESTRICT"), nullable=True
+        UUID(as_uuid=True),
+        ForeignKey("application_artifacts.id", ondelete="RESTRICT"),
+        nullable=True,
     )
     proposed_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     resolution_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
@@ -877,9 +888,7 @@ class EvalDataset(Base, TimestampMixin):
 
 class EvalDatasetVersion(Base):
     __tablename__ = "eval_dataset_versions"
-    __table_args__ = (
-        UniqueConstraint("dataset_id", "version", name="uq_eval_dataset_version"),
-    )
+    __table_args__ = (UniqueConstraint("dataset_id", "version", name="uq_eval_dataset_version"),)
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     dataset_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("eval_datasets.id", ondelete="CASCADE"), index=True
@@ -1617,7 +1626,9 @@ class Milestone(Base, TimestampMixin, TenantOwnedMixin):
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
     )
     due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    status: Mapped[str] = mapped_column(String(40), default="todo", index=True)  # todo/doing/done/blocked
+    status: Mapped[str] = mapped_column(
+        String(40), default="todo", index=True
+    )  # todo/doing/done/blocked
     completion_note: Mapped[str | None] = mapped_column(Text)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
@@ -1666,12 +1677,18 @@ class NotificationDelivery(Base, TenantOwnedMixin):
 
     __tablename__ = "notification_deliveries"
     __table_args__ = (
-        UniqueConstraint("notification_id", "recipient_user_id", name="uq_notification_delivery_recipient"),
+        UniqueConstraint(
+            "notification_id", "recipient_user_id", name="uq_notification_delivery_recipient"
+        ),
         Index("ix_notification_delivery_claim", "status", "next_attempt_at"),
     )
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    notification_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("notifications.id", ondelete="CASCADE"))
-    recipient_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"))
+    notification_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("notifications.id", ondelete="CASCADE")
+    )
+    recipient_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE")
+    )
     recipient_email: Mapped[str] = mapped_column(String(320))
     payload_json: Mapped[dict] = mapped_column(JSON)
     status: Mapped[str] = mapped_column(String(30), default="pending")

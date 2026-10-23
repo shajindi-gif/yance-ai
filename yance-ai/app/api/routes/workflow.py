@@ -1049,9 +1049,41 @@ def create_application_comment(
     principal: Principal = Depends(write_principal),
     db: Session = Depends(get_db),
 ):
+    db.execute(
+        select(Application.id)
+        .where(
+            Application.id == application_id,
+            Application.tenant_id == principal.tenant_id,
+        )
+        .with_for_update()
+    )
     application = require_tenant_resource(
         db, Application, application_id, principal.tenant_id, "Application"
     )
+    if payload.client_request_id:
+        existing = db.scalar(
+            select(ApplicationComment).where(
+                ApplicationComment.tenant_id == principal.tenant_id,
+                ApplicationComment.application_id == application.id,
+                ApplicationComment.client_request_id == payload.client_request_id,
+            )
+        )
+        if existing:
+            if (
+                existing.user_id,
+                existing.body,
+                existing.artifact_id,
+                existing.proposed_summary,
+            ) != (
+                principal.user.id,
+                payload.body.strip(),
+                payload.artifact_id,
+                payload.proposed_summary,
+            ):
+                raise HTTPException(
+                    status_code=409, detail="Submission identifier reused with different content"
+                )
+            return _comment_result(existing)
     if payload.artifact_id is not None:
         artifact = db.scalar(
             select(ApplicationArtifact.id).where(
@@ -1078,6 +1110,7 @@ def create_application_comment(
         body=body,
         artifact_id=payload.artifact_id,
         proposed_summary=payload.proposed_summary,
+        client_request_id=payload.client_request_id,
     )
     db.add(comment)
     db.flush()
@@ -1096,6 +1129,10 @@ def create_application_comment(
     )
     db.commit()
     db.refresh(comment)
+    return _comment_result(comment)
+
+
+def _comment_result(comment: ApplicationComment) -> dict:
     return {
         "id": str(comment.id),
         "body": comment.body,

@@ -1003,6 +1003,18 @@
             "title": "Body",
             "type": "string"
           },
+          "client_request_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Request Id"
+          },
           "proposed_summary": {
             "anyOf": [
               {

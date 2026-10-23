@@ -5,6 +5,7 @@ test('synthetic UI contract: compare saved versions and bind a version comment',
   const comments: Array<{ id: string; artifact_id: string; body: string; created_at: string; proposed_summary?: string; resolution?: {decision: string; artifact_id: string} }> = [];
   const application = { id: 'synthetic', title: '合成项目', company_name: '合成企业', status: 'draft', review_status: 'pending', documents: [], requirements: [], activities: [], evidence: [], tasks: [], comments, generated: [artifact(3, '<script>window.injected=true</script>'), artifact(2, '旧摘要'), artifact(1, '初稿')], readiness: { blockers: [], can_submit_for_review: false } };
   const writes: string[] = [];
+  const submissionIds: string[] = [];
   await page.addInitScript(() => localStorage.setItem('yance_token', 'synthetic-contract-only'));
   await page.route('**/*', async route => {
     const url = new URL(route.request().url());
@@ -14,7 +15,10 @@ test('synthetic UI contract: compare saved versions and bind a version comment',
         writes.push(url.pathname);
         const payload = route.request().postDataJSON();
         if (url.pathname.endsWith('/decision')) { comments[0].resolution = {decision: payload.decision, artifact_id: 'accepted-draft'}; return route.fulfill({json: comments[0].resolution}); }
+        submissionIds.push(payload.client_request_id);
+        if (comments.length) return route.fulfill({json: comments[0]});
         comments.push({proposed_summary: payload.proposed_summary, id: 'comment-1', artifact_id: payload.artifact_id, body: payload.body, created_at: '2026-10-23T00:00:00Z' });
+        return route.abort('failed');
       }
       const data = url.pathname.includes('/applications/') ? application : url.pathname.includes('/documents') ? [] : { id: 'synthetic', full_name: '合成用户', role: 'owner' };
       return route.fulfill({ json: data });
@@ -39,9 +43,15 @@ test('synthetic UI contract: compare saved versions and bind a version comment',
   await page.getByRole('textbox', { name: '建议替换摘要（可选）' }).fill('人工建议摘要');
   await page.getByRole('textbox', { name: '添加协作评论' }).fill('复核初稿证据');
   await page.getByRole('button', { name: '发送', exact: true }).click();
+  await expect(page.getByRole('button', { name: '发送', exact: true })).toBeEnabled();
+  await expect(page.getByRole('textbox', { name: '添加协作评论' })).toHaveValue('复核初稿证据');
+  await page.getByRole('button', { name: '发送', exact: true }).click();
   await expect(page.getByText('工作区成员 · 工作稿 v1', { exact: true })).toBeVisible();
   await expect(page.getByText('复核初稿证据', { exact: true })).toBeVisible();
-  expect(writes).toEqual(['/api/v1/applications/synthetic/comments']);
+  expect(writes).toEqual(['/api/v1/applications/synthetic/comments', '/api/v1/applications/synthetic/comments']);
+  expect(submissionIds[0]).toMatch(/^[0-9a-f-]{36}$/);
+  expect(submissionIds[1]).toEqual(submissionIds[0]);
+  expect(comments).toHaveLength(1);
   await page.getByRole('button', {name: '接受摘要建议', exact: true}).click();
   await expect(page.getByText('已接受并生成新稿，仍须人工复核', {exact: true})).toBeVisible();
 });

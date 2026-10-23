@@ -1483,9 +1483,9 @@ class ApiClient {
     });
   }
 
-  async addApplicationComment(applicationId: string, body: string, artifactId?: string, proposedSummary?: string): Promise<void> {
+  async addApplicationComment(applicationId: string, body: string, artifactId?: string, proposedSummary?: string, clientRequestId?: string): Promise<void> {
     await this.request(`/applications/${encodeURIComponent(applicationId)}/comments`, {
-      method: 'POST', body: JSON.stringify({ body, artifact_id: artifactId, proposed_summary: proposedSummary }),
+      method: 'POST', body: JSON.stringify({ body, artifact_id: artifactId, proposed_summary: proposedSummary, client_request_id: clientRequestId }),
     });
   }
 
