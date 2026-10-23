@@ -783,6 +783,7 @@ def get_application(
             {
                 "id": str(item.id),
                 "user_id": str(item.user_id) if item.user_id else None,
+                "artifact_id": str(item.artifact_id) if item.artifact_id else None,
                 "body": item.body,
                 "created_at": item.created_at.isoformat(),
             }
@@ -1049,6 +1050,16 @@ def create_application_comment(
     application = require_tenant_resource(
         db, Application, application_id, principal.tenant_id, "Application"
     )
+    if payload.artifact_id is not None:
+        artifact = db.scalar(
+            select(ApplicationArtifact.id).where(
+                ApplicationArtifact.id == payload.artifact_id,
+                ApplicationArtifact.application_id == application.id,
+                ApplicationArtifact.tenant_id == principal.tenant_id,
+            )
+        )
+        if artifact is None:
+            raise HTTPException(status_code=404, detail="Artifact not found")
     body = payload.body.strip()
     if not body:
         raise HTTPException(status_code=422, detail="Comment cannot be blank")
@@ -1057,8 +1068,10 @@ def create_application_comment(
         application_id=application.id,
         user_id=principal.user.id,
         body=body,
+        artifact_id=payload.artifact_id,
     )
     db.add(comment)
+    db.flush()
     db.add(
         ApplicationActivity(
             tenant_id=principal.tenant_id,
@@ -1066,12 +1079,20 @@ def create_application_comment(
             actor_user_id=principal.user.id,
             action="comment_added",
             summary="新增申报协作评论",
-            metadata_json={"comment_id": str(comment.id)},
+            metadata_json={
+                "comment_id": str(comment.id),
+                "artifact_id": str(comment.artifact_id) if comment.artifact_id else None,
+            },
         )
     )
     db.commit()
     db.refresh(comment)
-    return {"id": str(comment.id), "body": comment.body, "created_at": comment.created_at}
+    return {
+        "id": str(comment.id),
+        "body": comment.body,
+        "artifact_id": str(comment.artifact_id) if comment.artifact_id else None,
+        "created_at": comment.created_at,
+    }
 
 
 def _artifact_out(item: ApplicationArtifact) -> dict:

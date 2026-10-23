@@ -630,6 +630,7 @@ export interface ApplicationDetail extends ApplicationSummary {
     current_stage: string | null;
   }>;
   comments: Array<{
+    artifact_id?: string | null;
     id: string;
     user_id: string | null;
     body: string;
@@ -1480,9 +1481,9 @@ class ApiClient {
     });
   }
 
-  async addApplicationComment(applicationId: string, body: string): Promise<void> {
+  async addApplicationComment(applicationId: string, body: string, artifactId?: string): Promise<void> {
     await this.request(`/applications/${encodeURIComponent(applicationId)}/comments`, {
-      method: 'POST', body: JSON.stringify({ body }),
+      method: 'POST', body: JSON.stringify({ body, artifact_id: artifactId }),
     });
   }
 

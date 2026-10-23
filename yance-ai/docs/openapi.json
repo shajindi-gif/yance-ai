@@ -985,6 +985,18 @@
       },
       "ApplicationCommentCreate": {
         "properties": {
+          "artifact_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Id"
+          },
           "body": {
             "maxLength": 4000,
             "minLength": 1,
