@@ -126,9 +126,31 @@ def main():
             },
         )
         assert a.status_code == 201, a.text
+        from app.core.security import create_access_token
+        from app.models.models import Membership, User
+
+        with SessionLocal() as db:
+            viewer = User(
+                tenant_id=tenant,
+                email=f"viewer-{uuid.uuid4().hex}@example.com",
+                full_name="Synthetic viewer",
+                password_hash="not-used",
+                role="owner",
+            )
+            db.add(viewer)
+            db.flush()
+            db.add(Membership(tenant_id=tenant, user_id=viewer.id, role="viewer", status="active"))
+            db.commit()
+            viewer_token = create_access_token(
+                user_id=viewer.id, tenant_id=tenant, role="owner", auth_version=viewer.auth_version
+            )
         output.touch(mode=0o600, exist_ok=True)
         output.chmod(0o600)
-        output.write_text(json.dumps({"token": token, "application_id": a.json()["id"]}))
+        output.write_text(
+            json.dumps(
+                {"token": token, "viewer_token": viewer_token, "application_id": a.json()["id"]}
+            )
+        )
         print("Synthetic browser fixture ready")
 
 

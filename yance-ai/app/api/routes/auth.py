@@ -595,8 +595,8 @@ def password_reset_confirm(
 
 
 @router.get("/me", response_model=UserOut)
-def me(principal: Principal = Depends(get_principal)) -> User:
-    return principal.user
+def me(principal: Principal = Depends(get_principal)) -> UserOut:
+    return UserOut.model_validate(principal.user).model_copy(update={"role": principal.role})
 
 
 @router.post("/logout", status_code=204)

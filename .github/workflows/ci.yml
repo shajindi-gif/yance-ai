@@ -308,6 +308,8 @@ jobs:
         run: |
           python tests/seed_v2_browser.py "$RUNNER_TEMP/yance-v2-browser-fixture.json"
           echo "YANCE_V2_FIXTURE=$RUNNER_TEMP/yance-v2-browser-fixture.json" >> "$GITHUB_ENV"
+          python tests/seed_v2_browser.py "$RUNNER_TEMP/yance-roles-fixture.json"
+          echo "YANCE_ROLES_FIXTURE=$RUNNER_TEMP/yance-roles-fixture.json" >> "$GITHUB_ENV"
 
       - name: Install Chromium runtime
         working-directory: website
