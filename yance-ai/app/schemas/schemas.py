@@ -436,6 +436,7 @@ class ApplicationDocumentLinkCreate(BaseModel):
 
 
 class ApplicationCommentCreate(BaseModel):
+    proposed_summary: str | None = Field(default=None, min_length=2, max_length=5000)
     artifact_id: UUID | None = None
     body: str = Field(min_length=1, max_length=4000)
 

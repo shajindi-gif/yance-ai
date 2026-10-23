@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('synthetic UI contract: compare saved versions and bind a version comment', async ({ page }) => {
   const artifact = (version: number, summary: string) => ({ id: `draft-${version}`, version, title: '合成工作稿', status: 'draft', generation_method: 'synthetic', checksum_sha256: 'abc', content: { executive_summary: summary }, source_snapshot: { profile: version === 3 ? 'v2' : 'v1' } });
-  const comments: Array<{ id: string; artifact_id: string; body: string; created_at: string }> = [];
+  const comments: Array<{ id: string; artifact_id: string; body: string; created_at: string; proposed_summary?: string; resolution?: {decision: string; artifact_id: string} }> = [];
   const application = { id: 'synthetic', title: '合成项目', company_name: '合成企业', status: 'draft', review_status: 'pending', documents: [], requirements: [], activities: [], evidence: [], tasks: [], comments, generated: [artifact(3, '<script>window.injected=true</script>'), artifact(2, '旧摘要'), artifact(1, '初稿')], readiness: { blockers: [], can_submit_for_review: false } };
   const writes: string[] = [];
   await page.addInitScript(() => localStorage.setItem('yance_token', 'synthetic-contract-only'));
@@ -13,7 +13,8 @@ test('synthetic UI contract: compare saved versions and bind a version comment',
       if (route.request().method() !== 'GET') {
         writes.push(url.pathname);
         const payload = route.request().postDataJSON();
-        comments.push({ id: 'comment-1', artifact_id: payload.artifact_id, body: payload.body, created_at: '2026-10-23T00:00:00Z' });
+        if (url.pathname.endsWith('/decision')) { comments[0].resolution = {decision: payload.decision, artifact_id: 'accepted-draft'}; return route.fulfill({json: comments[0].resolution}); }
+        comments.push({proposed_summary: payload.proposed_summary, id: 'comment-1', artifact_id: payload.artifact_id, body: payload.body, created_at: '2026-10-23T00:00:00Z' });
       }
       const data = url.pathname.includes('/applications/') ? application : url.pathname.includes('/documents') ? [] : { id: 'synthetic', full_name: '合成用户', role: 'owner' };
       return route.fulfill({ json: data });
@@ -35,9 +36,12 @@ test('synthetic UI contract: compare saved versions and bind a version comment',
   expect(writes).toEqual([]);
   await page.getByRole('tab', { name: '动态', exact: true }).click();
   await page.getByRole('combobox', { name: '评论关联版本' }).selectOption('draft-1');
+  await page.getByRole('textbox', { name: '建议替换摘要（可选）' }).fill('人工建议摘要');
   await page.getByRole('textbox', { name: '添加协作评论' }).fill('复核初稿证据');
   await page.getByRole('button', { name: '发送', exact: true }).click();
   await expect(page.getByText('工作区成员 · 工作稿 v1', { exact: true })).toBeVisible();
   await expect(page.getByText('复核初稿证据', { exact: true })).toBeVisible();
   expect(writes).toEqual(['/api/v1/applications/synthetic/comments']);
+  await page.getByRole('button', {name: '接受摘要建议', exact: true}).click();
+  await expect(page.getByText('已接受并生成新稿，仍须人工复核', {exact: true})).toBeVisible();
 });

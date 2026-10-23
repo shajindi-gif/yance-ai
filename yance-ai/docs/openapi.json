@@ -1002,6 +1002,19 @@
             "minLength": 1,
             "title": "Body",
             "type": "string"
+          },
+          "proposed_summary": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "minLength": 2,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposed Summary"
           }
         },
         "required": [
@@ -5645,6 +5658,23 @@
         "title": "RevisionCreate",
         "type": "object"
       },
+      "SuggestionDecision": {
+        "properties": {
+          "decision": {
+            "enum": [
+              "accept",
+              "reject"
+            ],
+            "title": "Decision",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "title": "SuggestionDecision",
+        "type": "object"
+      },
       "TaskCreate": {
         "properties": {
           "company_id": {
@@ -8463,6 +8493,90 @@
           }
         ],
         "summary": "Create Application Comment",
+        "tags": [
+          "policy-scan",
+          "opportunity",
+          "application"
+        ]
+      }
+    },
+    "/api/v1/applications/{application_id}/comments/{comment_id}/decision": {
+      "post": {
+        "operationId": "decide_application_suggestion_api_v1_applications__application_id__comments__comment_id__decision_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "comment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Comment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestionDecision"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Decide Application Suggestion",
         "tags": [
           "policy-scan",
           "opportunity",

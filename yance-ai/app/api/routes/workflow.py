@@ -784,6 +784,8 @@ def get_application(
                 "id": str(item.id),
                 "user_id": str(item.user_id) if item.user_id else None,
                 "artifact_id": str(item.artifact_id) if item.artifact_id else None,
+                "proposed_summary": item.proposed_summary,
+                "resolution": item.resolution_json,
                 "body": item.body,
                 "created_at": item.created_at.isoformat(),
             }
@@ -1060,6 +1062,12 @@ def create_application_comment(
         )
         if artifact is None:
             raise HTTPException(status_code=404, detail="Artifact not found")
+    if payload.proposed_summary is not None and (
+        not payload.artifact_id or not payload.proposed_summary.strip()
+    ):
+        raise HTTPException(
+            status_code=422, detail="Suggestion requires a version and nonblank summary"
+        )
     body = payload.body.strip()
     if not body:
         raise HTTPException(status_code=422, detail="Comment cannot be blank")
@@ -1069,6 +1077,7 @@ def create_application_comment(
         user_id=principal.user.id,
         body=body,
         artifact_id=payload.artifact_id,
+        proposed_summary=payload.proposed_summary,
     )
     db.add(comment)
     db.flush()
@@ -1511,3 +1520,118 @@ def create_evidence_tasks(
         )
     db.commit()
     return {"created_requirement_ids": created}
+
+
+class SuggestionDecision(BaseModel):
+    decision: Literal["accept", "reject"]
+
+
+@router.post("/applications/{application_id}/comments/{comment_id}/decision")
+def decide_application_suggestion(
+    application_id: UUID,
+    comment_id: UUID,
+    payload: SuggestionDecision,
+    principal: Principal = Depends(write_principal),
+    db: Session = Depends(get_db),
+):
+    application = db.scalar(
+        select(Application)
+        .where(
+            Application.id == application_id,
+            Application.tenant_id == principal.tenant_id,
+        )
+        .with_for_update()
+    )
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+    comment = db.scalar(
+        select(ApplicationComment)
+        .where(
+            ApplicationComment.id == comment_id,
+            ApplicationComment.application_id == application.id,
+            ApplicationComment.tenant_id == principal.tenant_id,
+        )
+        .execution_options(populate_existing=True)
+    )
+    if not comment or comment.proposed_summary is None:
+        raise HTTPException(status_code=404, detail="Suggestion not found")
+    if comment.resolution_json:
+        if comment.resolution_json["decision"] != payload.decision:
+            raise HTTPException(status_code=409, detail="Suggestion already resolved")
+        return comment.resolution_json
+    result = {
+        "decision": payload.decision,
+        "actor_id": str(principal.user.id),
+        "at": datetime.now(UTC).isoformat(),
+        "artifact_id": None,
+    }
+    if payload.decision == "accept":
+        source = db.scalar(
+            select(ApplicationArtifact).where(
+                ApplicationArtifact.id == comment.artifact_id,
+                ApplicationArtifact.application_id == application.id,
+                ApplicationArtifact.tenant_id == principal.tenant_id,
+            )
+        )
+        latest = (
+            db.scalar(
+                select(func.max(ApplicationArtifact.version)).where(
+                    ApplicationArtifact.application_id == application.id,
+                    ApplicationArtifact.artifact_type == source.artifact_type,
+                )
+            )
+            if source
+            else None
+        )
+        if (
+            not source
+            or source.version != latest
+            or application.status not in {"draft", "preparing", "revision_requested"}
+            or not artifact_source_state(source, workspace_records(db, application))["current"]
+        ):
+            raise HTTPException(
+                status_code=409, detail="Suggestion version or sources changed; rebase and review"
+            )
+        try:
+            artifact = create_artifact(
+                db,
+                application,
+                user_id=principal.user.id,
+                title=source.title,
+                executive_summary=comment.proposed_summary,
+                revision_note=f"接受版本 v{source.version} 的人工摘要建议",
+            )
+            consume_usage(
+                db,
+                tenant_id=principal.tenant_id,
+                meter="generated_documents",
+                quantity=1,
+                idempotency_key=f"application_artifact:{artifact.id}",
+                user_id=principal.user.id,
+                resource_type="application_artifact",
+                resource_id=str(artifact.id),
+            )
+        except QuotaExceeded as exc:
+            db.rollback()
+            raise HTTPException(status_code=429, detail=exc.detail()) from exc
+        except ValueError as exc:
+            db.rollback()
+            raise HTTPException(
+                status_code=409, detail="Current evidence cannot produce a draft"
+            ) from exc
+        result["artifact_id"] = str(artifact.id)
+    comment.resolution_json = result
+    db.add(
+        ApplicationActivity(
+            tenant_id=principal.tenant_id,
+            application_id=application.id,
+            actor_user_id=principal.user.id,
+            action="suggestion_resolved",
+            summary="接受摘要建议并生成新工作稿"
+            if payload.decision == "accept"
+            else "拒绝摘要建议",
+            metadata_json={"comment_id": str(comment.id), **result},
+        )
+    )
+    db.commit()
+    return result

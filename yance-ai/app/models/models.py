@@ -741,6 +741,8 @@ class ApplicationComment(Base, TenantOwnedMixin):
     artifact_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("application_artifacts.id", ondelete="RESTRICT"), nullable=True
     )
+    proposed_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    resolution_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     body: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 

@@ -630,6 +630,8 @@ export interface ApplicationDetail extends ApplicationSummary {
     current_stage: string | null;
   }>;
   comments: Array<{
+    proposed_summary?: string | null;
+    resolution?: { decision: "accept" | "reject"; artifact_id: string | null } | null;
     artifact_id?: string | null;
     id: string;
     user_id: string | null;
@@ -1481,10 +1483,14 @@ class ApiClient {
     });
   }
 
-  async addApplicationComment(applicationId: string, body: string, artifactId?: string): Promise<void> {
+  async addApplicationComment(applicationId: string, body: string, artifactId?: string, proposedSummary?: string): Promise<void> {
     await this.request(`/applications/${encodeURIComponent(applicationId)}/comments`, {
-      method: 'POST', body: JSON.stringify({ body, artifact_id: artifactId }),
+      method: 'POST', body: JSON.stringify({ body, artifact_id: artifactId, proposed_summary: proposedSummary }),
     });
+  }
+
+  async decideSuggestion(applicationId: string, commentId: string, decision: 'accept' | 'reject'): Promise<void> {
+    await this.request(`/applications/${encodeURIComponent(applicationId)}/comments/${encodeURIComponent(commentId)}/decision`, { method: 'POST', body: JSON.stringify({ decision }) });
   }
 
   async createEvidenceTasks(applicationId: string): Promise<{ created_requirement_ids: string[] }> {
