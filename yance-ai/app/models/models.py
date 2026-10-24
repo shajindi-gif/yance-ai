@@ -1699,3 +1699,17 @@ class NotificationDelivery(Base, TenantOwnedMixin):
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     error_code: Mapped[str | None] = mapped_column(String(80))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class LLMInvocation(Base, TenantOwnedMixin):
+    __tablename__ = "llm_invocations"
+    __table_args__ = (Index("ix_llm_invocations_tenant_created", "tenant_id", "created_at"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
+    provider: Mapped[str] = mapped_column(String(40))
+    model: Mapped[str] = mapped_column(String(160))
+    reserved_output_tokens: Mapped[int]
+    charged_output_tokens: Mapped[int]
+    status: Mapped[str] = mapped_column(String(30))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

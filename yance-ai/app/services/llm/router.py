@@ -29,4 +29,17 @@ class LLMRouter:
         selected = provider or settings.llm_default_provider
         if selected not in self.providers:
             raise ValueError(f"Unknown LLM provider: {selected}")
-        return await self.providers[selected].complete(request)
+        if selected == "mock":
+            return await self.providers[selected].complete(request)
+        from dataclasses import replace
+
+        from app.services.llm.budget import reserve, settle
+
+        invocation, maximum = reserve(selected, request)
+        try:
+            response = await self.providers[selected].complete(replace(request, max_tokens=maximum))
+        except BaseException:
+            settle(invocation)
+            raise
+        settle(invocation, response)
+        return response

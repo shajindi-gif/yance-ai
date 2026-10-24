@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -137,6 +137,10 @@ class Settings(BaseSettings):
     agent_log_prompts: bool = False
     agent_worker_poll_seconds: float = 1.0
     agent_lease_seconds: int = 180
+    llm_daily_call_limit: int = Field(default=100, ge=1)
+    llm_daily_output_token_limit: int = Field(default=60000, ge=1)
+    llm_max_output_tokens: int = Field(default=6000, ge=1)
+    llm_max_input_bytes: int = Field(default=64000, ge=1)
     agent_max_retries: int = 2
     agent_run_timeout_seconds: float = 120.0
     trusted_proxy_count: int = 1
