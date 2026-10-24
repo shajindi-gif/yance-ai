@@ -128,6 +128,8 @@ def _project(client):
     )
     assert generated.status_code == 200, generated.text
     artifact = generated.json()["artifact"]
+    assert "客户本人或其授权团队成员" in artifact["content"]["disclaimer"]
+    assert "衍策不提供人工业务审核" in artifact["content"]["disclaimer"]
     comment = client.post(
         f"/api/v1/applications/{application_id}/comments",
         headers=headers,

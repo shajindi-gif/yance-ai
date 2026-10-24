@@ -241,7 +241,7 @@ def build_content(
         "schema_version": "application-brief-v1",
         "title": title or f"{application.title} — 申报工作稿",
         "company_name": company.name if company else "",
-        "disclaimer": "本文件为证据型工作稿，正式提交前必须由授权人员复核。",
+        "disclaimer": "本文件为证据型工作稿，企业资料由客户提供；正式使用或提交前须由客户本人或其授权团队成员核对原文、企业事实和材料。客户确认不代表政府认定或获批，衍策不提供人工业务审核。",
         "executive_summary": summary,
         "eligibility": {
             "status": status,

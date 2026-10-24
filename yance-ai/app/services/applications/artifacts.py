@@ -62,6 +62,8 @@ def _plain_rows(content: dict[str, Any]) -> list[tuple[str, str, str, str]]:
         )
     if content.get("revision_note"):
         rows.append(("修订", "说明", str(content["revision_note"]), ""))
+    if content.get("disclaimer"):
+        rows.append(("使用说明", "客户复核", str(content["disclaimer"]), ""))
     return rows
 
 
@@ -168,7 +170,7 @@ def render_pdf(content: dict[str, Any]) -> bytes:
       th, td {{ border: 1px solid #d9e0e8; padding: 7px; vertical-align: top; }}
       th {{ background: #f3f6f9; text-align: left; }}
     </style></head><body><h1>{escape(str(content.get("title", "申报工作稿")))}</h1>
-    <p>生成方式：确定性证据模板；正式提交前必须人工复核。</p>
+    <p>生成方式：确定性证据模板；正式使用或提交前须由客户本人或其授权团队成员复核。衍策不提供人工业务审核。</p>
     <table><thead><tr><th>类别</th><th>项目</th><th>内容</th><th>状态</th></tr></thead><tbody>{rows}</tbody></table>
     </body></html>
     """

@@ -130,7 +130,8 @@ export default function ApplicationWorkspacePage() {
 
   return <AppShell>
     <PageHeader eyebrow="Application workspace" title={application.title} description={`${application.company_name} · 证据、材料、版本、任务与人工复核均保存在同一工作区。`} actions={<div className={flow.toolbarActions}><ButtonLink href="/applications" variant="secondary">返回列表</ButtonLink>{(NEXT_STATUS[application.status] || []).map((next) => <Button key={next.status} type="button" variant={next.status === "revision_requested" ? "secondary" : "primary"} onClick={() => transition(next.status)} disabled={!canEdit || saving || (next.status === "approved" && !canReview)}>{next.label}</Button>)}</div>} />
-    {!canEdit ? <InlineAlert tone="info">当前为只读成员：可查看资料与工作稿，无法编辑、评论或审批。</InlineAlert> : !canReview ? <InlineAlert tone="info">当前可编辑材料；批准和退回工作稿需要管理员复核。</InlineAlert> : null}
+    <p className={content.cardIntro}>企业资料由客户提供；请由客户本人或其授权成员核对政策原文、事实与材料。客户确认不代表政府认定或获批。</p>
+    {!canEdit ? <InlineAlert tone="info">当前为只读成员：可查看资料与工作稿，无法编辑、评论或审批。</InlineAlert> : !canReview ? <InlineAlert tone="info">当前可编辑材料；批准和退回工作稿需由客户团队管理员操作；衍策不提供人工业务审核。</InlineAlert> : null}
     {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}
     <div className={flow.metricGrid}>
       <div className={flow.metric}><strong>{application.progress}%</strong><span>工作区进度</span></div>
