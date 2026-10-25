@@ -22,7 +22,7 @@ nice -n 10 env NEXT_PUBLIC_API_URL=/api/v1 API_PROXY_TARGET=http://127.0.0.1:800
 # Old sessions can continue requesting their content-addressed assets.
 cp -an /opt/yance/releases/website-web-20261020-01/website/.next/static/. .next/static/
 # The independently restored fallback can also serve new cached chunks after rollback.
-cp -an .next/static/. /opt/yance/releases/website-restore-web-20261025-01/.next/static/
+cp -an .next/static/. /opt/yance/releases/website-rollback-web-20261025-01/website/.next/static/
 node --version
 node -e 'console.log("Next",require("next/package.json").version)'
 node -e 'const r=require("./public/release.json");if(r.release!=="web-20261025-01")process.exit(1);console.log(r)'

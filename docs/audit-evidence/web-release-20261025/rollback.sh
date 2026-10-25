@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 umask 077
-restore=/opt/yance/releases/website-restore-web-20261025-01
+restore=/opt/yance/releases/website-rollback-web-20261025-01/website
 release=/opt/yance/releases/website-web-20261025-01
 conf=/etc/systemd/system/yance-website.service.d/91-website-web-20261025-01.conf
 [ -f "$restore/.next/BUILD_ID" ]
+[ "$(node -p 'require(process.argv[1]).version' "$restore/node_modules/next/package.json")" = 16.4.3 ]
 cat > "$conf.tmp" <<CONFIG
 [Service]
 WorkingDirectory=$restore
