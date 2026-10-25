@@ -8,6 +8,7 @@ export interface AuthConfig {
   logout_all_devices_enabled?: boolean;
   agent_cancellation_enabled?: boolean;
   district_profile_enabled?: boolean;
+  application_workspace_revision?: number;
 }
 
 export interface LoginResponse {

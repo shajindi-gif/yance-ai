@@ -42,7 +42,7 @@ export default function HomePage() {
       <figure className={styles.productShot}>
         <div className={styles.shotBar}><span>衍策 / 项目工作台</span><span>隔离环境 · 合成数据示例</span></div>
         <Image src="/product/evidence-workspace.png" alt="隔离合成项目的真实资格矩阵界面，展示政策条件、企业事实、判断与原文证据" width={1440} height={1000} sizes="(max-width: 700px) 100vw, 1160px" />
-        <figcaption>实际产品界面，使用合成企业和合成政策，不代表真实资助项目或客户结果。新版界面须发布后可用。</figcaption>
+        <figcaption>实际产品界面，使用合成企业和合成政策，不代表真实资助项目或客户结果。部分证据与协作能力需后台升级后启用，以工作区提示为准。</figcaption>
       </figure>
       <div className={styles.featureRows}>{[
         ['证据先行', '看见依据，也看见不足', '条件与事实并列阅读；缺少原文、事实不全或来源变化时，保留提醒。'],

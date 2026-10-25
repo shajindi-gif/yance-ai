@@ -1,0 +1,4 @@
+{"backup_restored": true, "regular_files": 14162, "excluded": ".next/cache; symlink targets not hashed"}
+6d52070a6aca9ed569fa1384b7b19d1bcd447070a26bf006783fc898ef9996da  /opt/yance/backups/website-web-20261025-01/website-before.tar.gz
+backup=/opt/yance/backups/website-web-20261025-01
+restore=/opt/yance/releases/website-restore-web-20261025-01

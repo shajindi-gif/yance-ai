@@ -308,6 +308,7 @@ def auth_config() -> dict:
         "logout_all_devices_enabled": True,
         "agent_cancellation_enabled": True,
         "district_profile_enabled": True,
+        "application_workspace_revision": 2,
     }
 
 

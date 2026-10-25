@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test('synthetic UI contract: compare saved versions and bind a version comment', async ({ page }) => {
   const artifact = (version: number, summary: string) => ({ id: `draft-${version}`, version, title: '合成工作稿', status: 'draft', generation_method: 'synthetic', checksum_sha256: 'abc', content: { executive_summary: summary }, source_snapshot: { profile: version === 3 ? 'v2' : 'v1' } });
   const comments: Array<{ id: string; artifact_id: string; body: string; created_at: string; proposed_summary?: string; resolution?: {decision: string; artifact_id: string} }> = [];
-  const application = { id: 'synthetic', title: '合成项目', company_name: '合成企业', status: 'draft', review_status: 'pending', documents: [], requirements: [], activities: [], evidence: [], tasks: [], comments, generated: [artifact(3, '<script>window.injected=true</script>'), artifact(2, '旧摘要'), artifact(1, '初稿')], readiness: { blockers: [], can_submit_for_review: false } };
+  const application = { evidence_matrix:{rows:[],context_issues:[],missing_information:[]}, id: 'synthetic', title: '合成项目', company_name: '合成企业', status: 'draft', review_status: 'pending', documents: [], requirements: [], activities: [], evidence: [], tasks: [], comments, generated: [artifact(3, '<script>window.injected=true</script>'), artifact(2, '旧摘要'), artifact(1, '初稿')], readiness: { blockers: [], can_submit_for_review: false } };
   const writes: string[] = [];
   const submissionIds: string[] = [];
   await page.addInitScript(() => localStorage.setItem('yance_token', 'synthetic-contract-only'));
@@ -11,6 +11,7 @@ test('synthetic UI contract: compare saved versions and bind a version comment',
     const url = new URL(route.request().url());
     if (!['localhost', '127.0.0.1'].includes(url.hostname)) return route.abort();
     if (url.pathname.startsWith('/api/')) {
+      if (url.pathname.endsWith('/auth/config')) return route.fulfill({json:{email_login_enabled:false,application_workspace_revision:2}});
       if (route.request().method() !== 'GET') {
         writes.push(url.pathname);
         const payload = route.request().postDataJSON();

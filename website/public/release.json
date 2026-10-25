@@ -1,5 +1,6 @@
 {
-  "release": "web-20261020-01",
+  "release": "web-20261025-01",
   "scope": "website",
-  "apiCompatibility": "capability-negotiated"
+  "compatibility": "legacy-workspace-supported",
+  "backendUpgradeIncluded": false
 }
