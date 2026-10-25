@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useNavigationDrawer } from '@/lib/use-navigation-drawer';
 
 /* 扁平导航：每个入口对应一个真实可访问的页面，无占位项、无路线图项。 */
 const NAV_LINKS = [
@@ -15,30 +16,14 @@ const NAV_LINKS = [
 ];
 
 export default function Header() {
-  const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    document.body.style.overflow = mobileOpen ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [mobileOpen]);
+  const { panel } = useNavigationDrawer(mobileOpen, () => setMobileOpen(false), 1024);
 
   const closeAll = () => setMobileOpen(false);
 
   return (
     <>
-      <header className={`header ${scrolled ? 'scrolled' : ''}`}>
+      <header className="header">
         <div className="header-inner">
           <Link href="/" className="header-logo" onClick={closeAll}>
             <Image
@@ -73,6 +58,7 @@ export default function Header() {
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label={mobileOpen ? '关闭菜单' : '打开菜单'}
               aria-expanded={mobileOpen}
+              aria-controls="marketing-mobile-navigation"
             >
               <span></span>
               <span></span>
@@ -89,9 +75,13 @@ export default function Header() {
       />
 
       <nav
+        ref={panel}
+        id="marketing-mobile-navigation"
+        hidden={!mobileOpen}
         className={`mobile-menu ${mobileOpen ? 'open' : ''}`}
         aria-label="移动端导航"
       >
+        <button type="button" data-drawer-close className="drawer-close" onClick={closeAll}>关闭菜单 ×</button>
         {NAV_LINKS.map((item) => (
           <Link key={item.href} href={item.href} onClick={closeAll}>
             {item.label}

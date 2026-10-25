@@ -1,7 +1,7 @@
 .panel { padding: 22px; border: 1px solid #dce4ed; border-radius: 12px; background: #fff; color: #253247; }
 .heading { display: flex; justify-content: space-between; align-items: start; gap: 16px; margin-bottom: 18px; }
 .heading h2 { margin: 0 0 8px; }
-.heading p, .matrix small { color: #667085; font-size: 12px; line-height: 1.7; }
+.heading p, .matrix small { color: var(--muted); font-size: 13px; line-height: 1.7; }
 .matrix { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 13px; text-align: left; }
 .matrix caption { text-align: left; margin: 12px 0; font-weight: 600; }
 .matrix th, .matrix td { padding: 14px; border-bottom: 1px solid #e4eaf1; vertical-align: top; overflow-wrap: anywhere; }
@@ -15,3 +15,12 @@
 
 .heading h2 { font-size: 22px; line-height: 1.4; }
 .panel h3 { font-size: 16px; margin: 20px 0 10px; }
+.panel { border-color:var(--line); border-radius:8px; }
+.heading h2 { font-size:20px; font-weight:550; }
+.heading p { max-width:600px; color:var(--muted); }
+.matrix thead { background:#edf1ed; }
+.matrix th,.matrix td { padding:18px 14px; line-height:1.7; border-color:var(--line); }
+.matrix th:first-child { width:23%; }
+.matrix small { font-size:12px; }
+.matrix summary { min-height:38px; color:var(--teal-dark); }
+.panel ul { padding-left:20px; color:var(--muted); font-size:13px; line-height:1.9; }

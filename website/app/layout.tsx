@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./design-system.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SmartAgent from "@/components/SmartAgent";
@@ -7,7 +8,7 @@ import SiteChrome from "@/components/SiteChrome";
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://yance.ai'),
-  title: "衍策引擎AI — 企业政策匹配、申报辅助与产业研究平台",
+  title: "衍策引擎AI — 企业政策与资源证据工作台",
   description:
     "根据企业所在地区、行业与经营情况，查找可能适用的扶持政策，核对申报条件，整理所需材料，生成可追溯的初筛报告。",
   keywords:
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
     icon: '/favicon.png',
   },
   openGraph: {
-    title: "衍策引擎AI — 企业政策匹配、申报辅助与产业研究平台",
+    title: "衍策引擎AI — 企业政策与资源证据工作台",
     description: "帮助科技企业更快找到政策、资金、资源和增长路径。",
     url: "https://yance.ai",
     siteName: "衍策引擎AI",

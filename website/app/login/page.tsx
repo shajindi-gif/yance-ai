@@ -221,7 +221,7 @@ function LoginContent() {
           <div className="yc-auth-header">
             <img src="/logo.png" alt="衍策引擎AI" className="yc-auth-logo" />
             <h1>衍策引擎AI</h1>
-            <p className="yc-auth-subtitle">新质生产力企业的政策匹配与申报 Agent</p>
+            <p className="yc-auth-subtitle">新质生产力企业的政策与资源证据工作台</p>
           </div>
 
           <div className="yc-auth-tabs">
@@ -229,8 +229,8 @@ function LoginContent() {
             <button className={`yc-auth-tab ${!isLogin ? 'active' : ''}`} onClick={() => { setIsLogin(false); setError(''); setNotice(''); }}>免费注册</button>
           </div>
 
-          {error && <div className="yc-auth-error">{error}</div>}
-          {notice && <div className="yc-auth-notice">{notice}</div>}
+          {error && <div role="alert" className="yc-auth-error">{error}</div>}
+          {notice && <div role="status" className="yc-auth-notice">{notice}</div>}
 
           {isLogin ? (
             <>
@@ -256,12 +256,12 @@ function LoginContent() {
               {loginMode === 'password' && !resetMode ? (
                 <form onSubmit={handleLogin} className="yc-auth-form">
                   <div className="yc-form-group">
-                    <label>邮箱</label>
-                    <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="your@company.com" required />
+                    <label htmlFor="auth-field-1">邮箱</label>
+                    <input id="auth-field-1" type="email" autoComplete="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="your@company.com" required />
                   </div>
                   <div className="yc-form-group">
-                    <label>密码</label>
-                    <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} placeholder="输入密码" required />
+                    <label htmlFor="auth-field-2">密码</label>
+                    <input id="auth-field-2" type="password" autoComplete="current-password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} placeholder="输入密码" required />
                   </div>
                   <button type="submit" className="yc-btn-primary yc-btn-full" disabled={loading}>
                     {loading ? '登录中...' : '登录'}
@@ -277,13 +277,13 @@ function LoginContent() {
               ) : loginMode === 'password' && resetMode ? (
                 <form onSubmit={handleResetSubmit} className="yc-auth-form">
                   <div className="yc-form-group">
-                    <label>注册邮箱</label>
-                    <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="your@company.com" required />
+                    <label htmlFor="auth-field-3">注册邮箱</label>
+                    <input id="auth-field-3" type="email" autoComplete="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="your@company.com" required />
                   </div>
                   <div className="yc-form-group">
-                    <label>重置验证码</label>
+                    <label htmlFor="auth-field-4">重置验证码</label>
                     <div className="yc-code-row">
-                      <input
+                      <input id="auth-field-4"
                         type="text"
                         inputMode="numeric"
                         maxLength={6}
@@ -303,12 +303,12 @@ function LoginContent() {
                     </div>
                   </div>
                   <div className="yc-form-group">
-                    <label>新密码 <span className="yc-required">*</span></label>
-                    <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="至少 12 位，含字母和数字" minLength={12} required />
+                    <label htmlFor="auth-field-5">新密码 <span className="yc-required">*</span></label>
+                    <input id="auth-field-5" type="password" autoComplete="new-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="至少 12 位，含字母和数字" minLength={12} required />
                   </div>
                   <div className="yc-form-group">
-                    <label>确认新密码 <span className="yc-required">*</span></label>
-                    <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="再次输入新密码" required />
+                    <label htmlFor="auth-field-6">确认新密码 <span className="yc-required">*</span></label>
+                    <input id="auth-field-6" type="password" autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="再次输入新密码" required />
                   </div>
                   <button
                     type="submit"
@@ -326,13 +326,13 @@ function LoginContent() {
               ) : loginMode === 'code' ? (
                 <form onSubmit={handleCodeLogin} className="yc-auth-form">
                   <div className="yc-form-group">
-                    <label>邮箱</label>
-                    <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="your@company.com" required />
+                    <label htmlFor="auth-field-7">邮箱</label>
+                    <input id="auth-field-7" type="email" autoComplete="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="your@company.com" required />
                   </div>
                   <div className="yc-form-group">
-                    <label>验证码</label>
+                    <label htmlFor="auth-field-8">验证码</label>
                     <div className="yc-code-row">
-                      <input
+                      <input id="auth-field-8"
                         type="text"
                         inputMode="numeric"
                         maxLength={6}
@@ -355,12 +355,12 @@ function LoginContent() {
                   {needsProfile && (
                     <>
                       <div className="yc-form-group">
-                        <label>您的姓名 <span className="yc-required">*</span></label>
-                        <input type="text" value={profileName} onChange={e => setProfileName(e.target.value)} placeholder="联系人姓名" required />
+                        <label htmlFor="auth-field-9">您的姓名 <span className="yc-required">*</span></label>
+                        <input id="auth-field-9" type="text" value={profileName} onChange={e => setProfileName(e.target.value)} placeholder="联系人姓名" required />
                       </div>
                       <div className="yc-form-group">
-                        <label>企业名称 <span className="yc-required">*</span></label>
-                        <input type="text" value={profileCompany} onChange={e => setProfileCompany(e.target.value)} placeholder="如：上海某某科技有限公司" required />
+                        <label htmlFor="auth-field-10">企业名称 <span className="yc-required">*</span></label>
+                        <input id="auth-field-10" type="text" value={profileCompany} onChange={e => setProfileCompany(e.target.value)} placeholder="如：上海某某科技有限公司" required />
                       </div>
                       <div className="yc-agree-group">
                         <label className="yc-agree-label">
@@ -390,13 +390,13 @@ function LoginContent() {
           ) : (
             <form onSubmit={handleRegister} className="yc-auth-form">
               <div className="yc-form-group">
-                <label>企业全称 <span className="yc-required">*</span></label>
-                <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="如：上海某某科技有限公司" required />
+                <label htmlFor="auth-field-11">企业全称 <span className="yc-required">*</span></label>
+                <input id="auth-field-11" type="text" value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="如：上海某某科技有限公司" required />
               </div>
               <div className="yc-form-row-2">
                 <div className="yc-form-group">
-                  <label>行业</label>
-                  <select value={industry} onChange={e => setIndustry(e.target.value)}>
+                  <label htmlFor="auth-field-12">行业</label>
+                  <select id="auth-field-12" value={industry} onChange={e => setIndustry(e.target.value)}>
                     <option value="">请选择（可选）</option>
                     <option value="人工智能">人工智能</option>
                     <option value="集成电路">集成电路 / 半导体</option>
@@ -411,25 +411,25 @@ function LoginContent() {
                   </select>
                 </div>
                 <div className="yc-form-group">
-                  <label>省份</label>
-                  <input type="text" value={province} onChange={e => setProvince(e.target.value)} placeholder="如：上海市" />
+                  <label htmlFor="auth-field-13">省份</label>
+                  <input id="auth-field-13" type="text" value={province} onChange={e => setProvince(e.target.value)} placeholder="如：上海市" />
                 </div>
               </div>
               <div className="yc-form-group">
-                <label>城市</label>
-                <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="如：徐汇区（可选）" />
+                <label htmlFor="auth-field-14">城市</label>
+                <input id="auth-field-14" type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="如：徐汇区（可选）" />
               </div>
               <div className="yc-form-group">
-                <label>联系人姓名 <span className="yc-required">*</span></label>
-                <input type="text" value={ownerName} onChange={e => setOwnerName(e.target.value)} placeholder="您的姓名" required />
+                <label htmlFor="auth-field-15">联系人姓名 <span className="yc-required">*</span></label>
+                <input id="auth-field-15" type="text" value={ownerName} onChange={e => setOwnerName(e.target.value)} placeholder="您的姓名" required />
               </div>
               <div className="yc-form-group">
-                <label>工作邮箱 <span className="yc-required">*</span></label>
-                <input type="email" value={ownerEmail} onChange={e => setOwnerEmail(e.target.value)} placeholder="your@company.com" required />
+                <label htmlFor="auth-field-16">工作邮箱 <span className="yc-required">*</span></label>
+                <input id="auth-field-16" type="email" autoComplete="email" value={ownerEmail} onChange={e => setOwnerEmail(e.target.value)} placeholder="your@company.com" required />
               </div>
               <div className="yc-form-group">
-                <label>密码 <span className="yc-required">*</span></label>
-                <input type="password" value={ownerPassword} onChange={e => setOwnerPassword(e.target.value)} placeholder="至少 12 位，含字母和数字" minLength={12} required />
+                <label htmlFor="auth-field-17">密码 <span className="yc-required">*</span></label>
+                <input id="auth-field-17" type="password" autoComplete="new-password" value={ownerPassword} onChange={e => setOwnerPassword(e.target.value)} placeholder="至少 12 位，含字母和数字" minLength={12} required />
               </div>
               <div className="yc-agree-group">
                 <label className="yc-agree-label">
@@ -458,9 +458,9 @@ function LoginContent() {
       </div>
 
       <style jsx>{`
-        .yc-auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0d1b2a 0%, #1b2d45 50%, #142842 100%); padding: 40px 20px; }
+        .yc-auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--paper); padding: 110px 20px 60px; }
         .yc-auth-container { width: 100%; max-width: 480px; }
-        .yc-auth-card { background: rgba(255, 255, 255, 0.98); border-radius: 20px; padding: 40px 36px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); }
+        .yc-auth-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 40px 36px; box-shadow: 0 8px 30px rgba(32,48,56,.04); }
         .yc-auth-header { text-align: center; margin-bottom: 28px; }
         .yc-auth-logo { width: 56px; height: 56px; margin-bottom: 12px; }
         .yc-auth-header h1 { font-size: 22px; font-weight: 700; color: #0d1b2a; margin: 0 0 6px; }
@@ -487,7 +487,7 @@ function LoginContent() {
         .yc-link-btn { background: none; border: none; color: #126a9a; font-size: 12px; cursor: pointer; padding: 0; text-decoration: underline; }
         .yc-link-btn:hover { color: #0d4f74; }
         .yc-btn-full { width: 100%; padding: 13px; font-size: 15px; margin-top: 4px; }
-        .yc-auth-hint { text-align: center; font-size: 12px; color: #94a3b8; margin: 8px 0 0; }
+        .yc-auth-hint { text-align: center; font-size: 12px; color: var(--muted); margin: 8px 0 0; }
         .yc-agree-group { margin-top: 2px; }
         .yc-agree-label { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: #374151; cursor: pointer; line-height: 1.5; }
         .yc-agree-label input[type='checkbox'] { width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; cursor: pointer; accent-color: #126a9a; }

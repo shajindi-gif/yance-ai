@@ -1,0 +1,77 @@
+{
+  "environment": "Local Chromium; no CPU/network throttling; warm server; one sample per page/device; screenshot-time LCP/CLS observation",
+  "results": [
+    {
+      "name": "home",
+      "device": "desktop",
+      "response_start_ms": 10,
+      "dom_content_loaded_ms": 90,
+      "lcp": 100,
+      "cls": 0,
+      "horizontal_overflow": false
+    },
+    {
+      "name": "application",
+      "device": "desktop",
+      "response_start_ms": 11.299999952316284,
+      "dom_content_loaded_ms": 33.89999997615814,
+      "lcp": 124,
+      "cls": 0.0013169521604938271,
+      "horizontal_overflow": false
+    },
+    {
+      "name": "pricing",
+      "device": "desktop",
+      "response_start_ms": 2.899999976158142,
+      "dom_content_loaded_ms": 23.100000023841858,
+      "lcp": 32,
+      "cls": 0,
+      "horizontal_overflow": false
+    },
+    {
+      "name": "login",
+      "device": "desktop",
+      "response_start_ms": 2.799999952316284,
+      "dom_content_loaded_ms": 14.299999952316284,
+      "lcp": 64,
+      "cls": 0,
+      "horizontal_overflow": false
+    },
+    {
+      "name": "home",
+      "device": "mobile",
+      "response_start_ms": 2.899999976158142,
+      "dom_content_loaded_ms": 38.89999997615814,
+      "lcp": 44,
+      "cls": 0,
+      "horizontal_overflow": false
+    },
+    {
+      "name": "application",
+      "device": "mobile",
+      "response_start_ms": 12.899999976158142,
+      "dom_content_loaded_ms": 31.799999952316284,
+      "lcp": 116,
+      "cls": 0,
+      "horizontal_overflow": false
+    },
+    {
+      "name": "pricing",
+      "device": "mobile",
+      "response_start_ms": 2.5,
+      "dom_content_loaded_ms": 21.100000023841858,
+      "lcp": 24,
+      "cls": 0,
+      "horizontal_overflow": false
+    },
+    {
+      "name": "login",
+      "device": "mobile",
+      "response_start_ms": 2.5,
+      "dom_content_loaded_ms": 14.100000023841858,
+      "lcp": 56,
+      "cls": 0,
+      "horizontal_overflow": false
+    }
+  ]
+}

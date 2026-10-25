@@ -6,9 +6,9 @@
 
 .listCard {
   display: block;
-  border: 1px solid #dde3eb;
+  border: 1px solid var(--line);
   border-radius: 11px;
-  background: #ffffff;
+  background: var(--surface);
   padding: 17px 19px;
   color: inherit;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.025);
@@ -37,8 +37,8 @@
 
 .meta,
 .subtle {
-  color: #667085;
-  font-size: 11px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .meta {
@@ -59,7 +59,7 @@
 .progressFill {
   height: 100%;
   border-radius: inherit;
-  background: #2386b8;
+  background: var(--teal);
   transition: width 300ms ease;
 }
 
@@ -67,15 +67,15 @@
   display: flex;
   justify-content: space-between;
   margin-top: 5px;
-  color: #667085;
-  font-size: 10px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .tableSurface {
   overflow: hidden;
-  border: 1px solid #dde3eb;
+  border: 1px solid var(--line);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--surface);
 }
 
 .table {
@@ -85,11 +85,11 @@
 }
 
 .table th {
-  border-bottom: 1px solid #dde3eb;
-  background: #f8fafc;
+  border-bottom: 1px solid var(--line);
+  background: #f4f6f2;
   padding: 11px 14px;
-  color: #667085;
-  font-size: 10px;
+  color: var(--muted);
+  font-size: 13px;
   font-weight: 650;
   letter-spacing: 0.03em;
   text-align: left;
@@ -100,7 +100,7 @@
   border-bottom: 1px solid #eef1f5;
   padding: 13px 14px;
   color: #344054;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .table tbody tr:last-child td {
@@ -122,11 +122,11 @@
 .mono {
   color: #253247;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .amount {
-  color: #172033;
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
   font-weight: 650;
 }
@@ -150,8 +150,8 @@
 .sectionHeading p,
 .cardIntro {
   margin: 4px 0 0;
-  color: #667085;
-  font-size: 11px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .upsellGrid {
@@ -169,15 +169,15 @@
 
 .upsellCard p {
   margin: 7px 0 14px;
-  color: #667085;
-  font-size: 11px;
+  color: var(--muted);
+  font-size: 13px;
   line-height: 1.6;
 }
 
 .card {
-  border: 1px solid #dde3eb;
+  border: 1px solid var(--line);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--surface);
   padding: 20px;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.025);
 }
@@ -192,14 +192,14 @@
 
 .cardHeader h1 {
   margin: 0 0 4px;
-  color: #172033;
+  color: var(--ink);
   font-size: 19px;
   font-weight: 680;
 }
 
 .detailMeta {
-  color: #667085;
-  font-size: 11px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .detailMeta span + span::before {
@@ -220,7 +220,7 @@
   align-items: center;
   gap: 9px;
   color: #98a2b3;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .stageDone,
@@ -246,12 +246,12 @@
 
 .stageDone .stageDot {
   background: #079455;
-  color: #ffffff;
+  color: var(--surface);
 }
 
 .stageActive .stageDot {
   background: #0b78a8;
-  color: #ffffff;
+  color: var(--surface);
 }
 
 .deliverableRow,
@@ -274,7 +274,7 @@
 .nextAction strong {
   display: block;
   color: #253247;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 650;
 }
 
@@ -283,7 +283,7 @@
   display: block;
   margin-top: 3px;
   color: #596579;
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .actionRow {
@@ -295,7 +295,7 @@
 
 .nextAction {
   margin-top: 9px;
-  border: 1px solid #e4e9ef;
+  border: 1px solid var(--line);
   border-radius: 9px;
   background: #f9fafb;
   padding: 11px 12px;
@@ -305,7 +305,7 @@
   justify-content: flex-start;
   padding: 8px 0;
   color: #475467;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .activityStatus {
@@ -314,7 +314,7 @@
 
 .activityLatency {
   margin-left: auto;
-  color: #667085;
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
@@ -328,7 +328,7 @@
   display: block;
   margin-bottom: 6px;
   color: #344054;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 650;
 }
 
@@ -338,16 +338,16 @@
   resize: vertical;
   border: 1px solid #ccd5df;
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--surface);
   padding: 10px 11px;
   color: #253247;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.55;
 }
 
 .revisionForm textarea:focus {
-  border-color: #2386b8;
+  border-color: var(--teal);
   outline: 3px solid rgba(35, 134, 184, 0.12);
 }
 

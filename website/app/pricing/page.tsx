@@ -9,9 +9,11 @@ export default function PricingPage() {
   const [products, setProducts] = useState<ProductCatalogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true); setError('');
     api.getProducts()
       .then((data) => {
         if (!cancelled) setProducts(data);
@@ -25,7 +27,7 @@ export default function PricingPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [retry]);
 
   const handleCTA = (product: ProductCatalogItem) => {
     if (product.code === 'FREE_POLICY_MATCH') {
@@ -46,30 +48,30 @@ export default function PricingPage() {
         <div className="container">
           <span className="badge" style={{ background: 'rgba(14,165,233,0.2)', color: 'var(--teal)', marginBottom: '16px' }}>按次付费</span>
           <h1>按次购买，需要时再买</h1>
-          <p>无需订阅，无自动续费。免费注册即可体验政策匹配，深度交付物按次购买。</p>
+          <p>按当前产品目录选择所需服务。无需订阅，无自动续费；具体权益与支付渠道以购买页面为准。</p>
         </div>
       </section>
 
       <section className="section">
         <div className="container">
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>加载产品目录...</div>
+            <div role="status"><span className="yc-visually-hidden">加载产品目录...</span><div className="grid grid-4 pricing-loading" aria-hidden="true">{[0,1,2,3].map(item => <div className="pricing-card" key={item}><div className="pricing-placeholder" /><div className="pricing-placeholder" /><div className="pricing-placeholder" /></div>)}</div></div>
           ) : error ? (
-            <div role="alert" style={{ textAlign: 'center', padding: '60px 0', color: '#b91c1c' }}>{error}</div>
+            <div role="alert" style={{ textAlign: 'center', padding: '60px 0', color: '#b91c1c' }}><p>{error}</p><button type="button" className="btn btn-outline" onClick={() => setRetry(value => value + 1)}>重新加载产品目录</button></div>
           ) : products.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>
               当前没有已启用的产品。这里不会用静态价格代替真实服务端目录。
             </div>
           ) : (
-            <div className="grid grid-4" style={{ gap: '20px', alignItems: 'start' }}>
+            <div className="grid grid-4 pricing-catalogue">
               {products.map((product) => {
                 const isFeatured = product.code === 'POLICY_REPORT';
                 const isPurchasableHere = product.price === 0 || product.entitlement_type === 'report';
                 const displayedPrice = product.promotional_price ?? product.price;
                 return (
-                  <div key={product.code} className={`pricing-card${isFeatured ? ' pricing-card-featured' : ''}`} style={isFeatured ? { borderColor: '#f97316', borderWidth: '2px' } : {}}>
+                  <div key={product.code} className={`pricing-card${isFeatured ? ' pricing-card-featured' : ''}`} style={isFeatured ? { borderColor: 'var(--teal)' , borderWidth: '1px' } : {}}>
                     {isFeatured && (
-                      <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', padding: '4px 16px', background: '#f97316', color: '#fff', fontSize: '0.75rem', fontWeight: 600, borderRadius: '9999px', whiteSpace: 'nowrap' }}>推荐</div>
+                      <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', padding: '4px 16px', background: 'var(--teal)' , color: '#fff', fontSize: '0.75rem', fontWeight: 600, borderRadius: '9999px', whiteSpace: 'nowrap' }}>推荐</div>
                     )}
                     <div className="pricing-name">{product.name}</div>
                     <div className="pricing-desc">{product.description}</div>
@@ -88,16 +90,16 @@ export default function PricingPage() {
                     </div>
                     <div className="pricing-divider" />
                     <ul className="pricing-features">
-                      <li>订单价格由服务端产品目录校验</li>
-                      <li>购买权益绑定到当前企业或具体机会</li>
-                      <li>支付状态以支付渠道的服务端回调为准</li>
+                      <li>购买前核对产品、价格与权益</li>
+                      <li>交付物归属当前企业或具体机会</li>
+                      <li>付款状态可在订单中查询</li>
                     </ul>
                     <button
                       onClick={() => handleCTA(product)}
                       disabled={!isPurchasableHere}
                       className={`btn ${isFeatured ? '' : 'btn-outline'}`}
                       style={isFeatured
-                        ? { background: '#f97316', color: '#fff', borderColor: '#f97316', borderRadius: '12px', width: '100%', cursor: isPurchasableHere ? 'pointer' : 'not-allowed' }
+                        ? { background: 'var(--teal)' , color: '#fff', borderColor: 'var(--teal)' , borderRadius: '12px', width: '100%', cursor: isPurchasableHere ? 'pointer' : 'not-allowed' }
                         : { borderRadius: '12px', width: '100%', cursor: isPurchasableHere ? 'pointer' : 'not-allowed' }}
                     >
                       {displayedPrice === 0
@@ -162,7 +164,7 @@ export default function PricingPage() {
           <h2 className="cta-title">创建工作区，开始政策机会初筛</h2>
           <p className="cta-subtitle">免费注册即可体验政策匹配，无需信用卡。</p>
           <div className="cta-actions">
-            <button onClick={() => api.isAuthenticated() ? router.push('/dashboard') : router.push('/login?register=1')} className="btn btn-lg" style={{ background: '#f97316', color: '#fff', borderColor: '#f97316', borderRadius: '12px', cursor: 'pointer' }}>免费开始</button>
+            <button onClick={() => api.isAuthenticated() ? router.push('/dashboard') : router.push('/login?register=1')} className="btn btn-lg" style={{ background: 'var(--teal)' , color: '#fff', borderColor: 'var(--teal)' , borderRadius: '12px', cursor: 'pointer' }}>免费开始</button>
             <a href="mailto:yanceai@163.com" className="btn btn-outline-white btn-lg">企业定制咨询</a>
           </div>
         </div>

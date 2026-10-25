@@ -6,15 +6,15 @@
 }
 
 .metric {
-  border: 1px solid #dde3eb;
+  border: 1px solid var(--line);
   border-radius: 11px;
-  background: #ffffff;
+  background: var(--surface);
   padding: 16px;
 }
 
 .metric strong {
   display: block;
-  color: #172033;
+  color: var(--ink);
   font-size: 24px;
   font-variant-numeric: tabular-nums;
   font-weight: 680;
@@ -23,8 +23,8 @@
 .metric span {
   display: block;
   margin-top: 3px;
-  color: #667085;
-  font-size: 11px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .gridTwo {
@@ -54,7 +54,7 @@
 .field label,
 .fieldWide label {
   color: #344054;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 650;
 }
 
@@ -67,11 +67,11 @@
   min-height: 38px;
   border: 1px solid #ccd5df;
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--surface);
   padding: 8px 10px;
   color: #253247;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .fieldWide textarea {
@@ -85,13 +85,13 @@
 .fieldWide input:focus,
 .fieldWide textarea:focus,
 .toolbar select:focus {
-  border-color: #2386b8;
+  border-color: var(--teal);
   outline: 3px solid rgba(35, 134, 184, 0.12);
 }
 
 .helper {
-  color: #667085;
-  font-size: 10px;
+  color: var(--muted);
+  font-size: 13px;
   line-height: 1.5;
 }
 
@@ -120,20 +120,20 @@
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 18px;
-  border: 1px solid #dfe5ec;
+  border: 1px solid var(--line);
   border-radius: 10px;
-  background: #f8fafc;
+  background: #f4f6f2;
   padding: 13px 15px;
 }
 
 .summaryBar strong {
   color: #253247;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .summaryBar span {
-  color: #667085;
-  font-size: 11px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .progress {
@@ -149,7 +149,7 @@
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: #126a9a;
+  background: var(--teal);
 }
 
 .detailGrid {
@@ -170,15 +170,15 @@
 }
 
 .definitionList dt {
-  color: #667085;
-  font-size: 10px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .definitionList dd {
   margin: 4px 0 0;
   overflow-wrap: anywhere;
   color: #253247;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.5;
 }
 
@@ -212,13 +212,13 @@
 .criterion strong,
 .gapList strong {
   color: #253247;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .criterion p {
   margin: 4px 0 0;
-  color: #667085;
-  font-size: 10px;
+  color: var(--muted);
+  font-size: 13px;
   line-height: 1.5;
 }
 
@@ -228,23 +228,23 @@
   gap: 5px;
   margin-top: 14px;
   border-radius: 8px;
-  background: #f8fafc;
+  background: #f4f6f2;
   padding: 12px;
-  color: #667085;
-  font-size: 11px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .evidenceQuote {
   margin: 14px 0 0;
-  border-left: 3px solid #2386b8;
-  background: #f8fafc;
+  border-left: 3px solid var(--teal);
+  background: #f4f6f2;
   padding: 13px 15px;
 }
 
 .evidenceQuote p {
   margin: 0;
   color: #253247;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.7;
 }
 
@@ -253,8 +253,8 @@
   align-items: center;
   gap: 7px;
   margin-top: 8px;
-  color: #667085;
-  font-size: 10px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .tableScroll {
@@ -269,7 +269,7 @@
   display: block;
   margin-bottom: 6px;
   color: #344054;
-  font-size: 10px;
+  font-size: 13px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -278,13 +278,13 @@
   max-height: 260px;
   overflow: auto;
   margin: 0;
-  border: 1px solid #e4e9ef;
+  border: 1px solid var(--line);
   border-radius: 8px;
-  background: #f8fafc;
+  background: #f4f6f2;
   padding: 12px;
   color: #344054;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 13px;
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
@@ -306,35 +306,35 @@
 .requirement strong {
   display: block;
   color: #253247;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .requirement p {
   margin: 3px 0 0;
-  color: #667085;
-  font-size: 10px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .requirement select {
   min-height: 36px;
   border: 1px solid #ccd5df;
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--surface);
   padding: 7px 9px;
   color: #344054;
   font: inherit;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .requirement select:focus {
-  border-color: #2386b8;
+  border-color: var(--teal);
   outline: 3px solid rgba(35, 134, 184, 0.12);
 }
 
 .activity {
   position: relative;
   margin-left: 5px;
-  border-left: 1px solid #dfe5ec;
+  border-left: 1px solid var(--line);
   padding: 0 0 16px 17px;
 }
 
@@ -345,31 +345,31 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #126a9a;
+  background: var(--teal);
   content: "";
 }
 
 .activity strong {
   display: block;
   color: #344054;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .activity time {
-  color: #667085;
-  font-size: 10px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .fileInput {
   border: 1px dashed #aebbc9;
   border-radius: 10px;
-  background: #f8fafc;
+  background: #f4f6f2;
   padding: 18px;
 }
 
 .fileInput input {
   width: 100%;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .tabs {
@@ -377,7 +377,7 @@
   overflow-x: auto;
   gap: 3px;
   margin-bottom: 14px;
-  border-bottom: 1px solid #dfe5ec;
+  border-bottom: 1px solid var(--line);
 }
 
 .applicationLayout {
@@ -396,15 +396,15 @@
   top: 20px;
   border: 1px solid #d8e1ea;
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--surface);
   padding: 16px;
   box-shadow: 0 8px 24px rgba(23, 32, 51, 0.05);
 }
 
 .agentPanel > p,
 .agentEmpty {
-  color: #667085;
-  font-size: 11px;
+  color: var(--muted);
+  font-size: 13px;
   line-height: 1.6;
 }
 
@@ -418,7 +418,7 @@
   padding: 9px 10px;
   color: #253247;
   font: inherit;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.5;
   resize: vertical;
 }
@@ -427,7 +427,7 @@
 .artifactActions textarea:focus,
 .commentForm textarea:focus,
 .linkDocumentForm select:focus {
-  border-color: #2386b8;
+  border-color: var(--teal);
   outline: 3px solid rgba(35, 134, 184, 0.12);
 }
 
@@ -478,12 +478,12 @@
   background: #f3f8fb;
   padding: 12px;
   color: #4b5b70;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .agentResult strong {
   color: #075985;
-  font-size: 10px;
+  font-size: 13px;
   letter-spacing: 0.08em;
 }
 
@@ -502,11 +502,11 @@
   min-height: 38px;
   border: 1px solid #ccd5df;
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--surface);
   padding: 8px 10px;
   color: #344054;
   font: inherit;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .artifactCard {
@@ -518,13 +518,13 @@
 
 .artifactCard strong {
   color: #253247;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .artifactCard p {
   margin: 4px 0 0;
-  color: #667085;
-  font-size: 10px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .artifactActions {
@@ -542,7 +542,7 @@
   padding: 3px;
   color: #075985;
   font: inherit;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -563,21 +563,21 @@
 .comment {
   margin-bottom: 14px;
   border-radius: 8px;
-  background: #f8fafc;
+  background: #f4f6f2;
   padding: 11px 13px;
 }
 
 .comment strong,
 .comment time {
   display: block;
-  color: #667085;
-  font-size: 10px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .comment p {
   margin: 5px 0;
   color: #344054;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.55;
 }
 
@@ -587,9 +587,9 @@
   border-bottom: 2px solid transparent;
   background: transparent;
   padding: 10px 12px;
-  color: #667085;
+  color: var(--muted);
   font: inherit;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 650;
   cursor: pointer;
 }
@@ -599,7 +599,7 @@
 }
 
 .tabActive {
-  border-bottom-color: #126a9a;
+  border-bottom-color: var(--teal);
   color: #075985;
 }
 
@@ -661,3 +661,56 @@
 /* Give the evidence columns full workspace width before the action panel. */
 .evidenceLayout { grid-template-columns: minmax(0, 1fr); }
 .evidenceLayout .agentPanel { position: static; }
+
+/* Project sample: persistent work navigation, readable evidence, focused actions. */
+.projectMetrics { gap:0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin:24px 0 28px; }
+.projectMetrics .metric { border:0; border-right:1px solid var(--line); border-radius:0; background:transparent; padding:18px 22px; }
+.projectMetrics .metric:first-child { padding-left:0; }
+.projectMetrics .metric:last-child { border-right:0; }
+.projectMetrics .metric strong { font-size:25px; font-weight:550; }
+.projectMetrics .metric span { font-size:12px; }
+.workspaceBody { display:grid; grid-template-columns:152px minmax(0,1fr); gap:24px; align-items:start; }
+.stageNavigation { position:sticky; top:100px; min-width:0; }
+.stageLabel { font-size:11px; color:var(--muted); display:block; margin-bottom:16px; }
+.stageNavigation .tabs { flex-direction:column; overflow:visible; border-bottom:0; gap:5px; }
+.stageNavigation .tab { display:flex; gap:9px; align-items:center; text-align:left; padding:12px 8px; margin:0; border:1px solid transparent; border-radius:5px; font-size:13px; line-height:1.6; }
+.stageNavigation .tab > span { font-family:var(--font-mono); font-size:10px; color:var(--muted); }
+.stageNavigation .tabActive { background:var(--accent-soft); border-color:#c4d8df; color:var(--teal-dark); }
+.stageNote { font-size:11px; line-height:1.8; color:var(--muted); padding:15px 8px 0; border-top:1px solid var(--line); }
+.applicationLayout { grid-template-columns:minmax(0,1fr) 260px; gap:20px; }
+.applicationLayout.evidenceLayout { grid-template-columns:minmax(0,1fr); }
+.applicationLayout.evidenceLayout .agentPanel { display:grid; grid-template-columns:1fr 1fr; gap:8px 18px; }
+.agentPanel { top:100px; box-shadow:none; border-radius:8px; padding:20px; }
+.agentPanel p { font-size:13px; }
+.agentHeader strong { font-size:16px; }
+.artifactCard { padding:22px 0; }
+.artifactCard strong { font-size:15px; }
+.artifactCard p { font-size:12px; overflow-wrap:anywhere; }
+.artifactActions { flex-wrap:wrap; }
+.artifactActions textarea { flex:1 1 100%; }
+.commentForm { flex-wrap:wrap; }
+.commentForm label { font-size:12px; color:var(--muted); width:100%; }
+.commentForm select { display:block; width:100%; margin-top:6px; border:1px solid var(--line); background:var(--surface); border-radius:6px; padding:10px; font:inherit; color:var(--ink); }
+.commentForm textarea { flex:1 1 100%; }
+.comment p { overflow-wrap:anywhere; }
+.textButton { min-height:38px; min-width:44px; padding:8px; font-size:12px; }
+@media(max-width:1200px) { .applicationLayout { grid-template-columns:minmax(0,1fr); } .agentPanel { position:static; } }
+@media(max-width:1100px) {
+ .workspaceBody { grid-template-columns:minmax(0,1fr); gap:14px; }
+ .stageNavigation { position:static; }
+ .stageNavigation .tabs { flex-direction:row; overflow-x:auto; padding-bottom:8px; }
+ .stageNavigation .tab { flex:0 0 auto; white-space:nowrap; }
+ .stageNote { display:none; }
+ .stageLabel { margin-bottom:10px; }
+}
+@media(max-width:640px) {
+ .projectMetrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ .projectMetrics .metric { padding:14px 10px; border-right:0; }
+ .projectMetrics .metric:first-child { padding-left:10px; }
+ .applicationLayout.evidenceLayout .agentPanel { grid-template-columns:minmax(0,1fr); }
+}
+.projectMetrics .metric > span:first-child { display:inline-flex; width:fit-content; margin-top:0; }
+@media(max-width:640px) {
+ .artifactActions,.commentForm { flex-wrap:nowrap; }
+ .artifactActions textarea,.commentForm textarea { flex:0 1 auto; width:100%; }
+}

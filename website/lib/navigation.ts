@@ -45,19 +45,19 @@ export const WORKSPACE_ROUTES = [
 /** Funding OS information architecture, grouped for the sidebar. */
 export const WORKSPACE_NAVIGATION_GROUPS: { title: string; items: WorkspaceNavItem[] }[] = [
   {
-    title: "Funding",
+    title: "政策与项目",
     items: [
       {
         href: "/dashboard",
-        label: "指挥中心",
-        description: "资金管道与行动建议",
+        label: "工作台",
+        description: "项目进度与下一步",
         icon: "home",
         match: (pathname) => pathname === "/dashboard",
       },
       {
         href: "/discover",
-        label: "发现资金",
-        description: "政策 · 补贴 · 基金目录",
+        label: "政策检索",
+        description: "政策来源与申报窗口",
         icon: "discover",
         match: (pathname) => pathname === "/discover",
       },
@@ -70,7 +70,7 @@ export const WORKSPACE_NAVIGATION_GROUPS: { title: string; items: WorkspaceNavIt
       },
       {
         href: "/applications",
-        label: "申报",
+        label: "申报工作台",
         description: "材料与执行进度",
         icon: "applications",
         match: (pathname) => pathname === "/applications" || pathname.startsWith("/applications/"),
@@ -85,7 +85,7 @@ export const WORKSPACE_NAVIGATION_GROUPS: { title: string; items: WorkspaceNavIt
     ],
   },
   {
-    title: "Knowledge",
+    title: "企业与知识",
     items: [
       {
         href: "/companies",
@@ -104,7 +104,7 @@ export const WORKSPACE_NAVIGATION_GROUPS: { title: string; items: WorkspaceNavIt
       {
         href: "/consultant",
         label: "AI 顾问",
-        description: "基于证据的资金咨询",
+        description: "围绕企业事实与原文",
         icon: "consultant",
         match: (pathname) => pathname === "/consultant",
       },
@@ -118,7 +118,7 @@ export const WORKSPACE_NAVIGATION_GROUPS: { title: string; items: WorkspaceNavIt
     ],
   },
   {
-    title: "Operations",
+    title: "执行与交付",
     items: [
       {
         href: "/reports",
@@ -174,7 +174,7 @@ export const WORKSPACE_BOTTOM_NAVIGATION: WorkspaceNavItem[] = [
 
 export const ADMIN_NAVIGATION: WorkspaceNavItem = {
   href: "/admin",
-  label: "Admin",
+  label: "平台管理",
   description: "平台运营与真实指标",
   icon: "admin",
   match: (pathname) => pathname === "/admin" || pathname.startsWith("/admin/"),

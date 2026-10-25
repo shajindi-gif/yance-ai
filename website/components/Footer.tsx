@@ -73,7 +73,7 @@ export default function Footer() {
               <span className="footer-brand-name">衍策引擎AI</span>
             </Link>
             <p className="footer-brand-desc">
-              面向中国新质生产力科技企业的 AI 产业研究与政策申报服务平台。为 AI、机器人、生物医药、集成电路、新能源等科技企业及产业园区提供智能化政策匹配、申报辅助和产业研究服务。
+              面向中国新质生产力企业的政策与资源证据工作台。从企业事实与政策原文出发，辅助资格核对、材料准备与客户自主复核。
             </p>
             <div className="footer-social">
               <a href="mailto:yanceai@163.com" aria-label="邮件联系" title="yanceai@163.com">
