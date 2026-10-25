@@ -5666,3 +5666,10 @@ main {
   .yc-platform-grid { grid-template-columns: repeat(2, 1fr); }
   .yc-dash-cta-inner { flex-direction: column; text-align: center; }
 }
+
+/* Product scope and readiness are readable independently of color. */
+.pricing-boundary { margin: 14px 0 0; color: var(--text-muted); font-size: .8125rem; line-height: 1.8; }
+.pricing-faq { border-bottom: 1px solid var(--border, #dfe3e5); padding: 18px 0; }
+.pricing-faq summary { cursor: pointer; font-weight: 600; line-height: 1.8; }
+.pricing-faq p { margin: 12px 0 0; line-height: 1.8; }
+.pricing-faq summary:focus-visible { outline: 2px solid var(--teal); outline-offset: 5px; }

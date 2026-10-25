@@ -120,3 +120,8 @@ export LLM_DEFAULT_PROVIDER=mock EMAIL_ENABLED=false DEMO_FEATURES_ENABLED=false
 - 工作进程被操作系统强杀后的全场景恢复、租约过期双worker竞争的fencing、供应商取消后的费用对账；协作式timeout不终止阻塞CPU解析。
 
 每项均因目标环境/供应商/真实标注数据缺失或尚未实现而未执行，不记作通过。
+
+
+## 2026-10-25 定价候选验证
+
+类型检查/构建通过，4项隔离浏览器合同通过（3.1秒）；使用合成目录与企业数据，无真实支付或生产API。未重跑服务端与供应商集成，不据此扩大通过范围。详见[实现与验收](pricing-implementation-20261025.md)。

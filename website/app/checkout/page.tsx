@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import api, { Company, ProductCatalogItem } from '@/lib/api';
+import { productPresentation } from '@/lib/product-presentation';
 
 type Provider = 'alipay' | 'wechat';
 
@@ -92,8 +93,8 @@ function CheckoutContent() {
     setPaying(true);
     setError('');
     try {
-      if (product.entitlement_type !== 'report') {
-        throw new Error('该产品需要从具体机会或申报工作区创建订单');
+      if (product.code !== 'POLICY_REPORT' || product.entitlement_type !== 'report') {
+        throw new Error('该产品暂不在此开放购买，请核对交付范围与开通状态');
       }
       const order = await api.createOrder({
         product_code: product.code,
@@ -133,6 +134,8 @@ function CheckoutContent() {
   );
 
   const price = product.promotional_price ?? product.price;
+  const presentation = productPresentation(product);
+  const canPurchase = product.code === 'POLICY_REPORT' && product.entitlement_type === 'report';
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', paddingTop: '100px' }}>
@@ -146,13 +149,11 @@ function CheckoutContent() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', padding: '16px 0', borderBottom: '1px solid #f1f5f9' }}>
               <div>
-                <div style={{ fontSize: '15px', fontWeight: 600, color: '#0d1b2a' }}>{product.name}</div>
-                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>{product.description}</div>
+                <div style={{ fontSize: '15px', fontWeight: 600, color: '#0d1b2a' }}>{presentation.name}</div>
+                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>商品：{product.name} · {product.code}</div>
+                <p style={{ fontSize: '12px', lineHeight: 1.6, color: '#475569' }}>{presentation.boundary}</p>
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '16px' }}>
-                {product.original_price && (
-                  <div style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '13px' }}>¥{product.original_price}</div>
-                )}
                 <div style={{ fontSize: '24px', fontWeight: 700, color: '#f97316' }}>¥{price}</div>
               </div>
             </div>
@@ -218,10 +219,10 @@ function CheckoutContent() {
                 </div>
                 <button
                   onClick={handlePay}
-                  disabled={paying || !selectedCompany}
+                  disabled={paying || !selectedCompany || !canPurchase}
                   style={{ width: '100%', padding: '14px', borderRadius: '10px', border: 'none', background: paying ? '#94a3b8' : '#f97316', color: '#fff', fontSize: '16px', fontWeight: 600, cursor: paying ? 'not-allowed' : 'pointer' }}
                 >
-                  {paying ? '处理中...' : provider === 'alipay' ? `确认支付 ¥${price}` : `生成付款二维码 ¥${price}`}
+                  {!canPurchase ? '待开通' : paying ? '处理中...' : provider === 'alipay' ? `确认支付 ¥${price}` : `生成付款二维码 ¥${price}`}
                 </button>
                 <p style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'center', marginTop: '12px' }}>
                   仅在服务端已配置并通过验证的支付供应商可用时创建结算页面。
