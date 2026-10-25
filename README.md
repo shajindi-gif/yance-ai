@@ -75,3 +75,7 @@ See `.env.example`. Never commit `.env` or `env.prod`.
 - Operations: `yance-ai/docs/PRODUCTION_OPS.md`
 - Investor demo: `/demo` after running `python scripts/seed_investor_demo.py`
 - Engineering data room: `docs/data-room/`
+
+## Website design release — 2026-10-25
+
+The website at yance.ai runs source `68a4b46` with Next16.4.3. The original website backup and a tested old-UI rollback build with the same security update are retained. Production backend remains e58a7c4; V2 evidence features activate only when the backend declares support. See [actual release and rollback](docs/website-release-20261025.md).

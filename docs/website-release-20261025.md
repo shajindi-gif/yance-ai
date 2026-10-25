@@ -1,5 +1,7 @@
 # 网页设计发布：web-20261025-01
 
+**当前状态：已正式上线。2026-10-25 17:36:12（Asia/Shanghai）激活，17:37:28完成正式域名浏览器验收。网页源码68a4b46，后端与生产数据库不在本次发布范围。**
+
 日期：2026-10-25，Asia/Shanghai。用户在查看6a34da3设计候选后明确要求“部署上看看，老的要有备份方便恢复”，授权本次网页发布及旧版备份。源码提交在发布结果中固定；部署仅 website，不发布后端或运行数据库迁移。
 
 ## 实测预检与兼容修正
@@ -47,3 +49,22 @@ sudo bash /opt/yance/releases/website-web-20261025-01/ops/rollback.sh
 首轮旧版原样恢复目录仍为website-restore-web-20261025-01；最终便捷回退脚本指向website-rollback-web-20261025-01/website（旧界面安全重建版），其运行验收结果待后续追加。原备份包、旧正式目录和失败候选日志均保留。
 
 安全修复本机验收：Next16.4.3构建和类型检查通过，15项浏览器回归11.6秒全部通过；npm audit包含开发依赖的安装审计及运行依赖复查均0漏洞。原始失败候选已保留为website-rejected-1d9b75e，未接生产流量。
+
+
+### 最终实际发布结果
+
+- **正式源码**：`68a4b46054e6107d21a555842f4fda79c7e47ffe`，已推送私有GitHub功能分支，未推main。
+- **新网页源码包** SHA256：`79afa17956d256a636bed8d1e350fece90880e04424cbd01c09c4da9ed8e2784`，服务器校验一致。
+- **旧界面安全回退包** SHA256：`92580cdd3a1fb880f17d471651e1c37f61160d5740291c1f1b5b3419cf852352`；UI源自ab50458，依赖文件源自68a4b46。原始117M备份及其摘要仍保留，不用安全重建版替换原始备份。
+- Ubuntu / Node22.23.2 / Next16.4.3：新网页及旧界面安全回退版均完成npm ci、typecheck、运行依赖审计及构建，审计均0漏洞。新网页BUILD_ID：`MKQeEVVQ8ql5FnK-lYdA4`。
+- [固定提交的GitHub候选验证](https://github.com/shajindi-gif/yance-ai/actions/runs/40180758265)成功，headSha为68a4b46，包含Linux/PG16后端验证、前端验证与打包；不把先前40180226888失败抹去。
+- 服务器候选九个公开页面及手机版检查通过，pageerror和HTTP>=400均为空；对服务器实际构建另执行2项新旧工作区合同测试通过（11.5秒），合同API为模拟，未向生产发送项目/评论写入。
+- **安全回退版**通过五页只读浏览器检查，旧release.json、价格目录与登录入口正常；它运行Next16.4.3。原样备份恢复先前也已独立启动验证，两者含义分开记录。
+- 17:36:08启动独立激活任务，17:36:12新网页与同源只读API均200，正式服务active；工作目录和规范链接指向 `/opt/yance/releases/website-web-20261025-01/website`。本机断线不影响激活任务。
+- **正式域名** https://yance.ai 的首页、产品匹配介绍、报告材料介绍、定价、登录、安全、政策库介绍、园区、关于共九页及手机版检查于17:37:28通过。新release.json正确、产品图加载、菜单焦点/Escape正常、手机无页面横向溢出、匿名auth/me为401；无pageerror或HTTP>=400。每页一次Chromium访问，不是SLA或真实客户全流程质量结论。
+- 后端health仍为e58a7c4，未发布后端、未运行生产迁移、未操作客户数据、真实支付/发票/外发/申报。公开能力声明无application_workspace_revision，因此生产显示兼容工作区；V2矩阵和版本建议继续等待独立后端发布。
+- 临时候选3001、安全回退检查3002服务已停止；正式服务保留。旧正式目录、原始备份、原样恢复副本、安全回退构建、被拒绝候选和日志均保留。
+
+自动失败回退分支本次未触发，不能称“已经执行生产回退演练”。已经验证的是备份字节恢复、恢复副本运行与旧界面安全回退版的浏览器行为；如需恢复旧界面，使用上述回退命令。生产只读验收未注册账号、未检验真实客户资料或支付/开票供应商。
+
+证据：`audit-evidence/web-release-20261025/production-public.json`、production-home-desktop.png、production-home-mobile.png、candidate-public.json、safe-fallback-public.json、server-contracts-2.txt、runtime-summary.json、final-ci.json。后续记录提交仅补证据，不改变已部署网页源码。

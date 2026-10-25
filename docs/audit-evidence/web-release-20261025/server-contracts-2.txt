@@ -1,0 +1,13 @@
+
+> yance-website@0.1.0 test:e2e
+> playwright test e2e/legacy-workspace.spec.ts e2e/artifact-comparison.spec.ts
+
+
+Running 2 tests using 1 worker
+
+(node:61438) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › e2e/artifact-comparison.spec.ts:3:5 › synthetic UI contract: compare saved versions and bind a version comment (5.2s)
+  ✓  2 [chromium] › e2e/legacy-workspace.spec.ts:4:5 › legacy application preserves general comments and hides unsupported V2 writes (5.9s)
+
+  2 passed (11.5s)
