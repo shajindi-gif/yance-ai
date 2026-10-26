@@ -79,3 +79,8 @@ See `.env.example`. Never commit `.env` or `env.prod`.
 ## Website design release — 2026-10-25
 
 The website at yance.ai runs source `68a4b46` with Next16.4.3. The original website backup and a tested old-UI rollback build with the same security update are retained. Production backend remains e58a7c4; V2 evidence features activate only when the backend declares support. See [actual release and rollback](docs/website-release-20261025.md).
+
+
+## Website audience and pricing release — 2026-10-27
+
+Current production website source is `e549923` (web-20261026-01), including enterprise audience, clearly marked usage scenarios, feedback entrance and pricing presentation. Ten public pages and mobile passed final read-only verification. The previous website backup and restored copy remain available; backend/database/prices are unchanged. See [actual release and rollback](docs/website-release-20261026.md).

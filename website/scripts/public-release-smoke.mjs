@@ -17,11 +17,13 @@ await context.route('**/*',route => {
 });
 const page=await context.newPage();
 page.on('pageerror',error=>errors.push(error.message));
-page.on('response',response=>{if(response.status()>=400)failures.push({path:new URL(response.url()).pathname,status:response.status()});});
+page.on('response',response=>{const path=new URL(response.url()).pathname;if(response.status()>=400&&!(path==='/api/v1/auth/me'&&response.status()===401))failures.push({path,status:response.status()});});
+async function readPublicJSON(path){return page.evaluate(async path=>{const response=await fetch(path,{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(15000)});return {status:response.status,data:await response.json()};},path);}
 try{
- const release=await context.request.get(`${base}/release.json`);
- expect(release.status()).toBe(200);
- expect((await release.json()).release).toBe('web-20261026-01');
+ await page.goto(base+'/',{timeout:60000});
+ const release=await readPublicJSON('/release.json');
+ expect(release.status).toBe(200);
+ expect(release.data.release).toBe('web-20261026-01');
  for(const path of ['/','/company-match','/brief-maker','/pricing','/feedback','/login','/security','/policy-knowledge-base','/parks','/about']){
   const start=Date.now();const response=await page.goto(base+path,{timeout:60000});expect(response.status()).toBe(200);
   await expect(page.locator('h1').first()).toBeVisible();
@@ -35,9 +37,9 @@ try{
  await page.keyboard.press('Escape');await expect(page.getByRole('navigation',{name:'移动端导航'})).toBeHidden();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:`${output}/home-mobile.png`});
- const config=await context.request.get(base+'/api/v1/auth/config');expect(config.status()).toBe(200);
- const me=await context.request.get(base+'/api/v1/auth/me');expect(me.status()).toBe(401);
+ const config=await readPublicJSON('/api/v1/auth/config');expect(config.status).toBe(200);
+ const me=await readPublicJSON('/api/v1/auth/me');expect(me.status).toBe(401);
  expect(failures).toEqual([]);expect(errors).toEqual([]);
- const result={at:new Date().toISOString(),base,release:'web-20261026-01',checks,mobile:true,failures,errors,blockedMethods,productionBusinessWrites:false,backendWorkspaceRevision:(await config.json()).application_workspace_revision??null,sample:'one Chromium visit per public page; no throttling; not SLA'};
+ const result={at:new Date().toISOString(),base,release:'web-20261026-01',checks,mobile:true,failures,errors,blockedMethods,productionBusinessWrites:false,backendWorkspaceRevision:config.data.application_workspace_revision??null,sample:'Chromium read-only page visits and browser fetch; no throttling; not SLA'};
  await writeFile(`${output}/result.json`,JSON.stringify(result,null,2));console.log(JSON.stringify(result));
-}finally{await browser.close();}
+}catch(error){await writeFile(`${output}/failure.json`,JSON.stringify({at:new Date().toISOString(),base,checks,failures,errors,blockedMethods,error:String(error),productionBusinessWrites:false},null,2));throw error;}finally{await browser.close();}

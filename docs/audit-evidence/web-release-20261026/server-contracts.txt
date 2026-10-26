@@ -1,0 +1,3 @@
+Server candidate e549923 / Node22.23.2 / Next16.4.3
+Playwright: audience-feedback + pricing-system + legacy-workspace
+9 passed (59.7s). Synthetic contracts only; no production business writes.
