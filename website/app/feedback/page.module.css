@@ -1,0 +1,11 @@
+.page { max-width:800px; margin:auto; padding:130px 28px 80px; }
+.page h1 { font-size:36px; margin:24px 0; }
+.page p { color:var(--text-muted); line-height:1.9; margin:18px 0; }
+.form { display:grid; gap:12px; margin-top:32px; }
+.form label { font-weight:600; }
+.form select,.form textarea { width:100%; border:1px solid var(--line); border-radius:8px; padding:12px; font:inherit; background:white; color:var(--ink); }
+.form textarea { resize:vertical; }
+.form select:focus-visible,.form textarea:focus-visible { outline:2px solid var(--teal); outline-offset:3px; }
+.form p { font-size:13px; margin:0 0 14px; }
+.form button { justify-self:start; }
+@media(max-width:700px) { .page { padding:110px 22px 55px; } .page h1 { font-size:30px; } }

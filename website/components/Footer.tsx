@@ -28,6 +28,7 @@ const resourceLinks = [
   { href: '/policies', label: '政策知识库' },
   { href: '/pricing', label: '价格方案' },
   { href: '/downloads', label: '客户端与渠道' },
+  { href: '/feedback', label: '使用反馈' },
 ];
 
 const companyLinks = [
@@ -73,7 +74,7 @@ export default function Footer() {
               <span className="footer-brand-name">衍策引擎AI</span>
             </Link>
             <p className="footer-brand-desc">
-              面向中国新质生产力企业的政策与资源证据工作台。从企业事实与政策原文出发，辅助资格核对、材料准备与客户自主复核。
+              聚焦新质生产力与科技企业，面向各类有政策需求的企业的政策与资源证据工作台。从企业事实与政策原文出发，辅助资格核对、材料准备与客户自主复核。
             </p>
             <div className="footer-social">
               <a href="mailto:yanceai@163.com" aria-label="邮件联系" title="yanceai@163.com">
