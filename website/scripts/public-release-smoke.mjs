@@ -21,12 +21,13 @@ page.on('response',response=>{if(response.status()>=400)failures.push({path:new 
 try{
  const release=await context.request.get(`${base}/release.json`);
  expect(release.status()).toBe(200);
- expect((await release.json()).release).toBe('web-20261025-01');
- for(const path of ['/','/company-match','/brief-maker','/pricing','/login','/security','/policy-knowledge-base','/parks','/about']){
+ expect((await release.json()).release).toBe('web-20261026-01');
+ for(const path of ['/','/company-match','/brief-maker','/pricing','/feedback','/login','/security','/policy-knowledge-base','/parks','/about']){
   const start=Date.now();const response=await page.goto(base+path,{timeout:60000});expect(response.status()).toBe(200);
   await expect(page.locator('h1').first()).toBeVisible();
+  if(path==='/feedback'){await expect(page.getByRole('heading',{name:'分享使用反馈'})).toBeVisible();await expect(page.getByRole('button',{name:'提交反馈'})).toBeDisabled();}
   if(path==='/pricing')await expect(page.locator('.pricing-card').first()).toBeVisible({timeout:20000});
-  if(path==='/'){const shot=page.locator('img[alt^="隔离合成项目"]');await shot.scrollIntoViewIfNeeded();await expect.poll(()=>shot.evaluate(img=>img.naturalWidth),{timeout:15000}).toBeGreaterThan(0);await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:`${output}/home-desktop.png`});}
+  if(path==='/'){await expect(page.locator('#for-business')).toContainText('各类有政策需求的企业');await expect(page.locator('#scenarios')).toContainText('不是真实客户案例');await expect(page.locator('#customer-feedback')).toContainText('暂未展示获授权');const shot=page.locator('img[alt^="隔离合成项目"]');await shot.scrollIntoViewIfNeeded();await expect.poll(()=>shot.evaluate(img=>img.naturalWidth),{timeout:15000}).toBeGreaterThan(0);await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:`${output}/home-desktop.png`});}
   checks.push({path,visible_ms:Date.now()-start});
  }
  await page.setViewportSize({width:390,height:844});await page.goto(base+'/');
@@ -37,6 +38,6 @@ try{
  const config=await context.request.get(base+'/api/v1/auth/config');expect(config.status()).toBe(200);
  const me=await context.request.get(base+'/api/v1/auth/me');expect(me.status()).toBe(401);
  expect(failures).toEqual([]);expect(errors).toEqual([]);
- const result={at:new Date().toISOString(),base,release:'web-20261025-01',checks,mobile:true,failures,errors,blockedMethods,productionBusinessWrites:false,backendWorkspaceRevision:(await config.json()).application_workspace_revision??null,sample:'one Chromium visit per public page; no throttling; not SLA'};
+ const result={at:new Date().toISOString(),base,release:'web-20261026-01',checks,mobile:true,failures,errors,blockedMethods,productionBusinessWrites:false,backendWorkspaceRevision:(await config.json()).application_workspace_revision??null,sample:'one Chromium visit per public page; no throttling; not SLA'};
  await writeFile(`${output}/result.json`,JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 }finally{await browser.close();}
