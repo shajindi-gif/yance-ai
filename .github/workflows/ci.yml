@@ -141,6 +141,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Verify interaction guards and artifact comparison
+        run: npm run test:unit
+
       - name: Build production application
         run: npm run build
 

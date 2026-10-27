@@ -19,6 +19,7 @@ from app.schemas.schemas import (
     PaymentCreate,
 )
 from app.services.analytics.events import record_event
+from app.services.commerce.availability import purchase_status
 from app.services.invoice.generator import generate_invoice_pdf
 
 router = APIRouter(tags=["orders", "payments", "invoices"])
@@ -49,6 +50,12 @@ def create_order(
     )
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+    availability = purchase_status(product)
+    if not availability["purchase_available"]:
+        raise HTTPException(status_code=409, detail={
+            "code": "product_not_available_for_new_orders",
+            "message": availability["purchase_unavailable_reason"],
+        })
     if not payload.resource_id:
         raise HTTPException(status_code=400, detail="A product resource is required")
     resource_model = Company if product.entitlement_type == "report" else Opportunity

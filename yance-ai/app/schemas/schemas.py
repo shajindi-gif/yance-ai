@@ -538,6 +538,14 @@ class FeedbackCreate(BaseModel):
     category: Literal["product", "data", "policy", "billing", "support"] = "product"
     message: str = Field(min_length=2, max_length=5000)
     route: str | None = Field(default=None, max_length=500)
+    client_request_id: UUID | None = None
+
+    @model_validator(mode="after")
+    def validate_message(self):
+        self.message = self.message.strip()
+        if len(self.message) < 2:
+            raise ValueError("反馈内容去除空白后至少需要两个字符")
+        return self
 
 
 class FeedbackStatusUpdate(BaseModel):

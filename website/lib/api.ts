@@ -1,3 +1,5 @@
+import { apiErrorMessage } from './api-errors';
+
 // Yance.ai API Client
 // Connects the Next.js frontend to the FastAPI backend
 
@@ -9,6 +11,7 @@ export interface AuthConfig {
   agent_cancellation_enabled?: boolean;
   district_profile_enabled?: boolean;
   application_workspace_revision?: number;
+  feedback_revision?: number;
 }
 
 export interface LoginResponse {
@@ -730,6 +733,7 @@ export interface BillingOverview {
   budgets: Array<{ id: string; scope_type: string; scope_id: string; meter_key: string; hard_limit: number; warning_threshold: number | null }>;
   orders: Order[];
   tax_invoices: Array<{ id: string; order_id: string; invoice_no: string | null; total_amount: number; status: string; created_at: string }>;
+  metering_policy?: { revision: number; manual_artifact_revisions_consume_generation: boolean };
   paid_plan_checkout_available: boolean;
   paid_plan_checkout_message: string;
 }
@@ -762,6 +766,10 @@ export interface Report {
   created_at: string;
 }
 
+export interface FeedbackItem {
+  id: string; category: string; message: string; status: string; created_at: string; updated_at: string;
+}
+
 export interface ProductCatalogItem {
   id: string;
   code: string;
@@ -772,6 +780,8 @@ export interface ProductCatalogItem {
   original_price: number | null;
   promotional_price: number | null;
   entitlement_type: string;
+  purchase_available?: boolean;
+  purchase_unavailable_reason?: string | null;
 }
 
 export interface Entitlement {
@@ -1069,7 +1079,7 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '请求失败' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      throw new Error(apiErrorMessage(error.detail, `HTTP ${response.status}`));
     }
 
     if (response.status === 204) return undefined as T;
@@ -1088,7 +1098,7 @@ class ApiClient {
     }
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '下载失败' }));
-      throw new Error(error.detail || '下载失败');
+      throw new Error(apiErrorMessage(error.detail, '下载失败'));
     }
     return response.blob();
   }
@@ -1107,7 +1117,7 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '登录失败' }));
-      throw new Error(error.detail || '登录失败');
+      throw new Error(apiErrorMessage(error.detail, '登录失败'));
     }
 
     const data = await response.json();
@@ -1132,7 +1142,7 @@ class ApiClient {
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '注册失败' }));
-      throw new Error(error.detail || '注册失败');
+      throw new Error(apiErrorMessage(error.detail, '注册失败'));
     }
     const result = await response.json();
     if (result.access_token) this.setToken(result.access_token);
@@ -1146,7 +1156,7 @@ class ApiClient {
   // ── Email code login（验证码登录，未注册邮箱自动建号）──────────
   async getAuthConfig(): Promise<AuthConfig> {
     try {
-      return await this.request<AuthConfig>('/auth/config');
+      return await this.request<AuthConfig>('/auth/config', { signal: AbortSignal.timeout(10_000) });
     } catch {
       // 配置接口不可用时保守回退：只显示密码登录
       return { email_login_enabled: false };
@@ -1161,7 +1171,7 @@ class ApiClient {
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '验证码发送失败' }));
-      throw new Error(error.detail || `验证码发送失败（HTTP ${response.status}）`);
+      throw new Error(apiErrorMessage(error.detail, `验证码发送失败（HTTP ${response.status}）`));
     }
   }
 
@@ -1179,7 +1189,7 @@ class ApiClient {
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '验证码校验失败' }));
-      throw new Error(error.detail || '验证码校验失败');
+      throw new Error(apiErrorMessage(error.detail, '验证码校验失败'));
     }
     const result = await response.json();
     if (result.access_token) this.setToken(result.access_token);
@@ -1195,7 +1205,7 @@ class ApiClient {
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '重置邮件发送失败' }));
-      throw new Error(error.detail || `重置邮件发送失败（HTTP ${response.status}）`);
+      throw new Error(apiErrorMessage(error.detail, `重置邮件发送失败（HTTP ${response.status}）`));
     }
   }
 
@@ -1211,7 +1221,7 @@ class ApiClient {
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '密码重置失败' }));
-      throw new Error(error.detail || '密码重置失败');
+      throw new Error(apiErrorMessage(error.detail, '密码重置失败'));
     }
     const result = await response.json();
     if (result.access_token) this.setToken(result.access_token);
@@ -1567,7 +1577,7 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '报告生成失败' }));
-      throw new Error(error.detail || '报告生成失败');
+      throw new Error(apiErrorMessage(error.detail, '报告生成失败'));
     }
 
     return response.json();
@@ -1628,11 +1638,16 @@ class ApiClient {
     await this.request(`/enterprise/deletion-request/${encodeURIComponent(requestId)}/cancel`, { method: 'POST' });
   }
 
-  async submitFeedback(category: string, message: string): Promise<{ id: string; status: string }> {
+  async submitFeedback(category: string, message: string, clientRequestId?: string): Promise<{ id: string; status: string }> {
     return this.request('/feedback', {
       method: 'POST',
-      body: JSON.stringify({ category, message, route: typeof window !== 'undefined' ? window.location.pathname : null }),
+      body: JSON.stringify({ category, message, route: typeof window !== 'undefined' ? window.location.pathname : null, ...(clientRequestId ? { client_request_id: clientRequestId } : {}) }),
+      signal: AbortSignal.timeout(15_000),
     });
+  }
+
+  async getMyFeedback(): Promise<FeedbackItem[]> {
+    return this.request<FeedbackItem[]>('/feedback', { signal: AbortSignal.timeout(15_000) });
   }
 
   async getProducts(): Promise<ProductCatalogItem[]> {

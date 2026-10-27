@@ -144,7 +144,7 @@ def _project(client):
 
 
 @pytest.mark.parametrize("scenario", ["current", "withdrawn", "quota", "citation_changed"])
-def test_suggestion_with_real_evidence_and_atomic_quota_recovery(scenario):
+def test_suggestion_keeps_evidence_guards_without_charging_manual_work(scenario):
     with TestClient(app) as client:
         headers, tenant, app_id, source, comment_id, policy_id = _project(client)
         with SessionLocal() as db:
@@ -168,7 +168,7 @@ def test_suggestion_with_real_evidence_and_atomic_quota_recovery(scenario):
             db.commit()
         endpoint = f"/api/v1/applications/{app_id}/comments/{comment_id}/decision"
         response = client.post(endpoint, headers=headers, json={"decision": "accept"})
-        expected = {"current": 200, "withdrawn": 409, "quota": 429, "citation_changed": 409}[
+        expected = {"current": 200, "withdrawn": 409, "quota": 200, "citation_changed": 409}[
             scenario
         ]
         assert response.status_code == expected, response.text
@@ -186,9 +186,10 @@ def test_suggestion_with_real_evidence_and_atomic_quota_recovery(scenario):
                 )
             )
             decision = db.get(ApplicationComment, uuid.UUID(comment_id)).resolution_json
-            assert count == usage == (2 if scenario == "current" else 1)
-            assert bool(decision) == (scenario == "current")
-            if scenario != "current":
+            assert usage == 1
+            assert count == (2 if scenario in {"current", "quota"} else 1)
+            assert bool(decision) == (scenario in {"current", "quota"})
+            if scenario not in {"current", "quota"}:
                 assert (
                     db.scalar(
                         select(func.count())
@@ -200,13 +201,6 @@ def test_suggestion_with_real_evidence_and_atomic_quota_recovery(scenario):
                     )
                     == 0
                 )
-            if scenario == "quota":
-                budget = db.scalar(select(UsageBudget).where(UsageBudget.tenant_id == tenant))
-                budget.hard_limit = 2
-                db.commit()
-        if scenario == "quota":
-            response = client.post(endpoint, headers=headers, json={"decision": "accept"})
-            assert response.status_code == 200, response.text
         if scenario in {"current", "quota"}:
             repeated = client.post(endpoint, headers=headers, json={"decision": "accept"})
             assert repeated.json() == response.json()
@@ -221,7 +215,7 @@ def test_suggestion_with_real_evidence_and_atomic_quota_recovery(scenario):
                             UsageRecord.meter_key == "generated_documents",
                         )
                     )
-                    == 2
+                    == 1
                 )
                 assert (
                     db.scalar(

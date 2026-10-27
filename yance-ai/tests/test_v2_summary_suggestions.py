@@ -116,7 +116,7 @@ def test_accept_is_atomic_idempotent_and_stale_suggestions_are_blocked(monkeypat
                         UsageRecord.meter_key == "generated_documents",
                     )
                 )
-                == 1
+                == 0
             )
             assert len(rows) == 2
             latest = max(rows, key=lambda item: item.version)

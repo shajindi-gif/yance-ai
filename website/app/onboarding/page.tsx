@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
+import { safeReturnPath } from '@/lib/return-path';
 
 const STEPS = [
   { id: 1, title: '企业名称', desc: '您的企业全称' },
@@ -23,6 +24,8 @@ const POLICY_NEEDS = ['高新技术企业认定', '专精特新认定', '科技�
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const [returnPath, setReturnPath] = useState('/dashboard');
+  useEffect(() => { setReturnPath(safeReturnPath(new URLSearchParams(window.location.search).get('next'))); }, []);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -114,7 +117,7 @@ export default function OnboardingPage() {
         setCompanyId(company.id);
       }
 
-      router.push('/dashboard?onboarded=1');
+      router.push(returnPath === '/dashboard' ? '/dashboard?onboarded=1' : returnPath);
     } catch (err) {
       console.error('Onboarding failed:', err);
       setError(err instanceof Error ? err.message : '保存失败，请重试或跳过稍后完善');
@@ -300,7 +303,7 @@ export default function OnboardingPage() {
 
         {/* Skip */}
         <div style={{ textAlign: 'center', marginTop: '16px' }}>
-          <button onClick={() => router.push('/dashboard')} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '12px', cursor: 'pointer' }}>
+          <button onClick={() => router.push(returnPath)} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '12px', cursor: 'pointer' }}>
             跳过，稍后完善
           </button>
         </div>

@@ -78,7 +78,7 @@ export default function ApplicationWorkspacePage() {
   }, [applicationId]);
 
   useEffect(() => {
-    if (!api.isAuthenticated()) { router.push("/login"); return; }
+    if (!api.isAuthenticated()) { router.push(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`); return; }
     let active = true;
     load().catch((loadError) => {
       if (active) setError(loadError instanceof Error ? loadError.message : "申报工作区加载失败");

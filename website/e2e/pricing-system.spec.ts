@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+const evidenceDir = process.env.YANCE_EVIDENCE_ROOT || '../docs/audit-evidence/pricing-system-20261025';
 
 // Synthetic UI contracts only; no payment provider, production API or email calls.
 const catalogue = [
@@ -31,9 +32,9 @@ test('catalogue controls price; unaccepted project tiers stay visible and unavai
     await expect(card.getByRole('button', { name: '待开通' })).toBeDisabled();
   }
   await expect(page.getByText('团队订阅仍在准备中', { exact: false })).toBeVisible();
-  await page.screenshot({ path: '../docs/audit-evidence/pricing-system-20261025/catalogue-desktop.png', fullPage: true });
+  await page.screenshot({ path: `${evidenceDir}/catalogue-desktop.png`, fullPage: true });
   await report.getByRole('button').click();
-  await expect(page).toHaveURL(/\/login\?register=1/);
+  await expect(page).toHaveURL(/\/login\?register=1&next=/);
 });
 
 test('server promotional price wins; no hard-coded fallback catalogue on failure', async ({ page }) => {
@@ -59,7 +60,7 @@ test('mobile scope and customer review FAQ remain readable with keyboard', async
   await page.keyboard.press('Enter');
   await expect(page.getByText('业务复核由客户本人或授权团队完成。', { exact: false })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.screenshot({ path: '../docs/audit-evidence/pricing-system-20261025/catalogue-mobile.png', fullPage: true });
+  await page.screenshot({ path: `${evidenceDir}/catalogue-mobile.png`, fullPage: true });
 });
 
 test('checkout retains server identity and price without striking unverifiable originals or creating an order', async ({ page }) => {

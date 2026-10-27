@@ -9,3 +9,10 @@
 .form p { font-size:13px; margin:0 0 14px; }
 .form button { justify-self:start; }
 @media(max-width:700px) { .page { padding:110px 22px 55px; } .page h1 { font-size:30px; } }
+.history { margin-top:56px; padding-top:28px; border-top:1px solid var(--line); }
+.history h2 { font-size:24px; }
+.history ul { list-style:none; padding:0; margin-top:24px; }
+.history li { padding:20px 0; border-bottom:1px solid var(--line); }
+.history li > div { display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px; }
+.history li span,.history time { font-size:13px; color:var(--text-muted); }
+.history li p { white-space:pre-wrap; overflow-wrap:anywhere; }

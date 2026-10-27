@@ -309,6 +309,7 @@ def auth_config() -> dict:
         "agent_cancellation_enabled": True,
         "district_profile_enabled": True,
         "application_workspace_revision": 2,
+        "feedback_revision": 1,
     }
 
 

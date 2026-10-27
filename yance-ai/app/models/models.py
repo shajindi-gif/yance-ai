@@ -862,6 +862,10 @@ class AnalyticsEvent(Base, TenantOwnedMixin):
 
 class Feedback(Base, TimestampMixin, TenantOwnedMixin):
     __tablename__ = "feedback"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "user_id", "client_request_id", name="uq_feedback_user_request"),
+    )
+    client_request_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), index=True

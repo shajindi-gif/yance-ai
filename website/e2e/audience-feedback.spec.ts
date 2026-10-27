@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+const evidenceDir = process.env.YANCE_EVIDENCE_ROOT || '../docs/audit-evidence/audience-20261026';
 
 test.beforeEach(async ({ page, baseURL }) => {
   expect(new URL(baseURL!).hostname).toMatch(/^(localhost|127\.0\.0\.1)$/);
@@ -22,11 +23,11 @@ test('homepage broadens audience while marking examples and feedback honestly', 
   await expect(cases).toContainText('不是真实客户案例、客户评价或获批结果');
   for (const card of await cases.getByRole('article').all()) await expect(card).toContainText('场景示例');
   await expect(page.locator('#customer-feedback')).toContainText('暂未展示获授权的客户评价');
-  await page.screenshot({ path: '../docs/audit-evidence/audience-20261026/home-desktop.png', fullPage: true });
+  await page.screenshot({ path: `${evidenceDir}/home-desktop.png`, fullPage: true });
   await page.getByRole('link', { name: '分享使用反馈' }).click();
   await expect(page).toHaveURL(/\/feedback$/);
   await expect(page.getByRole('button', { name: '提交反馈' })).toBeDisabled();
-  await expect(page.getByRole('link', { name: '登录账号' })).toHaveAttribute('href', '/login');
+  await expect(page.getByRole('link', { name: '登录账号' })).toHaveAttribute('href', '/login?next=%2Ffeedback');
 });
 
 test('mobile scene links, focus and FAQ remain usable', async ({ page }) => {
@@ -39,7 +40,7 @@ test('mobile scene links, focus and FAQ remain usable', async ({ page }) => {
   const feedback = page.getByRole('link', { name: '分享使用反馈' });
   await feedback.focus(); await expect(feedback).toBeFocused();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.screenshot({ path: '../docs/audit-evidence/audience-20261026/home-mobile.png', fullPage: true });
+  await page.screenshot({ path: `${evidenceDir}/home-mobile.png`, fullPage: true });
   await feedback.click();
   await expect(page.getByLabel('问题与建议')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

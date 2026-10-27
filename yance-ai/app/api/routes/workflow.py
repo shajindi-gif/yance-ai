@@ -1427,28 +1427,19 @@ def edit_application_artifact(
         raise HTTPException(
             status_code=409, detail="Only the latest artifact version can be edited"
         )
-    artifact = create_artifact(
-        db,
-        application,
-        user_id=principal.user.id,
-        title=payload.title or source.title,
-        executive_summary=payload.executive_summary or source.content_json.get("executive_summary"),
-        revision_note=f"基于 v{source.version} 人工编辑",
-    )
     try:
-        consume_usage(
+        artifact = create_artifact(
             db,
-            tenant_id=principal.tenant_id,
-            meter="generated_documents",
-            quantity=1,
-            idempotency_key=f"application_artifact:{artifact.id}",
+            application,
             user_id=principal.user.id,
-            resource_type="application_artifact",
-            resource_id=str(artifact.id),
+            title=payload.title or source.title,
+            executive_summary=payload.executive_summary or source.content_json.get("executive_summary"),
+            revision_note=f"基于 v{source.version} 人工编辑",
         )
-    except QuotaExceeded as exc:
+    except ValueError as exc:
         db.rollback()
-        raise HTTPException(status_code=429, detail=exc.detail()) from exc
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    # Human edits produce a version and audit activity, not a generation charge.
     db.add(
         ApplicationActivity(
             tenant_id=principal.tenant_id,
@@ -1638,19 +1629,6 @@ def decide_application_suggestion(
                 executive_summary=comment.proposed_summary,
                 revision_note=f"接受版本 v{source.version} 的人工摘要建议",
             )
-            consume_usage(
-                db,
-                tenant_id=principal.tenant_id,
-                meter="generated_documents",
-                quantity=1,
-                idempotency_key=f"application_artifact:{artifact.id}",
-                user_id=principal.user.id,
-                resource_type="application_artifact",
-                resource_id=str(artifact.id),
-            )
-        except QuotaExceeded as exc:
-            db.rollback()
-            raise HTTPException(status_code=429, detail=exc.detail()) from exc
         except ValueError as exc:
             db.rollback()
             raise HTTPException(

@@ -46,7 +46,7 @@ def _paid_order(headers: dict) -> str:
     resp = client.get("/api/v1/companies", headers=headers)
     company_id = resp.json()[0]["id"]
     products = client.get("/api/v1/products").json()
-    product = next((p for p in products if float(p["price"]) > 0), products[0])
+    product = next(p for p in products if p["code"] == "POLICY_REPORT")
     resp = client.post(
         "/api/v1/orders",
         headers=headers,
@@ -170,7 +170,7 @@ def test_unpaid_order_cannot_request_invoice():
     resp = client.get("/api/v1/companies", headers=headers)
     company_id = resp.json()[0]["id"]
     products = client.get("/api/v1/products").json()
-    product = next((p for p in products if float(p["price"]) > 0), products[0])
+    product = next(p for p in products if p["code"] == "POLICY_REPORT")
     order = client.post(
         "/api/v1/orders",
         headers=headers,

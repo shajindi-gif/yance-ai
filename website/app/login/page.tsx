@@ -3,10 +3,12 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
+import { safeReturnPath } from '@/lib/return-path';
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const returnPath = safeReturnPath(searchParams.get('next'));
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -85,7 +87,7 @@ function LoginContent() {
     setNotice('');
     try {
       await api.login(loginEmail, loginPassword);
-      router.push('/dashboard');
+      router.push(returnPath);
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败');
     } finally {
@@ -131,7 +133,7 @@ function LoginContent() {
         code: resetCode.trim(),
         new_password: newPassword,
       });
-      router.push('/dashboard');
+      router.push(returnPath);
     } catch (err) {
       setError(err instanceof Error ? err.message : '密码重置失败');
     } finally {
@@ -175,7 +177,7 @@ function LoginContent() {
             }
           : {}),
       });
-      router.push('/dashboard');
+      router.push(returnPath);
     } catch (err) {
       const msg = err instanceof Error ? err.message : '验证码校验失败';
       if (msg.includes('首次登录')) {
@@ -206,7 +208,7 @@ function LoginContent() {
         owner_password: ownerPassword,
         agreed_terms_version: agreed ? TERMS_VERSION : undefined,
       });
-      router.push('/onboarding');
+      router.push('/onboarding' + (returnPath !== '/dashboard' ? `?next=${encodeURIComponent(returnPath)}` : ''));
     } catch (err) {
       setError(err instanceof Error ? err.message : '注册失败');
     } finally {

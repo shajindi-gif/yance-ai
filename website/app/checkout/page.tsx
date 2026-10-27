@@ -60,7 +60,7 @@ function CheckoutContent() {
   useEffect(() => () => stopTimers(), [stopTimers]);
 
   useEffect(() => {
-    if (!api.isAuthenticated()) { router.push('/login?register=1'); return; }
+    if (!api.isAuthenticated()) { router.push(`/login?next=${encodeURIComponent('/checkout?' + searchParams.toString())}`); return; }
     let cancelled = false;
     Promise.all([
       api.getProducts(),
@@ -86,14 +86,14 @@ function CheckoutContent() {
     return () => {
       cancelled = true;
     };
-  }, [requestedCompany, router, productCode]);
+  }, [requestedCompany, router, productCode, searchParams]);
 
   const handlePay = async () => {
     if (!selectedCompany || !product) return;
     setPaying(true);
     setError('');
     try {
-      if (product.code !== 'POLICY_REPORT' || product.entitlement_type !== 'report') {
+      if (product.purchase_available === false || product.code !== 'POLICY_REPORT' || product.entitlement_type !== 'report') {
         throw new Error('该产品暂不在此开放购买，请核对交付范围与开通状态');
       }
       const order = await api.createOrder({
@@ -135,7 +135,7 @@ function CheckoutContent() {
 
   const price = product.promotional_price ?? product.price;
   const presentation = productPresentation(product);
-  const canPurchase = product.code === 'POLICY_REPORT' && product.entitlement_type === 'report';
+  const canPurchase = product.purchase_available !== false && product.code === 'POLICY_REPORT' && product.entitlement_type === 'report';
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', paddingTop: '100px' }}>

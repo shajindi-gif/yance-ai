@@ -25,6 +25,7 @@ from app.models.models import (
     Product,
     UserRole,
 )
+from app.services.commerce.availability import purchase_status
 from app.services.llm.base import LLMRequest
 from app.services.llm.router import LLMRouter
 from app.services.report.matcher import match_policies_for_company
@@ -249,8 +250,9 @@ async def get_products(db: Session = Depends(get_db)):
             "product_type": p.product_type,
             "price": float(p.price),
             "original_price": float(p.original_price) if p.original_price else None,
-            "promotional_price": float(p.promotional_price) if p.promotional_price else None,
+            "promotional_price": float(p.promotional_price) if p.promotional_price is not None else None,
             "entitlement_type": p.entitlement_type,
+            **purchase_status(p),
         }
         for p in products
     ]

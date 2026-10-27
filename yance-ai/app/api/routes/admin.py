@@ -414,10 +414,16 @@ def update_feedback_status(
     _: Principal = Depends(require_platform_admin),
     db: Session = Depends(get_db),
 ) -> dict:
-    feedback = db.get(Feedback, feedback_id)
+    feedback = db.scalar(select(Feedback).where(Feedback.id == feedback_id).with_for_update())
     if not feedback:
         raise HTTPException(status_code=404, detail="Feedback not found")
+    previous = feedback.status
     feedback.status = payload.status
+    if previous != payload.status:
+        from app.services.enterprise.audit import record_audit
+        record_audit(db, tenant_id=feedback.tenant_id, actor_user_id=_.user.id,
+                     action="feedback.status_changed", resource_type="feedback", resource_id=str(feedback.id),
+                     details={"previous_status": previous, "status": payload.status})
     db.commit()
     return {"id": str(feedback.id), "status": feedback.status}
 

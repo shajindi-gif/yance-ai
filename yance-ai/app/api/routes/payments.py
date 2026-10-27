@@ -16,7 +16,8 @@ from sqlalchemy.orm import Session
 from app.api.deps import Principal, get_principal, require_roles
 from app.core.config import settings
 from app.core.db import get_db
-from app.models.models import Order, Payment, UserRole
+from app.models.models import Order, Payment, Product, UserRole
+from app.services.commerce.availability import purchase_status
 from app.services.payments import wechat as wx
 from app.services.payments.settlement import settle_payment
 
@@ -34,6 +35,14 @@ def _checkout_payment(db: Session, order: Order, provider: str) -> Payment | Non
     existing = db.scalar(select(Payment).where(Payment.order_id == order.id, Payment.tenant_id == order.tenant_id).order_by(Payment.created_at.desc()))
     if existing and (existing.provider != provider or existing.status not in {"created", "pending"}):
         raise HTTPException(status_code=409, detail="该订单已有支付记录，请先核实原渠道交易状态，不会自动创建第二笔支付")
+    if not existing:
+        product = db.scalar(select(Product).where(Product.code == order.product_code))
+        availability = purchase_status(product) if product else {"purchase_available": False, "purchase_unavailable_reason": "商品当前不可新购，请联系支持核对。"}
+        if not availability["purchase_available"]:
+            raise HTTPException(status_code=409, detail={
+                "code": "product_not_available_for_new_orders",
+                "message": availability["purchase_unavailable_reason"],
+            })
     return existing
 
 

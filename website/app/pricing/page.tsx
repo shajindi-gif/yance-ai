@@ -37,7 +37,7 @@ export default function PricingPage() {
       return;
     }
     if (!api.isAuthenticated()) {
-      router.push('/login?register=1');
+      router.push(`/login?register=1&next=${encodeURIComponent('/checkout?product=' + product.code)}`);
       return;
     }
     router.push(`/checkout?product=${product.code}`);
@@ -67,7 +67,7 @@ export default function PricingPage() {
             <div className="grid grid-4 pricing-catalogue">
               {products.map((product) => {
                 const isFeatured = product.code === 'POLICY_REPORT';
-                const isPurchasableHere = product.code === 'FREE_POLICY_MATCH' || (product.code === 'POLICY_REPORT' && product.entitlement_type === 'report');
+                const isPurchasableHere = product.code === 'FREE_POLICY_MATCH' || (product.purchase_available !== false && product.code === 'POLICY_REPORT' && product.entitlement_type === 'report');
                 const presentation = productPresentation(product);
                 const displayedPrice = product.promotional_price ?? product.price;
                 return (
@@ -105,7 +105,7 @@ export default function PricingPage() {
                           ? '选择企业并购买'
                           : '待开通'}
                     </button>
-                    <p className="pricing-boundary">{presentation.boundary}</p>
+                    <p className="pricing-boundary">{product.purchase_unavailable_reason || presentation.boundary}</p>
                   </article>
                 );
               })}
