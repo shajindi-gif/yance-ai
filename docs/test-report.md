@@ -130,3 +130,8 @@ export LLM_DEFAULT_PROVIDER=mock EMAIL_ENABLED=false DEMO_FEATURES_ENABLED=false
 ## 2026-10-27 网页发布结果
 
 e549923网页已上线，正式域名十页及手机版验收通过；旧版已备份恢复校验，本轮失败回退已实际执行。后端、数据库、商品金额及历史订单未变。真实反馈入库未执行。详见[本轮发布记录](website-release-20261026.md)。
+
+
+## 2026-10-28 全链路本地候选
+
+候选1753fa9修复人工额度与新购保护，接通反馈恢复/进度和登录回跳；本轮未部署生产。迁移0033、旧应用/新库与合成备份恢复已验证；真实供应商、业务样本及生产完整迁移仍待验收。详见[跨岗位审计](company-wide-optimization-audit.md)、[方案](company-wide-optimization-plan.md)、[实际测试](company-wide-optimization-test-report.md)及[发布前方案](company-wide-optimization-release.md)。

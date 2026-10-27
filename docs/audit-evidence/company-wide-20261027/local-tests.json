@@ -1,0 +1,57 @@
+{
+  "baseline": "f3c3612",
+  "isolated_postgres": 18,
+  "baseline_full_suite": {
+    "passed": 240,
+    "failed": 0,
+    "coverage_percent": 81,
+    "seconds": 32.98,
+    "warnings": 6
+  },
+  "latest_targeted_regressions": {
+    "passed": 6,
+    "failed": 0,
+    "includes_two_added_after_full_suite": true
+  },
+  "frontend_unit_tests": {
+    "passed": 6,
+    "failed": 0
+  },
+  "browser_final": {
+    "passed": 25,
+    "failed": 0,
+    "seconds": 14.7
+  },
+  "initial_reproductions": {
+    "failed": 3,
+    "reason": "expected red tests before fixes"
+  },
+  "initial_full_run": {
+    "passed": 233,
+    "failed": 6,
+    "reason": "nonempty statistics fixture and unspecified product selection"
+  },
+  "initial_browser_full": {
+    "passed": 24,
+    "failed": 1,
+    "reason": "test assumed fixed total artifact count across shared workflows"
+  },
+  "production_changed": false,
+  "fixed_commit_ci": {
+    "source": "1753fa98b3d62506bf6d48754436ca944b1de088",
+    "platform": "Linux / PostgreSQL16 / Node22",
+    "backend_passed": 242,
+    "backend_failed": 0,
+    "backend_coverage_percent": 81,
+    "backend_seconds": 33.64,
+    "backend_warnings": 2,
+    "runtime_dependency_vulnerabilities": 0,
+    "status": "success",
+    "url": "https://github.com/shajindi-gif/yance-ai/actions/runs/40585516496"
+  },
+  "feedback_screenshot_recheck": {
+    "passed": 2,
+    "failed": 0,
+    "seconds": 2.6
+  }
+}

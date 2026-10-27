@@ -84,3 +84,8 @@ The website at yance.ai runs source `68a4b46` with Next16.4.3. The original webs
 ## Website audience and pricing release — 2026-10-27
 
 Current production website source is `e549923` (web-20261026-01), including enterprise audience, clearly marked usage scenarios, feedback entrance and pricing presentation. Ten public pages and mobile passed final read-only verification. The previous website backup and restored copy remain available; backend/database/prices are unchanged. See [actual release and rollback](docs/website-release-20261026.md).
+
+
+## Company-wide local candidate — 2026-10-28
+
+Candidate `1753fa9` fixes manual revision metering, server-side product availability and feedback recovery/status, with safe post-login return paths. It is **not deployed**. Production website remains the previously verified web-20261026-01 release. See [audit](docs/company-wide-optimization-audit.md), [plan](docs/company-wide-optimization-plan.md), [validation](docs/company-wide-optimization-test-report.md) and [release constraints](docs/company-wide-optimization-release.md).

@@ -1,0 +1,16 @@
+{
+  "migration": "20261024_0032 -> 20261027_0033",
+  "legacy_columns_and_rows": {
+    "tables": 78,
+    "verified": true,
+    "schema_version_table_excluded": true
+  },
+  "old_application_refs": [
+    "f3c3612",
+    "e58a7c4"
+  ],
+  "old_apps_read_historical_paid_order": true,
+  "old_apps_can_post_feedback_without_request_id": true,
+  "synthetic_data_only": true,
+  "production_database_accessed": false
+}

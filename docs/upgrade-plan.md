@@ -68,3 +68,8 @@
 ## 2026-10-25 定价第一批
 
 本地完成交付范围、商品开通状态、原价展示及通用结算限制。后续依赖：逐SKU真实交付验收、服务端新订单可售状态、人工编辑与模型计量拆分、订阅周期与供应商沙箱。详见[实现与验收](pricing-implementation-20261025.md)。
+
+
+## 2026-10-28 全链路本地候选
+
+候选1753fa9修复人工额度与新购保护，接通反馈恢复/进度和登录回跳；本轮未部署生产。迁移0033、旧应用/新库与合成备份恢复已验证；真实供应商、业务样本及生产完整迁移仍待验收。详见[跨岗位审计](company-wide-optimization-audit.md)、[方案](company-wide-optimization-plan.md)、[实际测试](company-wide-optimization-test-report.md)及[发布前方案](company-wide-optimization-release.md)。
