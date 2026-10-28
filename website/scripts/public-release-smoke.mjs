@@ -34,6 +34,7 @@ try{
   if(path==='/'){await expect(page.locator('#for-business')).toContainText('各类有政策需求的企业');await expect(page.locator('#scenarios')).toContainText('不是真实客户案例');await expect(page.locator('#customer-feedback')).toContainText('暂未展示获授权');const shot=page.locator('img[alt^="隔离合成项目"]');await shot.scrollIntoViewIfNeeded();await expect.poll(()=>shot.evaluate(img=>img.naturalWidth),{timeout:15000}).toBeGreaterThan(0);await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:`${output}/home-desktop.png`});}
   checks.push({path,visible_ms:Date.now()-start});
  }
+ if(expectedRelease==='growth-20261029-01'){await page.goto(base+'/');for(const asset of await page.locator('img[src*="industries"]').all()){await asset.scrollIntoViewIfNeeded();await expect.poll(()=>asset.evaluate(img=>img.naturalWidth)).toBeGreaterThan(0);} await expect(page.locator('#start-with-your-task')).toContainText('先体验，再按需购买');}
  await page.setViewportSize({width:390,height:844});await page.goto(base+'/');
  await page.getByRole('button',{name:'打开菜单',exact:true}).click();await expect(page.getByRole('navigation',{name:'移动端导航'})).toBeVisible();
  await page.keyboard.press('Escape');await expect(page.getByRole('navigation',{name:'移动端导航'})).toBeHidden();
@@ -43,6 +44,7 @@ try{
  if(['full-20261028-01','growth-20261029-01'].includes(expectedRelease)){
   expect(config.data.application_workspace_revision).toBe(2);
   expect(config.data.feedback_revision).toBe(1);
+  if(expectedRelease==='growth-20261029-01') expect(config.data.checkout_idempotency_revision).toBe(1);
   const products=await readPublicJSON('/api/v1/products');expect(products.status).toBe(200);
   expect(Array.isArray(products.data)).toBe(true);
   expect(products.data.length).toBeGreaterThan(0);

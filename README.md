@@ -94,3 +94,8 @@ Candidate `1753fa9` fixes manual revision metering, server-side product availabi
 ## Full production release — 2026-10-28
 
 The company-wide implementation1753fa9 is live as fixed release source `bd0ef29`, website `full-20261028-01`, backend/worker `bd0ef29`, database `20261027_0033`. Final backup restoration and original-row preservation passed; ten public pages and mobile passed read-only verification at15:15 Asia/Shanghai. Five legacy nullable-schema differences remain explicitly accepted, and task email is disabled while existing API login email is retained. Recovery readiness failure extended maintenance; see the complete [production record and fallback](docs/full-release-20261028.md), including remaining supplier/real-business verification limits. Earlier local-only descriptions are historical.
+
+
+## Growth release — 2026-10-29
+
+Production website `growth-20261029-01`, API/worker source `4587e34` (verified business implementatione25ab04), database unchanged0033. Original industry imagery and checkout retry protection are live. Fresh backup restoration and public desktop/mobile checks passed; prior version and rollback scripts retained. See [actual release and limits](docs/growth-release-20261029.md).
