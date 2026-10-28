@@ -22,7 +22,7 @@ export default function ReportsPage() {
 
   useEffect(() => {
     if (!api.isAuthenticated()) {
-      router.push("/login");
+      router.push("/login?next=%2Freports");
       return;
     }
     let cancelled = false;

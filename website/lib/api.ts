@@ -12,6 +12,7 @@ export interface AuthConfig {
   district_profile_enabled?: boolean;
   application_workspace_revision?: number;
   feedback_revision?: number;
+  checkout_idempotency_revision?: number;
 }
 
 export interface LoginResponse {
@@ -1661,6 +1662,7 @@ class ApiClient {
   async createOrder(data: {
     product_code: string;
     resource_id: string;
+    client_request_id?: string;
   }): Promise<Order> {
     return this.request<Order>('/orders', {
       method: 'POST',

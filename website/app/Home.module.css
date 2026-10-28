@@ -95,3 +95,23 @@
 .feedbackPanel > div { min-width:0; }
 @media(max-width:1000px) { .scenariosSection { padding:55px 28px; } .businessGrid,.scenarios { gap:18px; } .businessGrid article { padding:20px; } }
 @media(max-width:700px) { .businessGrid,.scenarios,.feedbackPanel,.audience { grid-template-columns:1fr; } .scenariosSection { padding:55px 22px; } .feedbackPanel { padding:24px; gap:24px; } }
+
+.heroGrid { grid-template-columns:1.1fr 1fr; gap:48px; }
+.heroScene { min-width:0; position:relative; margin:0; background:#eaece6; border:1px solid var(--line); }
+.heroScene img { width:100%; height:390px; object-fit:cover; display:block; }
+.heroScene figcaption { position:absolute; top:14px; left:14px; padding:6px 10px; background:#fff; color:#334b4f; font-size:11px; }
+.sceneCaption { padding:24px; }
+.sceneCaption span { display:block; color:var(--home-muted); font-size:12px; margin-bottom:10px; }
+.sceneCaption strong { font-size:22px; font-weight:550; line-height:1.5; }
+.segmentImage { margin:-28px -28px 24px; position:relative; }
+.segmentImage img { width:100%; height:190px; object-fit:cover; display:block; }
+.segmentImage figcaption { position:absolute; bottom:8px; left:8px; padding:4px 8px; background:#fff; font-size:10px; color:#334b4f; }
+.intentGrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:28px; }
+.intentGrid article { border-top:2px solid var(--teal); padding-top:24px; }
+.intentGrid h3 { font-size:21px; margin:14px 0; font-weight:550; }
+.intentGrid p,.purchasePath p { font-size:14px; line-height:1.9; color:var(--home-muted); }
+.purchasePath { margin-top:32px; padding:28px; border:1px solid var(--line); display:flex; gap:32px; align-items:center; background:#edf0eb; }
+.purchasePath p { margin-top:10px; max-width:650px; }
+.purchasePath :global(.btn) { flex-shrink:0; }
+@media(max-width:1000px) { .segmentImage { margin:-20px -20px 24px; } }
+@media(max-width:700px) { .heroGrid,.intentGrid { grid-template-columns:1fr; } .heroScene img { height:auto; } .purchasePath { flex-direction:column; align-items:flex-start; padding:22px; } }

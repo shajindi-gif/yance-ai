@@ -24,15 +24,14 @@ export default function HomePage() {
         <div>
           <h1>为新质生产力企业，<br />找到有依据的<br /><em>政策与资源机会。</em></h1>
           <p className={styles.lead}>重点服务新质生产力与科技企业，也面向各类有政策需求的企业。结合企业资料与政策原文，梳理申报条件、补证任务和材料工作稿，让每一步都有来源、有状态、可复核。</p>
-          <div className={styles.actions}><Link href="/discover" className="btn btn-primary">查找政策 <span aria-hidden="true">↗</span></Link><Link href="/dashboard" className={styles.textLink}>进入工作台 <span aria-hidden="true">→</span></Link></div>
+          <div className={styles.actions}><Link href="/discover" className="btn btn-primary">开始查找政策 <span aria-hidden="true">↗</span></Link><Link href="/dashboard" className={styles.textLink}>进入工作台 <span aria-hidden="true">→</span></Link></div>
           <p className={styles.note}>企业提供资料 · 条件逐项核对 · 客户自主复核</p>
         </div>
-        <aside className={styles.editorial} aria-label="证据工作流程">
-          <div className={styles.editorialTop}><span>从信息，到行动</span><span aria-hidden="true">↙</span></div>
-          <div className={styles.orbit} aria-hidden="true"><span>企 业</span><i /><b>证据</b></div>
-          <ol><li><span>输入</span><strong>企业事实与政策原文</strong></li><li><span>判断</span><strong>条件、依据与证据缺口</strong></li><li><span>交付</span><strong>可复核的项目与材料</strong></li></ol>
-          <p>匹配度不是获批概率。<br />每项判断，都应回到具体条件与证据。</p>
-        </aside>
+        <figure className={styles.heroScene}>
+          <Image src="/industries/manufacturing.webp" alt="AI生成的制造企业团队协作场景示意" width={1200} height={800} sizes="(max-width: 700px) 100vw, 50vw" preload />
+          <figcaption>行业场景 · AI 生成示意，非真实客户</figcaption>
+          <div className={styles.sceneCaption}><span>把创新投入，转化为有据可查的准备工作</span><strong>看政策条件，也看自己的证据。</strong></div>
+        </figure>
       </div>
       <div className={styles.sectors}><span>重点领域，开放服务</span><p>人工智能 / 智能制造 / 生物医药 / 集成电路 / 新能源新材料<br />也服务传统制造、商贸与专业服务等企业，按实际条件寻找机会。</p></div>
     </section>
@@ -40,10 +39,10 @@ export default function HomePage() {
     <section className={styles.section} id="for-business" aria-labelledby="business-heading">
       <div className={styles.sectionHead}><div><span className={styles.eyebrow}>服务对象 / 从重点到更广的企业需求</span><h2 id="business-heading">企业类型不同，<br />都从自己的事实出发。</h2></div><p>关注创新，也关注经营。先核对地域、规模、经营与研发情况，再判断政策是否适用。</p></div>
       <div className={styles.businessGrid}>{[
-        ['重点服务', '新质生产力企业', '人工智能、机器人、集成电路、新能源新材料等方向，先看政策原文中的产业与技术条件。'],
-        ['重点服务', '科技与研发型企业', '梳理研发活动、知识产权与成果转化事实，核对申报条件，缺少证明时保留待补证状态。'],
-        ['开放服务', '各类有政策需求的企业', '制造、商贸、专业服务等企业，无论初创、成长或转型，都可按所在地域与实际经营情况开始初筛。'],
-      ].map(([label,title,description]) => <article key={title}><span className={styles.segment}>{label}</span><h3>{title}</h3><p>{description}</p><Link href="/companies" className={styles.textLink}>从企业资料开始 →</Link></article>)}</div>
+        ['manufacturing', '重点服务', '新质生产力企业', '人工智能、机器人、集成电路、新能源新材料等方向，先看政策原文中的产业与技术条件。'],
+        ['research', '重点服务', '科技与研发型企业', '梳理研发活动、知识产权与成果转化事实，核对申报条件，缺少证明时保留待补证状态。'],
+        ['business', '开放服务', '各类有政策需求的企业', '制造、商贸、专业服务等企业，无论初创、成长或转型，都可按所在地域与实际经营情况开始初筛。'],
+      ].map(([scene,label,title,description]) => <article key={title}><figure className={styles.segmentImage}><Image src={`/industries/${scene}.webp`} alt={`${title}的AI生成场景示意`} width={1200} height={800} sizes="(max-width: 700px) 100vw, 33vw" /><figcaption>AI 生成 · 行业示意</figcaption></figure><span className={styles.segment}>{label}</span><h3>{title}</h3><p>{description}</p><Link href="/companies" className={styles.textLink}>从企业资料开始 →</Link></article>)}</div>
       <p className={styles.note}>面向各类企业开放使用，不等于已覆盖所有地区、行业或政策；企业类型和行业标签不直接决定申报资格。</p>
     </section>
 
@@ -77,6 +76,16 @@ export default function HomePage() {
         ['02 / 制造成长', '准备一个项目，先看还缺哪些证明', '申报人员会同财务、研发同事准备企业事实。', '对照一项政策的条件，区分满足、不满足与证据不足，再整理材料要求。', '条件核对与补证清单；缺少财务事实或证明时，不自动认定符合。', '/opportunities', '查看政策机会'],
         ['03 / 商贸与专业服务', '已有政策线索，想确认是否适用', '企业负责人提供经营情况，并核对所在地和申报批次。', '先检索相关原文，核实适用行业、地域和期限，再决定是否推进。', '适用性与缺口记录；未收录或已过期的政策不作为当前可申报结论。', '/discover', '核对政策来源'],
       ].map(([tag,title,input,action,output,href,cta]) => <article key={tag}><span className={styles.segment}>场景示例 · {tag}</span><h3>{title}</h3><dl><dt>谁来准备</dt><dd>{input}</dd><dt>怎样使用</dt><dd>{action}</dd><dt>关注结果</dt><dd>{output}</dd></dl><Link href={href} className={styles.textLink}>{cta} →</Link></article>)}</div>
+    </section>
+
+    <section className={styles.section} id="start-with-your-task" aria-labelledby="task-heading">
+      <div className={styles.sectionHead}><div><span className={styles.eyebrow}>从你的需求开始</span><h2 id="task-heading">今天，你想先解决哪件事？</h2></div><p>先看是否适合，再决定投入。企业类型不是资格结论，缺少证据的条件会保留待核对状态。</p></div>
+      <div className={styles.intentGrid}>{[
+        ['还没有明确政策线索', '建立企业档案，开始初筛', '准备所在地、业务方向与已有资质。确认企业事实后，再检索适用的政策来源。', '/companies', '建立企业档案'],
+        ['已经准备推进一项政策', '把条件变成项目清单', '核对资格矩阵，整理补证任务与材料版本，由你或授权团队复核。', '/applications', '进入项目工作台'],
+        ['已经购买，需要拿到交付', '找回订单与已购报告', '支付以服务端订单状态为准。报告按当前企业权益授权下载，异常可提交反馈。', '/orders', '查看订单与交付'],
+      ].map(([tag,title,description,href,cta]) => <article key={tag}><span className={styles.segment}>{tag}</span><h3>{title}</h3><p>{description}</p><Link href={href} className={styles.textLink}>{cta} →</Link></article>)}</div>
+      <div className={styles.purchasePath}><div><strong>先体验，再按需购买</strong><p>在账户现有额度内了解政策机会。需要报告时，先核对交付范围、企业和服务端报价，再决定是否购买；未开放产品不接受新单。</p></div><Link href="/pricing" className="btn btn-primary">查看交付范围与价格 →</Link></div>
     </section>
 
     <section className={styles.section} id="customer-feedback" aria-labelledby="feedback-heading">

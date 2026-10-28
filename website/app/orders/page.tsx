@@ -47,7 +47,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     if (!api.isAuthenticated()) {
-      router.push("/login");
+      router.push("/login?next=%2Forders");
       return;
     }
     let cancelled = false;

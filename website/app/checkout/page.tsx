@@ -22,6 +22,9 @@ function CheckoutContent() {
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [pendingOrder, setPendingOrder] = useState('');
   const [paid, setPaid] = useState(false);
+  const [retryProtection, setRetryProtection] = useState(false);
+  const payingRef = useRef(false);
+  const attemptRef = useRef<{signature:string; key:string; order?:string} | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [countdown, setCountdown] = useState(600);
@@ -65,9 +68,11 @@ function CheckoutContent() {
     Promise.all([
       api.getProducts(),
       api.getCompanies(),
-    ]).then(([products, comps]) => {
+      api.getAuthConfig().catch(() => null),
+    ]).then(([products, comps, config]) => {
       if (cancelled) return;
       const p = products.find((item) => item.code === productCode) ?? null;
+      setRetryProtection(config?.checkout_idempotency_revision === 1);
       setProduct(p);
       setCompanies(comps);
       if (comps.length > 0) {
@@ -89,17 +94,23 @@ function CheckoutContent() {
   }, [requestedCompany, router, productCode, searchParams]);
 
   const handlePay = async () => {
-    if (!selectedCompany || !product) return;
+    if (!selectedCompany || !product || payingRef.current) return;
+    payingRef.current = true;
     setPaying(true);
     setError('');
     try {
       if (product.purchase_available === false || product.code !== 'POLICY_REPORT' || product.entitlement_type !== 'report') {
         throw new Error('该产品暂不在此开放购买，请核对交付范围与开通状态');
       }
-      const order = await api.createOrder({
-        product_code: product.code,
-        resource_id: selectedCompany,
-      });
+      const signature = `${product.code}:${selectedCompany}`;
+      if (attemptRef.current?.signature !== signature) attemptRef.current = {signature, key:crypto.randomUUID()};
+      const attempt = attemptRef.current;
+      if (!attempt.order) {
+        const order = await api.createOrder({product_code:product.code, resource_id:selectedCompany,
+          ...(retryProtection ? {client_request_id:attempt.key} : {})});
+        attempt.order = order.id;
+      }
+      const order = {id:attempt.order};
       setPendingOrder(order.id);
       if (provider === 'alipay') {
         const checkout = await api.createCheckout(order.id);
@@ -112,6 +123,7 @@ function CheckoutContent() {
     } catch (err) {
       setError(err instanceof Error ? err.message : '支付失败，请重试');
     } finally {
+      payingRef.current = false;
       setPaying(false);
     }
   };
@@ -163,6 +175,8 @@ function CheckoutContent() {
               <div style={{ padding: '16px 0' }}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>选择企业</label>
                 <select
+                  aria-label="选择企业"
+                  disabled={paying || Boolean(qrCodeUrl)}
                   value={selectedCompany}
                   onChange={e => setSelectedCompany(e.target.value)}
                   style={{ width: '100%', padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', outline: 'none' }}
@@ -176,12 +190,12 @@ function CheckoutContent() {
 
             {companies.length === 0 && (
               <div role="status" style={{ padding: '12px 14px', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '8px', color: '#9a3412', fontSize: '13px', marginTop: '12px' }}>
-                请先在工作区创建企业档案，再为该企业购买报告。
+                请先在工作区创建企业档案，再为该企业购买报告。<p><a href="/onboarding?next=%2Fcheckout%3Fproduct%3DPOLICY_REPORT">创建企业后返回购买 →</a></p>
               </div>
             )}
 
             {error && (
-              <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#dc2626', fontSize: '13px', marginTop: '12px' }}>{error}</div>
+              <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#dc2626', fontSize: '13px', marginTop: '12px' }}>{error}{pendingOrder && <p><a href="/orders">查看已有订单，避免重复购买 →</a></p>}</div>
             )}
           </div>
 
@@ -251,7 +265,7 @@ function CheckoutContent() {
                   )}
                 </div>
                 <button
-                  onClick={() => { stopTimers(); setQrCodeUrl(''); setPendingOrder(''); }}
+                  onClick={() => { stopTimers(); setQrCodeUrl(''); }}
                   style={{ marginTop: '12px', background: 'none', border: 'none', color: '#64748b', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}
                 >
                   更换支付方式或取消

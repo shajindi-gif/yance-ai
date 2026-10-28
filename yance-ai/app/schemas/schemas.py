@@ -467,6 +467,7 @@ class ApplicationArtifactReview(BaseModel):
 class OrderCreate(BaseModel):
     product_code: str
     resource_id: UUID | None = None
+    client_request_id: UUID | None = None
 
 
 class PaymentCreate(BaseModel):

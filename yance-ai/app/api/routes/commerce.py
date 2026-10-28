@@ -1,5 +1,6 @@
 import secrets
 import time
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
@@ -9,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import Principal, get_principal, require_roles
 from app.core.config import settings
 from app.core.db import get_db
-from app.models.models import Company, Invoice, Opportunity, Order, Payment, Product, UserRole
+from app.models.models import Company, Invoice, Opportunity, Order, Payment, Product, User, UserRole
 from app.schemas.schemas import (
     CommerceOut,
     InvoiceCreate,
@@ -45,6 +46,29 @@ def create_order(
     principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
     db: Session = Depends(get_db),
 ) -> Order:
+    request_order_id = None
+    if payload.client_request_id:
+        # Stable, principal-scoped ID plus a row lock make retries atomic without
+        # changing the schema or historical orders. UUID is never authorization.
+        request_order_id = uuid.uuid5(
+            uuid.NAMESPACE_URL,
+            f"https://yance.ai/orders/v1/{principal.tenant_id}/{principal.user.id}/{payload.client_request_id}",
+        )
+        db.execute(select(User.id).where(User.id == principal.user.id).with_for_update())
+        existing = db.scalar(
+            select(Order).where(
+                Order.id == request_order_id, Order.tenant_id == principal.tenant_id
+            )
+        )
+        if existing:
+            if (
+                existing.product_code != payload.product_code
+                or existing.resource_id != payload.resource_id
+            ):
+                raise HTTPException(
+                    status_code=409, detail="该请求已关联其他订单内容，请返回订单核对"
+                )
+            return existing
     product = db.scalar(
         select(Product).where(Product.code == payload.product_code, Product.active.is_(True))
     )
@@ -52,10 +76,13 @@ def create_order(
         raise HTTPException(status_code=404, detail="Product not found")
     availability = purchase_status(product)
     if not availability["purchase_available"]:
-        raise HTTPException(status_code=409, detail={
-            "code": "product_not_available_for_new_orders",
-            "message": availability["purchase_unavailable_reason"],
-        })
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "product_not_available_for_new_orders",
+                "message": availability["purchase_unavailable_reason"],
+            },
+        )
     if not payload.resource_id:
         raise HTTPException(status_code=400, detail="A product resource is required")
     resource_model = Company if product.entitlement_type == "report" else Opportunity
@@ -68,10 +95,13 @@ def create_order(
     if not resource:
         raise HTTPException(status_code=404, detail="Product resource not found")
     order = Order(
+        **({"id": request_order_id} if request_order_id else {}),
         tenant_id=principal.tenant_id,
         order_no=f"Y{secrets.token_hex(8).upper()}",
         product_code=product.code,
-        amount=product.promotional_price if product.promotional_price is not None else product.price,
+        amount=product.promotional_price
+        if product.promotional_price is not None
+        else product.price,
         currency="CNY",
         resource_type=product.entitlement_type,
         resource_id=payload.resource_id,

@@ -4089,6 +4089,18 @@
       },
       "OrderCreate": {
         "properties": {
+          "client_request_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Request Id"
+          },
           "product_code": {
             "title": "Product Code",
             "type": "string"
