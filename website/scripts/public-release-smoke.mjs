@@ -19,7 +19,7 @@ await context.route('**/*',route => {
 });
 const page=await context.newPage();
 page.on('pageerror',error=>errors.push(error.message));
-page.on('response',response=>{const path=new URL(response.url()).pathname;if(response.status()>=400&&!(path==='/api/v1/auth/me'&&response.status()===401))failures.push({path,status:response.status()});});
+page.on('response',response=>{const path=new URL(response.url()).pathname;if(response.status()>=400&&!(['/api/v1/auth/me','/api/v1/feedback','/api/v1/companies','/api/v1/orders'].includes(path)&&response.status()===401))failures.push({path,status:response.status()});});
 async function readPublicJSON(path){return page.evaluate(async path=>{const response=await fetch(path,{cache:'no-store',credentials:'omit',signal:AbortSignal.timeout(15000)});return {status:response.status,data:await response.json()};},path);}
 try{
  await page.goto(base+'/',{timeout:60000});
@@ -40,8 +40,19 @@ try{
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:`${output}/home-mobile.png`});
  const config=await readPublicJSON('/api/v1/auth/config');expect(config.status).toBe(200);
+ if(expectedRelease==='full-20261028-01'){
+  expect(config.data.application_workspace_revision).toBe(2);
+  expect(config.data.feedback_revision).toBe(1);
+  const products=await readPublicJSON('/api/v1/products');expect(products.status).toBe(200);
+  expect(Array.isArray(products.data)).toBe(true);
+  expect(products.data.length).toBeGreaterThan(0);
+  for(const product of products.data)expect(typeof product.purchase_available).toBe('boolean');
+  for(const path of ['/api/v1/feedback','/api/v1/companies','/api/v1/orders']){
+   const denied=await readPublicJSON(path);expect(denied.status).toBe(401);
+  }
+ }
  const me=await readPublicJSON('/api/v1/auth/me');expect(me.status).toBe(401);
  expect(failures).toEqual([]);expect(errors).toEqual([]);
- const result={at:new Date().toISOString(),base,release:expectedRelease,checks,mobile:true,failures,errors,blockedMethods,productionBusinessWrites:false,backendWorkspaceRevision:config.data.application_workspace_revision??null,sample:'Chromium read-only page visits and browser fetch; no throttling; not SLA'};
+ const result={at:new Date().toISOString(),base,release:expectedRelease,checks,mobile:true,failures,errors,blockedMethods,productionBusinessWrites:false,backendWorkspaceRevision:config.data.application_workspace_revision??null,feedbackRevision:config.data.feedback_revision??null,sample:'Chromium read-only page visits and browser fetch; no throttling; not SLA'};
  await writeFile(`${output}/result.json`,JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 }catch(error){await writeFile(`${output}/failure.json`,JSON.stringify({at:new Date().toISOString(),base,checks,failures,errors,blockedMethods,error:String(error),productionBusinessWrites:false},null,2));throw error;}finally{await browser.close();}

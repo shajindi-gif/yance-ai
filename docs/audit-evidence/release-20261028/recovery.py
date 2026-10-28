@@ -81,15 +81,23 @@ def backup(root):
     assert keeper.returncode == 0
     backup_seconds = time.monotonic()-started
     run(['docker','run','-d','--name',recovery,'--network','none','--memory','512m','--pids-limit','150','-e','POSTGRES_HOST_AUTH_METHOD=trust','-e','POSTGRES_USER=yance','-e','POSTGRES_DB='+database,'pgvector/pgvector:pg16'],stdout=sp.DEVNULL)
-    for _ in range(60):
-        if sp.run(['docker','exec',recovery,'pg_isready','-U','yance','-d',database],stdout=sp.DEVNULL,stderr=sp.DEVNULL).returncode == 0:
+    # initdb briefly runs a Unix-socket-only temporary server. pg_isready can
+    # report ready even before POSTGRES_DB exists. Require the final TCP server
+    # and an actual SELECT in the requested database before restoring.
+    for _ in range(90):
+        if sp.run(['docker','exec',recovery,'psql','-X','-h','127.0.0.1','-U','yance','-d',database,'-Atqc','SELECT 1'],stdout=sp.DEVNULL,stderr=sp.DEVNULL).returncode == 0:
             break
         time.sleep(.5)
     else:
         raise RuntimeError('Recovery database failed to start')
     started = time.monotonic()
     with dump.open('rb') as source_file:
-        run(['docker','exec','-i',recovery,'pg_restore','--exit-on-error','--no-owner','--no-acl','-U','yance','-d',database],stdin=source_file,capture_output=True)
+        restored_process = sp.run(['docker','exec','-i',recovery,'pg_restore','--exit-on-error','--single-transaction','--no-owner','--no-acl','-U','yance','-d',database],stdin=source_file,capture_output=True)
+    if restored_process.returncode:
+        # Diagnostic bodies may contain customer values: keep them root-only,
+        # never include them in stdout, chat or repository evidence.
+        (root/'restore-error.private').write_bytes(restored_process.stderr)
+        raise RuntimeError('Isolated restore failed; root-only diagnostics saved')
     assert fingerprints(recovery,database,schema) == hashes, 'Restored fingerprints differ'
     restore_seconds = time.monotonic()-started
     plain_hash = hashlib.file_digest(dump.open('rb'),'sha256').hexdigest()

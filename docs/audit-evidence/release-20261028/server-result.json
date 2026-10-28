@@ -1,0 +1,182 @@
+{
+  "source": "bd0ef295f186de9b76263cf00483724650f6bb8c",
+  "source_archive_sha256": "06a30b7d3c0b70037ea8b89c3924d1a79df7d10dea87ad2f6f95953dfa326aab",
+  "image_id": "sha256:18af7bc61eaa3a43917439fe3a6d58f5426548a7a7022cb57db5598304da3810",
+  "reports": {
+    "recovery-preflight.json": {
+      "verified": true,
+      "container": "yance-recovery-preflight",
+      "database": "yance_release_test",
+      "network": "none",
+      "table_count": 77,
+      "row_count": 1438,
+      "backup_seconds": 1.701,
+      "restore_seconds": 3.606,
+      "plain_sha256": "a299a7551ea89f53d9f1d8a1e7be242333d80cd0cb71bed479dcb55b85c0c4b1",
+      "cipher_sha256": "1d7b50f900669428c1dc277c02c9e3d2c231d7681dc250c1eeaa8d6d79e4ac60"
+    },
+    "rehearsal-preservation.json": {
+      "verified": true,
+      "existing_tables": 76,
+      "changed_tables": [],
+      "revision": "20261027_0033"
+    },
+    "legacy-baseline-drift.json": {
+      "baseline_exception_verified": true,
+      "standard_alembic_check_passed": false,
+      "revision": null,
+      "nullable_differences": [
+        [
+          "analytics_events",
+          "tenant_id"
+        ],
+        [
+          "deliverables",
+          "created_at"
+        ],
+        [
+          "deliverables",
+          "updated_at"
+        ],
+        [
+          "policy_rules",
+          "tenant_id"
+        ],
+        [
+          "tasks",
+          "progress"
+        ]
+      ],
+      "null_counts": {
+        "analytics_events.tenant_id": 0,
+        "deliverables.created_at": 0,
+        "deliverables.updated_at": 0,
+        "policy_rules.tenant_id": 0,
+        "tasks.progress": 0
+      },
+      "row_rewrites": false
+    },
+    "legacy-migrated-drift.json": {
+      "baseline_exception_verified": true,
+      "standard_alembic_check_passed": false,
+      "revision": "20261027_0033",
+      "nullable_differences": [
+        [
+          "analytics_events",
+          "tenant_id"
+        ],
+        [
+          "deliverables",
+          "created_at"
+        ],
+        [
+          "deliverables",
+          "updated_at"
+        ],
+        [
+          "policy_rules",
+          "tenant_id"
+        ],
+        [
+          "tasks",
+          "progress"
+        ]
+      ],
+      "null_counts": {
+        "analytics_events.tenant_id": 84,
+        "deliverables.created_at": 0,
+        "deliverables.updated_at": 0,
+        "policy_rules.tenant_id": 5,
+        "tasks.progress": 0
+      },
+      "row_rewrites": false
+    },
+    "candidate-readonly-checks.log": {
+      "passed": true,
+      "schema": "20261027_0033",
+      "public_api_checks": 4,
+      "unauthenticated_denials": 4,
+      "legacy_unowned_rows_excluded_for_two_transient_tenants": true,
+      "authentication_mocked_only_in_isolated_process": true,
+      "customer_business_writes": false,
+      "external_network": false
+    },
+    "worker-shutdown.json": {
+      "results": [
+        {
+          "worker": "agent_worker",
+          "exit_code": 0,
+          "sigterm_passed": true
+        },
+        {
+          "worker": "notification_worker",
+          "exit_code": 0,
+          "sigterm_passed": true
+        }
+      ],
+      "external_email_enabled": false
+    },
+    "recovery-final-retry.json": {
+      "verified": true,
+      "container": "yance-recovery-final-retry",
+      "database": "yance_release_test",
+      "network": "none",
+      "table_count": 77,
+      "row_count": 1438,
+      "backup_seconds": 0.937,
+      "restore_seconds": 2.68,
+      "plain_sha256": "4448ace81605c45f5f7104b56c41d89c6b992b7206f5e2e8e3dc180be389f212",
+      "cipher_sha256": "b6b15c44d3aebc0cecd90d61edfdc61aa7be743a626584e8e13691053f613a68"
+    },
+    "final-retry-clone-preservation.json": {
+      "verified": true,
+      "existing_tables": 76,
+      "changed_tables": [],
+      "revision": "20261027_0033"
+    },
+    "final-retry-candidate-checks.log": {
+      "passed": true,
+      "schema": "20261027_0033",
+      "public_api_checks": 4,
+      "unauthenticated_denials": 4,
+      "legacy_unowned_rows_excluded_for_two_transient_tenants": true,
+      "authentication_mocked_only_in_isolated_process": true,
+      "customer_business_writes": false,
+      "external_network": false
+    },
+    "production-preservation.json": {
+      "verified": true,
+      "existing_tables": 76,
+      "changed_tables": [],
+      "revision": "20261027_0033"
+    },
+    "failed-snapshot-sealing": {
+      "encrypted_roundtrip_verified": true,
+      "original_restore_attempt_passed": false,
+      "same_row_fingerprints_as_verified_retry": true,
+      "plain_sha256": "fdb9d7c75ac16231b3f09f63babafa3f5b2b8890f55d7f703a74b4a9d955dce2",
+      "cipher_sha256": "1af89b5088dcfc47fd463fb49b69fe990d6658c8c56a567d1096c8e9ac218949",
+      "private_plaintext_removed_after_cipher_verification": true
+    }
+  },
+  "operational": {
+    "public_health": {
+      "status": "ok",
+      "service": "yance.ai API",
+      "version": "bd0ef295f186de9b76263cf00483724650f6bb8c"
+    },
+    "website_service": "WorkingDirectory=/opt/yance/releases/full-20261028-01/website\nActiveState=active",
+    "running_containers": "yance-prod-agent-worker-1 yance-backend:full-20261028-01 Up 6 minutes (healthy)\nyance-prod-api-1 yance-backend:full-20261028-01 Up 6 minutes (healthy)\nyance-prod-db-1 pgvector/pgvector:pg16 Up 10 days (healthy)\nyance-prod-clamav-1 clamav/clamav:1.4 Up 5 weeks (healthy)",
+    "database_revision": "20261027_0033",
+    "observed_at_utc": "2026-10-28T07:20:37Z",
+    "api_log_observation": {
+      "scope": "newly_created_api_container_last_2000_lines",
+      "lines": 46,
+      "parsed_json_records": 0,
+      "status_counts": {},
+      "error_level_events": null,
+      "private_log_contents_exported": false,
+      "continuous_monitoring": false
+    }
+  }
+}
