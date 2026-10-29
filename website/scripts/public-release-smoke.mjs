@@ -42,7 +42,7 @@ try{
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:`${output}/home-mobile.png`});
  const config=await readPublicJSON('/api/v1/auth/config');expect(config.status).toBe(200);
- if(['full-20261028-01','growth-20261029-01','images-20261029-01'].includes(expectedRelease)){
+ if(['full-20261028-01','growth-20261029-01','images-20261029-01','sms-20261029-01'].includes(expectedRelease)){
   expect(config.data.application_workspace_revision).toBe(2);
   expect(config.data.feedback_revision).toBe(1);
   if(['growth-20261029-01','images-20261029-01','sms-20261029-01'].includes(expectedRelease)) expect(config.data.checkout_idempotency_revision).toBe(1);
@@ -53,6 +53,17 @@ try{
   for(const path of ['/api/v1/feedback','/api/v1/companies','/api/v1/orders']){
    const denied=await readPublicJSON(path);expect(denied.status).toBe(401);
   }
+ }
+ if(expectedRelease==='sms-20261029-01'){
+  expect(config.data.sms_login_enabled).toBe(true);expect(config.data.email_login_enabled).toBe(true);
+  await page.goto(base+'/login');
+  await page.getByRole('button',{name:'手机注册 / 登录',exact:true}).click();
+  await expect(page.getByLabel('中国大陆手机号')).toBeVisible();
+  await expect(page.getByRole('button',{name:'获取短信验证码',exact:true})).toBeDisabled();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.screenshot({path:`${output}/sms-login-mobile.png`,fullPage:true});
+  await page.getByRole('button',{name:'邮箱注册 / 登录',exact:true}).click();
+  await expect(page.getByLabel('邮箱',{exact:true})).toBeVisible();
  }
  const me=await readPublicJSON('/api/v1/auth/me');expect(me.status).toBe(401);
  expect(failures).toEqual([]);expect(errors).toEqual([]);
