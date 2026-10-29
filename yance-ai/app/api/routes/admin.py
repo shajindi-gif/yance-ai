@@ -629,7 +629,7 @@ def _notify_invoice(db: Session, invoice, *, issued: bool, reason: str | None = 
             .join(Membership, Membership.user_id == User.id)
             .where(Membership.tenant_id == invoice.tenant_id)
         ).all()
-        for email in set(owners):
+        for email in {address for address in owners if address}:
             send_email(email, title, body)
     db.commit()
 

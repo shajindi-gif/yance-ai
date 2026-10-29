@@ -122,6 +122,16 @@ class Settings(BaseSettings):
     company_bank_name: str = ""
     company_bank_account: str = ""
 
+    # SMS is explicitly disabled until a reviewed release and delivery acceptance.
+    sms_enabled: bool = False
+    tencent_sms_secret_id: str = ""
+    tencent_sms_secret_key: str = ""
+    tencent_sms_app_id: str = ""
+    tencent_sms_sign_name: str = ""
+    tencent_sms_template_id: str = ""
+    tencent_sms_region: str = "ap-guangzhou"
+    sms_daily_limit: int = Field(default=100, ge=1, le=10000)
+
     # 事务邮件：截止日 T-7/T-3/T-1 强触达 + 登录验证码；未配置则仅站内通知/接口503
     # email_provider: resend | smtp（腾讯企业邮箱等 SMTP 通道）
     email_provider: str = "resend"

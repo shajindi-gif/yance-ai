@@ -1,0 +1,36 @@
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 20260809_0001, Initial yance.ai schema with pgvector.
+INFO  [alembic.runtime.migration] Running upgrade 20260809_0001 -> 20260809_0002, Add stripe_session_id to payments table.
+INFO  [alembic.runtime.migration] Running upgrade 20260809_0002 -> 20260809_0003, Add Alipay + invoice fields
+INFO  [alembic.runtime.migration] Running upgrade 20260809_0003 -> 20260809_0004, Add bank receipt fields to payments
+INFO  [alembic.runtime.migration] Running upgrade 20260809_0004 -> 20260809_0005, Fix policies.embedding dimension 1536 -> 1024 (B1).
+INFO  [alembic.runtime.migration] Running upgrade 20260809_0005 -> 20260814_0006_global_policy_kb, Make Policy global (remove tenant scoping) + add Global Policy KB fields.
+INFO  [alembic.runtime.migration] Running upgrade 20260814_0006_global_policy_kb -> 20260814_0007, Add Product SKU table and Entitlement table for unified pricing.
+INFO  [alembic.runtime.migration] Running upgrade 20260814_0007 -> 20260817_0008, Add Task, Deliverable, RevisionRequest tables for Outcome-based Agent SaaS.
+INFO  [alembic.runtime.migration] Running upgrade 20260817_0008 -> 20260902_0009, Align task and deliverable columns with the current ORM.
+INFO  [alembic.runtime.migration] Running upgrade 20260902_0009 -> 20260902_0010, Add replay-safe payment provider event ledger.
+INFO  [alembic.runtime.migration] Running upgrade 20260902_0010 -> 20260903_0011, Bind purchased entitlements to an explicit tenant resource.
+INFO  [alembic.runtime.migration] Running upgrade 20260903_0011 -> 20260903_0012, Align ORM invariants with the additive legacy schema.
+INFO  [alembic.runtime.migration] Running upgrade 20260903_0012 -> 20260903_0013, Add the persistent core product workflow spine.
+INFO  [alembic.runtime.migration] Running upgrade 20260903_0013 -> 20260903_0014, Add durable Agent Harness execution and trace records.
+INFO  [alembic.runtime.migration] Running upgrade 20260903_0014 -> 20260903_0015, Add immutable policy sources, typed rules, decisions, and evidence.
+INFO  [alembic.runtime.migration] Running upgrade 20260903_0015 -> 20260904_0016, Add Application document, artifact, review, and comment records.
+INFO  [alembic.runtime.migration] Running upgrade 20260904_0016 -> 20260904_0017, Add platform admin, analytics provenance, account stage and feedback.
+INFO  [alembic.runtime.migration] Running upgrade 20260904_0017 -> 20260905_0018, Add versioned evaluation datasets, runs and case evidence.
+INFO  [alembic.runtime.migration] Running upgrade 20260905_0018 -> 20260905_0019, Add subscription billing, usage metering and enterprise controls.
+INFO  [alembic.runtime.migration] Running upgrade 20260905_0019 -> 20260905_0020, Add isolated investor demo scenarios.
+INFO  [alembic.runtime.migration] Running upgrade 20260905_0020 -> 20260906_0021, Add durable document ingestion and reviewable company intelligence.
+INFO  [alembic.runtime.migration] Running upgrade 20260906_0021 -> 20260927_0022, Funding OS: structured funding facts, notifications, milestones.
+INFO  [alembic.runtime.migration] Running upgrade 20260927_0022 -> 20261015_0023, Email verification codes for passwordless login.
+INFO  [alembic.runtime.migration] Running upgrade 20261015_0023 -> 20261017_0024, Shared DB-backed auth rate limiting.
+INFO  [alembic.runtime.migration] Running upgrade 20261017_0024 -> 20261017_0025, Invoice e-invoice manual issuance loop (数电票人工闭环).
+INFO  [alembic.runtime.migration] Running upgrade 20261017_0025 -> 20261020_0026, Add a backwards-compatible JWT revocation counter.
+INFO  [alembic.runtime.migration] Running upgrade 20261020_0026 -> 20261020_0027, Separate policy validity from an application-window deadline.
+INFO  [alembic.runtime.migration] Running upgrade 20261020_0027 -> 20261023_0028, Add attempt fencing and a per-recipient notification outbox.
+INFO  [alembic.runtime.migration] Running upgrade 20261023_0028 -> 20261023_0029, Bind optional review comments to immutable draft versions.
+INFO  [alembic.runtime.migration] Running upgrade 20261023_0029 -> 20261023_0030, Optional human summary suggestions and immutable resolution records.
+INFO  [alembic.runtime.migration] Running upgrade 20261023_0030 -> 20261023_0031, Optional request identifiers for comment creation. Retain on app rollback.
+INFO  [alembic.runtime.migration] Running upgrade 20261023_0031 -> 20261024_0032, Durable per-tenant model output/call reservations, no monetary prices.
+INFO  [alembic.runtime.migration] Running upgrade 20261024_0032 -> 20261027_0033, Optional feedback retry identifiers. Keep this additive field on app rollback.
+INFO  [alembic.runtime.migration] Running upgrade 20261027_0033 -> 20261029_0034, Phone identities and short-lived SMS verification ledger; retain on rollback.

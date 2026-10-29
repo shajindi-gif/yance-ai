@@ -3,12 +3,15 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
+import SmsAuth from '@/components/auth/SmsAuth';
 import { safeReturnPath } from '@/lib/return-path';
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnPath = safeReturnPath(searchParams.get('next'));
+  const [smsEnabled, setSmsEnabled] = useState(false);
+  const [smsMode, setSmsMode] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -52,13 +55,13 @@ function LoginContent() {
   const [ownerPassword, setOwnerPassword] = useState('');
   const [agreed, setAgreed] = useState(false);
 
-  const TERMS_VERSION = '2026-09-19';
+  const TERMS_VERSION = '2026-10-29';
 
   // 验证码 tab 由后端能力开关控制：Resend 通道未配置时不展示
   useEffect(() => {
     let active = true;
     api.getAuthConfig().then(cfg => {
-      if (active) setEmailLoginEnabled(cfg.email_login_enabled);
+      if (active) { setEmailLoginEnabled(cfg.email_login_enabled); setSmsEnabled(cfg.sms_login_enabled === true); }
     });
     return () => {
       active = false;
@@ -226,6 +229,11 @@ function LoginContent() {
             <p className="yc-auth-subtitle">新质生产力企业的政策与资源证据工作台</p>
           </div>
 
+          {smsEnabled && <div className="yc-auth-tabs">
+            <button type="button" className={`yc-auth-tab ${!smsMode ? 'active' : ''}`} onClick={() => setSmsMode(false)}>邮箱注册 / 登录</button>
+            <button type="button" className={`yc-auth-tab ${smsMode ? 'active' : ''}`} onClick={() => setSmsMode(true)}>手机注册 / 登录</button>
+          </div>}
+          {smsMode ? <SmsAuth onSuccess={() => router.push(returnPath)} /> : <>
           <div className="yc-auth-tabs">
             <button className={`yc-auth-tab ${isLogin ? 'active' : ''}`} onClick={() => { setIsLogin(true); setError(''); setNotice(''); }}>登录</button>
             <button className={`yc-auth-tab ${!isLogin ? 'active' : ''}`} onClick={() => { setIsLogin(false); setError(''); setNotice(''); }}>免费注册</button>
@@ -456,6 +464,7 @@ function LoginContent() {
               ) : null}
             </form>
           )}
+          </>}
         </div>
       </div>
 

@@ -1,0 +1,26 @@
+
+> yance-website@0.1.0 test:unit
+> node --experimental-strip-types --test tests/*.test.mjs
+
+(node:34890) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/shajindi/yance-backup/yance/website/lib/artifact-diff.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/shajindi/yance-backup/yance/website/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ object key order does not invent evidence changes (9.566ms)
+✔ missing and null remain distinct, deletion is visible (0.096292ms)
+✔ changed nested citations and ordered arrays are visible (0.076917ms)
+✔ source comparison covers unknown metadata without dropping fields (0.052917ms)
+(node:34891) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/shajindi/yance-backup/yance/website/lib/api-errors.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/shajindi/yance-backup/yance/website/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ post-auth destinations preserve the task and reject external or privileged API destinations (0.506333ms)
+✔ structured API errors provide next steps without disclosing validation inputs (0.158125ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 101.853458

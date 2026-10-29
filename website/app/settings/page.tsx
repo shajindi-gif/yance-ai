@@ -7,11 +7,14 @@ import { Button } from "@/components/ui/Button";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import SmsAuth from "@/components/auth/SmsAuth";
 import AppShell from "@/components/workspace/AppShell";
 import styles from "@/components/workspace/Enterprise.module.css";
 import api, { type EnterpriseSettings } from "@/lib/api";
 
 export default function SettingsPage() {
+  const [smsEnabled, setSmsEnabled] = useState(false);
+  useEffect(() => { let active = true; api.getAuthConfig().then(cfg => { if (active) setSmsEnabled(cfg.sms_login_enabled === true); }); return () => { active = false; }; }, []);
   const [data, setData] = useState<EnterpriseSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -26,6 +29,7 @@ export default function SettingsPage() {
   if (loading) return <AppShell><LoadingState label="正在读取企业控制项" /></AppShell>;
   return <AppShell>
     <PageHeader eyebrow="Enterprise Controls" title="企业设置" description="API 密钥、数据导出、保留策略与删除请求均由后端权限和审计记录约束。" />
+    {smsEnabled && api.isAuthenticated() && <section className={styles.panel}><h2>绑定手机号</h2><SmsAuth binding /></section>}
     {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}
     {error && !data ? <Button type="button" variant="secondary" onClick={() => { setLoading(true); void load(); }}>重新加载企业设置</Button> : null}
     {secret ? <div className={styles.secret}><strong>仅显示一次：</strong> {secret}</div> : null}

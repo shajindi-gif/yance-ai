@@ -7,6 +7,7 @@ export const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
 export interface AuthConfig {
   email_login_enabled: boolean;
+  sms_login_enabled?: boolean;
   logout_all_devices_enabled?: boolean;
   agent_cancellation_enabled?: boolean;
   district_profile_enabled?: boolean;
@@ -31,7 +32,8 @@ export interface Tenant {
 export interface User {
   id: string;
   tenant_id: string;
-  email: string;
+  email: string | null;
+  phone?: string | null;
   role: string;
   is_active: boolean;
   is_platform_admin: boolean;
@@ -319,7 +321,8 @@ export interface FundingSummary {
 export interface TeamMember {
   id: string;
   tenant_id: string;
-  email: string;
+  email: string | null;
+  phone?: string | null;
   full_name: string;
   role: string;
   is_active: boolean;
@@ -1162,6 +1165,16 @@ class ApiClient {
       // 配置接口不可用时保守回退：只显示密码登录
       return { email_login_enabled: false };
     }
+  }
+
+  async smsAction(action: 'send' | 'verify' | 'bind/send' | 'bind', data: { phone: string; code?: string; owner_name?: string; company_name?: string; agreed_terms_version?: string }): Promise<{ access_token?: string; message?: string }> {
+    const response = await fetch(`${API_BASE}/auth/sms/${action}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(action.startsWith('bind') && this.token ? { Authorization: `Bearer ${this.token}` } : {}) },
+      body: JSON.stringify(data), signal: AbortSignal.timeout(20_000),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(apiErrorMessage(result.detail, '短信操作失败，请稍后重试'));
+    return result;
   }
 
   async sendEmailCode(email: string): Promise<void> {

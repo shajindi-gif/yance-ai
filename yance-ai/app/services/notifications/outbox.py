@@ -39,6 +39,7 @@ def enqueue_deadline_emails(db: Session, *, tenant_id=None, limit: int = 200) ->
             Notification.read_at.is_(None),
             ~Notification.dedup_key.endswith(":emailed"),
             User.is_active.is_(True),
+            User.email.is_not(None),
             Tenant.is_active.is_(True),
             Membership.status == "active",
             or_(

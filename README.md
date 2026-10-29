@@ -104,3 +104,7 @@ Production website `growth-20261029-01`, API/worker source `4587e34` (verified b
 ## Supplied imagery website release — 2026-10-29
 
 Website `images-20261029-01` / source `5b5c1f7` (page implementationb3d1627) is live. Six user-supplied images replace generated scenes; desktop/mobile public checks passed. Backend remains4587e34, no database operations. Verified previous website backup retained. See [release and rollback](docs/images-release-20261029.md).
+
+## Phone authentication candidate — 2026-10-29 (not deployed)
+
+Tencent SMS registration/login and authenticated phone binding have passed 252 isolated backend tests and two local API browser journeys. Real delivery is blocked by insufficient SMS package balance; production SMS stays disabled and email login remains available. See [implementation, evidence and release constraints](docs/sms-auth-20261029.md).

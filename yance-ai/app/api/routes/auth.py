@@ -43,6 +43,7 @@ from app.services.email_code import (
     send_reset_code,
 )
 from app.services.notifications.email import is_email_configured
+from app.services.sms import is_sms_configured
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = structlog.get_logger()
@@ -305,6 +306,7 @@ def auth_config() -> dict:
     """Public capability flags so the login page can hide unavailable tabs."""
     return {
         "email_login_enabled": is_email_configured(),
+        "sms_login_enabled": is_sms_configured(),
         "logout_all_devices_enabled": True,
         "agent_cancellation_enabled": True,
         "district_profile_enabled": True,

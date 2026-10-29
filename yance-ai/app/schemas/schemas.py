@@ -79,7 +79,8 @@ class UserCreate(BaseModel):
 class UserOut(ORMModel):
     id: UUID
     tenant_id: UUID
-    email: EmailStr
+    email: EmailStr | None
+    phone: str | None = None
     full_name: str
     role: UserRole
     is_active: bool

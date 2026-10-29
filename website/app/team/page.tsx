@@ -81,7 +81,7 @@ export default function TeamPage() {
             <div key={member.id} className={content.row}>
               <div>
                 <strong>{member.full_name}</strong>
-                <div className={content.subtle} style={{ fontSize: 12 }}>{member.email}</div>
+                <div className={content.subtle} style={{ fontSize: 12 }}>{member.email || (member.phone ? `${member.phone.slice(0, 6)}****${member.phone.slice(-4)}` : "未设置邮箱")}</div>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <Badge tone={member.role === "owner" ? "success" : "neutral"}>{member.role}</Badge>

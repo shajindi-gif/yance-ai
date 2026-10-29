@@ -1,0 +1,165 @@
+F....................................................................... [ 28%]
+........................................................................ [ 57%]
+........................................................................ [ 86%]
+..................................                                       [100%]
+=================================== FAILURES ===================================
+____ test_platform_admin_metrics_permissions_provenance_and_safe_resources _____
+
+    def test_platform_admin_metrics_permissions_provenance_and_safe_resources():
+        suffix = uuid.uuid4().hex
+        with TestClient(app) as client:
+            platform_headers, platform_email = _register(client, f"platform-{suffix}")
+            tenant_headers, tenant_email = _register(client, f"tenant-{suffix}")
+    
+            with SessionLocal() as db:
+                platform_user = db.scalar(select(User).where(User.email == platform_email))
+                tenant_user = db.scalar(select(User).where(User.email == tenant_email))
+                assert platform_user and tenant_user
+                platform_user.is_platform_admin = True
+                tenant = db.get(Tenant, tenant_user.tenant_id)
+                assert tenant
+                tenant.account_stage = "poc"
+                company = db.scalar(select(Company).where(Company.tenant_id == tenant.id))
+                assert company
+                opportunity = Opportunity(
+                    tenant_id=tenant.id,
+                    company_id=company.id,
+                    title="Admin metrics opportunity",
+                    status="identified",
+                )
+                application = Application(
+                    tenant_id=tenant.id,
+                    company_id=company.id,
+                    title="Admin metrics application",
+                    status="draft",
+                )
+                db.add_all([opportunity, application])
+                db.flush()
+                db.add(
+                    ApplicationArtifact(
+                        tenant_id=tenant.id,
+                        application_id=application.id,
+                        created_by=tenant_user.id,
+                        title="Metrics artifact",
+                        version=1,
+                        content_json={"title": "Metrics artifact"},
+                        source_snapshot_json={"application_id": str(application.id)},
+                        checksum_sha256="a" * 64,
+                    )
+                )
+                db.add_all(
+                    [
+                        AgentRun(
+                            tenant_id=tenant.id,
+                            user_id=tenant_user.id,
+                            agent_name="Policy Search Agent",
+                            provider="openai-compatible",
+                            model="test-model",
+                            status="completed",
+                            total_tokens=100,
+                            cost_usd=0.5,
+                        ),
+                        AgentRun(
+                            tenant_id=tenant.id,
+                            user_id=tenant_user.id,
+                            agent_name="Policy Search Agent",
+                            provider="openai-compatible",
+                            model="test-model",
+                            status="failed",
+                            total_tokens=0,
+                            cost_usd=0,
+                            error_code="provider_error",
+                        ),
+                        Order(
+                            tenant_id=tenant.id,
+                            order_no=f"METRICS-{suffix}",
+                            product_code="TEST",
+                            amount=123,
+                            currency="CNY",
+                            status="paid",
+                        ),
+                    ]
+                )
+                for name in (
+                    "company_profile_completed",
+                    "policy_scan_completed",
+                    "application_created",
+                    "document_generated",
+                    "payment_completed",
+                ):
+                    record_event(
+                        db,
+                        tenant_id=tenant.id,
+                        user_id=tenant_user.id,
+                        name=name,
+                        event_key=f"{name}:metrics:{suffix}",
+                    )
+                db.commit()
+                opportunity_id = opportunity.id
+                tenant_id = tenant.id
+    
+            denied = client.get("/api/v1/admin/investor-metrics", headers=tenant_headers)
+            assert denied.status_code == 403
+    
+            feedback = client.post(
+                "/api/v1/feedback",
+                headers=tenant_headers,
+                json={"category": "data", "message": "政策来源需要更新", "route": "/opportunities"},
+            )
+            assert feedback.status_code == 201
+    
+            for _ in range(2):
+                opened = client.post(
+                    f"/api/v1/opportunities/{opportunity_id}/opened", headers=tenant_headers
+                )
+                assert opened.status_code == 204
+            with SessionLocal() as db:
+                opened_count = db.scalar(
+                    select(func.count())
+                    .select_from(AnalyticsEvent)
+                    .where(
+                        AnalyticsEvent.tenant_id == tenant_id,
+                        AnalyticsEvent.name == "opportunity_opened",
+                    )
+                )
+                assert opened_count == 1
+    
+            metrics_response = client.get(
+                "/api/v1/admin/investor-metrics", headers=platform_headers
+            )
+            assert metrics_response.status_code == 200, metrics_response.text
+            metrics = metrics_response.json()
+            assert metrics["scope"] == "platform"
+>           assert metrics["totals"]["organizations"] == 2
+E           assert 13 == 2
+
+tests/test_admin_analytics.py:166: AssertionError
+----------------------------- Captured stdout call -----------------------------
+{"method": "POST", "path": "/api/v1/auth/register", "status_code": 201, "duration_ms": 87.26, "event": "request_completed", "request_id": "c7727cea-ba70-4356-8f84-b76a63c173cf", "level": "info", "timestamp": "2026-10-29T10:22:14.585285Z"}
+{"method": "POST", "path": "/api/v1/auth/register", "status_code": 201, "duration_ms": 42.19, "event": "request_completed", "request_id": "8927d291-f08e-4ba0-92e1-469b77fbe4af", "level": "info", "timestamp": "2026-10-29T10:22:14.628329Z"}
+{"method": "GET", "path": "/api/v1/admin/investor-metrics", "status_code": 403, "duration_ms": 13.77, "event": "request_completed", "request_id": "beb76398-3c85-48c2-8e61-b7b3049f40b2", "level": "info", "timestamp": "2026-10-29T10:22:14.661626Z"}
+{"method": "POST", "path": "/api/v1/feedback", "status_code": 201, "duration_ms": 9.36, "event": "request_completed", "request_id": "8b66de45-1ca8-413d-b731-4e47c3582985", "level": "info", "timestamp": "2026-10-29T10:22:14.671521Z"}
+{"method": "POST", "path": "/api/v1/opportunities/ad2c6bd6-7939-4ce9-af1c-840832244846/opened", "status_code": 204, "duration_ms": 37.7, "event": "request_completed", "request_id": "cb306217-09f0-41a4-a385-b9c92c382e9b", "level": "info", "timestamp": "2026-10-29T10:22:14.709855Z"}
+{"method": "POST", "path": "/api/v1/opportunities/ad2c6bd6-7939-4ce9-af1c-840832244846/opened", "status_code": 204, "duration_ms": 2.61, "event": "request_completed", "request_id": "97c55a01-4708-4c2f-a2f4-bf6f0d3276d4", "level": "info", "timestamp": "2026-10-29T10:22:14.713043Z"}
+{"method": "GET", "path": "/api/v1/admin/investor-metrics", "status_code": 200, "duration_ms": 17.41, "event": "request_completed", "request_id": "493df808-3b36-4308-8d60-7012a72363dd", "level": "info", "timestamp": "2026-10-29T10:22:14.732337Z"}
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /Users/shajindi/yance-backup/yance/yance-ai/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_admin_analytics.py::test_platform_admin_metrics_permissions_provenance_and_safe_resources
+1 failed, 249 passed, 6 warnings in 13.96s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
