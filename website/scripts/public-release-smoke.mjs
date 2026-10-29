@@ -3,7 +3,7 @@ import {mkdir,writeFile} from 'node:fs/promises';
 const base=process.env.YANCE_SMOKE_BASE;
 const output=process.env.YANCE_SMOKE_OUT;
 const expectedRelease=process.env.YANCE_SMOKE_RELEASE;
-if(!['web-20261026-01','full-20261028-01','growth-20261029-01','images-20261029-01'].includes(expectedRelease))throw new Error('Explicit approved release required');
+if(!['web-20261026-01','full-20261028-01','growth-20261029-01','images-20261029-01','sms-20261029-01'].includes(expectedRelease))throw new Error('Explicit approved release required');
 if(!base||!output)throw new Error('Explicit target and output required');
 const origin=new URL(base).origin;
 if(!['https://yance.ai','http://127.0.0.1:3019'].includes(origin))throw new Error('Unapproved release-check target');

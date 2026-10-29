@@ -108,3 +108,7 @@ Website `images-20261029-01` / source `5b5c1f7` (page implementationb3d1627) is 
 ## Phone authentication candidate — 2026-10-29 (not deployed)
 
 Tencent SMS registration/login and authenticated phone binding have passed 252 isolated backend tests and two local API browser journeys. Real delivery is blocked by insufficient SMS package balance; production SMS stays disabled and email login remains available. See [implementation, evidence and release constraints](docs/sms-auth-20261029.md).
+
+## SMS production release — 2026-10-29
+
+Phone registration, sign-in and verified binding are now enabled alongside email on yance.ai, release sms-20261029-01, backend b408a53 and database0034. Earlier candidate notices are historical; see [actual production evidence and recovery limits](docs/sms-release-20261029.md).
