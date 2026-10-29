@@ -10,7 +10,7 @@ ____ test_platform_admin_metrics_permissions_provenance_and_safe_resources _____
         with TestClient(app) as client:
             platform_headers, platform_email = _register(client, f"platform-{suffix}")
             tenant_headers, tenant_email = _register(client, f"tenant-{suffix}")
-    
+
             with SessionLocal() as db:
                 platform_user = db.scalar(select(User).where(User.email == platform_email))
                 tenant_user = db.scalar(select(User).where(User.email == tenant_email))
@@ -97,17 +97,17 @@ ____ test_platform_admin_metrics_permissions_provenance_and_safe_resources _____
                 db.commit()
                 opportunity_id = opportunity.id
                 tenant_id = tenant.id
-    
+
             denied = client.get("/api/v1/admin/investor-metrics", headers=tenant_headers)
             assert denied.status_code == 403
-    
+
             feedback = client.post(
                 "/api/v1/feedback",
                 headers=tenant_headers,
                 json={"category": "data", "message": "政策来源需要更新", "route": "/opportunities"},
             )
             assert feedback.status_code == 201
-    
+
             for _ in range(2):
                 opened = client.post(
                     f"/api/v1/opportunities/{opportunity_id}/opened", headers=tenant_headers
@@ -123,7 +123,7 @@ ____ test_platform_admin_metrics_permissions_provenance_and_safe_resources _____
                     )
                 )
                 assert opened_count == 1
-    
+
             metrics_response = client.get(
                 "/api/v1/admin/investor-metrics", headers=platform_headers
             )
