@@ -115,3 +115,14 @@
 .purchasePath :global(.btn) { flex-shrink:0; }
 @media(max-width:1000px) { .segmentImage { margin:-20px -20px 24px; } }
 @media(max-width:700px) { .heroGrid,.intentGrid { grid-template-columns:1fr; } .heroScene img { height:auto; } .purchasePath { flex-direction:column; align-items:flex-start; padding:22px; } }
+
+.heroScene img { height:auto; aspect-ratio:768/468; object-fit:contain; }
+.industryGrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; }
+.industryGrid article { border:1px solid var(--line); background:white; min-width:0; }
+.industryVisual { overflow:hidden; background:#edf0eb; }
+.industryVisual img { display:block; width:100%; height:210px; object-fit:cover; }
+.industryCopy { padding:22px; }
+.industryCopy h3 { font-size:20px; font-weight:550; line-height:1.5; margin-bottom:12px; }
+.industryCopy p { color:var(--home-muted); font-size:14px; line-height:1.9; }
+@media(max-width:1000px) { .industryGrid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:700px) { .industryGrid { grid-template-columns:1fr; } .industryVisual img { height:220px; } }

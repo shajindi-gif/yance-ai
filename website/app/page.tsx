@@ -28,21 +28,34 @@ export default function HomePage() {
           <p className={styles.note}>企业提供资料 · 条件逐项核对 · 客户自主复核</p>
         </div>
         <figure className={styles.heroScene}>
-          <Image src="/industries/manufacturing.webp" alt="AI生成的制造企业团队协作场景示意" width={1200} height={800} sizes="(max-width: 700px) 100vw, 50vw" preload />
-          <figcaption>行业场景 · AI 生成示意，非真实客户</figcaption>
+          <Image src="/industries/provided-20261029/ai.webp" alt="人工智能与产业数字化主题示意" width={768} height={468} sizes="(max-width: 700px) 100vw, 50vw" preload />
+          <figcaption>人工智能与产业创新 · 行业示意</figcaption>
           <div className={styles.sceneCaption}><span>把创新投入，转化为有据可查的准备工作</span><strong>看政策条件，也看自己的证据。</strong></div>
         </figure>
       </div>
       <div className={styles.sectors}><span>重点领域，开放服务</span><p>人工智能 / 智能制造 / 生物医药 / 集成电路 / 新能源新材料<br />也服务传统制造、商贸与专业服务等企业，按实际条件寻找机会。</p></div>
     </section>
 
+    <section className={styles.section} id="industry-scenes" aria-labelledby="industry-heading">
+      <div className={styles.sectionHead}><div><span className={styles.eyebrow}>聚焦创新产业，也关注每家企业的实际需求</span><h2 id="industry-heading">看见你的产业，<br />从企业事实寻找机会。</h2></div><p>从技术方向到经营场景，按地域、批次和具体条件核对政策。行业标签不等于申报资格。</p></div>
+      <div className={styles.industryGrid}>{[
+        ['ai', '人工智能', '人工智能与产业数字化主题示意', '从业务与技术方向出发，核对政策支持范围。',768,468],
+        ['robotics', '机器人与智能制造', '机器人在货架前作业的行业场景', '梳理技术、研发与应用场景，核对所需证明。',700,430],
+        ['drone', '低空科技与无人系统', '无人机主题图片', '核对适用地域、项目阶段和具体申报条件。',1440,1800],
+        ['computing', '算力与数字基础设施', '数据中心机柜通道的行业场景', '按项目类型与建设运营事实，查找相关政策。',547,365],
+        ['energy', '新能源与绿色转型', '太阳能发电阵列的行业场景', '对照项目阶段、技术和能效等条款整理证据。',1002,751],
+        ['biomed', '生物医药与研发', '实验室样本操作的行业场景', '梳理研发与成果事实，区分已确认信息和待补材料。',760,506],
+      ].map(([name,title,alt,description,width,height])=><article key={name}><div className={styles.industryVisual}><Image src={`/industries/provided-20261029/${name}.webp`} alt={String(alt)} width={Number(width)} height={Number(height)} sizes="(max-width: 700px) 100vw, 33vw" style={{objectPosition:name==='drone'?'50% 78%':'50% 50%'}} /></div><div className={styles.industryCopy}><h3>{title}</h3><p>{description}</p><Link href="/companies" className={styles.textLink}>从企业事实开始 →</Link></div></article>)}</div>
+      <p className={styles.note}>图片由用户提供，仅作行业主题展示，不代表衍策自有设施、合作客户或获批案例。具体可用政策以来源覆盖与实际条件为准，也面向制造、商贸、专业服务等各类企业开放。</p>
+    </section>
+
     <section className={styles.section} id="for-business" aria-labelledby="business-heading">
       <div className={styles.sectionHead}><div><span className={styles.eyebrow}>服务对象 / 从重点到更广的企业需求</span><h2 id="business-heading">企业类型不同，<br />都从自己的事实出发。</h2></div><p>关注创新，也关注经营。先核对地域、规模、经营与研发情况，再判断政策是否适用。</p></div>
       <div className={styles.businessGrid}>{[
-        ['manufacturing', '重点服务', '新质生产力企业', '人工智能、机器人、集成电路、新能源新材料等方向，先看政策原文中的产业与技术条件。'],
-        ['research', '重点服务', '科技与研发型企业', '梳理研发活动、知识产权与成果转化事实，核对申报条件，缺少证明时保留待补证状态。'],
-        ['business', '开放服务', '各类有政策需求的企业', '制造、商贸、专业服务等企业，无论初创、成长或转型，都可按所在地域与实际经营情况开始初筛。'],
-      ].map(([scene,label,title,description]) => <article key={title}><figure className={styles.segmentImage}><Image src={`/industries/${scene}.webp`} alt={`${title}的AI生成场景示意`} width={1200} height={800} sizes="(max-width: 700px) 100vw, 33vw" /><figcaption>AI 生成 · 行业示意</figcaption></figure><span className={styles.segment}>{label}</span><h3>{title}</h3><p>{description}</p><Link href="/companies" className={styles.textLink}>从企业资料开始 →</Link></article>)}</div>
+        ['重点服务', '新质生产力企业', '人工智能、机器人、集成电路、新能源新材料等方向，先看政策原文中的产业与技术条件。'],
+        ['重点服务', '科技与研发型企业', '梳理研发活动、知识产权与成果转化事实，核对申报条件，缺少证明时保留待补证状态。'],
+        ['开放服务', '各类有政策需求的企业', '制造、商贸、专业服务等企业，无论初创、成长或转型，都可按所在地域与实际经营情况开始初筛。'],
+      ].map(([label,title,description]) => <article key={title}><span className={styles.segment}>{label}</span><h3>{title}</h3><p>{description}</p><Link href="/companies" className={styles.textLink}>从企业资料开始 →</Link></article>)}</div>
       <p className={styles.note}>面向各类企业开放使用，不等于已覆盖所有地区、行业或政策；企业类型和行业标签不直接决定申报资格。</p>
     </section>
 
