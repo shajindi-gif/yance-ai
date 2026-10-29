@@ -35,6 +35,7 @@ try{
   checks.push({path,visible_ms:Date.now()-start});
  }
  if(['growth-20261029-01','images-20261029-01'].includes(expectedRelease)){await page.goto(base+'/');for(const asset of await page.locator('img[src*="industries"]').all()){await asset.scrollIntoViewIfNeeded();await expect.poll(()=>asset.evaluate(img=>img.naturalWidth)).toBeGreaterThan(0);} await expect(page.locator('#start-with-your-task')).toContainText('先体验，再按需购买');}
+ if(expectedRelease==='images-20261029-01'){await expect(page.locator('#industry-scenes article')).toHaveCount(6);await expect(page.locator('img[src*="provided-20261029"]')).toHaveCount(7);await expect(page.locator('body')).not.toContainText('AI 生成');}
  await page.setViewportSize({width:390,height:844});await page.goto(base+'/');
  await page.getByRole('button',{name:'打开菜单',exact:true}).click();await expect(page.getByRole('navigation',{name:'移动端导航'})).toBeVisible();
  await page.keyboard.press('Escape');await expect(page.getByRole('navigation',{name:'移动端导航'})).toBeHidden();
