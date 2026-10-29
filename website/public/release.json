@@ -1,6 +1,6 @@
 {
-  "release": "growth-20261029-01",
-  "scope": "website-and-backend",
+  "release": "images-20261029-01",
+  "scope": "website",
   "compatibility": "legacy-workspace-supported",
-  "backendUpgradeIncluded": true
+  "backendUpgradeIncluded": false
 }
