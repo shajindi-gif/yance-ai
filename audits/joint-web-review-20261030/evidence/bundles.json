@@ -1,0 +1,39 @@
+{
+  "all_route_js_files": 46,
+  "all_route_js_bytes": 1272131,
+  "not_first_page_transfer": true,
+  "largest": [
+    {
+      "name": "216iyidhmrh3u.js",
+      "bytes": 229597
+    },
+    {
+      "name": "34goyxc2anvlg.js",
+      "bytes": 163051
+    },
+    {
+      "name": "0cz1d0mv5g_q7.js",
+      "bytes": 112594
+    },
+    {
+      "name": "0tyla54klymee.js",
+      "bytes": 43082
+    },
+    {
+      "name": "37m610jxvrwtl.js",
+      "bytes": 40908
+    },
+    {
+      "name": "14vkbf_3i_y8c.js",
+      "bytes": 34609
+    },
+    {
+      "name": "1-nqmp1rl8kqt.js",
+      "bytes": 34043
+    },
+    {
+      "name": "3y1hijaf5s03k.js",
+      "bytes": 27237
+    }
+  ]
+}
