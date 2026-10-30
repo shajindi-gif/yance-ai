@@ -1,0 +1,55 @@
+{
+  "at": "2026-10-29T15:40:46.373Z",
+  "base": "https://yance.ai",
+  "release": "sms-20261029-01",
+  "checks": [
+    {
+      "path": "/",
+      "visible_ms": 3809
+    },
+    {
+      "path": "/company-match",
+      "visible_ms": 2031
+    },
+    {
+      "path": "/brief-maker",
+      "visible_ms": 2768
+    },
+    {
+      "path": "/pricing",
+      "visible_ms": 4914
+    },
+    {
+      "path": "/feedback",
+      "visible_ms": 4422
+    },
+    {
+      "path": "/login",
+      "visible_ms": 1921
+    },
+    {
+      "path": "/security",
+      "visible_ms": 1642
+    },
+    {
+      "path": "/policy-knowledge-base",
+      "visible_ms": 1463
+    },
+    {
+      "path": "/parks",
+      "visible_ms": 1089
+    },
+    {
+      "path": "/about",
+      "visible_ms": 1039
+    }
+  ],
+  "mobile": true,
+  "failures": [],
+  "errors": [],
+  "blockedMethods": [],
+  "productionBusinessWrites": false,
+  "backendWorkspaceRevision": 2,
+  "feedbackRevision": 1,
+  "sample": "Chromium read-only page visits and browser fetch; no throttling; not SLA"
+}

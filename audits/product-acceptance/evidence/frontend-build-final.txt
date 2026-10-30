@@ -1,0 +1,71 @@
+
+> yance-website@0.1.0 build
+> next build
+
+▲ Next.js 16.4.3 (Turbopack)
+✓ Running next.config.js took 8ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.5s
+  Running TypeScript ...
+  Finished TypeScript in 5.2s ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/42) ...
+  Generating static pages using 7 workers (10/42)
+  Generating static pages using 7 workers (20/42)
+  Generating static pages using 7 workers (31/42)
+✓ Generating static pages using 7 workers (42/42) in 365ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /about
+├ ○ /admin
+├ ○ /admin/evals
+├ ƒ /admin/evals/[runId]
+├ ○ /admin/investor-metrics
+├ ○ /agents
+├ ƒ /agents/[runId]
+├ ○ /applications
+├ ƒ /applications/[applicationId]
+├ ○ /billing
+├ ○ /brief-maker
+├ ○ /cancel
+├ ○ /checkout
+├ ○ /chrome-extension
+├ ○ /companies
+├ ƒ /companies/[companyId]
+├ ○ /company-match
+├ ○ /consultant
+├ ○ /dashboard
+├ ○ /demo
+├ ○ /discover
+├ ○ /documents
+├ ○ /downloads
+├ ○ /feedback
+├ ○ /login
+├ ○ /notifications
+├ ○ /onboarding
+├ ○ /opportunities
+├ ƒ /opportunities/[opportunityId]
+├ ○ /orders
+├ ○ /parks
+├ ○ /policies
+├ ○ /policy-knowledge-base
+├ ○ /pricing
+├ ○ /privacy
+├ ○ /projects
+├ ○ /reports
+├ ○ /roadshow
+├ ○ /security
+├ ○ /settings
+├ ○ /success
+├ ○ /tasks
+├ ƒ /tasks/[taskId]
+├ ○ /team
+└ ○ /terms
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand

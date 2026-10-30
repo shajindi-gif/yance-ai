@@ -1,0 +1,5 @@
+{
+  "verified": false,
+  "packages": null,
+  "reason": "Initial read-only SSH attempt timed out; subsequent attempt was blocked because the trusted temporary known-hosts file is absent. StrictHostKeyChecking retained. No host trust bypass, no production credentials read."
+}
