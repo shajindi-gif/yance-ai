@@ -99,13 +99,13 @@
 .heroGrid { grid-template-columns:1.1fr 1fr; gap:48px; }
 .heroScene { min-width:0; position:relative; margin:0; background:#eaece6; border:1px solid var(--line); }
 .heroScene img { width:100%; height:390px; object-fit:cover; display:block; }
-.heroScene figcaption { position:absolute; top:14px; left:14px; padding:6px 10px; background:#fff; color:#334b4f; font-size:11px; }
+.heroScene figcaption { padding:14px 24px 0; color:var(--home-muted); font-size:11px; line-height:1.8; }
 .sceneCaption { padding:24px; }
 .sceneCaption span { display:block; color:var(--home-muted); font-size:12px; margin-bottom:10px; }
 .sceneCaption strong { font-size:22px; font-weight:550; line-height:1.5; }
 .segmentImage { margin:-28px -28px 24px; position:relative; }
 .segmentImage img { width:100%; height:190px; object-fit:cover; display:block; }
-.segmentImage figcaption { position:absolute; bottom:8px; left:8px; padding:4px 8px; background:#fff; font-size:10px; color:#334b4f; }
+.segmentImage figcaption { padding:10px 20px; background:var(--surface); font-size:11px; line-height:1.8; color:var(--home-muted); }
 .intentGrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:28px; }
 .intentGrid article { border-top:2px solid var(--teal); padding-top:24px; }
 .intentGrid h3 { font-size:21px; margin:14px 0; font-weight:550; }
