@@ -22,6 +22,8 @@ function CheckoutContent() {
   const [provider, setProvider] = useState<Provider>('alipay');
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [pendingOrder, setPendingOrder] = useState('');
+  const [pollError, setPollError] = useState('');
+  const pollGeneration = useRef(0);
   const [paid, setPaid] = useState(false);
   const [retryProtection, setRetryProtection] = useState(false);
   const payingRef = useRef(false);
@@ -31,33 +33,39 @@ function CheckoutContent() {
   const [countdown, setCountdown] = useState(600);
 
   const stopTimers = useCallback(() => {
+    pollGeneration.current += 1;
     if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
   }, []);
 
   const startPolling = useCallback((orderId: string) => {
     stopTimers();
-    setCountdown(600);
-    pollRef.current = setInterval(async () => {
+    setCountdown(600); setPollError('');
+    const generation = pollGeneration.current;
+    const deadline = Date.now() + 600_000;
+    const poll = async () => {
+      if (generation !== pollGeneration.current) return;
       try {
         const result = await api.queryWechatOrder(orderId);
-        if (result.status === 'paid' || result.trade_state === 'SUCCESS') {
-          stopTimers();
-          setPaid(true);
-          window.setTimeout(() => router.push(`/success?order=${orderId}`), 800);
+        if (generation !== pollGeneration.current) return;
+        if (result.status === 'paid') {
+          stopTimers(); setPaid(true);
+          router.replace(`/success?order=${orderId}`);
+          return;
         }
+        setPollError('');
       } catch {
-        /* transient polling errors are ignored; next tick retries */
+        if (generation !== pollGeneration.current) return;
+        setPollError('付款状态暂时无法确认，正在重试；请勿重复付款。');
       }
-    }, 3000);
+      if (generation === pollGeneration.current && Date.now() < deadline)
+        pollRef.current = setTimeout(() => void poll(), 3000);
+    };
+    void poll();
     timerRef.current = setInterval(() => {
-      setCountdown((seconds) => {
-        if (seconds <= 1) {
-          stopTimers();
-          return 0;
-        }
-        return seconds - 1;
-      });
+      const remaining = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+      setCountdown(remaining);
+      if (!remaining) stopTimers();
     }, 1000);
   }, [router, stopTimers]);
 
@@ -177,9 +185,8 @@ function CheckoutContent() {
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>选择企业</label>
                 <select
                   aria-label="选择企业"
-                  disabled={paying || Boolean(qrCodeUrl)}
                   value={selectedCompany}
-                  onChange={e => setSelectedCompany(e.target.value)}
+                  disabled={paying || !!pendingOrder} onChange={e => setSelectedCompany(e.target.value)}
                   style={{ width: '100%', padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', outline: 'none' }}
                 >
                   {companies.map(c => (
@@ -214,6 +221,7 @@ function CheckoutContent() {
                     <button
                       key={key}
                       type="button"
+                      disabled={paying || (!!pendingOrder && provider !== key)}
                       onClick={() => setProvider(key)}
                       aria-pressed={provider === key}
                       style={{
@@ -232,6 +240,8 @@ function CheckoutContent() {
                     </button>
                   ))}
                 </div>
+                {pendingOrder && <p role="status">订单已保留，重试将继续这笔订单。请勿重复下单或付款。</p>}
+                <p style={{fontSize:12,color:'var(--muted)'}}>手机上可优先使用支付宝；微信付款二维码需使用另一台设备扫码。</p>
                 <button
                   onClick={handlePay}
                   disabled={paying || !selectedCompany || !canPurchase}
@@ -240,7 +250,7 @@ function CheckoutContent() {
                   {!canPurchase ? '待开通' : paying ? '处理中...' : provider === 'alipay' ? `确认支付 ¥${price}` : `生成付款二维码 ¥${price}`}
                 </button>
                 <p style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'center', marginTop: '12px' }}>
-                  仅在服务端已配置并通过验证的支付供应商可用时创建结算页面。
+                  付款后自动核对订单。未确认成功前，请勿再次付款。
                 </p>
               </>
             ) : (
@@ -255,14 +265,16 @@ function CheckoutContent() {
                   ) : countdown > 0 ? (
                     <>等待支付中… {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, '0')}</>
                   ) : (
-                    <span style={{ color: '#dc2626' }}>二维码已过期，请重新发起</span>
+                    <span style={{ color: '#dc2626' }}>暂未收到付款确认，请核对订单后再继续</span>
                   )}
                 </div>
+                {pollError && <p role="status">{pollError}</p>}
+                <p><a href={`/success?order=${pendingOrder}`}>已完成付款？查看订单结果 →</a></p>
                 <button
                   onClick={() => { stopTimers(); setQrCodeUrl(''); }}
                   style={{ marginTop: '12px', background: 'none', border: 'none', color: '#64748b', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}
                 >
-                  更换支付方式或取消
+                  收起二维码，保留订单
                 </button>
               </div>
             )}

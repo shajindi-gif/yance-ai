@@ -39,8 +39,8 @@ export default function SmsAuth({ binding = false, onSuccess }: { binding?: bool
       }
     } catch (failure) {
       const message = failure instanceof Error ? failure.message : '操作失败，请重试';
-      if (message.includes('首次手机登录')) setProfile(true);
-      setError(message);
+      if (message.includes('首次手机登录')) { setProfile(true); setNotice('手机号验证通过，请补充姓名和企业名称完成注册。'); }
+      else setError(message);
     } finally { guard.current = false; setBusy(false); }
   };
   return <form className={styles.form} onSubmit={event => { event.preventDefault(); void run(false); }}>

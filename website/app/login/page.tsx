@@ -10,6 +10,9 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnPath = safeReturnPath(searchParams.get('next'));
+  const authBusy = useRef(false);
+  const sendBusy = useRef(false);
+  const [configReady, setConfigReady] = useState(false);
   const [smsEnabled, setSmsEnabled] = useState(false);
   const [smsMode, setSmsMode] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
@@ -61,8 +64,8 @@ function LoginContent() {
   useEffect(() => {
     let active = true;
     api.getAuthConfig().then(cfg => {
-      if (active) { setEmailLoginEnabled(cfg.email_login_enabled); setSmsEnabled(cfg.sms_login_enabled === true); }
-    });
+      if (active) { setEmailLoginEnabled(cfg.email_login_enabled); setSmsEnabled(cfg.sms_login_enabled === true); if (cfg.email_login_enabled) { setLoginMode('code'); setIsLogin(true); } setConfigReady(true); }
+    }).catch(() => { if (active) { setConfigReady(true); setNotice("验证码通道暂时无法读取，可使用已有邮箱密码登录。"); } });
     return () => {
       active = false;
       if (countdownRef.current) clearInterval(countdownRef.current);
@@ -85,6 +88,8 @@ function LoginContent() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (authBusy.current) return;
+    authBusy.current = true;
     setLoading(true);
     setError('');
     setNotice('');
@@ -94,6 +99,7 @@ function LoginContent() {
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败');
     } finally {
+      authBusy.current = false;
       setLoading(false);
     }
   };
@@ -105,6 +111,8 @@ function LoginContent() {
       setError('请先输入注册邮箱');
       return;
     }
+    if (sendBusy.current || countdown > 0) return;
+    sendBusy.current = true;
     setCodeSending(true);
     try {
       await api.requestPasswordReset(loginEmail.trim());
@@ -113,6 +121,7 @@ function LoginContent() {
     } catch (err) {
       setError(err instanceof Error ? err.message : '验证码发送失败');
     } finally {
+      sendBusy.current = false;
       setCodeSending(false);
     }
   };
@@ -127,6 +136,8 @@ function LoginContent() {
       setError('两次输入的密码不一致');
       return;
     }
+    if (authBusy.current) return;
+    authBusy.current = true;
     setLoading(true);
     setError('');
     setNotice('');
@@ -140,6 +151,7 @@ function LoginContent() {
     } catch (err) {
       setError(err instanceof Error ? err.message : '密码重置失败');
     } finally {
+      authBusy.current = false;
       setLoading(false);
     }
   };
@@ -151,6 +163,8 @@ function LoginContent() {
       setError('请先输入邮箱');
       return;
     }
+    if (sendBusy.current || countdown > 0) return;
+    sendBusy.current = true;
     setCodeSending(true);
     try {
       await api.sendEmailCode(loginEmail.trim());
@@ -159,12 +173,15 @@ function LoginContent() {
     } catch (err) {
       setError(err instanceof Error ? err.message : '验证码发送失败');
     } finally {
+      sendBusy.current = false;
       setCodeSending(false);
     }
   };
 
   const handleCodeLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (authBusy.current) return;
+    authBusy.current = true;
     setLoading(true);
     setError('');
     setNotice('');
@@ -191,12 +208,15 @@ function LoginContent() {
         setError(msg);
       }
     } finally {
+      authBusy.current = false;
       setLoading(false);
     }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (authBusy.current) return;
+    authBusy.current = true;
     setLoading(true);
     setError('');
     setNotice('');
@@ -215,6 +235,7 @@ function LoginContent() {
     } catch (err) {
       setError(err instanceof Error ? err.message : '注册失败');
     } finally {
+      authBusy.current = false;
       setLoading(false);
     }
   };
@@ -229,40 +250,22 @@ function LoginContent() {
             <p className="yc-auth-subtitle">新质生产力企业的政策与资源证据工作台</p>
           </div>
 
-          {smsEnabled && <div className="yc-auth-tabs">
-            <button type="button" className={`yc-auth-tab ${!smsMode ? 'active' : ''}`} onClick={() => setSmsMode(false)}>邮箱注册 / 登录</button>
-            <button type="button" className={`yc-auth-tab ${smsMode ? 'active' : ''}`} onClick={() => setSmsMode(true)}>手机注册 / 登录</button>
-          </div>}
-          {smsMode ? <SmsAuth onSuccess={() => router.push(returnPath)} /> : <>
-          <div className="yc-auth-tabs">
-            <button className={`yc-auth-tab ${isLogin ? 'active' : ''}`} onClick={() => { setIsLogin(true); setError(''); setNotice(''); }}>登录</button>
-            <button className={`yc-auth-tab ${!isLogin ? 'active' : ''}`} onClick={() => { setIsLogin(false); setError(''); setNotice(''); }}>免费注册</button>
+          {!configReady ? <p role="status">正在准备安全登录…</p> : <>
+          <div className="yc-auth-tabs" aria-label="登录方式">
+            <button type="button" aria-pressed={!smsMode} className={`yc-auth-tab ${!smsMode ? 'active' : ''}`} onClick={() => { setSmsMode(false); setError(''); setNotice(''); }}>邮箱注册 / 登录</button>
+            <button type="button" aria-pressed={smsMode} disabled={!smsEnabled} className={`yc-auth-tab ${smsMode ? 'active' : ''}`} onClick={() => setSmsMode(true)}>手机注册 / 登录</button>
           </div>
-
+          {!smsEnabled && <p className="yc-auth-hint">短信通道暂不可用，请使用邮箱。</p>}
+          {smsMode ? <SmsAuth onSuccess={() => router.push(returnPath)} /> : <>
           {error && <div role="alert" className="yc-auth-error">{error}</div>}
           {notice && <div role="status" className="yc-auth-notice">{notice}</div>}
 
           {isLogin ? (
             <>
-              {emailLoginEnabled && (
-                <div className="yc-auth-subtabs">
-                  <button
-                    type="button"
-                    className={`yc-auth-subtab ${loginMode === 'password' ? 'active' : ''}`}
-                    onClick={() => { setLoginMode('password'); setError(''); setNotice(''); }}
-                  >
-                    密码登录
-                  </button>
-                  <button
-                    type="button"
-                    className={`yc-auth-subtab ${loginMode === 'code' ? 'active' : ''}`}
-                    onClick={() => { setLoginMode('code'); setResetMode(false); setError(''); setNotice(''); }}
-                  >
-                    验证码登录
-                  </button>
-                </div>
-              )}
-
+              <p className="yc-auth-hint">
+                {emailLoginEnabled && <button type="button" className="yc-link-btn" onClick={() => { setLoginMode(loginMode === 'code' ? 'password' : 'code'); setResetMode(false); setError(''); setNotice(''); }}>{loginMode === 'code' ? '使用邮箱密码登录' : '使用邮箱验证码登录 / 注册'}</button>}
+                {loginMode === 'password' && <button type="button" className="yc-link-btn" onClick={() => { setIsLogin(false); setError(''); }}>免费注册</button>}
+              </p>
               {loginMode === 'password' && !resetMode ? (
                 <form onSubmit={handleLogin} className="yc-auth-form">
                   <div className="yc-form-group">
@@ -299,7 +302,7 @@ function LoginContent() {
                         maxLength={6}
                         value={resetCode}
                         onChange={e => setResetCode(e.target.value.replace(/\D/g, ''))}
-                        placeholder="6 位验证码"
+                        autoComplete="one-time-code" pattern="[0-9]{6}" placeholder="6 位验证码"
                         required
                       />
                       <button
@@ -348,7 +351,7 @@ function LoginContent() {
                         maxLength={6}
                         value={codeValue}
                         onChange={e => setCodeValue(e.target.value.replace(/\D/g, ''))}
-                        placeholder="6 位验证码"
+                        autoComplete="one-time-code" pattern="[0-9]{6}" placeholder="6 位验证码"
                         required
                       />
                       <button
@@ -389,7 +392,7 @@ function LoginContent() {
                   <button
                     type="submit"
                     className="yc-btn-primary yc-btn-full"
-                    disabled={loading || !codeValue || (needsProfile && (!profileName.trim() || !profileCompany.trim() || !codeAgreed))}
+                    disabled={loading || codeSending || !codeValue || (needsProfile && (!profileName.trim() || !profileCompany.trim() || !codeAgreed))}
                   >
                     {loading ? '登录中...' : needsProfile ? '创建并开始使用' : '登录'}
                   </button>
@@ -399,6 +402,7 @@ function LoginContent() {
             </>
           ) : (
             <form onSubmit={handleRegister} className="yc-auth-form">
+              <button type="button" className="yc-link-btn" onClick={() => setIsLogin(true)}>返回邮箱登录</button>
               <div className="yc-form-group">
                 <label htmlFor="auth-field-11">企业全称 <span className="yc-required">*</span></label>
                 <input id="auth-field-11" type="text" value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="如：上海某某科技有限公司" required />
@@ -464,6 +468,7 @@ function LoginContent() {
               ) : null}
             </form>
           )}
+          </>}
           </>}
         </div>
       </div>

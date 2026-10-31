@@ -1,0 +1,11 @@
+
+Running 4 tests using 1 worker
+
+(node:8749) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › e2e/growth-journey.spec.ts:8:5 › industry assets, task paths and mobile layout (2.5s)
+  ✓  2 [chromium] › e2e/growth-journey.spec.ts:19:5 › provider failure retry reuses an existing order, contract simulation only (343ms)
+  ✓  3 [chromium] › e2e/login-payment-ux.spec.ts:8:5 › two identity entrances, code signup and legacy email password access (364ms)
+  ✓  4 [chromium] › e2e/login-payment-ux.spec.ts:25:5 › return URL cannot claim payment; retry displays only server-confirmed order state (264ms)
+
+  4 passed (4.1s)
