@@ -1,0 +1,6 @@
+cp: warning: behavior of -n is non-portable and may change in future; use --update=none instead
+ Container yance-prod-api-1 Recreate 
+ Container yance-prod-api-1 Recreated 
+ Container yance-prod-api-1 Starting 
+ Container yance-prod-api-1 Started 
+WEB_RELEASE_ACTIVE_EMAIL_SMS_ENABLED

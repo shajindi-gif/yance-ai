@@ -1,0 +1,9 @@
+Running as unit: yance-web-candidate-1031.service; invocation ID: 961c850cc78b41059164f1bca79caf42
+/ OK
+/login OK
+/pricing OK
+/checkout OK
+/success OK
+/release.json OK
+/api/v1/auth/config OK
+CANDIDATE_GET_CHECKS_PASSED
