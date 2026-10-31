@@ -11,7 +11,7 @@ test.beforeEach(async ({page,baseURL}) => {
   await page.route('**/*', route => ['127.0.0.1','localhost'].includes(new URL(route.request().url()).hostname) ? route.continue() : route.abort());
 });
 
-test('real login returns to feedback; lost response retry creates one record and operator progress is visible', async ({page,request,browser,baseURL}) => {
+test('real login returns to feedback; lost response retry creates one record and operator progress is visible', async ({page,browser,baseURL}) => {
   test.skip(!process.env.YANCE_ROLES_FIXTURE,'Requires an isolated seeded database');
   const operator=fixture();
   const email=operator.feedback_user_email;
@@ -69,7 +69,7 @@ test('real login returns to feedback; lost response retry creates one record and
   await page.screenshot({path:'../docs/audit-evidence/company-wide-20261027/feedback-mobile.png',fullPage:true});
 });
 
-test('unsafe post-login destinations return to the workspace', async ({page,request}) => {
+test('unsafe post-login destinations return to the workspace', async ({page}) => {
   test.skip(!process.env.YANCE_ROLES_FIXTURE,'Requires an isolated seeded database');
   const operator=fixture();
   const email=operator.feedback_user_email;

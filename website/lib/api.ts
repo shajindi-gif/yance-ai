@@ -13,6 +13,7 @@ export interface AuthConfig {
   district_profile_enabled?: boolean;
   application_workspace_revision?: number;
   feedback_revision?: number;
+  sales_request_revision?: number;
   checkout_idempotency_revision?: number;
 }
 
@@ -790,6 +791,7 @@ export interface ProductCatalogItem {
 
 export interface Entitlement {
   id: string;
+  order_id?: string;
   product_code: string;
   product_name: string;
   resource_type: string;
@@ -1712,8 +1714,8 @@ class ApiClient {
   async matchReport(companyId: string, provider: string = 'qwen'): Promise<{
     company_name: string;
     total_matches: number;
-    preview: any[];
-    full: any[];
+    preview: Record<string, unknown>[];
+    full: Record<string, unknown>[];
     ai_summary: string;
     provider_used: string;
   }> {
@@ -1724,8 +1726,8 @@ class ApiClient {
   }
 
   // Authorized report download
-  async downloadReport(companyId: string): Promise<Blob> {
-    return this.requestBlob(`/reports/${companyId}/download`);
+  async downloadReport(companyId: string, orderId?: string): Promise<Blob> {
+    return this.requestBlob(`/reports/${companyId}/download${orderId ? `?order_id=${encodeURIComponent(orderId)}` : ""}`);
   }
 
   // Tasks

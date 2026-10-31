@@ -771,6 +771,9 @@ class Order(Base, TimestampMixin, TenantOwnedMixin):
     currency: Mapped[str] = mapped_column(String(8), default="CNY")
     resource_type: Mapped[str | None] = mapped_column(String(40))
     resource_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    report_deliverable_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("deliverables.id", ondelete="RESTRICT", use_alter=True, name="fk_orders_report_deliverable")
+    )
     status: Mapped[str] = mapped_column(String(40), default="pending")
 
 
@@ -1554,6 +1557,8 @@ class Deliverable(Base, TimestampMixin, TenantOwnedMixin):
     content_markdown: Mapped[str | None] = mapped_column(Text)
     file_url: Mapped[str | None] = mapped_column(String(700))
     pdf_url: Mapped[str | None] = mapped_column(String(700))
+    frozen_pdf: Mapped[bytes | None] = mapped_column(LargeBinary)
+    frozen_pdf_sha256: Mapped[str | None] = mapped_column(String(64))
     version: Mapped[int] = mapped_column(default=1)
     status: Mapped[str] = mapped_column(String(40), default="generated")
     quality_score: Mapped[int | None] = mapped_column()

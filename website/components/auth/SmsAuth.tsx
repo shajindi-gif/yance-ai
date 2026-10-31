@@ -32,7 +32,7 @@ export default function SmsAuth({ binding = false, onSuccess }: { binding?: bool
       } else {
         const result = await api.smsAction(binding ? 'bind' : 'verify', {
           phone: phone.trim(), code,
-          ...(profile ? { owner_name: name.trim(), company_name: company.trim(), agreed_terms_version: agreed ? '2026-10-29' : undefined } : {}),
+          ...(profile ? { owner_name: name.trim(), company_name: company.trim(), agreed_terms_version: agreed ? '2026-10-30' : undefined } : {}),
         });
         if (!binding && result.access_token) api.setToken(result.access_token);
         setDone(true); setCode(''); setNotice(binding ? '手机号绑定成功。' : '登录成功，正在进入工作台。'); onSuccess?.();

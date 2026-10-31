@@ -5,23 +5,31 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node .next/standalone/server.js",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
-    "test:unit": "node --experimental-strip-types --test tests/*.test.mjs"
+    "test:unit": "node --experimental-strip-types --test tests/*.test.mjs",
+    "lint": "eslint .",
+    "postbuild": "node scripts/prepare-standalone.mjs"
   },
   "dependencies": {
     "next": "16.4.3",
+    "qrcode": "^1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "1.63.0",
     "@types/node": "^20.0.0",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "19.2.18",
-    "typescript": "^5.0.0"
+    "eslint": "^10.14.0",
+    "typescript": "^5.0.0",
+    "typescript-eslint": "^8.72.1"
   },
   "overrides": {
-    "@types/react": "19.2.18"
+    "@types/react": "19.2.18",
+    "minimatch": "^11.0.1"
   }
 }

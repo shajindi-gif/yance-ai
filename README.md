@@ -11,6 +11,14 @@ yance/
 └── benchmark/    # Policy Engine evaluation benchmarks
 ```
 
+## 版本状态与本轮修复（2026-10-31）
+
+- 最近一次有发布证据的生产版本：`sms-20261029-01`（源码 `b408a535`，数据库0034）；本轮未重新核实服务器，不将历史记录当作实时健康证明。
+- 本地候选：依赖安全修补、固定报告与订单版本绑定、支付二维码本地生成和无障碍修复，详见 [修复验收记录](docs/remediation-20261031.md)。0035仅在隔离环境迁移，未发布生产。
+- 下方各日期章节为历史快照；其中“current / 当前 / 尚未发布”等描述只代表当时，不覆盖本表。生产发布须另行确认具体提交、备份与回退方案。
+
+## 历史记录（按当时状态保留）
+
 ## 2026-10-20 audit and release status
 
 The current audit and local changes are documented in [docs/audit.md](docs/audit.md), [upgrade-plan](docs/upgrade-plan.md), [test-report](docs/test-report.md) and [release-runbook](docs/release-runbook.md). The backend and database migrations were authorized and deployed on 2026-10-21; see [production release evidence](docs/backend-release-20261021.md). The current website source is also live. The release workflow only verifies/packages source; production is activated through an explicit reviewed release procedure.

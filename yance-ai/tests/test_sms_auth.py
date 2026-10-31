@@ -54,7 +54,7 @@ def profile(number, code="123456"):
         "code": code,
         "owner_name": "合成用户",
         "company_name": "合成短信测试企业",
-        "agreed_terms_version": "2026-10-29",
+        "agreed_terms_version": "2026-10-30",
     }
 
 
@@ -159,7 +159,7 @@ def test_binding_requires_current_user_proof_and_no_merge(setup):
             "owner_email": secrets.token_hex(8) + "@example.com",
             "owner_name": "合成用户",
             "owner_password": "long-synthetic-123456",
-            "agreed_terms_version": "2026-10-29",
+            "agreed_terms_version": "2026-10-30",
         },
     )
     h = {"Authorization": "Bearer " + registered.json()["access_token"]}
@@ -246,7 +246,7 @@ def test_existing_phone_cannot_be_taken_by_another_account(setup):
             "owner_email": secrets.token_hex(8) + "@example.com",
             "owner_name": "合成用户",
             "owner_password": "synthetic-password-123456",
-            "agreed_terms_version": "2026-10-29",
+            "agreed_terms_version": "2026-10-30",
         },
     ).json()
     h = {"Authorization": "Bearer " + other["access_token"]}
@@ -281,3 +281,17 @@ def test_daily_budget_and_disabled_account(setup, monkeypatch):
         db.commit()
     seed(a)
     assert c.post("/api/v1/auth/sms/verify", json={"phone": a, "code": "123456"}).status_code == 403
+
+
+@pytest.mark.parametrize("version", ["2026-10-29", "2026-10-30"])
+def test_consent_bundle_compatibility_retains_the_exact_agreed_version(setup, version):
+    from app.models.models import AnalyticsEvent
+    c, _ = setup
+    number = phone()
+    seed(number)
+    response = c.post('/api/v1/auth/sms/verify', json={**profile(number), 'agreed_terms_version': version})
+    assert response.status_code == 200
+    me = c.get('/api/v1/auth/me', headers={'Authorization': 'Bearer '+response.json()['access_token']}).json()
+    with SessionLocal() as db:
+        event = db.scalar(select(AnalyticsEvent).where(AnalyticsEvent.user_id == me['id'], AnalyticsEvent.name == 'terms_accepted'))
+        assert event.properties['terms_version'] == version

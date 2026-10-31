@@ -3,6 +3,7 @@
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from test_funding_os import _register
@@ -110,11 +111,12 @@ def test_unaccepted_product_orders_fail_on_server_while_historical_orders_remain
                 headers=headers,
                 json={"product_code": "POLICY_REPORT", "resource_id": company["id"]},
             ).status_code
-            == 201
+            == 409
         )
 
 
-def test_feedback_actual_persistence_admin_processing_and_private_user_history():
+@pytest.mark.parametrize("category", ["policy", "sales"])
+def test_feedback_actual_persistence_admin_processing_and_private_user_history(category):
     with TestClient(app) as client:
         headers, me = _register(client, uuid.uuid4().hex)
         other, _ = _register(client, uuid.uuid4().hex)
@@ -123,7 +125,7 @@ def test_feedback_actual_persistence_admin_processing_and_private_user_history()
             == 422
         )
         payload = {
-            "category": "policy",
+            "category": category,
             "message": " 合成反馈：来源需要更新 ",
             "route": "/feedback",
             "client_request_id": str(uuid.uuid4()),

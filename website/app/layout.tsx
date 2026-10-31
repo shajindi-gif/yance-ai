@@ -25,9 +25,9 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: '/logo.png',
-        width: 1254,
-        height: 1254,
+        url: '/og-brand.png',
+        width: 1200,
+        height: 630,
         alt: '衍策引擎AI',
       },
     ],
@@ -45,6 +45,11 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           跳转到主要内容
         </a>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context": "https://schema.org", "@type": "Organization",
+          name: "上海衍策引擎人工智能科技有限公司", url: "https://yance.ai",
+          logo: "https://yance.ai/logo.png",
+        }) }} />
         <SiteChrome
           marketingHeader={<Header />}
           marketingFooter={

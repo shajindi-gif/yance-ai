@@ -93,7 +93,7 @@ export default function OnboardingPage() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const payload: any = {
+      const payload = {
         name: data.name || '未命名企业',
         industry: data.industry || undefined,
         province: data.province || undefined,

@@ -312,6 +312,7 @@ def auth_config() -> dict:
         "district_profile_enabled": True,
         "application_workspace_revision": 2,
         "feedback_revision": 1,
+        "sales_request_revision": 1,
         "checkout_idempotency_revision": 1,
     }
 

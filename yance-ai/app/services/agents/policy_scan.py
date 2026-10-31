@@ -1,3 +1,4 @@
+import hashlib
 from datetime import UTC, datetime
 from time import perf_counter
 from typing import TYPE_CHECKING
@@ -365,6 +366,8 @@ def _create_report_artifact(
         content_json=summary,
         content_markdown=f"# {company.name} 政策扫描报告\n\n匹配政策数: {len(opportunities)}",
         pdf_url=f"/api/v1/tasks/{task.id}/download",
+        frozen_pdf=pdf_bytes,
+        frozen_pdf_sha256=hashlib.sha256(pdf_bytes).hexdigest(),
         version=1,
         status="generated",
         generated_at=datetime.now(UTC),
@@ -382,6 +385,7 @@ def _create_report_artifact(
     )
     db.add_all([deliverable, artifact])
     db.flush()
+    deliverable.pdf_url = f"/api/v1/tasks/{task.id}/download?deliverable_id={deliverable.id}"
     harness._finish_tool(db, tool, summary, tool_started)
     return ActOutput(deliverable_id=deliverable.id, artifact_id=artifact.id)
 

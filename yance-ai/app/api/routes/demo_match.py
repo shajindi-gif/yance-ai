@@ -16,6 +16,7 @@ from app.core.db import get_db
 from app.models.models import (
     AnalyticsEvent,
     Company,
+    Deliverable,
     Entitlement,
     Invoice,
     Opportunity,
@@ -29,7 +30,7 @@ from app.services.commerce.availability import purchase_status
 from app.services.llm.base import LLMRequest
 from app.services.llm.router import LLMRouter
 from app.services.report.matcher import match_policies_for_company
-from app.services.report.pdf import generate_match_report_pdf
+from app.services.report.snapshot import report_bytes
 
 router = APIRouter(tags=["demo-match"])
 
@@ -181,6 +182,7 @@ async def generate_match_report(
 @router.get("/reports/{company_id}/download")
 async def download_match_report_pdf(
     company_id: uuid.UUID,
+    order_id: uuid.UUID | None = None,
     principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
     db: Session = Depends(get_db),
 ):
@@ -202,17 +204,23 @@ async def download_match_report_pdf(
     if not entitlement:
         raise HTTPException(status_code=403, detail="请先购买该企业的报告")
 
-    opportunities = db.scalars(
-        select(Opportunity)
-        .where(Opportunity.company_id == company_id)
-        .order_by(Opportunity.score.desc())
-    ).all()
-    if not opportunities:
-        raise HTTPException(status_code=404, detail="未找到匹配记录")
-
-    policy_ids = [o.policy_id for o in opportunities]
-    policies = db.scalars(select(Policy).where(Policy.id.in_(policy_ids))).all()
-    pdf_bytes = generate_match_report_pdf(company, opportunities, policies)
+    # Bind download to the purchased version, including tenant/resource checks on every join.
+    deliverable = db.scalar(
+        select(Deliverable).join(Order, Order.report_deliverable_id == Deliverable.id)
+        .join(Entitlement, Entitlement.order_id == Order.id)
+        .where(
+            Entitlement.tenant_id == principal.tenant_id,
+            Entitlement.resource_type == "report", Entitlement.resource_id == company_id,
+            Entitlement.status == "active", Order.tenant_id == principal.tenant_id,
+            Order.resource_type == "report", Order.resource_id == company_id,
+            Order.id == order_id if order_id else Order.id.is_not(None),
+            Order.status == "paid", Deliverable.tenant_id == principal.tenant_id,
+            Deliverable.company_id == company_id,
+        ).order_by(Order.created_at.desc())
+    )
+    if deliverable is None:
+        raise HTTPException(409, "原订单未绑定固定报告版本，请联系支持核对原交付；权益保留，请勿重复付款")
+    pdf_bytes = report_bytes(deliverable)
 
     track_event(
         db,
@@ -226,11 +234,12 @@ async def download_match_report_pdf(
 
     from urllib.parse import quote
 
-    filename = f"{company.name}_政策匹配报告_{datetime.now().strftime('%Y%m%d')}.pdf"
+    filename = f"{deliverable.title}_v{deliverable.version}.pdf"
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}"},
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}",
+                 "Cache-Control": "private, no-store"},
     )
 
 
@@ -392,6 +401,7 @@ async def get_entitlements(
         result.append(
             {
                 "id": str(e.id),
+                "order_id": str(e.order_id),
                 "product_code": product.code if product else "",
                 "product_name": product.name if product else "",
                 "resource_type": e.resource_type,

@@ -10,7 +10,18 @@ from sqlalchemy.orm import Session
 from app.api.deps import Principal, get_principal, require_roles
 from app.core.config import settings
 from app.core.db import get_db
-from app.models.models import Company, Invoice, Opportunity, Order, Payment, Product, User, UserRole
+from app.models.models import (
+    Company,
+    Deliverable,
+    Invoice,
+    Opportunity,
+    Order,
+    Payment,
+    Product,
+    Task,
+    User,
+    UserRole,
+)
 from app.schemas.schemas import (
     CommerceOut,
     InvoiceCreate,
@@ -22,6 +33,7 @@ from app.schemas.schemas import (
 from app.services.analytics.events import record_event
 from app.services.commerce.availability import purchase_status
 from app.services.invoice.generator import generate_invoice_pdf
+from app.services.report.snapshot import report_bytes
 
 router = APIRouter(tags=["orders", "payments", "invoices"])
 
@@ -94,6 +106,26 @@ def create_order(
     )
     if not resource:
         raise HTTPException(status_code=404, detail="Product resource not found")
+    report = None
+    if product.entitlement_type == "report":
+        report = db.scalar(
+            select(Deliverable).join(Task, Task.id == Deliverable.task_id).where(
+                Task.tenant_id == principal.tenant_id,
+                Task.company_id == payload.resource_id,
+                Task.status.in_(["delivered", "accepted"]),
+                Deliverable.tenant_id == principal.tenant_id,
+                Deliverable.company_id == payload.resource_id,
+                Deliverable.deliverable_type == "policy_scan",
+                Deliverable.status.in_(["generated", "delivered", "accepted"]),
+                Deliverable.frozen_pdf.is_not(None),
+            ).order_by(Deliverable.created_at.desc(), Deliverable.version.desc())
+        )
+        if report is None or not (report.content_json or {}).get("total_matches", 0):
+            raise HTTPException(409, detail={
+                "code": "report_not_ready",
+                "message": "请先完成政策扫描并生成有匹配记录的报告，再购买该固定版本。尚未创建订单。",
+            })
+        report_bytes(report)
     order = Order(
         **({"id": request_order_id} if request_order_id else {}),
         tenant_id=principal.tenant_id,
@@ -105,6 +137,7 @@ def create_order(
         currency="CNY",
         resource_type=product.entitlement_type,
         resource_id=payload.resource_id,
+        report_deliverable_id=report.id if report else None,
         status="created",
     )
     db.add(order)

@@ -537,7 +537,7 @@ class AnalyticsEventCreate(BaseModel):
 
 
 class FeedbackCreate(BaseModel):
-    category: Literal["product", "data", "policy", "billing", "support"] = "product"
+    category: Literal["product", "data", "policy", "billing", "support", "sales"] = "product"
     message: str = Field(min_length=2, max_length=5000)
     route: str | None = Field(default=None, max_length=500)
     client_request_id: UUID | None = None

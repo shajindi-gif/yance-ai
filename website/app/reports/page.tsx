@@ -44,11 +44,11 @@ export default function ReportsPage() {
     };
   }, [router]);
 
-  const handleDownload = async (companyId: string) => {
+  const handleDownload = async (companyId: string, orderId?: string) => {
     setDownloading(companyId);
     setError("");
     try {
-      const blob = await api.downloadReport(companyId);
+      const blob = await api.downloadReport(companyId, orderId);
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
@@ -101,7 +101,7 @@ export default function ReportsPage() {
               </div>
               <Button
                 type="button"
-                onClick={() => entitlement.resource_id && handleDownload(entitlement.resource_id)}
+                onClick={() => entitlement.resource_id && handleDownload(entitlement.resource_id, entitlement.order_id)}
                 disabled={!entitlement.resource_id || downloading === entitlement.resource_id}
               >
                 {downloading === entitlement.resource_id ? "下载中…" : "下载 PDF"}

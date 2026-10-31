@@ -2,6 +2,7 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 
 from fastapi.testclient import TestClient
+from report_fixture import ready_report
 from test_funding_os import _register
 
 from app.main import app
@@ -14,6 +15,7 @@ def test_order_retry_concurrency_conflict_and_tenant_isolation():
         company = client.post(
             "/api/v1/companies", headers=headers, json={"name": "合成订单企业"}
         ).json()
+        ready_report(company["id"])
         company2 = {
             "id": str(uuid.uuid4())
         }  # Different payload; no need to consume a second-company quota.

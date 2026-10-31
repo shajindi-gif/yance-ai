@@ -8,12 +8,13 @@ import { InlineAlert } from '@/components/ui/InlineAlert';
 import styles from './page.module.css';
 
 const STATUS: Record<string, string> = { open: '已收到', reviewing: '处理中', resolved: '已处理', dismissed: '已归档' };
-const CATEGORY: Record<string, string> = { product: '功能与体验建议', data: '数据来源问题', policy: '政策内容问题', billing: '订单与计费问题', support: '其他使用问题' };
+const CATEGORY: Record<string, string> = { product: '功能与体验建议', data: '数据来源问题', policy: '政策内容问题', billing: '订单与计费问题', support: '其他使用问题', sales: '产品演示与需求沟通' };
 
 export default function FeedbackPage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [ready, setReady] = useState(false);
   const [revision, setRevision] = useState(0);
+  const [salesSupported, setSalesSupported] = useState(false);
   const [category, setCategory] = useState('product');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -37,10 +38,13 @@ export default function FeedbackPage() {
     setAuthenticated(api.isAuthenticated());
     api.getAuthConfig().then(config => {
       if (!active) return;
+      const supportsSales = config.sales_request_revision === 1;
+      setSalesSupported(supportsSales);
+      if (supportsSales && new URLSearchParams(window.location.search).get("category") === "sales") setCategory("sales");
       const supported = config.feedback_revision === 1;
       setRevision(supported ? 1 : 0); setReady(true);
       if (supported && api.isAuthenticated()) void refreshHistory();
-    });
+    }).catch(() => { if (active) { setReady(true); setError("服务能力暂时无法读取，请刷新后重试。内容不会自动提交。"); } });
     return () => { active = false; };
   }, [refreshHistory]);
 
@@ -63,20 +67,21 @@ export default function FeedbackPage() {
 
   return <section className={styles.page}>
     <Link href="/#customer-feedback">← 返回使用场景与反馈</Link>
-    <h1>分享使用反馈</h1>
+    <h1>{category === "sales" ? "申请产品演示与需求沟通" : "分享使用反馈"}</h1>
+    {category === "sales" && <p>请说明希望了解的流程、企业类型与使用场景；提交后可在下方查看处理状态。不代表已预约、已报价或承诺交付时间。</p>}
     <p>告诉我们使用中遇到的问题与改进建议。反馈用于产品改进，不自动成为公开案例或客户评价；公开前会另行征得授权。</p>
-    {!authenticated ? <InlineAlert tone="info">请先<Link href="/login?next=%2Ffeedback">登录账号</Link>，登录后会回到此页。</InlineAlert> : null}
+    {!authenticated ? <InlineAlert tone="info">请先<Link href={category === "sales" ? "/login?next=%2Ffeedback%3Fcategory%3Dsales" : "/login?next=%2Ffeedback"}>登录账号</Link>，登录后会回到此页。</InlineAlert> : null}
     <form onSubmit={submit} className={styles.form} aria-busy={busy}>
       <label htmlFor="feedback-category">反馈类型</label>
       <select id="feedback-category" value={category} disabled={busy} onChange={event => { setCategory(event.target.value); setSent(false); }}>
-        {Object.entries(CATEGORY).map(([value,label]) => <option key={value} value={value}>{label}</option>)}
+        {Object.entries(CATEGORY).filter(([value]) => value !== "sales" || salesSupported).map(([value,label]) => <option key={value} value={value}>{label}</option>)}
       </select>
       <label htmlFor="feedback-message">问题与建议</label>
       <textarea id="feedback-message" value={message} disabled={busy} onChange={event => { setMessage(event.target.value); setSent(false); }} minLength={2} maxLength={5000} required rows={7} aria-describedby="feedback-hint" />
       <p id="feedback-hint">请说明使用的功能、问题与预期；2–5000 字。请勿填写密钥、完整客户资料或未经授权的个人信息。</p>
       {error ? <InlineAlert>{error}</InlineAlert> : null}
       {sent ? <InlineAlert tone="info">反馈已提交，感谢你的建议。内容不会自动公开。</InlineAlert> : null}
-      <Button type="submit" disabled={!ready || !authenticated || busy || message.trim().length < 2}>{busy ? '正在提交…' : '提交反馈'}</Button>
+      <Button type="submit" disabled={!ready || !authenticated || busy || message.trim().length < 2}>{busy ? '正在提交…' : category === 'sales' ? '提交演示需求' : '提交反馈'}</Button>
     </form>
     {authenticated ? <section className={styles.history} aria-labelledby="feedback-history-heading">
       <h2 id="feedback-history-heading">我的反馈进度</h2>

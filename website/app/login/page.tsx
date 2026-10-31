@@ -55,7 +55,7 @@ function LoginContent() {
   const [ownerPassword, setOwnerPassword] = useState('');
   const [agreed, setAgreed] = useState(false);
 
-  const TERMS_VERSION = '2026-10-29';
+  const TERMS_VERSION = '2026-10-30';
 
   // 验证码 tab 由后端能力开关控制：Resend 通道未配置时不展示
   useEffect(() => {
@@ -475,12 +475,12 @@ function LoginContent() {
         .yc-auth-header { text-align: center; margin-bottom: 28px; }
         .yc-auth-logo { width: 56px; height: 56px; margin-bottom: 12px; }
         .yc-auth-header h1 { font-size: 22px; font-weight: 700; color: #0d1b2a; margin: 0 0 6px; }
-        .yc-auth-subtitle { color: #64748b; font-size: 13px; margin: 0; }
+        .yc-auth-subtitle { color: #526174; font-size: 13px; margin: 0; }
         .yc-auth-tabs { display: flex; background: #f1f5f9; border-radius: 10px; padding: 4px; margin-bottom: 20px; }
-        .yc-auth-tab { flex: 1; padding: 10px; border: none; background: transparent; border-radius: 8px; font-size: 14px; font-weight: 500; color: #64748b; cursor: pointer; transition: all 0.2s; }
+        .yc-auth-tab { flex: 1; padding: 10px; border: none; background: transparent; border-radius: 8px; font-size: 14px; font-weight: 500; color: #526174; cursor: pointer; transition: all 0.2s; }
         .yc-auth-tab.active { background: #fff; color: #0d1b2a; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
         .yc-auth-subtabs { display: flex; gap: 16px; border-bottom: 1px solid #e2e8f0; margin-bottom: 16px; }
-        .yc-auth-subtab { padding: 8px 2px; border: none; background: transparent; font-size: 13px; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+        .yc-auth-subtab { padding: 8px 2px; border: none; background: transparent; font-size: 13px; color: #526174; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
         .yc-auth-subtab.active { color: #126a9a; font-weight: 600; border-bottom-color: #126a9a; }
         .yc-auth-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
         .yc-auth-notice { background: #f0f9ff; border: 1px solid #bae6fd; color: #0369a1; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }

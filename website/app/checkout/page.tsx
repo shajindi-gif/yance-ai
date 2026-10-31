@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import api, { Company, ProductCatalogItem } from '@/lib/api';
+import PaymentQr from '@/components/PaymentQr';
 import { productPresentation } from '@/lib/product-presentation';
 
 type Provider = 'alipay' | 'wechat';
@@ -195,7 +196,7 @@ function CheckoutContent() {
             )}
 
             {error && (
-              <div style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#dc2626', fontSize: '13px', marginTop: '12px' }}>{error}{pendingOrder && <p><a href="/orders">查看已有订单，避免重复购买 →</a></p>}</div>
+              <div role="alert" style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#dc2626', fontSize: '13px', marginTop: '12px' }}>{error}{!pendingOrder && <p><a href="/policy-scan">前往政策扫描，准备报告 →</a></p>}{pendingOrder && <p><a href="/orders">查看已有订单，避免重复购买 →</a></p>}</div>
             )}
           </div>
 
@@ -247,14 +248,7 @@ function CheckoutContent() {
                 <p style={{ fontSize: '14px', color: '#0d1b2a', fontWeight: 600, margin: '4px 0 12px' }}>
                   请使用微信扫码支付
                 </p>
-                {/* code_url 渲染为二维码；仅公开用于唤起支付，不含敏感信息 */}
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data=${encodeURIComponent(qrCodeUrl)}`}
-                  alt="微信支付的二维码"
-                  width={200}
-                  height={200}
-                  style={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}
-                />
+                <PaymentQr value={qrCodeUrl} />
                 <div style={{ fontSize: '13px', color: '#64748b', marginTop: '12px' }}>
                   {paid ? (
                     <span style={{ color: '#059669', fontWeight: 600 }}>支付成功，正在跳转…</span>

@@ -60,7 +60,7 @@ export default function PricingPage() {
           ) : error ? (
             <div role="alert" style={{ textAlign: 'center', padding: '60px 0', color: '#b91c1c' }}><p>{error}</p><button type="button" className="btn btn-outline" onClick={() => setRetry(value => value + 1)}>重新加载产品目录</button></div>
           ) : products.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b' }}>
+            <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--muted)' }}>
               当前没有已启用的产品。这里不会用静态价格代替真实服务端目录。
             </div>
           ) : (
@@ -140,7 +140,7 @@ export default function PricingPage() {
             <p style={{ fontSize: '0.95rem', lineHeight: 1.7, color: '#334155', marginBottom: '16px' }}>
               政策与原文由服务器采集，企业资料由客户提供。采集入库不代表已核验、完整或仍然有效；复核由客户本人或客户授权团队完成。
             </p>
-            <ul style={{ paddingLeft: '24px', color: '#64748b', fontSize: '0.9rem', lineHeight: 1.8 }}>
+            <ul style={{ paddingLeft: '24px', color: 'var(--muted)', fontSize: '0.9rem', lineHeight: 1.8 }}>
               <li>核对政策来源、有效期与当期申报截止时间</li>
               <li>缺失资料保持证据不足，客户确认不等于政府认定</li>
               <li>不承诺申报成功率，不承诺获得补贴金额</li>

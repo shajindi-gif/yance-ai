@@ -127,7 +127,7 @@ export default function AboutPage() {
                 title: '务实落地',
                 desc: '产品设计以园区实际工作场景为核心，追求真正的效率提升，而非技术噱头。',
                 bg: '#fff7ed',
-                color: '#f97316',
+                color: '#a54709',
               },
               {
                 icon: '\u{1F91D}',
@@ -227,7 +227,7 @@ export default function AboutPage() {
                 title: '行业与客户团队',
                 desc: '负责政策规则复核、试点验收和客户实施边界。',
                 bg: '#fff7ed',
-                color: '#f97316',
+                color: '#a54709',
               },
             ].map((team) => (
               <div key={team.initials} className="card" style={{ textAlign: 'center', padding: '32px' }}>
@@ -308,7 +308,7 @@ export default function AboutPage() {
               <p className="card-desc">上海市徐汇区</p>
             </div>
             <div className="card" style={{ textAlign: 'center', padding: '32px' }}>
-              <div className="card-icon" style={{ margin: '0 auto 16px', background: '#fff7ed', color: '#f97316' }}>
+              <div className="card-icon" style={{ margin: '0 auto 16px', background: '#fff7ed', color: '#a54709' }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/></svg>
               </div>
               <h4 className="card-title">联系邮箱</h4>
@@ -328,7 +328,7 @@ export default function AboutPage() {
         }}
       >
         <div className="container">
-          <h2 className="cta-title">加入我们的园区智能服务之旅</h2>
+          <h2 className="cta-title">从企业的政策需求开始</h2>
           <p className="cta-subtitle">
             无论是产品咨询、合作意向还是加入我们团队，都欢迎联系衍策引擎。
           </p>
@@ -340,9 +340,9 @@ export default function AboutPage() {
             >
               免费注册
             </Link>
-            <a href="mailto:yanceai@163.com" className="btn btn-outline-white btn-lg">
-              发送邮件
-            </a>
+            <Link href="/feedback?category=sales" className="btn btn-outline-white btn-lg">
+              申请产品演示
+            </Link>
           </div>
         </div>
       </section>

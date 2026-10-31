@@ -6,6 +6,7 @@ from app.api.deps import Principal, get_principal
 from app.core.db import get_db
 from app.models.models import Feedback, User
 from app.schemas.schemas import FeedbackCreate
+from app.services.analytics.events import record_event
 
 router = APIRouter(tags=["analytics", "feedback"])
 
@@ -83,6 +84,11 @@ def create_feedback(
         status="open",
     )
     db.add(feedback)
+    db.flush()
+    if feedback.category == "sales":
+        record_event(db, tenant_id=principal.tenant_id, user_id=principal.user.id,
+                     name="demo_request_submitted", event_key=f"demo_request:{feedback.id}",
+                     properties={"feedback_id": str(feedback.id)})
     db.commit()
     db.refresh(feedback)
     return _feedback_out(feedback)

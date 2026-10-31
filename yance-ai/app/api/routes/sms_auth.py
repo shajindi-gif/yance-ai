@@ -149,7 +149,7 @@ def verify(payload: SmsVerify, request: Request, db: Session = Depends(get_db)):
             and payload.owner_name.strip()
             and payload.company_name
             and payload.company_name.strip()
-            and payload.agreed_terms_version == "2026-10-29"
+            and payload.agreed_terms_version in {"2026-10-29", "2026-10-30"}
         ):
             # Only after proof of phone control; keep code for the profile step.
             raise HTTPException(400, "首次手机登录需填写姓名、企业名称并同意服务条款与隐私政策")
