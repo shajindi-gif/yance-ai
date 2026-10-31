@@ -12751,6 +12751,7 @@
             "name": "invoice_id",
             "required": true,
             "schema": {
+              "format": "uuid",
               "title": "Invoice Id",
               "type": "string"
             }
@@ -12815,6 +12816,7 @@
             "name": "invoice_id",
             "required": true,
             "schema": {
+              "format": "uuid",
               "title": "Invoice Id",
               "type": "string"
             }
@@ -12883,6 +12885,7 @@
             "name": "invoice_id",
             "required": true,
             "schema": {
+              "format": "uuid",
               "title": "Invoice Id",
               "type": "string"
             }
@@ -13763,6 +13766,70 @@
           }
         ],
         "summary": "Create Order",
+        "tags": [
+          "orders",
+          "payments",
+          "invoices"
+        ]
+      }
+    },
+    "/api/v1/orders/{order_id}/checkout": {
+      "get": {
+        "operationId": "checkout_state_api_v1_orders__order_id__checkout_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Order Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Checkout State",
         "tags": [
           "orders",
           "payments",

@@ -126,6 +126,8 @@ export default function OrdersPage() {
                       </td>
                       <td className={content.alignCenter}>
                         <Badge tone={status.tone}>{status.text}</Badge>
+                        {["created", "pending"].includes(order.status) && order.product_code === "POLICY_REPORT" && <ButtonLink href={`/checkout?order=${encodeURIComponent(order.id)}`}>继续付款</ButtonLink>}
+                        {order.status === "paid" && <ButtonLink href={`/success?order=${encodeURIComponent(order.id)}`}>查看交付</ButtonLink>}
                       </td>
                       <td className={`${content.alignRight} ${content.subtle}`}>
                         {new Date(order.created_at).toLocaleDateString("zh-CN")}

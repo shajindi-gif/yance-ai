@@ -13,25 +13,28 @@ function PaymentResult() {
   const [retry, setRetry] = useState(0);
   useEffect(() => {
     let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     setLoading(true); setError('');
     if (!api.isAuthenticated()) { setLoading(false); return; }
     api.getOrders().then(rows => {
       if (!active) return;
       const current = rows.find(row => row.id === id);
       setOrder(current ?? null);
+      if (current && ['created','pending'].includes(current.status) && retry < 20) timer = setTimeout(() => setRetry(v=>v+1), 3000);
       if (!current) setError('未找到当前账号可查看的这笔订单，请前往订单列表核对。');
     }).catch(() => { if (active) setError('暂时无法读取付款结果，请稍后刷新；请勿重复付款。'); })
       .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+    return () => { active = false; if (timer) clearTimeout(timer); };
   }, [id, retry]);
-  const paid = order?.status === 'paid';
+  const currentOrder = order?.id === id ? order : null;
+  const paid = currentOrder?.status === 'paid';
   const labels: Record<string,string> = {created:'等待付款确认',pending:'等待付款确认',cancelled:'订单已取消',refunded:'订单已退款',failed:'付款未完成'};
   return <main style={{minHeight:'100vh',background:'var(--paper)',padding:'140px 24px 48px'}}>
     <section style={{maxWidth:560,margin:'0 auto',padding:32,background:'var(--surface)',border:'1px solid var(--line)',borderRadius:16}} aria-busy={loading}>
-      <h1 style={{fontSize:26}}>{loading ? '正在核对付款结果…' : paid ? '付款已确认' : labels[order?.status ?? ''] ?? '核对订单结果'}</h1>
+      <h1 style={{fontSize:26}}>{loading && !currentOrder ? '正在核对付款结果…' : paid ? '付款已确认' : labels[currentOrder?.status ?? ''] ?? '核对订单结果'}</h1>
       {error && <p role="alert">{error}</p>}
       {!api.isAuthenticated() ? <p><Link href={`/login?next=${encodeURIComponent('/success?order=' + (id ?? ''))}`}>登录后查看订单</Link></p> : <>
-        {order && <p>订单号：{order.order_no} · ¥{Number(order.amount).toFixed(2)}</p>}
+        {currentOrder && <p>订单号：{currentOrder.order_no} · ¥{Number(currentOrder.amount).toFixed(2)}</p>}
         <p role="status">{paid ? '可以前往报告页获取本订单授权的交付物，并在发票页申请开票。' : '若已完成付款，请稍后刷新确认。返回此页本身不会更改订单或授予权益。'}</p>
         {!paid && <button type="button" className="yc-btn-primary" disabled={loading} onClick={()=>setRetry(v=>v+1)}>{loading ? '正在核对…' : '刷新付款结果'}</button>}
       </>}

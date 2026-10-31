@@ -15,6 +15,7 @@ export interface AuthConfig {
   feedback_revision?: number;
   sales_request_revision?: number;
   checkout_idempotency_revision?: number;
+  checkout_resume_revision?: number;
 }
 
 export interface LoginResponse {
@@ -1600,6 +1601,10 @@ class ApiClient {
   }
 
   // Orders
+  async getCheckoutState(id: string): Promise<{order:Order; provider:string|null; can_continue:boolean; reason:string|null}> {
+    return this.request(`/orders/${encodeURIComponent(id)}/checkout`);
+  }
+
   async getOrders(): Promise<Order[]> {
     return this.request<Order[]>('/orders');
   }

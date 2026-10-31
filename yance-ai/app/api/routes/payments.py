@@ -18,6 +18,7 @@ from app.core.config import settings
 from app.core.db import get_db
 from app.models.models import Order, Payment, Product, UserRole
 from app.services.commerce.availability import purchase_status
+from app.services.commerce.delivery import require_order_report
 from app.services.payments import wechat as wx
 from app.services.payments.settlement import settle_payment
 
@@ -32,6 +33,7 @@ def _checkout_payment(db: Session, order: Order, provider: str) -> Payment | Non
     """
     if order.status not in {"created", "pending"}:
         raise HTTPException(status_code=409, detail="Order is not open for payment")
+    require_order_report(db, order)
     existing = db.scalar(select(Payment).where(Payment.order_id == order.id, Payment.tenant_id == order.tenant_id).order_by(Payment.created_at.desc()))
     if existing and (existing.provider != provider or existing.status not in {"created", "pending"}):
         raise HTTPException(status_code=409, detail="该订单已有支付记录，请先核实原渠道交易状态，不会自动创建第二笔支付")

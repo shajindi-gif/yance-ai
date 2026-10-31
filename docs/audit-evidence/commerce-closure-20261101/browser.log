@@ -1,0 +1,15 @@
+
+Running 8 tests using 1 worker
+
+(node:59666) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › e2e/growth-journey.spec.ts:8:5 › industry assets, task paths and mobile layout (3.9s)
+  ✓  2 [chromium] › e2e/growth-journey.spec.ts:19:5 › provider failure retry reuses an existing order, contract simulation only (318ms)
+  ✓  3 [chromium] › e2e/login-payment-ux.spec.ts:8:5 › two identity entrances, code signup and legacy email password access (351ms)
+  ✓  4 [chromium] › e2e/login-payment-ux.spec.ts:25:5 › return URL cannot claim payment; retry displays only server-confirmed order state (295ms)
+  ✓  5 [chromium] › e2e/login-payment-ux.spec.ts:38:5 › resume uses server price and payment channel and never creates another order (410ms)
+  ✓  6 [chromium] › e2e/login-payment-ux.spec.ts:56:5 › price change requires another confirmation before contacting a payment provider (404ms)
+  ✓  7 [chromium] › e2e/login-payment-ux.spec.ts:73:5 › real local API restores an order and preserves it when provider is unavailable (665ms)
+  ✓  8 [chromium] › e2e/login-payment-ux.spec.ts:92:5 › pending return automatically refreshes the server status without claiming early success (3.6s)
+
+  8 passed (10.5s)

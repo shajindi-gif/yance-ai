@@ -12,6 +12,10 @@ function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const productCode = searchParams.get('product') || 'POLICY_REPORT';
+  const resumeId = searchParams.get('order') || '';
+  const [resumeAmount, setResumeAmount] = useState<number | null>(null);
+  const [resumeBlocked, setResumeBlocked] = useState(false);
+  const resumeSupported = useRef(false);
   const requestedCompany = searchParams.get('company') || '';
   const [product, setProduct] = useState<ProductCatalogItem | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -78,13 +82,26 @@ function CheckoutContent() {
       api.getProducts(),
       api.getCompanies(),
       api.getAuthConfig().catch(() => null),
-    ]).then(([products, comps, config]) => {
+    ]).then(async ([products, comps, config]) => {
+      resumeSupported.current = config?.checkout_resume_revision === 1;
+      const state = resumeId && resumeSupported.current ? await api.getCheckoutState(resumeId) : null;
       if (cancelled) return;
-      const p = products.find((item) => item.code === productCode) ?? null;
+      const p = products.find((item) => item.code === (state?.order.product_code ?? productCode)) ?? null;
+      setResumeBlocked(!!resumeId && (!state || !state.can_continue || state.order.currency !== "CNY"));
+      if (resumeId && !state) setError("当前后台尚不支持恢复付款，请到订单列表核对；不会另建订单。");
+      if (state) {
+        const order = state.order;
+        if (order.status === "paid") { router.replace(`/success?order=${order.id}`); return; }
+        setResumeAmount(Number(order.amount)); setPendingOrder(order.id);
+        setSelectedCompany(order.resource_id ?? "");
+        if (state.provider === "wechat" || state.provider === "alipay") setProvider(state.provider);
+        attemptRef.current = {signature:`${order.product_code}:${order.resource_id}`,key:crypto.randomUUID(),order:order.id};
+        if (state.reason) setError(state.reason);
+      }
       setRetryProtection(config?.checkout_idempotency_revision === 1);
       setProduct(p);
       setCompanies(comps);
-      if (comps.length > 0) {
+      if (comps.length > 0 && !state) {
         const selected = comps.some((company) => company.id === requestedCompany)
           ? requestedCompany
           : comps[0].id;
@@ -100,10 +117,10 @@ function CheckoutContent() {
     return () => {
       cancelled = true;
     };
-  }, [requestedCompany, router, productCode, searchParams]);
+  }, [requestedCompany, router, productCode, searchParams, resumeId]);
 
   const handlePay = async () => {
-    if (!selectedCompany || !product || payingRef.current) return;
+    if (!selectedCompany || !product || payingRef.current || resumeBlocked) return;
     payingRef.current = true;
     setPaying(true);
     setError('');
@@ -118,9 +135,21 @@ function CheckoutContent() {
         const order = await api.createOrder({product_code:product.code, resource_id:selectedCompany,
           ...(retryProtection ? {client_request_id:attempt.key} : {})});
         attempt.order = order.id;
+        if (order.status === "paid") { router.replace(`/success?order=${order.id}`); return; }
+        if (typeof order.amount === "number") {
+          setResumeAmount(order.amount);
+          if (order.amount !== (resumeAmount ?? product.promotional_price ?? product.price)) {
+            setPendingOrder(order.id);
+            throw new Error('价格已更新，请核对订单金额后再次确认付款；本次尚未调用支付渠道。');
+          }
+        }
       }
       const order = {id:attempt.order};
       setPendingOrder(order.id);
+      if (resumeSupported.current && !resumeId) {
+        const query = new URLSearchParams({order:order.id,product:product.code,company:selectedCompany});
+        window.history.replaceState(null, "", `/checkout?${query}`);
+      }
       if (provider === 'alipay') {
         const checkout = await api.createCheckout(order.id);
         window.location.assign(checkout.url);
@@ -154,9 +183,9 @@ function CheckoutContent() {
     </div>
   );
 
-  const price = product.promotional_price ?? product.price;
+  const price = resumeAmount ?? product.promotional_price ?? product.price;
   const presentation = productPresentation(product);
-  const canPurchase = product.purchase_available !== false && product.code === 'POLICY_REPORT' && product.entitlement_type === 'report';
+  const canPurchase = !resumeBlocked && product.purchase_available !== false && product.code === 'POLICY_REPORT' && product.entitlement_type === 'report';
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', paddingTop: '100px' }}>
@@ -203,7 +232,7 @@ function CheckoutContent() {
             )}
 
             {error && (
-              <div role="alert" style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#dc2626', fontSize: '13px', marginTop: '12px' }}>{error}{!pendingOrder && <p><a href="/policy-scan">前往政策扫描，准备报告 →</a></p>}{pendingOrder && <p><a href="/orders">查看已有订单，避免重复购买 →</a></p>}</div>
+              <div role="alert" style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#dc2626', fontSize: '13px', marginTop: '12px' }}>{error}{!pendingOrder && <p><a href="/policy-scan">前往政策扫描，准备报告 →</a> · <a href="/orders">查看已有订单</a></p>}{pendingOrder && <p><a href="/orders">查看已有订单，避免重复购买 →</a></p>}</div>
             )}
           </div>
 
@@ -247,7 +276,7 @@ function CheckoutContent() {
                   disabled={paying || !selectedCompany || !canPurchase}
                   style={{ width: '100%', padding: '14px', borderRadius: '10px', border: 'none', background: paying ? '#94a3b8' : '#f97316', color: '#fff', fontSize: '16px', fontWeight: 600, cursor: paying ? 'not-allowed' : 'pointer' }}
                 >
-                  {!canPurchase ? '待开通' : paying ? '处理中...' : provider === 'alipay' ? `确认支付 ¥${price}` : `生成付款二维码 ¥${price}`}
+                  {!canPurchase ? (resumeBlocked ? '暂不能继续付款' : '待开通') : paying ? '处理中...' : provider === 'alipay' ? `确认支付 ¥${price}` : `生成付款二维码 ¥${price}`}
                 </button>
                 <p style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'center', marginTop: '12px' }}>
                   付款后自动核对订单。未确认成功前，请勿再次付款。

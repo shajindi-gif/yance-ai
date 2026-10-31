@@ -314,6 +314,7 @@ def auth_config() -> dict:
         "feedback_revision": 1,
         "sales_request_revision": 1,
         "checkout_idempotency_revision": 1,
+        "checkout_resume_revision": 1,
     }
 
 
