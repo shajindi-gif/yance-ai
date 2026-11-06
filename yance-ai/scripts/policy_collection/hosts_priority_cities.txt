@@ -1,0 +1,27 @@
+# priority city science & technology bureaus (candidate hosts)
+kjj.sz.gov.cn
+kjj.gz.gov.cn
+kjj.hangzhou.gov.cn
+kjw.nanjing.gov.cn
+kjj.suzhou.gov.cn
+cdst.chengdu.gov.cn
+kjj.wuhan.gov.cn
+xakjj.xa.gov.cn
+kjj.hefei.gov.cn
+qdkjj.qingdao.gov.cn
+jnkjj.jinan.gov.cn
+kjj.ningbo.gov.cn
+kjj.wuxi.gov.cn
+kjj.changsha.gov.cn
+kjj.zhengzhou.gov.cn
+dgst.dg.gov.cn
+kjj.xm.gov.cn
+kj.fuzhou.gov.cn
+kjj.nc.gov.cn
+kjj.shenyang.gov.cn
+kjj.dl.gov.cn
+kjj.changchun.gov.cn
+kjj.harbin.gov.cn
+kjj.km.gov.cn
+kjj.guiyang.gov.cn
+kjj.lanzhou.gov.cn

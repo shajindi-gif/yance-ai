@@ -60,6 +60,33 @@ class Settings(BaseSettings):
     document_url_connect_timeout_seconds: float = 5.0
     document_url_read_timeout_seconds: float = 15.0
     document_url_total_timeout_seconds: float = 30.0
+
+    # ------------------------------------------------------------------ #
+    # Continuous policy collection (docs/policy-collection-runbook.md)
+    # Every switch defaults to the safe/OFF position: enabling collection is an
+    # explicit production decision, never a side effect of a deploy.
+    # ------------------------------------------------------------------ #
+    policy_collection_enabled: bool = False
+    policy_collection_catalog_dir: str = "config/policy_sources"
+    policy_collection_raw_dir: str = ""  # empty -> <app>/crawler_output/policy_raw
+    policy_collection_user_agent: str = "YancePolicyCollector/3.0 (+https://yance.ai)"
+    policy_collection_max_pages_per_source: int = 3
+    policy_collection_max_items_per_source: int = 20
+    policy_collection_max_detail_bytes: int = 5_000_000
+    policy_collection_max_attachment_bytes: int = 25_000_000
+    policy_collection_max_attachments_per_doc: int = 12
+    policy_collection_min_host_interval_seconds: float = 2.0
+    policy_collection_request_timeout_seconds: float = 20.0
+    policy_collection_max_retries: int = 2
+    policy_collection_respect_robots: bool = True
+    policy_collection_run_timeout_seconds: int = 900
+    policy_collection_source_failure_pause_threshold: int = 5
+    # Budget guards: the deterministic pipeline needs no LLM; this only caps the
+    # optional classification/embedding stage.
+    policy_collection_llm_enabled: bool = False
+    policy_collection_daily_model_budget_calls: int = 0
+    policy_collection_attachment_parse_enabled: bool = True
+
     malware_scan_mode: Literal["disabled", "optional", "required"] = "disabled"
     clamd_host: str = ""
     clamd_port: int = 3310

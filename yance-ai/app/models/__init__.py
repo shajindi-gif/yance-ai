@@ -19,3 +19,14 @@ from app.models.models import (  # noqa: F401
     Tenant,
     User,
 )
+
+# Policy collection runtime tables (additive; imported for Alembic metadata).
+from app.models.policy_collection import (  # noqa: F401
+    PolicyApplicationWindow,
+    PolicyAttachment,
+    PolicyCollectionRun,
+    PolicyDocumentKey,
+    PolicyOrigin,
+    PolicyRawEvidence,
+    PolicySourceState,
+)
