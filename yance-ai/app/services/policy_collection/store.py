@@ -375,6 +375,12 @@ class SqlPolicyStore:
                         continue
                     if value is not None:
                         setattr(policy, key_name, value)
+                # A changed document must carry its new body, otherwise
+                # ``_write_version`` hashes the *old* text, reports "unchanged"
+                # and the revision is silently lost. History is preserved by the
+                # previous PolicyVersion row, not by keeping a stale policy body.
+                policy.content = payload.text
+                policy.original_text = payload.text
             version, embedding_status = _write_version(
                 self.db, policy, embedding_enabled=self.embedding_enabled
             )

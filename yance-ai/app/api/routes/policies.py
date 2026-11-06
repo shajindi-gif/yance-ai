@@ -59,6 +59,43 @@ async def create_policy(
     return policy
 
 
+@router.get("/policies/evidence-search")
+def evidence_search(
+    q: str,
+    limit: int = 10,
+    level: str | None = None,
+    jurisdiction: str | None = None,
+    current_only: bool = False,
+    principal: Principal = Depends(get_principal),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Keyword evidence search — works with **no model configured**.
+
+    Returns chunks with exact character spans inside an immutable policy version,
+    so a UI can quote the source and a reviewer can re-check it.  Vector search
+    (``POST /policies/search``) stays a separate, budgeted path; this endpoint must
+    never call an embedding provider.
+    """
+    from app.services.policy_collection.keyword_search import keyword_search, searchable_counts
+
+    hits = keyword_search(
+        db,
+        q,
+        limit=limit,
+        level=level,
+        jurisdiction=jurisdiction,
+        current_only=current_only,
+        tenant_id=principal.tenant_id,
+    )
+    return {
+        "query": q,
+        "retrieval": "keyword_trigram",
+        "count": len(hits),
+        "hits": [hit.as_dict() for hit in hits],
+        "corpus": searchable_counts(db),
+    }
+
+
 @router.get("/policies/{policy_id}", response_model=PolicyOut)
 def get_policy(
     policy_id: UUID,

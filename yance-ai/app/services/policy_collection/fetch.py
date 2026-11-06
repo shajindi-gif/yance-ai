@@ -50,6 +50,16 @@ class FetchResult:
         return self.error is None and self.status_code == 200 and not self.robots_denied
 
     @property
+    def not_modified(self) -> bool:
+        """Server answered 304: the stored copy is still current.
+
+        Deliberately **not** part of ``ok``: callers must decide explicitly what
+        an unchanged body means, so a 304 can never be mistaken for a fresh
+        document that carries an empty body.
+        """
+        return self.error is None and self.status_code == 304
+
+    @property
     def text(self) -> str:
         encoding = "utf-8"
         content_type = (self.content_type or "").lower()
@@ -148,7 +158,14 @@ class SafeFetcher:
         return robots_policy.can_fetch(url, self.user_agent), delay
 
     # -- request --------------------------------------------------------
-    def get(self, url: str, *, purpose: str = "document", min_interval: float | None = None) -> FetchResult:
+    def get(
+        self,
+        url: str,
+        *,
+        purpose: str = "document",
+        min_interval: float | None = None,
+        extra_headers: dict[str, str] | None = None,
+    ) -> FetchResult:
         started = self._clock()
         try:
             current = self.target_policy.check(url)
@@ -180,7 +197,12 @@ class SafeFetcher:
             interval = self.min_interval_seconds if min_interval is None else min_interval
             self._limiter.wait(current, interval)
             try:
-                result = self._single_request(current, purpose=purpose, redirects=redirects)
+                result = self._single_request(
+                    current,
+                    purpose=purpose,
+                    redirects=redirects,
+                    extra_headers=extra_headers,
+                )
             except httpx.TimeoutException as exc:
                 last_error, kind = f"timeout: {exc}", "timeout"
                 result = None
@@ -224,7 +246,14 @@ class SafeFetcher:
                     pass
         return min(2.0**attempt, 15.0)
 
-    def _single_request(self, url: str, *, purpose: str, redirects: list[str]) -> FetchResult:
+    def _single_request(
+        self,
+        url: str,
+        *,
+        purpose: str,
+        redirects: list[str],
+        extra_headers: dict[str, str] | None = None,
+    ) -> FetchResult:
         current = url
         for _ in range(self.max_redirects + 1):
             with self._client.stream(
@@ -235,6 +264,7 @@ class SafeFetcher:
                     "Accept": "text/html,application/xhtml+xml,application/pdf,"
                     "application/msword,application/vnd.openxmlformats-officedocument.*;q=0.9,*/*;q=0.5",
                     "Accept-Language": "zh-CN,zh;q=0.9",
+                    **(extra_headers or {}),
                 },
             ) as response:
                 if response.status_code in {301, 302, 303, 307, 308}:

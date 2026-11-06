@@ -28,13 +28,16 @@ import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
+from pathlib import Path
+from urllib.parse import parse_qsl, urlsplit
 
+from app.core.config import settings
 from app.services.documents.parsers import DocumentIngestionError, parse_document
 
 from .adapters import ListUnavailable, resolve_adapter
 from .catalog import SourceDefinition
 from .classify import classify
-from .extract import extract_document_page
+from .extract import DocumentPage, extract_document_page
 from .fetch import FetchResult, SafeFetcher
 from .fingerprint import normalize_text
 from .rawstore import RawEvidenceStore
@@ -42,6 +45,20 @@ from .store import AttachmentPayload, DocumentPayload, PolicyStore, StoreResult,
 from .urlguard import TargetPolicy
 
 logger = logging.getLogger(__name__)
+
+# Documents that some archives publish *as* the list entry.  The body of such a
+# response is a file, not HTML; decoding it as text corrupts the record.
+_BINARY_CONTENT_TYPES = {
+    "application/pdf": ".pdf",
+    "application/msword": ".doc",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+    "application/vnd.ms-excel": ".xls",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+    "application/ofd": ".ofd",
+    # Government sites frequently serve PDFs as octet-stream.
+    "application/octet-stream": None,
+}
+_BINARY_SUFFIXES = (".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ofd")
 
 MIN_DOCUMENT_CHARS = 80
 # A publication date in the future is almost always a parse mistake (year in an
@@ -114,6 +131,7 @@ class SourceRunOutcome:
     error: str | None = None
     adapter_used: str | None = None
     adapter_note: str | None = None
+    pages_available: int = 0  # screens the site declares (0 = unknown)
     duration_ms: int = 0
 
     @property
@@ -167,6 +185,19 @@ class SourceRunOutcome:
         }
 
 
+def _cache_validators(headers: dict | None) -> dict:
+    """Extract ETag / Last-Modified, case-insensitively, for conditional requests."""
+    if not headers:
+        return {}
+    lowered = {str(key).lower(): value for key, value in headers.items()}
+    picked: dict[str, str] = {}
+    if lowered.get("etag"):
+        picked["etag"] = str(lowered["etag"])
+    if lowered.get("last-modified"):
+        picked["last_modified"] = str(lowered["last-modified"])
+    return picked
+
+
 def _looks_like_document(title: str) -> bool:
     """Cheap pre-filter so navigation links never become policies.
 
@@ -211,6 +242,8 @@ class PolicyCollectionRunner:
         limits: CollectionLimits | None = None,
         user_agent: str = "YancePolicyCollector/3.0",
         fetcher_factory=None,
+        validators_provider=None,
+        prefetch_guard=None,
         sleep=time.sleep,
         clock=time.monotonic,
     ) -> None:
@@ -219,6 +252,11 @@ class PolicyCollectionRunner:
         self.limits = limits or CollectionLimits()
         self.user_agent = user_agent
         self._fetcher_factory = fetcher_factory
+        self._validators_provider = validators_provider
+        # Returns a stop reason (e.g. "storage_full") to refuse new downloads, or
+        # None to continue. Checked before *every* document so a full disk stops
+        # growth immediately instead of after the batch finishes.
+        self._prefetch_guard = prefetch_guard
         self._sleep = sleep
         self._clock = clock
 
@@ -231,6 +269,13 @@ class PolicyCollectionRunner:
         policy = TargetPolicy(
             allowed_domains=tuple(source.allowed_domains) or (source.entry_host,),
             allowed_ports=tuple({80, 443, *source.allow_non_standard_ports}),
+            dns_proxy_cidrs=tuple(
+                cidr.strip()
+                for cidr in str(
+                    getattr(settings, "policy_collection_dns_proxy_cidrs", "") or ""
+                ).split(",")
+                if cidr.strip()
+            ),
         )
         return SafeFetcher(
             target_policy=policy,
@@ -254,6 +299,8 @@ class PolicyCollectionRunner:
         trigger: str = "manual",
         run_id: str | None = None,
         max_items: int | None = None,
+        max_pages: int | None = None,
+        start_page: int = 1,
     ) -> SourceRunOutcome:
         started = self._clock()
         outcome = SourceRunOutcome(source_id=source.source_id, status="failed", trigger=trigger)
@@ -274,7 +321,9 @@ class PolicyCollectionRunner:
         fetcher = self._build_fetcher(source, max_bytes=self.limits.max_detail_bytes)
 
         try:
-            entries = self._collect_entries(source, fetcher, outcome)
+            entries = self._collect_entries(
+                source, fetcher, outcome, max_pages=max_pages, start_page=start_page
+            )
             if entries is None:  # list page unreachable
                 outcome.duration_ms = int((self._clock() - started) * 1000)
                 return outcome
@@ -285,7 +334,13 @@ class PolicyCollectionRunner:
                 outcome.duration_ms = int((self._clock() - started) * 1000)
                 return outcome
 
+            stopped_by_guard: str | None = None
             for entry_url, title_hint, date_hint in entries[:item_cap]:
+                if self._prefetch_guard is not None:
+                    stop_reason = self._prefetch_guard()
+                    if stop_reason:
+                        stopped_by_guard = stop_reason
+                        break
                 item = self._process_document(
                     source,
                     fetcher,
@@ -296,6 +351,18 @@ class PolicyCollectionRunner:
                 )
                 outcome.items.append(item)
                 self._tally(outcome, item)
+
+            if stopped_by_guard:
+                outcome.error_kind = stopped_by_guard
+                outcome.error = (
+                    f"stopped before finishing the page window: {stopped_by_guard}"
+                )
+                if outcome.new_documents or outcome.updated_documents or outcome.unchanged_documents:
+                    outcome.status = "partial"
+                else:
+                    outcome.status = "failed"
+                outcome.duration_ms = int((self._clock() - started) * 1000)
+                return outcome
 
             if outcome.failed_documents and (outcome.new_documents or outcome.updated_documents):
                 outcome.status = "partial"
@@ -322,13 +389,23 @@ class PolicyCollectionRunner:
     # list pages
     # ------------------------------------------------------------------ #
     def _collect_entries(
-        self, source: SourceDefinition, fetcher: SafeFetcher, outcome: SourceRunOutcome
+        self,
+        source: SourceDefinition,
+        fetcher: SafeFetcher,
+        outcome: SourceRunOutcome,
+        *,
+        max_pages: int | None = None,
+        start_page: int = 1,
     ) -> list[tuple[str, str, object]] | None:
         """Fetch the list page(s) through the adapter registered for this source."""
-        page_limit = min(self.limits.max_pages_per_source, max(1, source.max_pages))
+        page_limit = max(1, max_pages if max_pages is not None else self.limits.max_pages_per_source)
+        if start_page <= 1:
+            page_limit = min(page_limit, max(1, source.max_pages))
         adapter = resolve_adapter(source)
         try:
-            fetched = adapter.fetch(fetcher, source, max_pages=page_limit)
+            fetched = adapter.fetch(
+                fetcher, source, max_pages=page_limit, start_page=max(1, start_page)
+            )
         except ListUnavailable as exc:
             self._record_fetch_failure(outcome, exc.result)
             if exc.note:
@@ -336,6 +413,7 @@ class PolicyCollectionRunner:
             return None
 
         outcome.pages_fetched += fetched.pages_fetched
+        outcome.pages_available = max(outcome.pages_available, fetched.pages_available)
         outcome.adapter_used = fetched.adapter_used
         if fetched.note:
             outcome.adapter_note = fetched.note
@@ -382,6 +460,24 @@ class PolicyCollectionRunner:
     # ------------------------------------------------------------------ #
     # detail pages
     # ------------------------------------------------------------------ #
+    def _conditional_headers(self, source: SourceDefinition, url: str) -> dict[str, str]:
+        """Validators (ETag / Last-Modified) from the previous stored fetch."""
+        if self._validators_provider is None:
+            return {}
+        try:
+            validators = self._validators_provider(source.source_id, url) or {}
+        except Exception:  # never let a cache lookup break collection
+            logger.warning("conditional validator lookup failed for %s", url, exc_info=True)
+            return {}
+        headers: dict[str, str] = {}
+        etag = validators.get("etag")
+        if etag:
+            headers["If-None-Match"] = etag
+        last_modified = validators.get("last_modified") or validators.get("last-modified")
+        if last_modified:
+            headers["If-Modified-Since"] = last_modified
+        return headers
+
     def _process_document(
         self,
         source: SourceDefinition,
@@ -393,7 +489,15 @@ class PolicyCollectionRunner:
         run_id: uuid.UUID | None,
     ) -> ItemOutcome:
         item = ItemOutcome(url=url, title=title_hint)
-        result = fetcher.get(url, purpose="document")
+        conditional = self._conditional_headers(source, url)
+        result = fetcher.get(url, purpose="document", extra_headers=conditional or None)
+        if result.not_modified:
+            # The origin says our stored copy is still current. Nothing was
+            # downloaded, so there is no new evidence and no new version: the
+            # document is *known unchanged*, not "missing".
+            item.status = "unchanged"
+            item.error_kind = "not_modified"
+            return item
         if not result.ok:
             item.status = "fetch_failed"
             item.error_kind = result.error_kind or ("http" if result.status_code else "unknown")
@@ -415,9 +519,43 @@ class PolicyCollectionRunner:
             stored = None
 
         html = result.text
-        page = extract_document_page(html, result.final_url)
-        title = page.title or title_hint
-        text = page.text
+        binary_name = self._binary_document_name(result.final_url, result.content_type)
+        if binary_name:
+            # Some archives publish the document itself as the list entry
+            # (cnipa's ``downfile.jsp?...filename=x.pdf``): the response is a PDF, not
+            # HTML.  Decoding it as text used to write 250k of binary garbage into
+            # ``policies.content`` and abort the batch on a NUL byte.  Parse it with
+            # the document parser instead, and keep the raw bytes as evidence either
+            # way.
+            parsed = None
+            try:
+                parsed = parse_document(binary_name, result.content)
+            except DocumentIngestionError as exc:
+                item.error_kind = exc.code
+                item.error = f"{exc.code}: {exc.safe_message}"
+            except Exception as exc:  # noqa: BLE001 - a corrupt file is not a crash
+                item.error_kind = "parse_error"
+                item.error = f"{type(exc).__name__}: {exc}"
+            text = (parsed.text if parsed else "") or ""
+            if len(normalize_text(text)) < MIN_DOCUMENT_CHARS:
+                item.status = "parse_failed"
+                item.title = title_hint
+                item.error_kind = item.error_kind or "empty_content"
+                item.error = item.error or f"binary document yielded {len(text)} chars"
+                item.evidence_complete = stored is not None
+                self._store_evidence_only(source, result, stored, None, run_id, item)
+                return item
+            page = DocumentPage(
+                url=result.final_url,
+                title=title_hint or binary_name,
+                text=text,
+                text_chars=len(text),
+            )
+            title = page.title
+        else:
+            page = extract_document_page(html, result.final_url)
+            title = page.title or title_hint
+            text = page.text
         published_at = page.published_at or date_hint
         rejected_date = None
         if published_at and published_at > date.today() + timedelta(days=MAX_FUTURE_PUBLISH_DAYS):
@@ -470,6 +608,10 @@ class PolicyCollectionRunner:
                 "attempts": result.attempts,
                 "redirects": result.redirects,
                 "elapsed_ms": result.elapsed_ms,
+                # Cache validators from the origin. They are the only way a later
+                # incremental pass can ask "unchanged?" without downloading again,
+                # so they are persisted next to the evidence hash.
+                **_cache_validators(result.headers),
                 **({"publish_date_rejected": rejected_date} if rejected_date else {}),
             },
             http_status=result.status_code,
@@ -499,6 +641,32 @@ class PolicyCollectionRunner:
         item.evidence_complete = stored is not None
         item.status = _status_for(store_result.change)
         return item
+
+    def _binary_document_name(self, url: str, content_type: str | None) -> str | None:
+        """Return a filename when the fetched body is a document, not an HTML page.
+
+        Either signal is enough: a binary ``Content-Type``, or a filename-ish URL
+        (path, or a ``filename``/``showname``/``download`` query parameter) ending in
+        a known document suffix.  Returning ``None`` means "treat as HTML".
+        """
+        ctype = (content_type or "").split(";")[0].strip().lower()
+        suffix_from_type = _BINARY_CONTENT_TYPES.get(ctype)
+        parsed = urlsplit(url)
+        candidates = [parsed.path]
+        candidates += [
+            value
+            for key, value in parse_qsl(parsed.query, keep_blank_values=False)
+            if key.lower() in {"filename", "showname", "download", "file", "name"}
+        ]
+        for candidate in candidates:
+            lowered = candidate.lower()
+            for suffix in _BINARY_SUFFIXES:
+                if lowered.endswith(suffix):
+                    name = Path(lowered).name
+                    return name or f"document{suffix}"
+        if suffix_from_type:
+            return f"document{suffix_from_type}"
+        return None
 
     def _store_evidence_only(
         self,

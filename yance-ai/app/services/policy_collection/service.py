@@ -208,6 +208,47 @@ class RunReport:
     skipped_reason: str | None = None
 
 
+def _validators_provider(db: Session):
+    """Prior ETag / Last-Modified for a URL, read from stored evidence.
+
+    Kept as a closure so the runner stays DB-free and therefore unit-testable
+    offline.  Failing to find a validator is normal (first fetch) and simply
+    results in an unconditional request.
+    """
+
+    def provide(source_id: str, url: str) -> dict[str, str]:
+        from app.services.policy_collection.urlguard import normalize_url
+
+        row = db.scalar(
+            select(PolicyRawEvidence.http_meta)
+            .where(
+                PolicyRawEvidence.source_id == source_id,
+                PolicyRawEvidence.url_normalized == normalize_url(url)[:1000],
+                PolicyRawEvidence.purpose == "document",
+            )
+            .order_by(PolicyRawEvidence.fetched_at.desc())
+            .limit(1)
+        )
+        if not row:
+            return {}
+        validators: dict[str, str] = {}
+        if row.get("etag"):
+            validators["etag"] = str(row["etag"])
+        if row.get("last_modified"):
+            validators["last_modified"] = str(row["last_modified"])
+        return validators
+
+    return provide
+
+
+def _storage_stop_reason() -> str | None:
+    """Refuse new downloads when the evidence volume is nearly full."""
+    from app.services.policy_collection.ops import storage_guard
+
+    guard = storage_guard()
+    return None if guard.ok else "storage_full"
+
+
 def execute_source_run(
     db: Session,
     source: SourceDefinition,
@@ -215,6 +256,8 @@ def execute_source_run(
     trigger: str = "manual",
     limits: CollectionLimits | None = None,
     max_items: int | None = None,
+    max_pages: int | None = None,
+    start_page: int = 1,
     dry_run: bool = False,
 ) -> RunReport:
     if not settings.policy_collection_enabled and not dry_run and trigger != "manual":
@@ -235,7 +278,13 @@ def execute_source_run(
             limits=limits or CollectionLimits.from_settings(settings),
             user_agent=settings.policy_collection_user_agent,
         )
-        outcome = runner.run_source(source, trigger="dry-run", max_items=max_items)
+        outcome = runner.run_source(
+            source,
+            trigger="dry-run",
+            max_items=max_items,
+            max_pages=max_pages,
+            start_page=start_page,
+        )
         return RunReport(
             source_id=source.source_id,
             run_id=outcome.run_id,
@@ -257,10 +306,17 @@ def execute_source_run(
         raw_store=raw_store(),
         limits=limits or CollectionLimits.from_settings(settings),
         user_agent=settings.policy_collection_user_agent,
+        validators_provider=_validators_provider(db),
+        prefetch_guard=_storage_stop_reason,
     )
     try:
         outcome = runner.run_source(
-            source, trigger=trigger, run_id=str(run.id), max_items=max_items
+            source,
+            trigger=trigger,
+            run_id=str(run.id),
+            max_items=max_items,
+            max_pages=max_pages,
+            start_page=start_page,
         )
     except Exception as exc:  # keep the run row consistent even on crash
         db.rollback()

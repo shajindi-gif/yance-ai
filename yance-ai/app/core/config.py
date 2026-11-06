@@ -86,6 +86,46 @@ class Settings(BaseSettings):
     policy_collection_llm_enabled: bool = False
     policy_collection_daily_model_budget_calls: int = 0
     policy_collection_attachment_parse_enabled: bool = True
+    # Global kill switch: True stops every scheduled queue (backfill + incremental)
+    # without touching the website. Sources stay readable/searchable.
+    policy_collection_paused: bool = False
+    # A file-based pause flag, checked on every cycle.  The env switch needs a
+    # process restart; this one takes effect within one cycle and is what
+    # ``cli.py pause --global`` writes, so an operator can stop downloads without
+    # redeploying anything.
+    policy_collection_pause_flag_path: str = ""  # empty -> <raw_dir>/PAUSED
+    # Storage guard: stop *new* downloads when free space drops below this, so a
+    # full disk can never take down login/payment/report services.
+    policy_collection_min_free_disk_mb: int = 2048
+    policy_collection_backfill_pages_per_batch: int = 3
+    policy_collection_backfill_docs_per_batch: int = 15
+    policy_collection_backfill_window_seconds: int = 900
+    # How many consecutive "page answered 200 but yielded no candidates" rounds a
+    # source may repeat before its cursor is parked for manual review.  Without a
+    # limit the same page is re-read every cycle forever, which looks like activity
+    # in the logs and hides the fact that history is stuck behind a broken selector.
+    policy_collection_gap_streak_limit: int = 3
+    # Attachment storage is content addressed under this folder; must be on the
+    # persistent volume, never inside a container's tmp layer.
+    policy_collection_attachment_dir: str = ""
+    # DEV ONLY, comma separated CIDRs. On a laptop whose DNS is taken over by a
+    # local TUN/fake-IP proxy (Clash & co.) every hostname resolves into
+    # 198.18.0.0/15, which the SSRF guard must otherwise reject. Leave empty in
+    # production: it weakens the guard to make local download tests possible.
+    policy_collection_dns_proxy_cidrs: str = ""
+
+    # Long-running scheduler (incremental queue). One cycle = every source whose
+    # own interval elapsed; a cycle never outlives its budget.
+    policy_collection_scheduler_interval_seconds: int = 300
+    policy_collection_scheduler_cycle_seconds: int = 600
+    policy_collection_scheduler_max_sources_per_cycle: int = 12
+    # Low-frequency re-check of archives that were already declared exhausted:
+    # conditional requests make this cheap and it is how a page added years later
+    # is discovered without re-downloading the archive.
+    policy_collection_recheck_interval_hours: float = 168.0
+    policy_collection_alert_failure_threshold: int = 4
+    policy_collection_alert_stale_hours: float = 72.0
+    policy_collection_alerts_json_path: str = ""
 
     malware_scan_mode: Literal["disabled", "optional", "required"] = "disabled"
     clamd_host: str = ""

@@ -26,6 +26,8 @@ from .extract import (
     ListEntry,
     detect_client_redirect,
     detect_page_count,
+    discover_page_urls,
+    pagination_urls,
     extract_list_entries,
     paginate_urls,
     parse_cn_date,
@@ -47,12 +49,18 @@ class ListFetch:
     pages_fetched: int
     adapter_used: str
     note: str | None = None
+    # How many list screens the site itself says the column has (0 = unknown).
+    # Backfill uses it to tell "the archive really ended" apart from "the list
+    # rule returned nothing", which must never be reported as an archive end.
+    pages_available: int = 0
 
 
 class ListAdapter:
     name = "generic_list"
 
-    def fetch(self, fetcher, source: SourceDefinition, *, max_pages: int) -> ListFetch:
+    def fetch(
+        self, fetcher, source: SourceDefinition, *, max_pages: int, start_page: int = 1
+    ) -> ListFetch:
         raise NotImplementedError
 
 
@@ -61,12 +69,22 @@ class GenericListAdapter(ListAdapter):
 
     name = "generic_list"
 
-    def fetch(self, fetcher, source: SourceDefinition, *, max_pages: int) -> ListFetch:
+    def fetch(
+        self, fetcher, source: SourceDefinition, *, max_pages: int, start_page: int = 1
+    ) -> ListFetch:
         entries: list[ListEntry] = []
         seen: set[str] = set()
         pages = 0
         urls = [source.entry_url]
-        page_cap = max(1, min(max_pages, source.max_pages))
+        start_page = max(1, start_page)
+        # ``max_pages`` is the *window* this call is allowed to read. Backfill
+        # deep-crawls by moving ``start_page`` forward, so the effective depth is
+        # start_page + window - 1 and the routine poll depth (source.max_pages)
+        # must not clamp it.
+        page_cap = max(1, start_page + max(1, max_pages) - 1)
+        if start_page == 1:
+            page_cap = max(1, min(page_cap, max(source.max_pages, 1)))
+        declared_pages = 0
         index = 0
         while index < len(urls) and pages < page_cap:
             url = urls[index]
@@ -125,17 +143,52 @@ class GenericListAdapter(ListAdapter):
                     continue
                 seen.add(entry.url)
                 entries.append(entry)
-            if pages == 1:
+            if pages == 1 and start_page > 1:
+                # Deep backfill: page 1 only told us the pagination shape. Discard
+                # its entries when the caller asked for a later window so every
+                # batch reports exactly the pages it actually read.
+                entries.clear()
+                seen.clear()
                 total_pages = detect_page_count(html, cap=page_cap)
+                base_url = result.final_url or source.entry_url
+                deeper = pagination_urls(
+                    html,
+                    base_url,
+                    cap=max(total_pages, start_page),
+                    page_parameter=source.page_parameter,
+                )
+                if not deeper or len(deeper) < start_page - 1:
+                    return ListFetch(
+                        entries=[],
+                        pages_fetched=pages,
+                        adapter_used=self.name,
+                        note=(
+                            "pagination_unsupported: the list page exposes no "
+                            f"page parameter, so page {start_page} cannot be reached"
+                        ),
+                    )
+                # deeper[0] is page 2, so page ``start_page`` lives at index start_page-2.
+                urls = deeper[start_page - 2 : page_cap - 1]
+                index = 0
+            elif pages == 1:
+                total_pages = detect_page_count(html, cap=page_cap)
+                declared_pages = max(declared_pages, total_pages)
                 if total_pages > 1:
+                    base_url = result.final_url or source.entry_url
                     urls.extend(
-                        paginate_urls(
-                            source.entry_url,
-                            total_pages,
+                        pagination_urls(
+                            html,
+                            base_url,
+                            cap=total_pages - 1,
                             page_parameter=source.page_parameter,
                         )
                     )
-        return ListFetch(entries=entries, pages_fetched=pages, adapter_used=self.name)
+        return ListFetch(
+            entries=entries,
+            pages_fetched=pages,
+            adapter_used=self.name,
+            pages_available=declared_pages,
+        )
 
 
 class JpaasListAdapter(ListAdapter):
@@ -144,7 +197,19 @@ class JpaasListAdapter(ListAdapter):
     name = "site_specific"
     max_pages_supported = 1
 
-    def fetch(self, fetcher, source: SourceDefinition, *, max_pages: int) -> ListFetch:
+    def fetch(
+        self, fetcher, source: SourceDefinition, *, max_pages: int, start_page: int = 1
+    ) -> ListFetch:
+        if start_page > 1:
+            return ListFetch(
+                entries=[],
+                pages_fetched=0,
+                adapter_used=self.name,
+                note=(
+                    "pagination_unsupported: this adapter serves a single "
+                    f"endpoint page; cannot jump to page {start_page}"
+                ),
+            )
         page = fetcher.get(source.entry_url, purpose="list")
         if not page.ok:
             raise ListUnavailable(page)
@@ -195,7 +260,19 @@ class OpenApiListAdapter(ListAdapter):
 
     name = "open_api"
 
-    def fetch(self, fetcher, source: SourceDefinition, *, max_pages: int) -> ListFetch:
+    def fetch(
+        self, fetcher, source: SourceDefinition, *, max_pages: int, start_page: int = 1
+    ) -> ListFetch:
+        if start_page > 1:
+            return ListFetch(
+                entries=[],
+                pages_fetched=0,
+                adapter_used=self.name,
+                note=(
+                    "pagination_unsupported: this adapter serves a single "
+                    f"endpoint page; cannot jump to page {start_page}"
+                ),
+            )
         api = dict(source.api or {})
         if not api:
             return self._fetch_simple_json(fetcher, source)
@@ -319,7 +396,19 @@ class PortalAdapter(GenericListAdapter):
 
     name = "portal"
 
-    def fetch(self, fetcher, source: SourceDefinition, *, max_pages: int) -> ListFetch:
+    def fetch(
+        self, fetcher, source: SourceDefinition, *, max_pages: int, start_page: int = 1
+    ) -> ListFetch:
+        if start_page > 1:
+            return ListFetch(
+                entries=[],
+                pages_fetched=0,
+                adapter_used=self.name,
+                note=(
+                    "pagination_unsupported: this adapter serves a single "
+                    f"endpoint page; cannot jump to page {start_page}"
+                ),
+            )
         fetched = super().fetch(fetcher, source, max_pages=max_pages)
         if not fetched.entries:
             fetched.note = "portal page contained no document links; needs a column URL"

@@ -40,6 +40,15 @@ TRACKING_PARAMETERS = {
 
 CLOUD_METADATA_HOSTS = {"metadata.tencentyun.com", "metadata.google.internal"}
 
+# Ranges a local TUN/fake-IP proxy hands out instead of real public addresses.
+# Only these can ever be rescued by ``policy_collection_dns_proxy_cidrs``.
+_FAKE_IP_RANGES = (
+    ipaddress.ip_network("198.18.0.0/15"),  # RFC 2544 benchmarking, used by Clash/mihomo
+    ipaddress.ip_network("198.51.100.0/24"),  # RFC 5737 documentation
+    ipaddress.ip_network("203.0.113.0/24"),
+    ipaddress.ip_network("192.0.2.0/24"),
+)
+
 
 class UnsafeURLError(ValueError):
     """Raised when a target URL violates the collector's access policy."""
@@ -81,14 +90,34 @@ def host_matches(host: str, allowed_domains: Iterable[str]) -> bool:
     return False
 
 
-def is_blocked_ip(value: str) -> bool:
+def is_blocked_ip(value: str, *, dns_proxy_cidrs: tuple[str, ...] = ()) -> bool:
+    """True when ``value`` must not be fetched.
+
+    ``dns_proxy_cidrs`` exists for exactly one situation: a developer machine whose
+    DNS is hijacked by a local proxy in TUN/fake-IP mode, so *every* hostname
+    resolves into a benchmark range (198.18.0.0/15 with Clash, 198.51.100.x with some
+    Surge setups) instead of the real public address.  Without an escape hatch the
+    SSRF guard blocks all traffic and no download can be tested locally at all.
+
+    It is deliberately narrow:
+
+    * the caller must opt in explicitly (settings/env), never on by default;
+    * only addresses inside ``_FAKE_IP_RANGES`` may be rescued — a caller passing
+      ``0.0.0.0/0`` still cannot whitelist RFC1918 or loopback, because the address
+      itself must belong to a documentation/benchmark range;
+    * it only vouches for addresses produced by *DNS resolution*, never for a
+      literal IP typed into a URL.
+
+    Production deployments must leave it empty — see
+    ``docs/policy-collection-production-runbook.md``.
+    """
     try:
         address = ipaddress.ip_address(value)
     except ValueError:
         return True
     if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped:
         address = address.ipv4_mapped
-    return bool(
+    blocked = bool(
         address.is_private
         or address.is_loopback
         or address.is_link_local
@@ -98,6 +127,18 @@ def is_blocked_ip(value: str) -> bool:
         or address in ipaddress.ip_network("100.64.0.0/10")  # CGNAT
         or address in ipaddress.ip_network("169.254.169.254/32")  # cloud metadata
     )
+    if not blocked or not dns_proxy_cidrs:
+        return blocked
+    if not any(address in network for network in _FAKE_IP_RANGES):
+        return True
+    for cidr in dns_proxy_cidrs:
+        try:
+            network = ipaddress.ip_network(cidr, strict=False)
+        except ValueError:
+            continue
+        if address in network:
+            return False
+    return True
 
 
 class ResolutionError(UnsafeURLError):
@@ -132,6 +173,8 @@ class TargetPolicy:
     allowed_domains: tuple[str, ...]
     allowed_ports: tuple[int, ...] = (80, 443)
     resolver: Callable[[str], list[str]] = resolve_ips
+    # Empty in production. See ``is_blocked_ip`` for why this exists at all.
+    dns_proxy_cidrs: tuple[str, ...] = ()
 
     def check(self, url: str) -> str:
         """Validate one hop and return its canonical form."""
@@ -157,7 +200,7 @@ class TargetPolicy:
                 raise UnsafeURLError("target IP is not public")
             return canonical
         for address in self.resolver(host):
-            if is_blocked_ip(address):
+            if is_blocked_ip(address, dns_proxy_cidrs=self.dns_proxy_cidrs):
                 raise UnsafeURLError(f"host resolves to a blocked address: {address}")
         return canonical
 
