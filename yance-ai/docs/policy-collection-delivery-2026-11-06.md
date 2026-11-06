@@ -1,3 +1,14 @@
+---
+AIGC:
+    Label: "1"
+    ContentProducer: 001191440300708461136T1XGW3
+    ProduceID: af44a43be3f5d56ec87e76066ae0891d_b4286ac2d9d311f1bc42525400638852
+    ReservedCode1: hyK92Uyfrjh8IcGzWfD+uHct01mqzhfIPX7KGsFvw95+vWAerDFtqb+vqD40s3NOOpqwH946AXiON0cub4sBZfymzRdlWlhTL3y4tLopGem6G8WyAJeFQW30sTyGuDHG2wV5ofyqROVZyDMEAaoTxMS3ZbzYN0JHCSq5UJ0/97KbPJNe722QK4Ndm2U=
+    ContentPropagator: 001191440300708461136T1XGW3
+    PropagateID: af44a43be3f5d56ec87e76066ae0891d_b4286ac2d9d311f1bc42525400638852
+    ReservedCode2: hyK92Uyfrjh8IcGzWfD+uHct01mqzhfIPX7KGsFvw95+vWAerDFtqb+vqD40s3NOOpqwH946AXiON0cub4sBZfymzRdlWlhTL3y4tLopGem6G8WyAJeFQW30sTyGuDHG2wV5ofyqROVZyDMEAaoTxMS3ZbzYN0JHCSq5UJ0/97KbPJNe722QK4Ndm2U=
+---
+
 # 政策证据库 · 交付说明（2026-11-06）
 
 本文是这一轮的**交付凭证**，不是计划书。文中每个数字都来自本机真实 PostgreSQL 实例
