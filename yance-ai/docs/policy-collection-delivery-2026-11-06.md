@@ -338,3 +338,42 @@ POLICY_COLLECTION_ENABLED=true ./ops/collector.sh trial 100
 才可以开始，我不会把它们写成"已完成"。
 
 *（内容由AI生成，仅供参考）*
+
+## 验收记录：PostgreSQL 16 与 0034 → head 升级路径（隔离环境）
+
+在服务器上用一个一次性容器（`pgvector/pgvector:pg16`，PostgreSQL 16.14）做隔离验收，
+全程不连接 `yance-prod-db-1`，不启动任何迁移，不重启 api。验收脚本先把 `public`
+schema 清空，再造出与生产一致的 `20261029_0034` 状态，然后走真实升级路径。
+
+| 步骤 | 结果 |
+| --- | --- |
+| 空库 → `alembic upgrade 20261029_0034` | 成功，构成生产现状（36 列 `policies` 等旧表已在） |
+| `0034 → head`（0035→0036→0037→0038） | 成功，`public` 共 91 张表，耗时数秒 |
+| 0034 已有表在 head 后是否仍在 | 全部保留；新增 11 张表（`policy_*`、`parks`、`park_policy_scopes` 等） |
+| `0038` 建的 pg_trgm 索引 | `ix_policies_title_trgm`、`ix_policy_chunks_content_trgm`、`ix_policy_versions_title_trgm` 均在 |
+| 扩展 | `vector 0.8.6`、`pg_trgm 1.6`、`pgcrypto 1.3` |
+| `downgrade 0038 → 0037` | 干净，trgm 索引归零，核心表仍在 |
+| `downgrade 0037 → 0036`（不带闸门） | 按预期拒绝：`Refusing to drop park policy evidence tables`，版本号不变 |
+| `downgrade 0037 → 0036`（`PARK_POLICY_ALLOW_DROP=1`） | 成功，落在 `0036` |
+| 再 `upgrade head`，连跑两次 | 幂等，回到 `0038`，91 张表 |
+
+真实试采（写入隔离库，不是生产库）：
+
+```
+[success] nat_cnipa_notice   pages 1-1 read=1 new=2 changed=0 unchanged=0 failed=0 stop=batch_complete
+[success] nat_miit_zxzc      pages 1-1 read=3 new=2 changed=0 unchanged=0 failed=0 stop=batch_complete
+policies=4  policy_versions=4  policy_chunks=6  policy_origins=4  policy_collection_runs=2
+重复 URL=0  发布日期缺失=0  地域缺失=0  原文落卷=4 个 HTML（100KB）
+检索：知识产权 3 条/44ms、中小企业 1 条/4ms、节约战略 1 条/4ms（均为 keyword_trigram，无需模型）
+```
+
+三处在这种情况下会真实踩到的坑，已修复并写进代码：
+
+1. **镜像里没有来源目录**。`config/policy_sources/*.yaml` 不属于后端镜像，采集容器起来后
+   第一条命令就是 `FileNotFoundError: config/policy_sources`。Dockerfile 现在只拷这一个子目录。
+2. **`APP_ENV` 不能从 `.env.prod` 继承**。继承 `production` 后 `Settings.validate_production_secrets`
+   会索要 `jwt_secret` / `bootstrap_token` / `tenant_provisioning_token` / `api_key_pepper`，
+   而采集容器一个都不需要 —— 于是 `collector.sh migrate-status` 直接在服务器上报
+   `pydantic ValidationError`。现在 `.env.collector` 固定 `APP_ENV=staging`，生产密钥不进这个容器。
+3. **安装目录与解包目录是两处**。`collector-install.sh` 把内容复制到 `/opt/yance/collector-<REV>`，
+   解包目录只当安装源；运行命令一律在 `/opt/yance/collector-20261106-r3` 下执行。
