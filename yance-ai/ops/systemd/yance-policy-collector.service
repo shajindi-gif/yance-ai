@@ -21,11 +21,11 @@ Type=simple
 # is ever used for real.  The containerised path does not need a host account at all.
 User=yance
 Group=yance
-WorkingDirectory=/opt/yance/collector-20261106-r2
-EnvironmentFile=/opt/yance/collector-20261106-r2/.env.collector
+WorkingDirectory=/opt/yance/collector-20261106-r3
+EnvironmentFile=/opt/yance/collector-20261106-r3/.env.collector
 # The master switch is set in .env.collector, not here: one place to look when the
 # collector "does nothing".
-ExecStart=/opt/yance/collector-20261106-r2/.venv/bin/python -m app.workers.policy_collector
+ExecStart=/opt/yance/collector-20261106-r3/.venv/bin/python -m app.workers.policy_collector
 # SIGTERM between documents: give the current page time to finish and commit.
 KillSignal=SIGTERM
 TimeoutStopSec=120

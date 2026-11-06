@@ -8,14 +8,14 @@
 #   backend image that is already serving traffic, so:
 #     - no network is needed to build (base image is present locally),
 #     - the running `yance-prod-api-1` container keeps its own image untouched,
-#     - the collector runs byte-identical code to the tested revision 20261106-r2.
+#     - the collector runs byte-identical code to the tested revision 20261106-r3.
 #
 # Build:
 #   docker build -f docker/Dockerfile.collector \
 #     --build-arg BASE_IMAGE=yance-backend:web-auth-20261031-01 \
-#     -t yance-collector:20261106-r2 .
+#     -t yance-collector:20261106-r3 .
 #
-# The revision 20261106-r2 introduced no new Python dependencies, which is why no pip
+# The revision 20261106-r3 introduced no new Python dependencies, which is why no pip
 # step appears here.  If a later revision adds one, add a `RUN /opt/venv/bin/pip
 # install ...` line *and* vendor the wheel — do not assume PyPI is reachable.
 

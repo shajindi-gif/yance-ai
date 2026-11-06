@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-RELEASE="20261106-r2"
+RELEASE="20261106-r3"
 INSTALL_ROOT="${INSTALL_ROOT:-/opt/yance}"
 TARGET_DIR="${INSTALL_ROOT}/collector-${RELEASE}"
 PROD_ENV="${PROD_ENV:-/opt/yance/yance-ai/.env.prod}"
@@ -64,7 +64,14 @@ log "generating ${TARGET_DIR}/.env.collector from ${PROD_ENV}"
 
 # Whitelist: the crawler needs the database URL and nothing else from production
 # secrets.  Everything that talks to money, SMS, WeChat or auth stays out.
-WHITELIST="DATABASE_URL APP_ENV POLICY_ENGINE_V2 CLAMD_HOST MALWARE_SCAN_MODE DOCUMENT_OCR_ENABLED"
+# APP_ENV is deliberately NOT inherited: .env.prod carries APP_ENV=production, and
+# Settings.validate_production_secrets then demands jwt_secret / bootstrap_token /
+# tenant_provisioning_token / api_key_pepper — auth secrets the crawler never uses.
+# Copying them in would spread production credentials for no reason, and leaving them
+# out makes every command die with a pydantic ValidationError (this was reproduced:
+# `collector.sh migrate-status` crashed on the production host).  The collector runs
+# no API routes, so staging is both accurate and sufficient; APP_ENV is pinned below.
+WHITELIST="DATABASE_URL POLICY_ENGINE_V2 CLAMD_HOST MALWARE_SCAN_MODE DOCUMENT_OCR_ENABLED"
 TMP_ENV="$(mktemp)"
 trap 'rm -f "${TMP_ENV}"' EXIT
 : > "${TMP_ENV}"
@@ -76,6 +83,7 @@ grep -q '^DATABASE_URL=' "${TMP_ENV}" || die "DATABASE_URL not found in ${PROD_E
 
 cat >> "${TMP_ENV}" <<'EOF'
 # ---- collector runtime (values mirror docker-compose.collector.yml) ----
+APP_ENV=staging
 POLICY_COLLECTION_ENABLED=true
 POLICY_COLLECTION_RAW_DIR=/app/policy_raw
 POLICY_COLLECTION_ATTACHMENT_DIR=/app/policy_raw/attachments

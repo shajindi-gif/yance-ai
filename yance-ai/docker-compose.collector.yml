@@ -21,7 +21,7 @@ services:
     # The collector image is built FROM the already-deployed backend image and only
     # overwrites the application code with the pinned revision.  No network access is
     # required at build time, and the running produiction API image is never touched.
-    image: ${COLLECTOR_IMAGE:-yance-collector:20261106-r2}
+    image: ${COLLECTOR_IMAGE:-yance-collector:20261106-r3}
     build:
       context: .
       dockerfile: docker/Dockerfile.collector
