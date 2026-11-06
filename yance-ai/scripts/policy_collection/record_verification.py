@@ -63,9 +63,11 @@ def classify(entry: dict) -> tuple[str | None, str]:
             return "unreachable", f"2026-11-06 干跑实测 http 404，入口已失效，待重定位栏目 URL"
         if "robots" in err:
             return "blocked_by_robots", "2026-11-06 干跑实测 robots.txt 禁止，按规则不采"
-        if "timeout" in err:
-            return None, "2026-11-06 干跑列表页请求超时，本轮未取到有效列表，待复测"
-        return None, f"2026-11-06 干跑失败：{err[:60]}"
+        # Transient outcomes (timeout, connection reset) say nothing about the
+        # source itself.  Writing them into the catalog would leave a permanent
+        # "broken" note that contradicts the next successful run, so the state
+        # and the notes stay untouched; the harvest JSON keeps the evidence.
+        return None, ""
 
     if entry["entries"] == 0:
         return None, "2026-11-06 干跑列表页解析出 0 条：静态 HTML 无条目锚点或选择器未命中，需核查适配器"

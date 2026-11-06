@@ -4,7 +4,7 @@
 
 ## 0. 一句话结论
 
-**129 个用例通过（无 DB 依赖部分全绿），需要 PostgreSQL 的集成与端到端场景未执行。** 不得据此宣称系统已验证可用。
+**130 个用例通过（无 DB 依赖部分全绿），需要 PostgreSQL 的集成与端到端场景未执行。** 不得据此宣称系统已验证可用。
 
 ---
 
@@ -13,13 +13,13 @@
 ```bash
 cd yance-ai
 .venv/bin/python -m pytest tests/park_policy tests/policy_collection -p no:cacheprovider
-# => 129 passed, 5 warnings in 1.82s
+# => 130 passed, 5 warnings in 1.82s
 ```
 
 | 测试文件 | 用例 | 覆盖 |
 | --- | --- | --- |
 | `tests/policy_collection/test_collection_pipeline.py` | 36 | URL 守卫、robots、抓取限额、增量判定、幂等、窗口、质量门、跳转壳识别 |
-| `tests/policy_collection/test_record_verification.py` | 3 | 目录回写：只改 3 个字段、重放幂等、失败类型不误标 |
+| `tests/policy_collection/test_record_verification.py` | 4 | 目录回写：只改 3 个字段、重放幂等、失败类型不误标、瞬时超时不落笔 |
 | `tests/park_policy/test_conditions_evidence.py` | 24 | 条件矩阵、证据约束、金额与期间、冲突事实 |
 | `tests/park_policy/test_park_catalog_geography.py` | 15 | 园区目录、地域判定、地址不等于资格 |
 | `tests/park_policy/test_park_retrieval.py` | 15 | 混合检索、权限过滤、别名 |

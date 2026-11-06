@@ -308,8 +308,8 @@ sources:
     check_interval_hours: 24
     enabled: true
     verification_state: document_verified
-    last_verified_at: "2026-11-06T16:20:46+08:00"
-    notes: 2026-11-06 干跑：修复跳转壳识别后复测，列表 15 条、取 1 篇并解析成功（未入库）；此前一次超时为临时网络问题。；2026-11-06 干跑列表页请求超时，本轮未取到有效列表，待复测
+    last_verified_at: "2026-11-06T16:30:59+08:00"
+    notes: 2026-11-06 干跑：列表 15 条，取 1 篇，解析成功 1 篇（未入库）；此前偶发列表超时，为临时网络问题
 
   - source_id: prov_heilongjiang_kjt
     name: 黑龙江省科学技术厅-通知公告

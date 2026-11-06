@@ -174,3 +174,35 @@ def test_failure_kinds_are_not_mislabelled(tmp_path, script, monkeypatch):
     assert by_id["prose_source"]["verification_state"] == "registered"
     # folded prose is never appended to: the diagnosis stays in the harvest JSON
     assert "列表 0 条" not in by_id["prose_source"]["notes"]
+
+
+def test_transient_timeout_leaves_catalog_untouched(tmp_path, script, monkeypatch):
+    """A timeout says nothing about the source, so it must not become a note.
+
+    Writing "待复测" into the hand-maintained catalog would leave a permanent
+    contradiction behind the next successful run; the harvest JSON is the
+    place for a one-off network blip.
+    """
+    catalog_dir, _ = _write_fixture(tmp_path)
+    before = (catalog_dir / "national.yaml").read_text(encoding="utf-8")
+    harvest = tmp_path / "harvest_timeout.json"
+    harvest.write_text(
+        json.dumps(
+            {
+                "sources": [
+                    {
+                        "source_id": "good_source",
+                        "list_ok": False,
+                        "list_error": "timeout: The read operation timed out",
+                        "entries": 0,
+                        "docs": [],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    _run(script, catalog_dir, harvest, monkeypatch)
+
+    assert (catalog_dir / "national.yaml").read_text(encoding="utf-8") == before

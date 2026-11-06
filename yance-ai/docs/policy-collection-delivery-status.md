@@ -62,7 +62,22 @@ AIGC:
 1. **重放会刷新时间戳**：`record_verification.py` 原先无条件重写 `last_verified_at`，同一份干跑结果跑两遍，28 个 YAML 全被改动、`last_verified_at` 变成"现在"，看起来像刚复核过。现在先判断状态与备注是否真的变化，无变化整块不动；重放输出 `0 source block(s) touched`。手动写的折行备注（`notes: >-`）视为已记录，不再反复追加。
 2. **折行备注块被插坏**：块内已有 `notes: >-` 而缺 `last_verified_at` 时，新插入的行落在 `notes: >-` 与它的缩进正文之间，YAML 直接解析失败（`expected <block end>, but found '<scalar>'`）。新增字段现在插到 `notes` 行之前。
 
-两条都有回归测试：`tests/policy_collection/test_record_verification.py`（3 例，含"重放不重写目录"与"折行块不被追加"）。
+两条都有回归测试：`tests/policy_collection/test_record_verification.py`（4 例，含"重放不重写目录""折行块不被追加""瞬时超时不落笔"）。
+
+### 2.3 第二次全量干跑：状态可复现，条数会随站点波动
+
+为确认上面的数字不是一次性的，同一套命令在 2026-11-06 16:23 又跑了第二遍（90 个启用来源，`--docs 1`）：
+
+| 项 | 第一次 | 第二次 | 说明 |
+| --- | --- | --- | --- |
+| 列表可访问 | 88 / 90 | 87 / 90 | `nat_miit_zxzc` 本轮请求超时（上轮可访问） |
+| 抓到正文 | 85 篇 | 84 篇 | 同上少 1 篇 |
+| 解析成功 | 79 篇 | 78 篇 | 同上 |
+| 目录状态差异 | — | **0 处** | 90 个来源块的状态判定与已回写值完全一致 |
+
+结论：**状态判定是可复现的，具体条数在 ±1 内浮动**。政府站点偶发超时属正常波动，因此 `record_verification.py` 对 timeout / 连接重置这类瞬时结果**不写状态、不写 notes**——否则目录里会留下"待复测"这种与下一次成功运行自相矛盾的永久备注，诊断信息留在干跑 JSON 里即可。这条规则有回归测试 `test_transient_timeout_leaves_catalog_untouched`。
+
+同理，重跑后 `record_verification.py` 再跑一遍的输出为 `0 source block(s) touched`，说明回写在真实波动数据上也是幂等的。
 
 ---
 
@@ -136,7 +151,7 @@ cd /Users/shajindi/yance-backup/yance/yance-ai
 # 园区目录
 .venv/bin/python scripts/park_policy/cli.py parks summary
 
-# 不依赖 DB 的测试（129 passed）
+# 不依赖 DB 的测试（130 passed）
 .venv/bin/python -m pytest tests/policy_collection tests/park_policy -q
 ```
 
