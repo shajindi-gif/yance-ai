@@ -1,0 +1,14 @@
+[Unit]
+Description=yance.ai policy collector guard (disk floor, heartbeat, pause flag)
+Documentation=file:///opt/yance/collector-20261106-r3/docs/policy-collection-host-native-2026-11-06.md
+After=yance-collector.service
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/local/bin/yance-collector-guard
+Nice=10
+IOSchedulingClass=idle
+# The guard only reads state, writes the PAUSED flag and appends to guard.log.
+ProtectSystem=full
+ReadWritePaths=/var/lib/yance /var/log/yance

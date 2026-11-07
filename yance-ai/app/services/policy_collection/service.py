@@ -25,7 +25,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.models.models import PolicyChunk, PolicyVersion
+from app.models.models import Policy, PolicyChunk, PolicyVersion
 from app.models.policy_collection import (
     PolicyAttachment,
     PolicyCollectionRun,
@@ -593,7 +593,7 @@ def promote_ready_documents(
             PolicyVersion.status == "collected",
             PolicyVersion.tenant_id.is_(None),  # only the public catalogue is promoted
         )
-        .order_by(PolicyVersion.published_at.desc().nullslast(), PolicyVersion.id)
+        .order_by(PolicyVersion.publish_date.desc().nullslast(), PolicyVersion.id)
         .limit(limit)
     ).all()
 
@@ -610,6 +610,12 @@ def promote_ready_documents(
             report.published += 1
             if not dry_run:
                 version.status = "published"
+                # Retrieval gates on Policy.status too (current_policy_clauses), so
+                # promoting the version alone would leave the policy invisible.
+                parent = db.get(Policy, version.policy_id)
+                if parent is not None and parent.status != "published":
+                    parent.status = "published"
+                    parent.updated_at = func.now()
     if not dry_run:
         db.commit()
     return report

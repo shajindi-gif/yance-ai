@@ -44,6 +44,7 @@ from app.services.policy_collection.service import (
     PolicySourceState,
     due_sources,
     execute_source_run,
+    promote_ready_documents,
 )
 
 log = logging.getLogger(__name__)
@@ -302,6 +303,19 @@ def run_cycle(
                 {"source_id": source.source_id, "status": report.status, "new": getattr(report.outcome, "new_documents", 0)}
             )
             rechecked_ids.add(source.source_id)
+
+    # Publication gate.  ``collected`` is deliberate (nothing reaches a customer
+    # unreviewed) but it is also *invisible*: retrieval only serves published
+    # versions.  Nothing used to call the gate, so every crawled document stayed in
+    # ``collected`` forever and the web search box never showed a single one of
+    # them.  Running it inside the cycle is what makes "collected" mean "waiting a
+    # few minutes" instead of "never".
+    try:
+        promotion = promote_ready_documents(db, limit=200)
+        if promotion.published or promotion.held_for_review:
+            log.info("publication gate: %s", promotion.as_dict())
+    except Exception as exc:  # noqa: BLE001 - promotion must never kill collection
+        log.warning("publication gate failed: %s", exc)
 
     result.due_after = len(due_sources(catalog, db, now=datetime.now(UTC)))
     result.finished_at = datetime.now(UTC).isoformat()

@@ -2,12 +2,14 @@
 AIGC:
     Label: "1"
     ContentProducer: 001191440300708461136T1XGW3
-    ProduceID: af44a43be3f5d56ec87e76066ae0891d_b4286ac2d9d311f1bc42525400638852
-    ReservedCode1: hyK92Uyfrjh8IcGzWfD+uHct01mqzhfIPX7KGsFvw95+vWAerDFtqb+vqD40s3NOOpqwH946AXiON0cub4sBZfymzRdlWlhTL3y4tLopGem6G8WyAJeFQW30sTyGuDHG2wV5ofyqROVZyDMEAaoTxMS3ZbzYN0JHCSq5UJ0/97KbPJNe722QK4Ndm2U=
+    ProduceID: af44a43be3f5d56ec87e76066ae0891d_9dbfdfced9d811f1ba6252540064ee0f
+    ReservedCode1: P0ZcJyd4OPctWfAGcc/Kf6dXnbUGS6QUNxjUJMDn6fl3+010fQmiRfFZdur9TjHd7w3FDb5hYx0Z3UOlNj/H9yYN29vsLbV3Lsg2fRWHNFz8MW7UCvsWSbCvvTOdRGIhf6S0kSQgeaxZkhMBSKITfG3BnvyWOgFnfKFNtZGfmvtZXu6+E+VBp3QfAEQ=
     ContentPropagator: 001191440300708461136T1XGW3
-    PropagateID: af44a43be3f5d56ec87e76066ae0891d_b4286ac2d9d311f1bc42525400638852
-    ReservedCode2: hyK92Uyfrjh8IcGzWfD+uHct01mqzhfIPX7KGsFvw95+vWAerDFtqb+vqD40s3NOOpqwH946AXiON0cub4sBZfymzRdlWlhTL3y4tLopGem6G8WyAJeFQW30sTyGuDHG2wV5ofyqROVZyDMEAaoTxMS3ZbzYN0JHCSq5UJ0/97KbPJNe722QK4Ndm2U=
+    PropagateID: af44a43be3f5d56ec87e76066ae0891d_9dbfdfced9d811f1ba6252540064ee0f
+    ReservedCode2: P0ZcJyd4OPctWfAGcc/Kf6dXnbUGS6QUNxjUJMDn6fl3+010fQmiRfFZdur9TjHd7w3FDb5hYx0Z3UOlNj/H9yYN29vsLbV3Lsg2fRWHNFz8MW7UCvsWSbCvvTOdRGIhf6S0kSQgeaxZkhMBSKITfG3BnvyWOgFnfKFNtZGfmvtZXu6+E+VBp3QfAEQ=
 ---
+
+
 
 # 政策证据库 · 交付说明（2026-11-06）
 
@@ -377,3 +379,4 @@ policies=4  policy_versions=4  policy_chunks=6  policy_origins=4  policy_collect
    `pydantic ValidationError`。现在 `.env.collector` 固定 `APP_ENV=staging`，生产密钥不进这个容器。
 3. **安装目录与解包目录是两处**。`collector-install.sh` 把内容复制到 `/opt/yance/collector-<REV>`，
    解包目录只当安装源；运行命令一律在 `/opt/yance/collector-20261106-r3` 下执行。
+*（内容由AI生成，仅供参考）*
