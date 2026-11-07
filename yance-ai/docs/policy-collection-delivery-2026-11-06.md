@@ -379,4 +379,61 @@ policies=4  policy_versions=4  policy_chunks=6  policy_origins=4  policy_collect
    `pydantic ValidationError`。现在 `.env.collector` 固定 `APP_ENV=staging`，生产密钥不进这个容器。
 3. **安装目录与解包目录是两处**。`collector-install.sh` 把内容复制到 `/opt/yance/collector-<REV>`，
    解包目录只当安装源；运行命令一律在 `/opt/yance/collector-20261106-r3` 下执行。
+
+## 宿主机原生交付（r4，2026-11-07）
+
+采集进程不再跑在 Docker 里：独立 venv、专用用户 `yancecoll`、systemd 常驻、原始原文落在
+`/var/lib/yance/policy_raw`，网站与数据库容器保持不变，数据库仍只监听 `127.0.0.1:5434`。
+
+### 两个真实缺陷（不是配置问题，是代码问题）
+
+如果不修这两处，交付会呈现为「装好了、日志也正常、但网页搜不到」，且没有任何报错：
+
+1. **发布闸门从未被调用**。`promote_ready_documents` 定义了却没人调，采集写入的版本永远停在
+   `collected`；而检索只服务 `published`。这个函数自己也跑不通 —— 排序用了不存在的列
+   `published_at`（实际列名 `publish_date`）。现在 `run_cycle` 每周期结束时调用它，并且
+   同步把父 `Policy.status` 置为 `published`（`current_policy_clauses` 也看这个字段，
+   只改版本仍然检索不到）。
+2. **混合检索的词法通道只有最近 500 个 chunk**。一小时后新采进来的文档就被挤出窗口，
+   数据库里有、`evidence-search` 查得到、网页搜索框就是不返回。新增 pg_trgm RRF 通道
+   （`k=20`，权重 ×4）：它走索引、不需要 embedding —— 而刚采进来的 chunk 恰好还没有
+   embedding。
+
+修复后实测（生产库、真实账号）：
+
+| 检查 | 结果 |
+| --- | --- |
+| `POST /api/v1/policies/search` 查「南昌市科技重大专项」 | `hits=20`，**第 1、2 条就是当天新采的两份南昌政策** |
+| 标题含关键词条数 | 3 条 |
+| `GET /api/v1/policies/evidence-search` 同一关键词 | `count=3` |
+| 混合检索最高分 | 0.955 / 0.913 对应两份新采文档，`status=published` |
+| `policy_versions` 状态分布 | `published=876`、`pending_review=61`、`draft=71`，`collected` 清零 |
+
+### 交付包与安装
+
+```
+/home/ubuntu/yance-collector-incoming/yance-collector-20261107-r4.tar.gz
+sha256 9552f1497ca0caca2f2be0d4a2c8c1e428e9c623fbc2e9624d1e0f5ee50fdf69
+```
+
+安装脚本一个入口，失败即停、不留重复任务、不改现有网站服务：
+
+```
+sudo bash /opt/yance/host-install/host/install.sh --rev 20261107-r4 --start
+```
+
+脚本装完会自检 unit 是否仍指向别的代码树 —— 这是实测踩到的坑：早期版本原样安装 unit 模板，
+`--rev r4` 装完后 `WorkingDirectory` / `ExecStart` 还指着 r3，服务仍跑旧代码，症状是
+「改了代码没反应」。现在所有 unit 与脚本都按 `COLLECTOR_HOME` 重新渲染，指向不一致直接失败退出。
+
+运维三件套：
+
+```
+sudo yance-collector status      # unit + heartbeat + 上一周期
+sudo yance-collector progress    # 回填游标（不是反复抓首页）
+sudo yance-collector pause "disk maintenance"   # 暂停调度，不动 unit
+sudo yance-collector resume
+```
+
+回滚：`sudo bash /opt/yance/host-install/host/install.sh --rev 20261106-r3 --start`（旧树保留未删）。
 *（内容由AI生成，仅供参考）*

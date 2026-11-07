@@ -212,13 +212,29 @@ log "venv locked to read-only for ${COLLECTOR_USER}"
 
 # ---- units, timer, logrotate, control script --------------------------------
 step "6/9 systemd units, guard timer, log rotation"
-install -m 0644 "${SELF_DIR}/systemd/yance-collector.service"        /etc/systemd/system/yance-collector.service
-install -m 0644 "${SELF_DIR}/systemd/yance-collector-guard.service"  /etc/systemd/system/yance-collector-guard.service
-install -m 0644 "${SELF_DIR}/systemd/yance-collector-guard.timer"    /etc/systemd/system/yance-collector-guard.timer
-install -m 0755 "${SELF_DIR}/guard.sh"                               /usr/local/bin/yance-collector-guard
-install -m 0755 "${SELF_DIR}/collectorctl.sh"                        /usr/local/bin/yance-collector
-install -m 0755 "${SELF_DIR}/verify-isolated.sh"                     /usr/local/bin/yance-collector-verify-isolated
-install -m 0644 "${SELF_DIR}/logrotate/yance-collector"              /etc/logrotate.d/yance-collector
+
+# The shipped templates spell out the default revision so a file copied by hand
+# still reads correctly.  Installing them verbatim would be a trap: `--rev r4`
+# then produced a unit whose WorkingDirectory and ExecStart still pointed at r3,
+# the service kept running the old code, and the only symptom was "the fix did
+# nothing".  Every copy is therefore re-rendered onto ${COLLECTOR_HOME}.
+render_to() {  # render_to <template> <mode> <target>
+  sed -e "s|/opt/yance/collector-[0-9A-Za-z._-]*|${COLLECTOR_HOME}|g" "$1" \
+    | install -m "$2" /dev/stdin "$3"
+}
+render_to "${SELF_DIR}/systemd/yance-collector.service"       0644 /etc/systemd/system/yance-collector.service
+render_to "${SELF_DIR}/systemd/yance-collector-guard.service" 0644 /etc/systemd/system/yance-collector-guard.service
+render_to "${SELF_DIR}/systemd/yance-collector-guard.timer"   0644 /etc/systemd/system/yance-collector-guard.timer
+render_to "${SELF_DIR}/guard.sh"                              0755 /usr/local/bin/yance-collector-guard
+render_to "${SELF_DIR}/collectorctl.sh"                       0755 /usr/local/bin/yance-collector
+render_to "${SELF_DIR}/verify-isolated.sh"                    0755 /usr/local/bin/yance-collector-verify-isolated
+install -m 0644 "${SELF_DIR}/logrotate/yance-collector"       /etc/logrotate.d/yance-collector
+
+# Prove the render landed: a unit that still names another tree is a hard stop,
+# not a warning.
+stale="$(grep -l "/opt/yance/collector-" /etc/systemd/system/yance-collector.service /etc/systemd/system/yance-collector-guard.service /etc/systemd/system/yance-collector-guard.timer 2>/dev/null | xargs -r grep -L "${COLLECTOR_HOME}" || true)"
+[[ -z "${stale}" ]] || fail "unit still points at another collector tree: ${stale}"
+log "units rendered for ${COLLECTOR_HOME}"
 
 # Helper python used by `yance-collector env` and `yance-collector verify-web`.
 install -d -m 0755 /usr/local/lib/yance-collector
