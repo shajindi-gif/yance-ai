@@ -28,7 +28,7 @@ export default function HomePage() {
           <p className={styles.note}>企业提供资料 · 条件逐项核对 · 客户自主复核</p>
         </div>
         <figure className={styles.heroScene}>
-          <Image src="/industries/provided-20261029/ai.webp" alt="人工智能与产业数字化主题示意" width={768} height={468} sizes="(max-width: 700px) 100vw, 50vw" preload />
+          <Image src="/industries/provided-20261029/ai.webp" alt="人工智能与产业数字化主题示意" width={768} height={468} sizes="(max-width: 700px) calc(100vw - 44px), 50vw" loading="eager" fetchPriority="high" />
           <figcaption>人工智能与产业创新 · 行业示意</figcaption>
           <div className={styles.sceneCaption}><span>把创新投入，转化为有据可查的准备工作</span><strong>看政策条件，也看自己的证据。</strong></div>
         </figure>

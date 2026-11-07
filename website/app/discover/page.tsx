@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import PolicyEvidenceSearch from "@/components/workspace/PolicyEvidenceSearch";
 import AppShell from "@/components/workspace/AppShell";
 import content from "@/components/workspace/WorkspaceContent.module.css";
 import flow from "@/components/workspace/CoreWorkflow.module.css";
@@ -125,6 +126,8 @@ export default function DiscoverPage() {
       />
       {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}
       {scanMessage ? <InlineAlert tone="info">{scanMessage}</InlineAlert> : null}
+
+      <PolicyEvidenceSearch />
 
       <div className={flow.toolbar}>
         <input

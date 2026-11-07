@@ -24,8 +24,8 @@ from __future__ import annotations
 
 import logging
 import uuid
-from dataclasses import dataclass, field
 from collections.abc import Sequence
+from dataclasses import dataclass, field
 from datetime import date
 
 from sqlalchemy import text
@@ -42,7 +42,7 @@ WITH terms AS (
 scored AS (
     SELECT
         p.id                AS policy_id,
-        p.title             AS policy_title,
+        v.title             AS policy_title,
         p.jurisdiction      AS jurisdiction,
         p.level             AS level,
         p.province          AS province,
@@ -56,6 +56,7 @@ scored AS (
         p.issuing_authority AS issuing_authority,
         v.id                AS version_id,
         v.version           AS version_no,
+        (v.version < (SELECT max(v3.version) FROM policy_versions v3 WHERE v3.policy_id=p.id)) AS stale_version,
         c.id                AS chunk_id,
         c.chunk_index       AS chunk_index,
         c.article           AS article,
@@ -105,7 +106,8 @@ scored AS (
       AND (CAST(:published_to AS timestamptz) IS NULL
            OR p.published_at <= CAST(:published_to AS timestamptz))
       AND (CAST(:current_only AS boolean) = false OR (
-            (p.expires_at IS NULL OR p.expires_at >= now())
+            (p.effective_at IS NULL OR p.effective_at <= now())
+        AND (p.expires_at IS NULL OR p.expires_at >= now())
         AND (p.deadline IS NULL OR p.deadline >= now())
       ))
 ),
@@ -281,6 +283,8 @@ def keyword_search(
     hits: list[KeywordHit] = []
     for row in rows:
         gaps: list[str] = []
+        if row["stale_version"]:
+            gaps.append("newer_version_unavailable")
         if row["published_at"] is None:
             gaps.append("published_at")
         if row["jurisdiction"] is None and row["province"] is None:
@@ -317,30 +321,25 @@ def keyword_search(
     return hits
 
 
-def searchable_counts(db: Session) -> dict:
-    """How much of the collected corpus is actually reachable today (no model)."""
-    row = db.execute(
-        text(
-            """
-            SELECT
-              (SELECT count(*) FROM policies WHERE status = 'published')                AS published_policies,
-              (SELECT count(*) FROM policies
-                WHERE status IN ('published', 'collected'))                             AS searchable_policies,
-              (SELECT count(*) FROM policy_versions)                                    AS versions,
-              (SELECT count(*) FROM policy_chunks)                                      AS chunks,
-              (SELECT count(*) FROM policy_chunks WHERE embedding IS NOT NULL)          AS embedded_chunks
-            """
+def searchable_counts(db: Session, tenant_id: uuid.UUID | None = None) -> dict:
+    """Count only public and explicitly scoped tenant evidence."""
+    row = db.execute(text("""
+        WITH visible AS (
+          SELECT id, status FROM policies
+          WHERE (tenant_id IS NULL OR tenant_id = CAST(:tenant_id AS uuid))
+            AND status IN ('published', 'collected')
         )
-    ).mappings().one()
-    return {
-        "published_policies": int(row["published_policies"]),
-        "searchable_policies": int(row["searchable_policies"]),
-        "versions": int(row["versions"]),
-        "chunks": int(row["chunks"]),
-        "embedded_chunks": int(row["embedded_chunks"]),
-        "keyword_searchable": int(row["chunks"]) > 0,
-        "vector_searchable": int(row["embedded_chunks"]) > 0,
-    }
+        SELECT
+          (SELECT count(*) FROM visible WHERE status='published') AS published_policies,
+          (SELECT count(*) FROM visible) AS searchable_policies,
+          (SELECT count(*) FROM policy_versions v JOIN visible p ON p.id=v.policy_id) AS versions,
+          (SELECT count(*) FROM policy_chunks c JOIN visible p ON p.id=c.policy_id) AS chunks,
+          (SELECT count(*) FROM policy_chunks c JOIN visible p ON p.id=c.policy_id
+             WHERE c.embedding IS NOT NULL) AS embedded_chunks
+    """), {"tenant_id": str(tenant_id) if tenant_id else None}).mappings().one()
+    result = {key: int(value) for key, value in row.items()}
+    return {**result, "keyword_searchable": result["chunks"] > 0,
+            "vector_searchable": result["embedded_chunks"] > 0}
 
 
 __all__ = ["KeywordHit", "keyword_search", "searchable_counts"]

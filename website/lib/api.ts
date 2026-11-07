@@ -1548,6 +1548,17 @@ class ApiClient {
   }
 
   // Policies
+  async searchPolicyEvidence(query: string, level = '') {
+    const params = new URLSearchParams({ q: query, limit: '20' });
+    if (level) params.set('level', level);
+    return this.request<{ hits: EvidenceHit[] }>(`/policies/evidence-search?${params}`);
+  }
+
+  async getPolicyVersion(policyId: string, versionId: string) {
+    return this.request<{ content: string; title: string; content_sha256: string }>(
+      `/policies/${encodeURIComponent(policyId)}/versions/${encodeURIComponent(versionId)}`);
+  }
+
   async getPolicies(): Promise<Policy[]> {
     return this.request<Policy[]>('/policies');
   }
@@ -1948,3 +1959,11 @@ class ApiClient {
 
 export const api = new ApiClient();
 export default api;
+
+export interface EvidenceHit {
+  policy_id: string; version_id: string; chunk_id: string; title: string;
+  snippet: string; version_no: number; char_start: number; char_end: number;
+  jurisdiction: string | null; issuing_authority: string | null;
+  published_at: string | null; deadline: string | null; expires_at: string | null;
+  source_url: string | null; review_state: string; metadata_gaps: string[];
+}

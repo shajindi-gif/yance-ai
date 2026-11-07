@@ -39,6 +39,9 @@ def _register(client: TestClient, suffix: str) -> tuple[dict[str, str], str]:
 
 
 def test_platform_admin_metrics_permissions_provenance_and_safe_resources():
+    with SessionLocal() as db:
+        baseline_organizations = db.scalar(select(func.count()).select_from(Tenant))
+        baseline_users = db.scalar(select(func.count()).select_from(User))
     suffix = uuid.uuid4().hex
     with TestClient(app) as client:
         platform_headers, platform_email = _register(client, f"platform-{suffix}")
@@ -163,8 +166,8 @@ def test_platform_admin_metrics_permissions_provenance_and_safe_resources():
         assert metrics_response.status_code == 200, metrics_response.text
         metrics = metrics_response.json()
         assert metrics["scope"] == "platform"
-        assert metrics["totals"]["organizations"] == 2
-        assert metrics["totals"]["total_users"] == 2
+        assert metrics["totals"]["organizations"] == baseline_organizations + 2
+        assert metrics["totals"]["total_users"] == baseline_users + 2
         assert metrics["totals"]["poc_accounts"] == 1
         assert metrics["totals"]["paying_customers"] == 1
         assert metrics["totals"]["agent_runs"] == 2
@@ -179,7 +182,7 @@ def test_platform_admin_metrics_permissions_provenance_and_safe_resources():
 
         users = client.get("/api/v1/admin/resources/users", headers=platform_headers)
         assert users.status_code == 200
-        assert users.json()["total"] == 2
+        assert users.json()["total"] == baseline_users + 2
         assert "password_hash" not in users.text
 
         evaluations = client.get("/api/v1/admin/resources/evals", headers=platform_headers)

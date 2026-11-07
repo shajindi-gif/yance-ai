@@ -144,3 +144,45 @@ def test_evidence_search_returns_citable_span_without_model(seeded, monkeypatch)
     assert hit["char_start"] == 0 and hit["char_end"] > 0
     assert marker in hit["snippet"]
     assert "corpus" in payload and payload["corpus"]["keyword_searchable"] is True
+
+
+def test_version_reader_preserves_source_and_denies_other_tenant(seeded):
+    marker, public_id = seeded
+    with TestClient(app) as client:
+        headers = _register(client)
+        response = client.get('/api/v1/policies/evidence-search', params={'q': marker}, headers=headers)
+        hit = next(h for h in response.json()['hits'] if h['policy_id'] == str(public_id))
+        path = f"/api/v1/policies/{public_id}/versions/{hit['version_id']}"
+        assert client.get(path).status_code in (401, 403)
+        version = client.get(path, headers=headers)
+        assert version.status_code == 200
+        assert marker in version.json()['content']
+        # Private documents stay hidden even when their UUIDs are known.
+        with SessionLocal() as db:
+            policy = db.get(Policy, public_id)
+            from app.models.models import Tenant
+            tenant = Tenant(name='Synthetic private version tenant', slug=uuid.uuid4().hex)
+            db.add(tenant)
+            db.flush()
+            policy.tenant_id = tenant.id
+            db.commit()
+        assert client.get(path, headers=headers).status_code == 404
+
+
+def test_corpus_counts_do_not_reveal_another_tenants_private_documents(seeded):
+    from app.services.policy_collection.keyword_search import searchable_counts
+    marker, public_id = seeded
+    with SessionLocal() as db:
+        from app.models.models import Tenant
+        before = searchable_counts(db)
+        tenant = Tenant(name='Synthetic corpus privacy tenant', slug=uuid.uuid4().hex)
+        db.add(tenant)
+        db.flush()
+        policy = db.get(Policy, public_id)
+        policy.tenant_id = tenant.id
+        db.commit()
+        public = searchable_counts(db)
+        scoped = searchable_counts(db, tenant.id)
+        assert public['searchable_policies'] == before['searchable_policies'] - 1
+        assert scoped['searchable_policies'] == before['searchable_policies']
+        assert scoped['chunks'] > public['chunks']

@@ -92,8 +92,26 @@ def evidence_search(
         "retrieval": "keyword_trigram",
         "count": len(hits),
         "hits": [hit.as_dict() for hit in hits],
-        "corpus": searchable_counts(db),
+        "corpus": searchable_counts(db, principal.tenant_id),
     }
+
+
+@router.get("/policies/{policy_id}/versions/{version_id}")
+def read_policy_version(
+    policy_id: UUID, version_id: UUID,
+    principal: Principal = Depends(get_principal), db: Session = Depends(get_db),
+) -> dict:
+    policy = db.scalar(select(Policy).where(
+        Policy.id == policy_id, visible_policy_clause(principal.tenant_id),
+    ))
+    version = db.scalar(select(PolicyVersion).where(
+        PolicyVersion.id == version_id, PolicyVersion.policy_id == policy_id,
+    )) if policy else None
+    if version is None:
+        raise HTTPException(404, "Policy version not found")
+    return {"id": str(version.id), "version": version.version,
+            "title": version.title, "content": version.content,
+            "source_url": version.source_url, "content_sha256": version.content_sha256}
 
 
 @router.get("/policies/{policy_id}", response_model=PolicyOut)

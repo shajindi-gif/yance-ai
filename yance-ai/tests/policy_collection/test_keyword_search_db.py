@@ -15,14 +15,13 @@ from __future__ import annotations
 
 import hashlib
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy import text
 
 from app.core.db import SessionLocal
 from app.models.models import Policy, PolicyChunk, PolicyVersion
-
 
 
 def _seed_policy(
@@ -44,7 +43,7 @@ def _seed_policy(
         level=level,
         province=jurisdiction,
         jurisdiction=jurisdiction,
-        published_at=published_at or datetime(2026, 1, 10, tzinfo=timezone.utc),
+        published_at=published_at or datetime(2026, 1, 10, tzinfo=UTC),
         expires_at=expires_at,
         deadline=deadline,
         status=status,
@@ -138,7 +137,7 @@ def test_keyword_search_current_only_excludes_expired(db):
     from app.services.policy_collection.keyword_search import keyword_search
 
     marker = f"申报通知{uuid.uuid4().hex[:8]}"
-    past = datetime.now(timezone.utc) - timedelta(days=400)
+    past = datetime.now(UTC) - timedelta(days=400)
     expired = _seed_policy(
         db,
         title=f"关于开展{marker}申报的通知（2024年度）",
@@ -149,7 +148,7 @@ def test_keyword_search_current_only_excludes_expired(db):
         db,
         title=f"关于开展{marker}申报的通知（2026年度）",
         body=f"{marker}受理截止日期为下月。",
-        deadline=datetime.now(timezone.utc) + timedelta(days=30),
+        deadline=datetime.now(UTC) + timedelta(days=30),
     )
     hits = keyword_search(db, marker, current_only=True, limit=50)
     ids = {hit.policy_id for hit in hits}
@@ -249,3 +248,13 @@ def test_private_documents_never_leak_across_tenants(db):
         db.rollback()
         db.execute(text("DELETE FROM tenants WHERE slug LIKE 'tst-%'"))
         db.commit()
+
+
+def test_future_effective_policy_is_not_current(db):
+    from app.services.policy_collection.keyword_search import keyword_search
+    title = "未来生效专项" + uuid.uuid4().hex
+    policy = _seed_policy(db, title=title, body=title)
+    policy.effective_at = datetime.now(UTC) + timedelta(days=30)
+    db.commit()
+    assert any(h.policy_id == str(policy.id) for h in keyword_search(db, title))
+    assert all(h.policy_id != str(policy.id) for h in keyword_search(db, title, current_only=True))
