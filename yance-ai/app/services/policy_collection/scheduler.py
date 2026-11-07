@@ -38,6 +38,7 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.services.policy_collection.backfill import BackfillConfig, run_batch
 from app.services.policy_collection.catalog import Catalog, SourceDefinition
 from app.services.policy_collection.ops import pause_state, storage_guard
 from app.services.policy_collection.service import (
@@ -236,6 +237,34 @@ def run_cycle(
         result.due_after = result.due_before
         result.finished_at = datetime.now(UTC).isoformat()
         return result
+
+    # History backfill.  run_cycle consumed the backfill *cursor* (priority order,
+    # recheck eligibility) but nothing ever advanced it: ``backfill-run`` existed
+    # only as a manual CLI command, so all 90 sources sat at page 1 with an empty
+    # ``cursor.backfill`` while the service reported healthy cycles and the web
+    # site showed only whatever the first listing page happened to contain.
+    # One bounded batch per cycle keeps history moving without letting it starve
+    # the incremental pass that follows.
+    try:
+        batch = run_batch(
+            db,
+            catalog,
+            config=BackfillConfig.from_settings(
+                seconds_budget=max(
+                    30, min(180, int(settings.policy_collection_backfill_window_seconds or 900))
+                ),
+                max_sources=3,
+            ),
+        )
+        log.info(
+            "backfill batch: stop=%s sources=%s pages=%s new=%s",
+            batch.stop_reason,
+            len(batch.sources),
+            sum(getattr(item, "pages_read", 0) for item in batch.sources),
+            sum(getattr(item, "documents_new", 0) for item in batch.sources),
+        )
+    except Exception as exc:  # noqa: BLE001 - backfill must never kill the cycle
+        log.warning("backfill batch failed: %s", exc)
 
     due = due_sources(catalog, db, now=moment)
     result.due_before = len(due)
