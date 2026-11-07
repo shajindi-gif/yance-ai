@@ -1,0 +1,145 @@
+I001 [*] Import block is un-sorted or un-formatted
+  --> yance-ai/app/services/policy_collection/keyword_search.py:23:1
+   |
+21 |   """
+22 |
+23 | / from __future__ import annotations
+24 | |
+25 | | import logging
+26 | | import uuid
+27 | | from dataclasses import dataclass, field
+28 | | from collections.abc import Sequence
+29 | | from datetime import date
+30 | |
+31 | | from sqlalchemy import text
+32 | | from sqlalchemy.orm import Session
+   | |__________________________________^
+33 |
+34 |   logger = logging.getLogger(__name__)
+   |
+help: Organize imports
+   |
+26 | import uuid
+27 + from collections.abc import Sequence
+28 | from dataclasses import dataclass, field
+   - from collections.abc import Sequence
+29 | from datetime import date
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> yance-ai/tests/policy_collection/test_keyword_search_db.py:14:1
+   |
+12 |   """
+13 |
+14 | / from __future__ import annotations
+15 | |
+16 | | import hashlib
+17 | | import uuid
+18 | | from datetime import datetime, timedelta, timezone
+19 | |
+20 | | import pytest
+21 | | from sqlalchemy import text
+22 | |
+23 | | from app.core.db import SessionLocal
+24 | | from app.models.models import Policy, PolicyChunk, PolicyVersion
+   | |________________________________________________________________^
+help: Organize imports
+   |
+26 |
+   -
+27 | def _seed_policy(
+   |
+
+UP017 [*] Use `datetime.UTC` alias
+  --> yance-ai/tests/policy_collection/test_keyword_search_db.py:47:67
+   |
+45 |         province=jurisdiction,
+46 |         jurisdiction=jurisdiction,
+47 |         published_at=published_at or datetime(2026, 1, 10, tzinfo=timezone.utc),
+   |                                                                   ^^^^^^^^^^^^
+48 |         expires_at=expires_at,
+49 |         deadline=deadline,
+   |
+help: Convert to `datetime.UTC` alias
+   |
+17 | import uuid
+   - from datetime import datetime, timedelta, timezone
+18 + from datetime import datetime, timedelta, timezone, UTC
+19 |
+--------------------------------------------------------------------------------
+46 |         jurisdiction=jurisdiction,
+   -         published_at=published_at or datetime(2026, 1, 10, tzinfo=timezone.utc),
+47 +         published_at=published_at or datetime(2026, 1, 10, tzinfo=UTC),
+48 |         expires_at=expires_at,
+   |
+
+UP017 [*] Use `datetime.UTC` alias
+   --> yance-ai/tests/policy_collection/test_keyword_search_db.py:141:25
+    |
+140 |     marker = f"申报通知{uuid.uuid4().hex[:8]}"
+141 |     past = datetime.now(timezone.utc) - timedelta(days=400)
+    |                         ^^^^^^^^^^^^
+142 |     expired = _seed_policy(
+143 |         db,
+    |
+help: Convert to `datetime.UTC` alias
+    |
+17  | import uuid
+    - from datetime import datetime, timedelta, timezone
+18  + from datetime import datetime, timedelta, timezone, UTC
+19  |
+--------------------------------------------------------------------------------
+140 |     marker = f"申报通知{uuid.uuid4().hex[:8]}"
+    -     past = datetime.now(timezone.utc) - timedelta(days=400)
+141 +     past = datetime.now(UTC) - timedelta(days=400)
+142 |     expired = _seed_policy(
+    |
+
+UP017 [*] Use `datetime.UTC` alias
+   --> yance-ai/tests/policy_collection/test_keyword_search_db.py:152:31
+    |
+150 |         title=f"关于开展{marker}申报的通知（2026年度）",
+151 |         body=f"{marker}受理截止日期为下月。",
+152 |         deadline=datetime.now(timezone.utc) + timedelta(days=30),
+    |                               ^^^^^^^^^^^^
+153 |     )
+154 |     hits = keyword_search(db, marker, current_only=True, limit=50)
+    |
+help: Convert to `datetime.UTC` alias
+    |
+17  | import uuid
+    - from datetime import datetime, timedelta, timezone
+18  + from datetime import datetime, timedelta, timezone, UTC
+19  |
+--------------------------------------------------------------------------------
+151 |         body=f"{marker}受理截止日期为下月。",
+    -         deadline=datetime.now(timezone.utc) + timedelta(days=30),
+152 +         deadline=datetime.now(UTC) + timedelta(days=30),
+153 |     )
+    |
+
+UP017 [*] Use `datetime.UTC` alias
+   --> yance-ai/tests/policy_collection/test_keyword_search_db.py:258:40
+    |
+256 |     title = "未来生效专项" + uuid.uuid4().hex
+257 |     policy = _seed_policy(db, title=title, body=title)
+258 |     policy.effective_at = datetime.now(timezone.utc) + timedelta(days=30)
+    |                                        ^^^^^^^^^^^^
+259 |     db.commit()
+260 |     assert any(h.policy_id == str(policy.id) for h in keyword_search(db, title))
+    |
+help: Convert to `datetime.UTC` alias
+    |
+17  | import uuid
+    - from datetime import datetime, timedelta, timezone
+18  + from datetime import datetime, timedelta, timezone, UTC
+19  |
+--------------------------------------------------------------------------------
+257 |     policy = _seed_policy(db, title=title, body=title)
+    -     policy.effective_at = datetime.now(timezone.utc) + timedelta(days=30)
+258 +     policy.effective_at = datetime.now(UTC) + timedelta(days=30)
+259 |     db.commit()
+    |
+
+Found 6 errors.
+[*] 6 fixable with the `--fix` option.
