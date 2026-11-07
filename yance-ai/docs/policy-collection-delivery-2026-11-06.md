@@ -380,53 +380,59 @@ policies=4  policy_versions=4  policy_chunks=6  policy_origins=4  policy_collect
 3. **安装目录与解包目录是两处**。`collector-install.sh` 把内容复制到 `/opt/yance/collector-<REV>`，
    解包目录只当安装源；运行命令一律在 `/opt/yance/collector-20261106-r3` 下执行。
 
-## 宿主机原生交付（r4，2026-11-07）
+## 宿主机原生交付（r5，2026-11-07）
 
 采集进程不再跑在 Docker 里：独立 venv、专用用户 `yancecoll`、systemd 常驻、原始原文落在
 `/var/lib/yance/policy_raw`，网站与数据库容器保持不变，数据库仍只监听 `127.0.0.1:5434`。
+终端和本机都可以关掉，采集不受影响。
 
-### 两个真实缺陷（不是配置问题，是代码问题）
+### 三个真实缺陷（不是配置问题，是代码问题）
 
-如果不修这两处，交付会呈现为「装好了、日志也正常、但网页搜不到」，且没有任何报错：
+这三个如果不修，交付会呈现为「装好了、日志干净、服务健康、网页却搜不到新东西」，而且没有任何报错：
 
 1. **发布闸门从未被调用**。`promote_ready_documents` 定义了却没人调，采集写入的版本永远停在
-   `collected`；而检索只服务 `published`。这个函数自己也跑不通 —— 排序用了不存在的列
-   `published_at`（实际列名 `publish_date`）。现在 `run_cycle` 每周期结束时调用它，并且
-   同步把父 `Policy.status` 置为 `published`（`current_policy_clauses` 也看这个字段，
-   只改版本仍然检索不到）。
-2. **混合检索的词法通道只有最近 500 个 chunk**。一小时后新采进来的文档就被挤出窗口，
-   数据库里有、`evidence-search` 查得到、网页搜索框就是不返回。新增 pg_trgm RRF 通道
-   （`k=20`，权重 ×4）：它走索引、不需要 embedding —— 而刚采进来的 chunk 恰好还没有
-   embedding。
+   `collected`，而检索只服务 `published`。这个函数自己也跑不通 —— 排序用了不存在的列
+   `published_at`（真实列名 `publish_date`）。现在 `run_cycle` 每周期结束调用一次，并且同步
+   把父 `Policy.status` 置为 `published`（`current_policy_clauses` 也看这个字段，只改版本仍检索不到）。
+2. **混合检索的词法通道只覆盖最近 500 个 chunk**。新采文档一小时后就被挤出窗口，数据库里有、
+   `evidence-search` 查得到，网页搜索框就是不返回。新增 pg_trgm RRF 通道（`k=20`、权重 ×4）：
+   它走索引、不需要 embedding —— 而刚采进来的 chunk 恰好还没有 embedding。
+3. **历史回填从未真正开始**。`backfill-run` 只存在于 CLI，`run_cycle` 会读 `cursor.backfill`
+   做优先级排序，却没有任何东西推进它：90 个来源全部停在 page 1、`cursor` 为空、`stored=0`，
+   同时服务每 5 分钟报一次 `stop_reason=completed` —— 最像健康的故障。现在每个周期跑一个
+   受限批次（≤180s、3 个来源），历史与增量交替推进。
 
-修复后实测（生产库、真实账号）：
+修复后实测（生产库、真实账号、非模拟）：
 
 | 检查 | 结果 |
 | --- | --- |
 | `POST /api/v1/policies/search` 查「南昌市科技重大专项」 | `hits=20`，**第 1、2 条就是当天新采的两份南昌政策** |
 | 标题含关键词条数 | 3 条 |
 | `GET /api/v1/policies/evidence-search` 同一关键词 | `count=3` |
-| 混合检索最高分 | 0.955 / 0.913 对应两份新采文档，`status=published` |
-| `policy_versions` 状态分布 | `published=876`、`pending_review=61`、`draft=71`，`collected` 清零 |
+| 混合检索最高分 | 0.955 / 0.913，两份新采文档，`status=published` |
+| 回填游标 | `nat_mof_notice` page 4、`nat_miit_zxzc` page 4、`nat_cnipa_notice` page 2，每周期前进 |
+| 原文证据条数 | 1869 → 1922（回填持续落库） |
+| `policy_versions` | `published=876`、`pending_review=61`、`draft=71`，`collected` 清零 |
+| 采集日志 | `collector.log` 0 条 error，`collector.err.log` 0 字节 |
 
 ### 交付包与安装
 
 ```
-/home/ubuntu/yance-collector-incoming/yance-collector-20261107-r4.tar.gz
-sha256 9552f1497ca0caca2f2be0d4a2c8c1e428e9c623fbc2e9624d1e0f5ee50fdf69
+/home/ubuntu/yance-collector-incoming/yance-collector-20261107-r5.tar.gz
+sha256 239a1df0e0adea2e6f97bb691695fc3e4b721d2efd374c07518337695e9a1ca6
 ```
 
-安装脚本一个入口，失败即停、不留重复任务、不改现有网站服务：
+一条命令装完（失败即停、不留重复任务、不改现有网站服务）：
 
 ```
-sudo bash /opt/yance/host-install/host/install.sh --rev 20261107-r4 --start
+sudo bash /opt/yance/host-install/host/install.sh --rev 20261107-r5 --start
 ```
 
-脚本装完会自检 unit 是否仍指向别的代码树 —— 这是实测踩到的坑：早期版本原样安装 unit 模板，
-`--rev r4` 装完后 `WorkingDirectory` / `ExecStart` 还指着 r3，服务仍跑旧代码，症状是
-「改了代码没反应」。现在所有 unit 与脚本都按 `COLLECTOR_HOME` 重新渲染，指向不一致直接失败退出。
+脚本装完会自检 unit 是否仍指向别的代码树 —— 这是实测踩到的第四个坑：早期版本原样安装 unit 模板，
+`--rev` 换版本后 `WorkingDirectory` / `ExecStart` 仍指向旧树，服务继续跑旧代码，症状是
+「改了代码没反应」。现在所有 unit 与脚本按 `COLLECTOR_HOME` 重新渲染，指向不一致直接失败退出。
 
-运维三件套：
+日常运维：
 
 ```
 sudo yance-collector status      # unit + heartbeat + 上一周期
@@ -435,5 +441,7 @@ sudo yance-collector pause "disk maintenance"   # 暂停调度，不动 unit
 sudo yance-collector resume
 ```
 
-回滚：`sudo bash /opt/yance/host-install/host/install.sh --rev 20261106-r3 --start`（旧树保留未删）。
+回滚：`sudo bash /opt/yance/host-install/host/install.sh --rev 20261106-r3 --start`。
+旧代码树 `collector-20261106-r3` / `collector-20261107-r4` 保留未删，确认稳定后可按需清理。
+
 *（内容由AI生成，仅供参考）*
