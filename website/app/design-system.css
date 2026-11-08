@@ -1,10 +1,10 @@
 /* Yance evidence workspace: shared public/workspace design tokens. */
 :root {
-  --paper:#f7f7f2;
+  --paper:#f6f5f1;
   --surface:#ffffff;
-  --ink:#203038;
+  --ink:#202c31;
   --muted:#59676d;
-  --line:#d9ded9;
+  --line:#dcded8;
   --accent:#126a9a;
   --accent-soft:#e9f2f5;
   --focus:#126a9a;
@@ -19,6 +19,10 @@
   --radius-lg:12px;
   --radius-xl:16px;
   --shadow-card:0 1px 2px #20303806;
+  --surface-inset:#eeede7;
+  --shadow-document:0 2px 4px #20303805,0 16px 40px -24px #20303830;
+  --shadow-overlay:0 12px 48px -12px #20303840;
+  --space-section:clamp(48px,6vw,88px);
   --shadow-card-hover:0 4px 14px #20303808;
 }
 body { color:var(--ink); background:var(--paper); }
@@ -78,3 +82,15 @@ body { color:var(--ink); background:var(--paper); }
 .pricing-placeholder:nth-child(2) { height:125px; }
 .pricing-placeholder:nth-child(3) { width:55%; height:42px; }
 @media(max-width:768px) { .pricing-catalogue .pricing-card,.pricing-loading .pricing-card { min-height:500px; } .pricing-desc { min-height:90px; } }
+
+/* Shared rhythm across public pages and transactional entry points. */
+input,select,textarea { accent-color:var(--accent); }
+.btn,.yc-btn-primary,.yc-btn-primary-sm { transition:background-color 160ms ease,border-color 160ms ease; }
+.page-banner h1 { letter-spacing:-.035em; max-width:24ch; margin-inline:auto; }
+.card,.card-flat,.pricing-card { box-shadow:var(--shadow-document); }
+.pricing-card { border-radius:12px; }
+.footer { background:var(--surface-inset); }
+@media (max-width:700px) {
+ .header-inner { padding-inline:20px; }
+ .page-banner { padding-inline:20px; }
+}

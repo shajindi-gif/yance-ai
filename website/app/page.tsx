@@ -22,9 +22,9 @@ export default function HomePage() {
       <div className={styles.heroTop}><span className={styles.eyebrow}>衍策引擎 AI / 企业政策与资源证据工作台</span><span className={styles.issue}>聚焦新质生产力与科技企业 · 服务各类企业</span></div>
       <div className={styles.heroGrid}>
         <div>
-          <h1>为新质生产力企业，<br />找到有依据的<br /><em>政策与资源机会。</em></h1>
-          <p className={styles.lead}>重点服务新质生产力与科技企业，也面向各类有政策需求的企业。结合企业资料与政策原文，梳理申报条件、补证任务和材料工作稿，让每一步都有来源、有状态、可复核。</p>
-          <div className={styles.actions}><Link href="/discover" className="btn btn-primary">开始查找政策 <span aria-hidden="true">↗</span></Link><Link href="/dashboard" className={styles.textLink}>进入工作台 <span aria-hidden="true">→</span></Link></div>
+          <h1>找到适合企业的政策，<br /><em>看清每项条件的依据。</em></h1>
+          <p className={styles.lead}>从一条政策到一份申报材料，把企业事实、原文条款和待补证明放在同一个工作台。为新质生产力、科技及各类有政策需求的企业提供支持。</p>
+          <div className={styles.actions}><Link href="/discover" className="btn btn-primary">查找政策 <span aria-hidden="true">↗</span></Link><Link href="/dashboard" className={styles.textLink}>进入工作台 <span aria-hidden="true">→</span></Link></div>
           <p className={styles.note}>企业提供资料 · 条件逐项核对 · 客户自主复核</p>
         </div>
         <figure className={styles.heroScene}>
@@ -34,6 +34,20 @@ export default function HomePage() {
         </figure>
       </div>
       <div className={styles.sectors}><span>重点领域，开放服务</span><p>人工智能 / 智能制造 / 生物医药 / 集成电路 / 新能源新材料<br />也服务传统制造、商贸与专业服务等企业，按实际条件寻找机会。</p></div>
+    </section>
+
+    <section className={styles.section} id="product">
+      <div className={styles.sectionHead}><div><span className={styles.eyebrow}>从政策原文，到企业行动</span><h2>让政策、事实和材料，<br />在同一个项目里对齐。</h2></div><p>从逐条资格核对，到工作稿版本比较和协作评论，把判断的来由和下一步工作放在手边。</p></div>
+      <figure className={styles.productShot}>
+        <div className={styles.shotBar}><span>衍策 / 项目工作台</span><span>隔离环境 · 合成数据示例</span></div>
+        <Image src="/product/evidence-workspace.png" alt="隔离合成项目的真实资格矩阵界面，展示政策条件、企业事实、判断与原文证据" width={1440} height={1000} sizes="(max-width: 700px) 100vw, 1160px" />
+        <figcaption>实际产品界面，使用合成企业和合成政策，不代表真实资助项目或客户结果。部分证据与协作能力需后台升级后启用，以工作区提示为准。</figcaption>
+      </figure>
+      <div className={styles.featureRows}>{[
+        ['证据先行', '看见依据，也看见不足', '条件与事实并列阅读；缺少原文、事实不全或来源变化时，保留提醒。'],
+        ['材料协作', '每一版修改，都有去处', '保留工作稿、版本差异、评论和摘要建议。接受建议会生成新稿，仍需客户复核。'],
+        ['受控执行', '行动有状态，操作有权限', '按项目权限准备材料、处理补证和导出；任务结果来自实际执行记录。'],
+      ].map(([label,title,description]) => <article key={label}><span>{label}</span><h3>{title}</h3><p>{description}</p></article>)}</div>
     </section>
 
     <section className={styles.section} id="industry-scenes" aria-labelledby="industry-heading">
@@ -59,19 +73,7 @@ export default function HomePage() {
       <p className={styles.note}>面向各类企业开放使用，不等于已覆盖所有地区、行业或政策；企业类型和行业标签不直接决定申报资格。</p>
     </section>
 
-    <section className={styles.section} id="product">
-      <div className={styles.sectionHead}><div><span className={styles.eyebrow}>01 / 一个持续工作的空间</span><h2>让政策、事实和材料，<br />在同一个项目里对齐。</h2></div><p>从逐条资格核对，到工作稿版本比较和协作评论，把判断的来由和下一步工作放在手边。</p></div>
-      <figure className={styles.productShot}>
-        <div className={styles.shotBar}><span>衍策 / 项目工作台</span><span>隔离环境 · 合成数据示例</span></div>
-        <Image src="/product/evidence-workspace.png" alt="隔离合成项目的真实资格矩阵界面，展示政策条件、企业事实、判断与原文证据" width={1440} height={1000} sizes="(max-width: 700px) 100vw, 1160px" />
-        <figcaption>实际产品界面，使用合成企业和合成政策，不代表真实资助项目或客户结果。部分证据与协作能力需后台升级后启用，以工作区提示为准。</figcaption>
-      </figure>
-      <div className={styles.featureRows}>{[
-        ['证据先行', '看见依据，也看见不足', '条件与事实并列阅读；缺少原文、事实不全或来源变化时，保留提醒。'],
-        ['材料协作', '每一版修改，都有去处', '保留工作稿、版本差异、评论和摘要建议。接受建议会生成新稿，仍需客户复核。'],
-        ['受控执行', '行动有状态，操作有权限', '按项目权限准备材料、处理补证和导出；任务结果来自实际执行记录。'],
-      ].map(([label,title,description]) => <article key={label}><span>{label}</span><h3>{title}</h3><p>{description}</p></article>)}</div>
-    </section>
+
 
     <section className={styles.workflowSection} id="workflow"><div className={styles.sectionHead}><div><span className={styles.eyebrow}>02 / 从企业资料出发</span><h2>把一次检索，<br />变成有步骤的准备工作。</h2></div><Link href="/company-match" className={styles.textLink}>了解产品流程 →</Link></div><ol className={styles.journey}>{JOURNEY.map(([number,title,description,href]) => <li key={number}><span>{number}</span><div><h3><Link href={href}>{title} <span aria-hidden="true">↗</span></Link></h3><p>{description}</p></div></li>)}</ol></section>
 
@@ -85,7 +87,7 @@ export default function HomePage() {
     <section className={styles.scenariosSection} id="scenarios" aria-labelledby="scenarios-heading">
       <div className={styles.sectionHead}><div><span className={styles.eyebrow}>使用场景 / 看看可以怎样开始</span><h2 id="scenarios-heading">把企业的具体问题，<br />变成下一步准备工作。</h2></div><p>以下为场景示例，不是真实客户案例、客户评价或获批结果。可用功能以工作区和后台支持情况为准。</p></div>
       <div className={styles.scenarios}>{[
-        ['01 / 科技初创', '第一次找政策，不知道从哪里开始', '企业负责人先整理地域、成立时间与业务方向。', '从企业资料进入政策检索，查看来源与申报窗口，记录不清楚的条件。', '政策机会与待核对事项；没有匹配结果时，继续核对资料与目录覆盖。', '/discover', '开始查找政策'],
+        ['01 / 科技初创', '第一次找政策，不知道从哪里开始', '企业负责人先整理地域、成立时间与业务方向。', '从企业资料进入政策检索，查看来源与申报窗口，记录不清楚的条件。', '政策机会与待核对事项；没有匹配结果时，继续核对资料与目录覆盖。', '/discover', '查找政策'],
         ['02 / 制造成长', '准备一个项目，先看还缺哪些证明', '申报人员会同财务、研发同事准备企业事实。', '对照一项政策的条件，区分满足、不满足与证据不足，再整理材料要求。', '条件核对与补证清单；缺少财务事实或证明时，不自动认定符合。', '/opportunities', '查看政策机会'],
         ['03 / 商贸与专业服务', '已有政策线索，想确认是否适用', '企业负责人提供经营情况，并核对所在地和申报批次。', '先检索相关原文，核实适用行业、地域和期限，再决定是否推进。', '适用性与缺口记录；未收录或已过期的政策不作为当前可申报结论。', '/discover', '核对政策来源'],
       ].map(([tag,title,input,action,output,href,cta]) => <article key={tag}><span className={styles.segment}>场景示例 · {tag}</span><h3>{title}</h3><dl><dt>谁来准备</dt><dd>{input}</dd><dt>怎样使用</dt><dd>{action}</dd><dt>关注结果</dt><dd>{output}</dd></dl><Link href={href} className={styles.textLink}>{cta} →</Link></article>)}</div>

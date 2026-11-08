@@ -476,16 +476,16 @@ function LoginContent() {
       <style jsx>{`
         .yc-auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--paper); padding: 110px 20px 60px; }
         .yc-auth-container { width: 100%; max-width: 480px; }
-        .yc-auth-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 40px 36px; box-shadow: 0 8px 30px rgba(32,48,56,.04); }
+        .yc-auth-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 40px 36px; box-shadow: var(--shadow-document); }
         .yc-auth-header { text-align: center; margin-bottom: 28px; }
         .yc-auth-logo { width: 56px; height: 56px; margin-bottom: 12px; }
-        .yc-auth-header h1 { font-size: 22px; font-weight: 700; color: #0d1b2a; margin: 0 0 6px; }
-        .yc-auth-subtitle { color: #526174; font-size: 13px; margin: 0; }
-        .yc-auth-tabs { display: flex; background: #f1f5f9; border-radius: 10px; padding: 4px; margin-bottom: 20px; }
-        .yc-auth-tab { flex: 1; padding: 10px; border: none; background: transparent; border-radius: 8px; font-size: 14px; font-weight: 500; color: #526174; cursor: pointer; transition: all 0.2s; }
-        .yc-auth-tab.active { background: #fff; color: #0d1b2a; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
+        .yc-auth-header h1 { font-size: 22px; font-weight: 700; color: var(--ink); margin: 0 0 6px; }
+        .yc-auth-subtitle { color: var(--muted); font-size: 13px; margin: 0; }
+        .yc-auth-tabs { display: flex; background: var(--surface-inset); border-radius: 8px; padding: 4px; margin-bottom: 20px; }
+        .yc-auth-tab { flex: 1; padding: 10px; border: none; background: transparent; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+        .yc-auth-tab.active { background: #fff; color: var(--ink); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
         .yc-auth-subtabs { display: flex; gap: 16px; border-bottom: 1px solid #e2e8f0; margin-bottom: 16px; }
-        .yc-auth-subtab { padding: 8px 2px; border: none; background: transparent; font-size: 13px; color: #526174; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+        .yc-auth-subtab { padding: 8px 2px; border: none; background: transparent; font-size: 13px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
         .yc-auth-subtab.active { color: #126a9a; font-weight: 600; border-bottom-color: #126a9a; }
         .yc-auth-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
         .yc-auth-notice { background: #f0f9ff; border: 1px solid #bae6fd; color: #0369a1; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }

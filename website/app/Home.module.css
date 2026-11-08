@@ -135,3 +135,33 @@
   .industryCopy p { font-size: 13px; }
   .industryCopy .textLink { font-size: 12px; gap: 4px; }
 }
+
+/* Editorial composition with a distinct document surface. */
+.heroGrid { grid-template-columns:1.25fr 1fr; gap:56px; padding:56px 0; }
+.hero h1 { font-size:clamp(34px,3.8vw,55px); line-height:1.42; letter-spacing:-.045em; text-wrap:balance; }
+.hero h1 em { color:var(--ink); }
+.heroScene { background:var(--surface); border-radius:10px; overflow:hidden; box-shadow:var(--shadow-document); }
+.heroScene img { display:block; }
+.section { padding-block:var(--space-section); }
+.productShot { border-radius:10px; overflow:hidden; box-shadow:var(--shadow-document); }
+.shotBar { background:var(--surface-inset); padding-block:16px; }
+.featureRows h3 { font-size:18px; }
+.workflowSection { border-radius:12px; }
+.industryGrid article { border-radius:8px; overflow:hidden; }
+.businessGrid article { background:transparent; border:0; border-top:1px solid var(--line); padding:24px 0; }
+.feedbackPanel { background:var(--surface); border-radius:10px; box-shadow:var(--shadow-document); }
+@media(min-width:1001px) {
+ .journey { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:22px; }
+ .journey li { display:block; padding-block:24px 8px; }
+ .journey li > span { display:block; margin-bottom:20px; }
+ .journey h3 { font-size:17px; line-height:1.7; }
+ .journey h3 a { gap:8px; }
+}
+@media(max-width:700px) {
+ .heroGrid { grid-template-columns:1fr; gap:28px; padding:32px 0; }
+ .hero h1 { font-size:34px; }
+ .heroScene { max-width:560px; }
+ .actions { gap:20px; }
+ .lead { line-height:1.85; }
+ .workflowSection { border-radius:0; }
+}

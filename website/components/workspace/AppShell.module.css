@@ -374,3 +374,8 @@
 @media(max-width:640px) { .content { padding:22px 14px; } .topbar { min-height:64px; } }
 .topbar > div:last-child { flex-direction:row; }
 @media(max-width:900px) { .sidebar:not(.sidebarOpen) { visibility:hidden; pointer-events:none; } }
+
+/* Navigation recedes while the current document stays prominent. */
+.sidebar { background:var(--surface-inset); }
+.brand { color:var(--ink); }
+.workspaceIdentity { background:var(--surface); border-radius:8px; }

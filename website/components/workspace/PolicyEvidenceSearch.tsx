@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, type FormEvent } from 'react';
+import styles from './PolicyEvidenceSearch.module.css';
 import api, { type EvidenceHit } from '@/lib/api';
 
 const dateLabel = (value: string | null) => value ? value.slice(0, 10) : '待核对';
@@ -46,12 +47,12 @@ export default function PolicyEvidenceSearch() {
     } finally { if (attempt === sourceRequest.current) setSourcePending(''); }
   }
 
-  return <section aria-labelledby="evidence-search-heading" style={{marginBlock: 24}}>
+  return <section aria-labelledby="evidence-search-heading" className={styles.search}>
     <h2 id="evidence-search-heading">搜索政策原文</h2>
     <p>按正文和条款查找已收录资料。采集资料保留待核对状态，搜索相关性不代表企业符合资格。</p>
-    <form onSubmit={search} style={{display:'flex', flexWrap:'wrap', gap:12}}>
+    <form onSubmit={search} className={styles.form}>
       <input aria-label="政策原文关键词" placeholder="例如：研发费用、专精特新" required maxLength={200}
-        value={query} onChange={e => setQuery(e.target.value)} style={{flex:'1 1 200px', minWidth:0}} />
+        value={query} onChange={e => setQuery(e.target.value)} className={styles.query} />
       <select aria-label="原文检索层级" value={level} onChange={e => setLevel(e.target.value)}>
         <option value="">全部层级</option><option value="national">国家级</option>
         <option value="provincial">省级</option><option value="municipal">市级</option><option value="district">区级</option>
@@ -61,7 +62,7 @@ export default function PolicyEvidenceSearch() {
     {error && <p role="alert">{error}。可保留关键词重新检索，或重试读取原文。</p>}
     <p role="status">{searched && !pending ? `找到 ${hits.length} 份资料` : ''}</p>
     {searched && !pending && !error && !hits.length && <p>暂无命中资料。可减少关键词或切换层级；来源覆盖仍在持续更新。</p>}
-    {hits.map(hit => <article key={hit.policy_id} style={{borderBottom:'1px solid var(--line, #ddd)', paddingBlock:20, overflowWrap:'anywhere'}}>
+    {hits.map(hit => <article key={hit.policy_id} className={styles.result}>
       <h3>{hit.title}</h3>
       <p>{hit.jurisdiction || '适用地域待核对'} · {hit.issuing_authority || '发布机构待核对'} · 原文 v{hit.version_no}</p>
       <p>发布日期 {dateLabel(hit.published_at)} · 申报截止 {dateLabel(hit.deadline)} · 政策失效 {dateLabel(hit.expires_at)}</p>

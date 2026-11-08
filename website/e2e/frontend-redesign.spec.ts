@@ -12,7 +12,7 @@ test('public design: real product image, readable mobile menu, focus containment
   await page.setViewportSize({width:390,height:844});
   await page.emulateMedia({reducedMotion:'reduce'});
   await page.goto('/');
-  await expect(page.getByRole('heading',{level:1})).toContainText('找到有依据的');
+  await expect(page.getByRole('heading',{level:1})).toContainText('看清每项条件的依据');
   const image = page.getByRole('img',{name:/隔离合成项目的真实资格矩阵/});
   await image.scrollIntoViewIfNeeded();
   await expect(image).toBeVisible();
@@ -33,10 +33,11 @@ test('public design: real product image, readable mobile menu, focus containment
 });
 
 test('pricing error recovers into the real server catalogue without a purchase',async ({page}) => {
-  let first=true;
-  await page.route('**/api/v1/products',route => { if(first){first=false;return route.fulfill({status:503,json:{detail:'Synthetic outage'}});}return route.continue(); });
+  let unavailable=true;
+  await page.route('**/api/v1/products',route => unavailable ? route.fulfill({status:503,json:{detail:'Synthetic outage'}}) : route.continue());
   await page.goto('/pricing');
   await expect(page.getByRole('alert').filter({hasText:'当前无法读取'})).toContainText('当前无法读取');
+  unavailable=false;
   await page.getByRole('button',{name:'重新加载产品目录'}).click();
   await expect(page.locator('.pricing-card').first()).toBeVisible();
   await expect(page.getByRole('alert').filter({hasText:'当前无法读取'})).toHaveCount(0);

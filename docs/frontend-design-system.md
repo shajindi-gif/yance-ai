@@ -37,3 +37,7 @@
 焦点使用可见轮廓；prefers-reduced-motion 下关闭动画/过渡和平滑滚动。核心色对比计算见 `audit-evidence/frontend-redesign/contrast.json`，5组均超过4.5:1；这不是整站 WCAG 认证，历史页面的全部颜色组合、读屏和触摸目标尚需更广泛审查。
 
 组件复核采用 React best-practices 检查项：静态首页为 Server Component；只为交互保留客户端状态；复用已有并行数据加载；事件监听按生命周期清理；不引入额外数据/样式框架。`website/AGENTS.md` 所要求的 Next16 本地 use-client 文档已阅读。
+
+## 2026-11-08 文档表面层次补充
+
+画布调整为#f6f5f1，正文#202c31，边界#dcded8。新增surface-inset用于导航和内嵌工具条，shadow-document用于文档主工作面，shadow-overlay留给临时浮层。官网与工作台共享颜色和焦点，工作台保留紧凑布局。项目主工作面采用24px内距，手机16px/12px。原文检索的正文、命中高亮与来源动作集中在独立CSS Module中。具体覆盖、测试与限制见[本轮交付](frontend-depth-20261108.md)。
