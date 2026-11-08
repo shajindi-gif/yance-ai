@@ -1,0 +1,52 @@
+[
+  {
+    "width": 1440,
+    "path": "/",
+    "status": 200
+  },
+  {
+    "width": 1440,
+    "path": "/pricing",
+    "status": 200
+  },
+  {
+    "width": 1440,
+    "path": "/login",
+    "status": 200
+  },
+  {
+    "width": 1440,
+    "path": "/feedback",
+    "status": 200
+  },
+  {
+    "width": 1440,
+    "path": "/discover",
+    "evidence_version_highlight": true
+  },
+  {
+    "width": 390,
+    "path": "/",
+    "status": 200
+  },
+  {
+    "width": 390,
+    "path": "/pricing",
+    "status": 200
+  },
+  {
+    "width": 390,
+    "path": "/login",
+    "status": 200
+  },
+  {
+    "width": 390,
+    "path": "/feedback",
+    "status": 200
+  },
+  {
+    "width": 390,
+    "path": "/discover",
+    "evidence_version_highlight": true
+  }
+]
