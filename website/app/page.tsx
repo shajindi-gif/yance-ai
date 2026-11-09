@@ -41,7 +41,7 @@ export default function HomePage() {
       <div id="scenarios">
         <header className={styles.heading}>
           <div><p className={styles.kicker}>使用场景示例</p><h2>从手头的申报任务开始</h2></div>
-          <Link href="/company-match">了解完整流程 →</Link>
+          <nav aria-label="企业情报工具" className={styles.actions}><Link href="/intelligence#policy">政策匹配</Link><Link href="/intelligence#compliance">交易审查</Link><Link href="/intelligence#industry">产业分析</Link></nav>
         </header>
         <div className={styles.tasks}>{scenarios.map(item => <article key={item.href}>
           <span>{item.role}</span><h3>{item.title}</h3><p>{item.detail}</p>
