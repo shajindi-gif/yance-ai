@@ -26,7 +26,13 @@ export function EvidenceMatrix({ matrix, busy, canWrite, onCollect }: { matrix?:
         <td><Badge tone={row.status === "PASS" ? "success" : row.status === "FAIL" ? "danger" : "warning"}>{LABELS[row.status] || "需人工复核"}</Badge></td>
         <td>{row.policy_evidence.length === 0 ? "缺少逐条原文引用" : row.policy_evidence.map(item => {
           const url = safeUrl(item.source_url);
-          return <details key={item.id}><summary>{item.article || "查看政策原文"} · {item.verified ? "逐字核验" : "待核验"}</summary><blockquote>{item.quote}</blockquote>{url ? <a href={url} target="_blank" rel="noopener noreferrer">打开来源网页</a> : <span>来源链接未核实</span>}</details>;
+          return <details key={item.id} onKeyDown={event => {
+            if (event.key === "Escape" && event.currentTarget.open) {
+              event.currentTarget.open = false;
+              event.currentTarget.querySelector("summary")?.focus();
+              event.stopPropagation();
+            }
+          }}><summary>{item.article || "查看政策原文"} · {item.verified ? "逐字核验" : "待核验"}</summary><blockquote>{item.quote}</blockquote>{url ? <a href={url} target="_blank" rel="noopener noreferrer">打开来源网页</a> : <span>来源链接未核实</span>}</details>;
         })}</td>
       </tr>)}</tbody>
     </table></DataTable>}

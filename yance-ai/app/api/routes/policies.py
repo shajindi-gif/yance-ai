@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Form, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, get_principal, require_platform_admin, require_roles
@@ -66,6 +66,7 @@ def evidence_search(
     level: str | None = None,
     jurisdiction: str | None = None,
     current_only: bool = False,
+    include_low_quality: bool = False,
     principal: Principal = Depends(get_principal),
     db: Session = Depends(get_db),
 ) -> dict:
@@ -112,6 +113,80 @@ def read_policy_version(
     return {"id": str(version.id), "version": version.version,
             "title": version.title, "content": version.content,
             "source_url": version.source_url, "content_sha256": version.content_sha256}
+
+
+@router.get("/policies/quality-summary")
+def policy_quality_summary(
+    principal: Principal = Depends(get_principal),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Distribution of the quality rubric across the corpus.
+
+    This is the answer to "what are you actually delivering": how many documents
+    pass the reliability/validity/utility bars, which axis they fail on, and why.
+    Counts only — no document text leaves the database here.
+    """
+    from app.services.policy_collection.quality import RUBRIC_VERSION, summary
+
+    return summary(db, rubric_version=RUBRIC_VERSION)
+
+
+@router.get("/policies/{policy_id}/quality")
+def policy_quality(
+    policy_id: UUID,
+    principal: Principal = Depends(get_principal),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Per-document verdict: three axis scores, grade, timeline state and every issue.
+
+    Returned with the *reasons* rather than a bare score so a customer can dispute a
+    specific finding (e.g. "this was not repealed") instead of arguing with a number.
+    """
+    from app.services.policy_collection.quality import RUBRIC_VERSION
+
+    policy = db.scalar(
+        select(Policy).where(Policy.id == policy_id, visible_policy_clause(principal.tenant_id))
+    )
+    if policy is None:
+        raise HTTPException(status_code=404, detail="policy_not_found")
+    row = db.execute(
+        text(
+            "SELECT q.grade, q.delivery_tier, q.deliverable, q.reliability, q.validity, "
+            "       q.utility, q.total, q.timeline_state, q.source_tier, q.verdict, "
+            "       q.issues, q.signals, q.assessed_at, q.rubric_version "
+            "FROM policy_quality_assessments q "
+            "JOIN policy_versions v ON v.id = q.policy_version_id "
+            "WHERE q.policy_id = CAST(:pid AS uuid) AND q.rubric_version = :rv "
+            "ORDER BY v.version DESC LIMIT 1"
+        ),
+        {"pid": str(policy_id), "rv": RUBRIC_VERSION},
+    ).mappings().first()
+    if row is None:
+        return {
+            "policy_id": str(policy_id),
+            "assessed": False,
+            "reason": "not_yet_assessed",
+            "deliverable": policy.quality_deliverable,
+            "grade": policy.quality_grade,
+        }
+    return {
+        "policy_id": str(policy_id),
+        "assessed": True,
+        "rubric_version": row["rubric_version"],
+        "grade": row["grade"],
+        "delivery_tier": row["delivery_tier"],
+        "deliverable": row["deliverable"],
+        "reliability": float(row["reliability"]),
+        "validity": float(row["validity"]),
+        "utility": float(row["utility"]),
+        "total": float(row["total"]),
+        "timeline_state": row["timeline_state"],
+        "source_tier": row["source_tier"],
+        "verdict": row["verdict"],
+        "issues": row["issues"],
+        "signals": row["signals"],
+        "assessed_at": row["assessed_at"].isoformat() if row["assessed_at"] else None,
+    }
 
 
 @router.get("/policies/{policy_id}", response_model=PolicyOut)

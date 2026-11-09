@@ -229,3 +229,43 @@ class PolicyApplicationWindow(Base, TimestampMixin):
     entry_url: Mapped[str | None] = mapped_column(String(1000))
     evidence_text: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(24), default="unknown", index=True)
+
+
+class PolicyQualityAssessment(Base, TimestampMixin):
+    """Rubric verdict for one immutable policy version (see ``policy_collection.quality``).
+
+    One row per ``(policy_version_id, rubric_version)``.  Re-assessment updates the
+    row in place; a new rubric revision inserts alongside it so a past verdict stays
+    reproducible — that is the difference between an audit trail and a mutable score.
+    """
+
+    __tablename__ = "policy_quality_assessments"
+    __table_args__ = (
+        UniqueConstraint(
+            "policy_version_id", "rubric_version", name="uq_policy_quality_version_rubric"
+        ),
+        Index("ix_policy_quality_grade", "rubric_version", "grade"),
+        Index("ix_policy_quality_deliverable", "rubric_version", "deliverable"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    policy_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policies.id", ondelete="CASCADE"), index=True
+    )
+    policy_version_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("policy_versions.id", ondelete="CASCADE"), index=True
+    )
+    rubric_version: Mapped[str] = mapped_column(String(40))
+    reliability: Mapped[float] = mapped_column(Numeric(5, 2))
+    validity: Mapped[float] = mapped_column(Numeric(5, 2))
+    utility: Mapped[float] = mapped_column(Numeric(5, 2))
+    total: Mapped[float] = mapped_column(Numeric(5, 2))
+    grade: Mapped[str] = mapped_column(String(2))
+    delivery_tier: Mapped[str] = mapped_column(String(32))
+    deliverable: Mapped[bool] = mapped_column(Boolean, default=False)
+    timeline_state: Mapped[str] = mapped_column(String(24), default="unknown")
+    source_tier: Mapped[str] = mapped_column(String(2), default="D")
+    verdict: Mapped[str | None] = mapped_column(String(400))
+    issues: Mapped[dict] = mapped_column(JSON, default=list)
+    signals: Mapped[dict] = mapped_column(JSON, default=dict)
+    assessed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)

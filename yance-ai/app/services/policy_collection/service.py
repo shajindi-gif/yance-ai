@@ -33,6 +33,7 @@ from app.models.policy_collection import (
     PolicySourceState,
 )
 from app.services.policy_collection.catalog import Catalog, SourceDefinition, load_catalog
+from app.services.policy_collection import quality
 from app.services.policy_collection.rawstore import RawEvidenceStore
 from app.services.policy_collection.runner import (
     CollectionLimits,
@@ -573,8 +574,17 @@ def promote_ready_documents(
 ) -> PromoteReport:
     """Move ``collected`` versions to ``published`` when the facts hold up.
 
-    Versions that fail the gate move to ``pending_review`` and are reported with
-    a reason code so an operator can see *why* something is not searchable.
+    Two gates, in order:
+
+    1. **Structural** (:func:`_quality_gate_blockers`) — is the row complete enough to
+       be a document at all (title, body length, region, stored original, chunks)?
+    2. **Rubric** (:mod:`app.services.policy_collection.quality`) — is it a document we
+       are willing to hand a customer?  Repealed, expired, region-contradicting,
+       superseded or under-sourced versions are *not* published, however complete they
+       look; they park in ``pending_review`` with a reason code that names the axis.
+
+    The rubric verdict is persisted for every candidate, including the rejected ones,
+    so "why is this document not in the product" is answerable from the database.
     """
     report = PromoteReport()
     latest = (
@@ -597,6 +607,7 @@ def promote_ready_documents(
         .limit(limit)
     ).all()
 
+    structurally_ready: list[PolicyVersion] = []
     for version in candidates:
         report.checked += 1
         blockers = _quality_gate_blockers(db, version)
@@ -607,15 +618,45 @@ def promote_ready_documents(
             if not dry_run:
                 version.status = "pending_review"
         else:
-            report.published += 1
+            structurally_ready.append(version)
+
+    if structurally_ready:
+        assessments = quality.assess_versions(
+            db,
+            version_ids=[str(version.id) for version in structurally_ready],
+            only_latest=True,
+            persist=not dry_run,
+        )
+        by_version = {assessment.version_id: assessment for assessment in assessments}
+        for version in structurally_ready:
+            assessment = by_version.get(str(version.id))
+            if assessment is not None and assessment.deliverable:
+                report.published += 1
+                if not dry_run:
+                    version.status = "published"
+                    # Retrieval gates on Policy.status too (current_policy_clauses), so
+                    # promoting the version alone would leave the policy invisible.
+                    parent = db.get(Policy, version.policy_id)
+                    if parent is not None and parent.status != "published":
+                        parent.status = "published"
+                        parent.updated_at = func.now()
+                continue
+
+            report.held_for_review += 1
+            reason = _rubric_reason(assessment)
+            report.reasons[reason] = report.reasons.get(reason, 0) + 1
             if not dry_run:
-                version.status = "published"
-                # Retrieval gates on Policy.status too (current_policy_clauses), so
-                # promoting the version alone would leave the policy invisible.
-                parent = db.get(Policy, version.policy_id)
-                if parent is not None and parent.status != "published":
-                    parent.status = "published"
-                    parent.updated_at = func.now()
+                version.status = "pending_review"
     if not dry_run:
         db.commit()
     return report
+
+
+def _rubric_reason(assessment) -> str:
+    """A stable, greppable reason code for a rubric rejection."""
+    if assessment is None:
+        return "rubric_unavailable"
+    blockers = [issue["code"] for issue in assessment.issues if issue["severity"] == "blocker"]
+    if blockers:
+        return f"rubric_blocker:{blockers[0]}"
+    return f"rubric_grade_{assessment.grade.lower()}"

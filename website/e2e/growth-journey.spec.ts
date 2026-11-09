@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 import {mkdir} from 'node:fs/promises';
-const out='../docs/audit-evidence/growth-20261028';
+const out=process.env.YANCE_EVIDENCE_ROOT || '../docs/audit-evidence/growth-20261028';
 test.beforeEach(async({page,baseURL})=>{
  expect(new URL(baseURL!).hostname).toMatch(/^(localhost|127\.0\.0\.1)$/);
  await page.route('**/*',route=>['localhost','127.0.0.1'].includes(new URL(route.request().url()).hostname)?route.continue():route.abort());

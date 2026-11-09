@@ -27,7 +27,7 @@ export default function PolicyEvidenceSearch() {
     if (!query.trim()) return;
     const attempt = ++request.current;
     ++sourceRequest.current;
-    setPending(true); setError(''); setSource(null); setSourcePending(''); setHits([]);
+    setPending(true); setSearched(false); setError(''); setSource(null); setSourcePending(''); setHits([]);
     try {
       const response = await api.searchPolicyEvidence(query.trim(), level);
       if (attempt === request.current) { setHits(response.hits); setSearched(true); }

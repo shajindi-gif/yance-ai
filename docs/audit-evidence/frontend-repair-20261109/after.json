@@ -1,0 +1,110 @@
+[
+  {
+    "name": "home",
+    "width": 390,
+    "height": 4666,
+    "overflow": false
+  },
+  {
+    "name": "discover",
+    "width": 390,
+    "height": 1326,
+    "overflow": false
+  },
+  {
+    "name": "application",
+    "width": 390,
+    "height": 1839,
+    "overflow": false
+  },
+  {
+    "name": "login",
+    "width": 390,
+    "height": 2646,
+    "overflow": false
+  },
+  {
+    "name": "orders",
+    "width": 390,
+    "height": 1000,
+    "overflow": false
+  },
+  {
+    "name": "pricing",
+    "width": 390,
+    "height": 6970,
+    "overflow": false
+  },
+  {
+    "name": "home",
+    "width": 768,
+    "height": 3902,
+    "overflow": false
+  },
+  {
+    "name": "discover",
+    "width": 768,
+    "height": 1052,
+    "overflow": false
+  },
+  {
+    "name": "application",
+    "width": 768,
+    "height": 1599,
+    "overflow": false
+  },
+  {
+    "name": "login",
+    "width": 768,
+    "height": 2036,
+    "overflow": false
+  },
+  {
+    "name": "orders",
+    "width": 768,
+    "height": 1000,
+    "overflow": false
+  },
+  {
+    "name": "pricing",
+    "width": 768,
+    "height": 5942,
+    "overflow": false
+  },
+  {
+    "name": "home",
+    "width": 1440,
+    "height": 2739,
+    "overflow": false
+  },
+  {
+    "name": "discover",
+    "width": 1440,
+    "height": 1027,
+    "overflow": false
+  },
+  {
+    "name": "application",
+    "width": 1440,
+    "height": 1304,
+    "overflow": false
+  },
+  {
+    "name": "login",
+    "width": 1440,
+    "height": 1498,
+    "overflow": false
+  },
+  {
+    "name": "orders",
+    "width": 1440,
+    "height": 1000,
+    "overflow": false
+  },
+  {
+    "name": "pricing",
+    "width": 1440,
+    "height": 3826,
+    "overflow": false
+  }
+]

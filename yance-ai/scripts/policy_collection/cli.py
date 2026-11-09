@@ -763,6 +763,119 @@ def cmd_scheduler_status(args) -> int:
     return 0
 
 
+def cmd_quality_assess(args) -> int:
+    from app.services.policy_collection import quality
+
+    session = _session()
+    try:
+        assessments = quality.assess_versions(
+            session,
+            policy_ids=None,
+            only_latest=not args.all_versions,
+            only_public=not args.include_tenant_docs,
+            persist=not args.dry_run,
+        )
+        payload = {
+            "rubric_version": quality.RUBRIC_VERSION,
+            "assessed": len(assessments),
+            "deliverable": sum(1 for a in assessments if a.deliverable),
+            "dry_run": bool(args.dry_run),
+            "by_grade": {},
+        }
+        for assessment in assessments:
+            payload["by_grade"][assessment.grade] = payload["by_grade"].get(assessment.grade, 0) + 1
+        if args.json:
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+        else:
+            print(f"rubric {payload['rubric_version']}  assessed={payload['assessed']}  "
+                  f"deliverable={payload['deliverable']}  dry_run={payload['dry_run']}")
+            for grade in sorted(payload["by_grade"]):
+                print(f"  grade {grade}: {payload['by_grade'][grade]}")
+        return 0
+    finally:
+        session.close()
+
+
+def cmd_quality_export(args) -> int:
+    from app.services.policy_collection import quality
+
+    session = _session()
+    try:
+        count = quality.export_deliverable_csv(session, args.out, rubric_version=args.rubric_version)
+        print(f"exported {count} deliverable policies -> {args.out}")
+        return 0
+    finally:
+        session.close()
+
+
+def cmd_quality_report(args) -> int:
+    from app.services.policy_collection import quality
+
+    session = _session()
+    try:
+        payload = quality.summary(session)
+        if args.json:
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            return 0
+        print(f"rubric {payload['rubric_version']}  assessed={payload['assessed']}  "
+              f"deliverable={payload['deliverable']}")
+        print("axis averages: "
+              f"reliability={payload['avg_reliability']}  "
+              f"validity={payload['avg_validity']}  utility={payload['avg_utility']}")
+        print("grades: " + ", ".join(f"{r['grade']}={r['count']}" for r in payload["by_grade"]))
+        print("delivery: " + ", ".join(f"{r['tier']}={r['count']}" for r in payload["by_delivery_tier"]))
+        print("timeline: " + ", ".join(f"{r['state']}={r['count']}" for r in payload["by_timeline_state"]))
+        print("source tier: " + ", ".join(f"{r['tier']}={r['count']}" for r in payload["by_source_tier"]))
+        print("top issues: " + ", ".join(f"{r['code']}={r['count']}" for r in payload["top_issue_codes"]))
+        return 0
+    finally:
+        session.close()
+
+
+def cmd_quality_explain(args) -> int:
+    from sqlalchemy import text
+
+    from app.services.policy_collection import quality
+
+    session = _session()
+    try:
+        row = session.execute(
+            text(
+                "SELECT p.id::text AS policy_id, v.id::text AS version_id, p.title, p.status "
+                "FROM policies p JOIN policy_versions v ON v.policy_id = p.id "
+                "WHERE p.id::text LIKE :needle OR p.title ILIKE :like "
+                "ORDER BY v.version DESC LIMIT 1"
+            ),
+            {"needle": f"{args.needle}%", "like": f"%{args.needle}%"},
+        ).mappings().first()
+        if row is None:
+            print(f"no policy matching {args.needle!r}", file=sys.stderr)
+            return 4
+        assessments = quality.assess_versions(
+            session, policy_ids=[row["policy_id"]], only_latest=True, persist=False
+        )
+        if not assessments:
+            print("no version to assess", file=sys.stderr)
+            return 4
+        payload = assessments[0].as_dict()
+        payload["title"] = row["title"]
+        if args.json:
+            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            return 0
+        print(f"{row['title']}")
+        print(f"  grade={payload['grade']} tier={payload['delivery_tier']} "
+              f"total={payload['total']} timeline={payload['timeline_state']} "
+              f"source_tier={payload['source_tier']}")
+        print(f"  reliability={payload['reliability']} validity={payload['validity']} "
+              f"utility={payload['utility']}")
+        print(f"  verdict: {payload['verdict']}")
+        for issue in payload["issues"]:
+            print(f"  - [{issue['severity']}/{issue['axis']}] {issue['code']}: {issue['message']}")
+        return 0
+    finally:
+        session.close()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="policy collection operations")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -889,6 +1002,31 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--stale-hours", type=float)
     p.add_argument("--json", action="store_true")
     p.set_defaults(func=cmd_alerts)
+
+    p = sub.add_parser("quality-summary", help="quality rubric distribution (read-only)")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_quality_report)
+
+    p = sub.add_parser("quality-assess", help="run the quality rubric over the corpus and persist verdicts")
+    p.add_argument("--dry-run", action="store_true", help="score without writing rows")
+    p.add_argument("--all-versions", action="store_true", help="assess every version, not just the latest")
+    p.add_argument("--include-tenant-docs", action="store_true", help="include tenant-private documents")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_quality_assess)
+
+    p = sub.add_parser("quality-export", help="export the deliverable policy list as customer-readable CSV")
+    p.add_argument(
+        "--out",
+        default="/var/lib/yance/deliverables/policy_quality_deliverable.csv",
+        help="target CSV path",
+    )
+    p.add_argument("--rubric-version", help="rubric version to export (default: current)")
+    p.set_defaults(func=cmd_quality_export)
+
+    p = sub.add_parser("quality-explain", help="explain one document's verdict (policy id prefix or title)")
+    p.add_argument("needle")
+    p.add_argument("--json", action="store_true")
+    p.set_defaults(func=cmd_quality_explain)
 
     args = parser.parse_args(argv)
     try:

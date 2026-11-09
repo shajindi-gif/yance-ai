@@ -15,6 +15,15 @@ test('customer searches collected evidence and reads its immutable source versio
   await read.click();
   await expect(page.getByText('对应版本完整原文', {exact:true})).toBeVisible();
   await expect(page.locator('details[open]')).toContainText('合成');
+  const search = page.locator('section[aria-labelledby="evidence-search-heading"]');
+  await page.route('**/policies/evidence-search?**', route => route.fulfill({status:503,json:{detail:'测试中断'}}));
+  await search.getByRole('button',{name:'检索原文',exact:true}).click();
+  await expect(search.getByRole('alert')).toBeVisible();
+  await expect(search.getByRole('status')).toBeEmpty();
+  await expect(search.getByLabel('政策原文关键词')).toHaveValue('合成');
+  await page.unroute('**/policies/evidence-search?**');
+  await search.getByRole('button',{name:'检索原文',exact:true}).click();
+  await expect(read).toBeVisible();
   await page.setViewportSize({width:390,height:844});
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

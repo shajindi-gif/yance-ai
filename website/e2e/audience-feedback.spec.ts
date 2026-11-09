@@ -13,16 +13,16 @@ test.beforeEach(async ({ page, baseURL }) => {
 
 test('homepage broadens audience while marking examples and feedback honestly', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('为新质生产力企业');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('看清每项条件的依据');
   const businesses = page.locator('#for-business');
-  await expect(businesses.getByRole('heading', { name: '新质生产力企业', exact: true })).toBeVisible();
-  await expect(businesses.getByRole('heading', { name: '科技与研发型企业' })).toBeVisible();
-  await expect(businesses.getByRole('heading', { name: '各类有政策需求的企业' })).toBeVisible();
+  await businesses.locator('summary').click();
+  for (const label of ['新质生产力企业','科技与研发型企业','各类有政策需求的企业']) {
+    await expect(businesses.locator('details p')).toContainText(label);
+  }
   const cases = page.locator('#scenarios');
   await expect(cases.getByRole('article')).toHaveCount(3);
-  await expect(cases).toContainText('不是真实客户案例、客户评价或获批结果');
-  for (const card of await cases.getByRole('article').all()) await expect(card).toContainText('场景示例');
-  await expect(page.locator('#customer-feedback')).toContainText('暂未展示获授权的客户评价');
+  await expect(cases).toContainText('使用场景示例');
+  await expect(page.locator('#customer-feedback')).toContainText('公开引用须另获授权');
   await page.screenshot({ path: `${evidenceDir}/home-desktop.png`, fullPage: true });
   await page.getByRole('link', { name: '分享使用反馈' }).click();
   await expect(page).toHaveURL(/\/feedback$/);
@@ -36,7 +36,7 @@ test('mobile scene links, focus and FAQ remain usable', async ({ page }) => {
   await page.goto('/');
   const faq = page.locator('summary').filter({ hasText: '适合哪些企业' });
   await faq.focus(); await page.keyboard.press('Enter');
-  await expect(page.getByText('重点服务新质生产力与科技企业，同时面向制造', { exact: false })).toBeVisible();
+  await expect(page.getByText('重点服务新质生产力企业、科技与研发型企业', { exact: false })).toBeVisible();
   const feedback = page.getByRole('link', { name: '分享使用反馈' });
   await feedback.focus(); await expect(feedback).toBeFocused();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

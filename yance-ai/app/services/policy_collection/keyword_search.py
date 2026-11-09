@@ -54,6 +54,9 @@ scored AS (
         p.expires_at        AS expires_at,
         p.source_url        AS source_url,
         p.issuing_authority AS issuing_authority,
+        p.quality_grade     AS quality_grade,
+        p.quality_score     AS quality_score,
+        p.quality_deliverable AS quality_deliverable,
         v.id                AS version_id,
         v.version           AS version_no,
         (v.version < (SELECT max(v3.version) FROM policy_versions v3 WHERE v3.policy_id=p.id)) AS stale_version,
@@ -97,6 +100,12 @@ scored AS (
             EXISTS (SELECT 1 FROM terms t WHERE c.content ILIKE '%' || t.term || '%')
          OR EXISTS (SELECT 1 FROM terms t WHERE v.title ILIKE '%' || t.term || '%')
       )
+      -- Quality rubric gate: search must not surface documents the delivery policy
+      -- withholds (repealed / expired / unsourced).  ``IS DISTINCT FROM false`` keeps
+      -- never-assessed documents visible so deploying the rubric cannot empty the
+      -- index before the backfill runs.
+      AND (CAST(:include_low_quality AS boolean) = true
+           OR p.quality_deliverable IS DISTINCT FROM false)
       AND (CAST(:level AS text) IS NULL OR p.level = CAST(:level AS text))
       AND (CAST(:jurisdiction AS text) IS NULL
            OR p.jurisdiction = CAST(:jurisdiction AS text)
@@ -165,6 +174,10 @@ class KeywordHit:
     policy_status: str | None = None
     review_state: str = "unreviewed"
     matched_chunks: int = 1
+    quality_grade: str | None = None
+    quality_score: float | None = None
+    quality_deliverable: bool | None = None
+    quality_note: str | None = None
 
     def as_dict(self) -> dict:
         return {
@@ -192,6 +205,10 @@ class KeywordHit:
             "policy_status": self.policy_status,
             "review_state": self.review_state,
             "matched_chunks": self.matched_chunks,
+            "quality_grade": self.quality_grade,
+            "quality_score": self.quality_score,
+            "quality_deliverable": self.quality_deliverable,
+            "quality_note": self.quality_note,
         }
 
 
@@ -258,6 +275,7 @@ def keyword_search(
     current_only: bool = False,
     tenant_id: uuid.UUID | str | None = None,
     statuses: Sequence[str] = ("published", "collected"),
+    include_low_quality: bool = False,
 ) -> list[KeywordHit]:
     terms = _terms(query)
     if not terms:
@@ -278,6 +296,7 @@ def keyword_search(
             "tenant_id": str(tenant_id) if tenant_id else None,
             "statuses": list(statuses),
             "min_coverage": min_coverage,
+            "include_low_quality": include_low_quality,
         },
     ).mappings()
     hits: list[KeywordHit] = []
@@ -316,6 +335,14 @@ def keyword_search(
                 policy_status=row["policy_status"],
                 review_state="published" if row["policy_status"] == "published" else "unreviewed",
                 matched_chunks=int(row["matched_chunks"] or 1),
+                quality_grade=row["quality_grade"],
+                quality_score=float(row["quality_score"]) if row["quality_score"] is not None else None,
+                quality_deliverable=row["quality_deliverable"],
+                quality_note=(
+                    None
+                    if row["quality_grade"] == "A"
+                    else "quality_grade_" + (row["quality_grade"] or "unassessed")
+                ),
             )
         )
     return hits

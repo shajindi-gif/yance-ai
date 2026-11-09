@@ -61,6 +61,11 @@ def hybrid_policy_candidates(
             *applicable_region_clauses(region or {}),
             PolicyVersion.status == "published",
             or_(PolicyChunk.tenant_id.is_(None), PolicyChunk.tenant_id == tenant_id),
+            # Quality rubric gate.  A published version can still be one the delivery
+            # policy withholds (repealed last year, region contradicts its own level);
+            # those must not enter either ranking channel.  NULL = not yet assessed and
+            # stays visible, so this filter cannot empty search before the backfill.
+            or_(Policy.quality_deliverable.is_(None), Policy.quality_deliverable.is_(True)),
         )
     )
     lexical_pool = list(db.scalars(base.order_by(PolicyChunk.created_at.desc()).limit(500)).all())

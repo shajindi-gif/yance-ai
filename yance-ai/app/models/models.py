@@ -365,6 +365,12 @@ class Policy(Base, TimestampMixin):
     technology: Mapped[str | None] = mapped_column(String(240))
     embedding: Mapped[list[float] | None] = mapped_column(Vector(1024))
     status: Mapped[str] = mapped_column(String(40), default="draft", index=True)
+    # Headline of the quality rubric (see app/services/policy_collection/quality.py).
+    # NULL means "not assessed yet" and must never be read as "not deliverable".
+    quality_score: Mapped[float | None] = mapped_column(Numeric(5, 2))
+    quality_grade: Mapped[str | None] = mapped_column(String(2))
+    quality_deliverable: Mapped[bool | None] = mapped_column(Boolean)
+    quality_assessed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class PolicyRule(Base, TimestampMixin, TenantOwnedMixin):
