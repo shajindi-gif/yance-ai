@@ -202,6 +202,8 @@ def build_chunk_query(filters: RetrievalFilters, *, latest_policy_version_subque
             *current_policy_clauses(),
             *applicable_region_clauses({"province": filters.province, "city": filters.city}),
             *_scope_predicates(filters),
+            # 质量闸门：未评估(None)或可交付(True)才进入候选池，withheld 一律排除。
+            or_(Policy.quality_deliverable.is_(None), Policy.quality_deliverable.is_(True)),
         )
     )
     return base

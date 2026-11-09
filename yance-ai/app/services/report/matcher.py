@@ -13,7 +13,7 @@
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.models.models import Company, CompanyProfileVersion, Opportunity, Policy
@@ -105,6 +105,8 @@ async def match_policies_for_company(
                 Policy.embedding.isnot(None),
                 *current_policy_clauses(),
                 *applicable_region_clauses(region),
+                # 与 hybrid 通道一致的质量闸门：排除 withheld 政策。
+                or_(Policy.quality_deliverable.is_(None), Policy.quality_deliverable.is_(True)),
             )
             .order_by(Policy.embedding.cosine_distance(company_vector))
             .limit(50)
