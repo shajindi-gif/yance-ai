@@ -11,6 +11,10 @@ yance/
 └── benchmark/    # Policy Engine evaluation benchmarks
 ```
 
+## 网页版本更新（2026-11-09）
+
+正式网页已切换为frontend-20261108-02，源码faf50b6。API/数据库/采集保持上一轮版本。旧网页备份恢复校验与首次失败自动回退均已验证，详见[切换交付](docs/frontend-release-20261108.md)。
+
 ## 版本状态（2026-11-08）
 
 - 正式网页为commercial-20261108-01，源码68b3d5b；API为web-20261106-05基础镜像加同提交的三文件补丁与pypdf/Brotli/dnspython安全更新，报告任务同步新镜像。数据库0038，原生政策采集继续运行。
