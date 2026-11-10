@@ -17,3 +17,7 @@
 候选和正式域名各15组浏览器页面检查通过，覆盖390/768/1440宽度的首页、情报中心、登录、定价、订单，均无整页横向溢出。会话内采购文本原文定位通过。证据为audit-evidence/frontend-release-20261109下candidate-results.json、production-results.json及对应截图。服务器lint、typecheck、6项单元测试、构建通过，旧网页恢复逐文件摘要通过。本轮无真实交易、开票、短信邮件发送及申报。
 
 首次候选条款检查的选择器匹配两条命中同一原文，导致检查脚本失败；修正为核对首条命中后重新跑完整15组检查通过。正式切换脚本继承了历史输出标记FRONTEND_FAF50B6_API68_DB0038_EMAIL_SMS_PASSED，其实际断言已更新至680e048/0039；真实版本以公开release.json及动态运行版本接口为准。回退脚本已交付，本次未主动中断生产演练切回。
+
+## 2026-11-10 用户要求恢复原网页
+
+已按用户“恢复到原来”执行本轮rollback.sh。网页恢复frontend-20261108-02，源码faf50b6。服务器release.json确认恢复，yance-website与yance-collector均active；API为commercial-20261109-quality2、数据库0039。本次恢复范围为网页，保留本地候选代码及生产业务数据。

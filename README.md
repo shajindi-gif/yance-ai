@@ -11,6 +11,10 @@ yance/
 └── benchmark/    # Policy Engine evaluation benchmarks
 ```
 
+## 网页恢复（2026-11-10）
+
+按用户要求，正式网页恢复frontend-20261108-02，源码faf50b6。后端commercial-20261109-quality2、数据库0039，采集active。候选代码保留，详见[恢复记录](docs/frontend-release-20261109.md)。
+
 ## 企业情报中心发布（2026-11-09）
 
 网页已发布frontend-20261109-01，源码680e048，新增三类情报入口及首页检修。正式域名15组响应式检查通过。API为commercial-20261109-quality2、数据库0039，政策采集active。能力范围、备份恢复和开放项见[发布记录](docs/frontend-release-20261109.md)。
