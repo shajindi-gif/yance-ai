@@ -11,6 +11,10 @@ yance/
 └── benchmark/    # Policy Engine evaluation benchmarks
 ```
 
+## 界面整合正式发布（2026-11-10）
+
+经用户确认切换部署，正式网页更新至frontend-20261110-01，源码5c41702。候选与正式站各15组响应式浏览器检查通过，旧网页备份恢复摘要通过。后端commercial-20261109-quality2、数据库0039，政策采集active。发布及回退见[发布记录](docs/unified-release-20261110.md)。
+
 ## 网页恢复（2026-11-10）
 
 按用户要求，正式网页恢复frontend-20261108-02，源码faf50b6。后端commercial-20261109-quality2、数据库0039，采集active。候选代码保留，详见[恢复记录](docs/frontend-release-20261109.md)。
