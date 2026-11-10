@@ -175,7 +175,7 @@ export default function TaskDetailPage() {
   return (
     <AppShell>
       <PageHeader
-        eyebrow="Application task"
+        eyebrow="申报任务"
         title={task.title}
         description="查看当前执行状态、交付版本和真实执行记录。关键材料必须由用户验收。"
         actions={
@@ -191,9 +191,9 @@ export default function TaskDetailPage() {
         <section className={content.card}>
           <div className={content.cardHeader}>
             <div>
-              <h1>{task.company_name || "未命名企业"}</h1>
+              <h2>{task.company_name || "未命名企业"}</h2>
               <div className={content.detailMeta}>
-                <span>Task ID: {task.id}</span>
+                <span>任务编号 {task.id}</span>
                 <span>{new Date(task.created_at).toLocaleString("zh-CN")}</span>
               </div>
             </div>

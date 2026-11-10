@@ -175,6 +175,8 @@
 }
 
 .card {
+  min-width: 0;
+  overflow-wrap: anywhere;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
@@ -184,13 +186,14 @@
 
 .cardHeader {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 12px;
 }
 
-.cardHeader h1 {
+.cardHeader h2 {
   margin: 0 0 4px;
   color: var(--ink);
   font-size: 19px;

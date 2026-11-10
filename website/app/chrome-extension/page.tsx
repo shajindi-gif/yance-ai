@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import pageStyles from './page.module.css';
 
 /* --- Extraction Fields --- */
 const EXTRACTION_FIELDS = [
@@ -66,7 +67,7 @@ function SidePanelMockup() {
         {/* Side panel */}
         <div className="yc-ext-mockup-sidebar">
           <div className="yc-ext-sidebar-header">
-            <img src="/logo.png" alt="" width={20} height={20} style={{ borderRadius: '4px', verticalAlign: 'middle', marginRight: '6px' }} />
+            <img src="/logo.png" alt="" width={20} height={20} className={pageStyles.section} />
             <span className="yc-ext-sidebar-logo">衍策引擎AI</span>
             <span className="yc-ext-sidebar-badge">6 项已识别</span>
           </div>
@@ -290,12 +291,12 @@ export default function ChromeExtensionPage() {
 
       {/* CTA */}
       <div className="yc-cta-section">
-        <div className="container" style={{ textAlign: 'center' }}>
+        <div className={["container", pageStyles.section2].filter(Boolean).join(' ')} >
           <h2 className="yc-cta-title">先使用 Web 工作区</h2>
-          <p style={{ color: 'var(--text-inverse-secondary)', marginBottom: 24, maxWidth: 520, marginLeft: 'auto', marginRight: 'auto' }}>
+          <p className={pageStyles.description}>
             浏览器扩展仍在路线图中；当前请使用已部署的 Web 功能。
           </p>
-          <div className="yc-cta-actions" style={{ justifyContent: 'center' }}>
+          <div className={["yc-cta-actions", pageStyles.section3].filter(Boolean).join(' ')} >
             <Link href="/downloads" className="yc-btn-primary">查看发布状态</Link>
             <Link href="/login?register=1" className="yc-btn-outline-white">打开 Web 工作区</Link>
           </div>

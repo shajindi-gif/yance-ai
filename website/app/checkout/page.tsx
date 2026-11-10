@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import api, { Company, ProductCatalogItem } from '@/lib/api';
 import PaymentQr from '@/components/PaymentQr';
 import { productPresentation } from '@/lib/product-presentation';
+import pageStyles from './page.module.css';
 
 type Provider = 'alipay' | 'wechat';
 
@@ -167,18 +168,18 @@ function CheckoutContent() {
   };
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
-      <div style={{ color: '#64748b' }}>加载中...</div>
+    <div className={pageStyles.layout}>
+      <div className={pageStyles.section}>加载中...</div>
     </div>
   );
 
   if (!product) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: '48px', marginBottom: '16px' }}>❌</div>
-        <h2 style={{ color: '#0d1b2a', marginBottom: '8px' }}>产品未找到</h2>
-        <p style={{ color: '#64748b', marginBottom: '20px' }}>请从定价页选择产品</p>
-        <button onClick={() => router.push('/pricing')} style={{ padding: '10px 24px', background: '#126a9a', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>返回定价页</button>
+    <div className={pageStyles.layout}>
+      <div className={pageStyles.section2}>
+        <div className={pageStyles.section3}>❌</div>
+        <h2 className={pageStyles.heading}>产品未找到</h2>
+        <p className={pageStyles.description}>请从定价页选择产品</p>
+        <button onClick={() => router.push('/pricing')} className={pageStyles.action}>返回定价页</button>
       </div>
     </div>
   );
@@ -188,35 +189,35 @@ function CheckoutContent() {
   const canPurchase = !resumeBlocked && product.purchase_available !== false && product.code === 'POLICY_REPORT' && product.entitlement_type === 'report';
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', paddingTop: '100px' }}>
-      <div style={{ maxWidth: '560px', margin: '0 auto', padding: '32px 24px' }}>
-        <button onClick={() => router.push('/pricing')} style={{ background: 'none', border: 'none', color: 'var(--teal)', fontSize: '13px', cursor: 'pointer', marginBottom: '24px', padding: 0 }}>← 返回定价页</button>
+    <div className={pageStyles.section4}>
+      <div className={pageStyles.section5}>
+        <button onClick={() => router.push('/pricing')} className={pageStyles.action2}>← 返回定价页</button>
 
-        <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+        <div className={pageStyles.section6}>
           {/* Order summary */}
-          <div style={{ padding: '32px' }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#0d1b2a', margin: '0 0 24px' }}>确认订单</h1>
+          <div className={pageStyles.section7}>
+            <h1 className={pageStyles.heading2}>确认订单</h1>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', padding: '16px 0', borderBottom: '1px solid #f1f5f9' }}>
+            <div className={pageStyles.layout2}>
               <div>
-                <div style={{ fontSize: '15px', fontWeight: 600, color: '#0d1b2a' }}>{presentation.name}</div>
-                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>商品：{product.name} · {product.code}</div>
-                <p style={{ fontSize: '12px', lineHeight: 1.6, color: '#475569' }}>{presentation.boundary}</p>
+                <div className={pageStyles.section8}>{presentation.name}</div>
+                <div className={pageStyles.section9}>商品：{product.name} · {product.code}</div>
+                <p className={pageStyles.description2}>{presentation.boundary}</p>
               </div>
-              <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '16px' }}>
-                <div style={{ fontSize: '24px', fontWeight: 700, color: '#f97316' }}>¥{price}</div>
+              <div className={pageStyles.section10}>
+                <div className={pageStyles.section11}>¥{price}</div>
               </div>
             </div>
 
             {/* Company selection */}
             {companies.length > 0 && (
-              <div style={{ padding: '16px 0' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '8px' }}>选择企业</label>
+              <div className={pageStyles.section12}>
+                <label className={pageStyles.layout3}>选择企业</label>
                 <select
                   aria-label="选择企业"
                   value={selectedCompany}
                   disabled={paying || !!pendingOrder} onChange={e => setSelectedCompany(e.target.value)}
-                  style={{ width: '100%', padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', outline: 'none' }}
+                  className={pageStyles.section13}
                 >
                   {companies.map(c => (
                     <option key={c.id} value={c.id}>{c.name} ({c.industry || '—'} / {c.province || '—'})</option>
@@ -226,26 +227,26 @@ function CheckoutContent() {
             )}
 
             {companies.length === 0 && (
-              <div role="status" style={{ padding: '12px 14px', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '8px', color: '#9a3412', fontSize: '13px', marginTop: '12px' }}>
+              <div role="status" className={pageStyles.section14}>
                 请先在工作区创建企业档案，再为该企业购买报告。<p><a href="/onboarding?next=%2Fcheckout%3Fproduct%3DPOLICY_REPORT">创建企业后返回购买 →</a></p>
               </div>
             )}
 
             {error && (
-              <div role="alert" style={{ padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', color: '#dc2626', fontSize: '13px', marginTop: '12px' }}>{error}{!pendingOrder && <p><a href="/policy-scan">前往政策扫描，准备报告 →</a> · <a href="/orders">查看已有订单</a></p>}{pendingOrder && <p><a href="/orders">查看已有订单，避免重复购买 →</a></p>}</div>
+              <div role="alert" className={pageStyles.section15}>{error}{!pendingOrder && <p><a href="/policy-scan">前往政策扫描，准备报告 →</a> · <a href="/orders">查看已有订单</a></p>}{pendingOrder && <p><a href="/orders">查看已有订单，避免重复购买 →</a></p>}</div>
             )}
           </div>
 
           {/* Payment section */}
-          <div style={{ padding: '24px 32px', background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <span style={{ fontSize: '14px', color: '#64748b' }}>应付金额</span>
-              <span style={{ fontSize: '28px', fontWeight: 700, color: '#0d1b2a' }}>¥{price}</span>
+          <div className={pageStyles.section16}>
+            <div className={pageStyles.layout4}>
+              <span className={pageStyles.label}>应付金额</span>
+              <span className={pageStyles.label2}>¥{price}</span>
             </div>
 
             {!qrCodeUrl ? (
               <>
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                <div className={pageStyles.layout5}>
                   {([['alipay', '支付宝'], ['wechat', '微信支付']] as [Provider, string][]).map(([key, label]) => (
                     <button
                       key={key}
@@ -253,55 +254,45 @@ function CheckoutContent() {
                       disabled={paying || (!!pendingOrder && provider !== key)}
                       onClick={() => setProvider(key)}
                       aria-pressed={provider === key}
-                      style={{
-                        flex: 1,
-                        padding: '10px',
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        border: provider === key ? '2px solid #126a9a' : '1px solid #e2e8f0',
-                        background: provider === key ? '#f2f8fc' : '#fff',
-                        color: provider === key ? '#126a9a' : '#64748b',
-                      }}
+                      className={pageStyles.inlineAction} style={{ border: provider === key ? '2px solid #126a9a' : '1px solid #e2e8f0', background: provider === key ? '#f2f8fc' : 'var(--surface)', color: provider === key ? 'var(--accent)' : '#64748b' }}
                     >
                       {label}
                     </button>
                   ))}
                 </div>
                 {pendingOrder && <p role="status">订单已保留，重试将继续这笔订单。请勿重复下单或付款。</p>}
-                <p style={{fontSize:12,color:'var(--muted)'}}>手机上可优先使用支付宝；微信付款二维码需使用另一台设备扫码。</p>
+                <p className={pageStyles.description3}>手机上可优先使用支付宝；微信付款二维码需使用另一台设备扫码。</p>
                 <button
                   onClick={handlePay}
                   disabled={paying || !selectedCompany || !canPurchase}
-                  style={{ width: '100%', padding: '14px', borderRadius: '10px', border: 'none', background: paying ? '#94a3b8' : '#f97316', color: '#fff', fontSize: '16px', fontWeight: 600, cursor: paying ? 'not-allowed' : 'pointer' }}
+                  className={pageStyles.inlineAction2} style={{ background: paying ? '#94a3b8' : 'var(--accent)', cursor: paying ? 'not-allowed' : 'pointer' }}
                 >
                   {!canPurchase ? (resumeBlocked ? '暂不能继续付款' : '待开通') : paying ? '处理中...' : provider === 'alipay' ? `确认支付 ¥${price}` : `生成付款二维码 ¥${price}`}
                 </button>
-                <p style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'center', marginTop: '12px' }}>
+                <p className={pageStyles.description4}>
                   付款后自动核对订单。未确认成功前，请勿再次付款。
                 </p>
               </>
             ) : (
-              <div style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: '14px', color: '#0d1b2a', fontWeight: 600, margin: '4px 0 12px' }}>
+              <div className={pageStyles.section2}>
+                <p className={pageStyles.description5}>
                   请使用微信扫码支付
                 </p>
                 <PaymentQr value={qrCodeUrl} />
-                <div style={{ fontSize: '13px', color: '#64748b', marginTop: '12px' }}>
+                <div className={pageStyles.section17}>
                   {paid ? (
-                    <span style={{ color: '#059669', fontWeight: 600 }}>支付成功，正在跳转…</span>
+                    <span className={pageStyles.label3}>支付成功，正在跳转…</span>
                   ) : countdown > 0 ? (
                     <>等待支付中… {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, '0')}</>
                   ) : (
-                    <span style={{ color: '#dc2626' }}>暂未收到付款确认，请核对订单后再继续</span>
+                    <span className={pageStyles.label4}>暂未收到付款确认，请核对订单后再继续</span>
                   )}
                 </div>
                 {pollError && <p role="status">{pollError}</p>}
                 <p><a href={`/success?order=${pendingOrder}`}>已完成付款？查看订单结果 →</a></p>
                 <button
                   onClick={() => { stopTimers(); setQrCodeUrl(''); }}
-                  style={{ marginTop: '12px', background: 'none', border: 'none', color: '#64748b', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}
+                  className={pageStyles.action3}
                 >
                   收起二维码，保留订单
                 </button>
@@ -311,7 +302,7 @@ function CheckoutContent() {
         </div>
 
         {/* Trust signals */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginTop: '24px', fontSize: '12px', color: '#94a3b8' }}>
+        <div className={pageStyles.layout6}>
           <span>金额由服务端产品目录确定</span>
           <span>支付回调校验金额与币种</span>
         </div>
@@ -322,7 +313,7 @@ function CheckoutContent() {
 
 export default function CheckoutPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', color: '#64748b' }}>加载中...</div>}>
+    <Suspense fallback={<div className={pageStyles.layout7}>加载中...</div>}>
       <CheckoutContent />
     </Suspense>
   );

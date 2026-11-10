@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
+import pageStyles from './page.module.css';
 
 export const metadata: Metadata = { title: '安全合规 | 衍策引擎AI' };
 
 export default function SecurityPage() {
   return (
     <>
-      <section className="page-banner" style={{ background: 'linear-gradient(135deg, #0d1b2a 0%, #1b2d44 60%, #0d1b2a 100%)' }}>
+      <section className={["page-banner", pageStyles.section].filter(Boolean).join(' ')} >
         <div className="container">
           <h1>安全现状与责任边界</h1>
           <p>仅陈述当前代码和测试能够证明的控制；部署级能力以客户环境验收结果为准。</p>

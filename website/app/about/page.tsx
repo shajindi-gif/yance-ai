@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import pageStyles from './page.module.css';
 
 export const metadata = {
   title: '关于我们 | 衍策引擎AI',
@@ -13,19 +14,13 @@ export default function AboutPage() {
     <>
       {/* Page Banner */}
       <section
-        className="page-banner"
-        style={{
-          background: 'linear-gradient(135deg, #0d1b2a 0%, #1b2d44 60%, #0d1b2a 100%)',
-        }}
+        className={["page-banner", pageStyles.section].filter(Boolean).join(' ')}
+
       >
         <div className="container">
           <span
-            className="badge"
-            style={{
-              background: 'rgba(14,165,233,0.2)',
-              color: 'var(--teal)',
-              marginBottom: '16px',
-            }}
+            className={["badge", pageStyles.label].filter(Boolean).join(' ')}
+
           >
             关于衍策引擎
           </span>
@@ -54,39 +49,25 @@ export default function AboutPage() {
               </p>
             </div>
             <div className="split-visual">
-              <div style={{ textAlign: 'center' }}>
+              <div className={pageStyles.section2}>
                 <Image
                   src="/logo.png"
                   alt="衍策引擎AI"
                   width={120}
                   height={120}
-                  style={{ borderRadius: '24px', margin: '0 auto 24px' }}
+                  className={pageStyles.section3}
                 />
-                <h3 style={{ marginBottom: '8px' }}>衍策引擎AI</h3>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                <h3 className={pageStyles.heading}>衍策引擎AI</h3>
+                <p className={pageStyles.description}>
                   上海衍策引擎人工智能科技有限公司
                 </p>
                 <div
-                  style={{
-                    marginTop: '16px',
-                    display: 'flex',
-                    gap: '8px',
-                    justifyContent: 'center',
-                    flexWrap: 'wrap',
-                  }}
+                  className={pageStyles.layout}
                 >
                   {['AI', '园区服务', '政策智能'].map((tag) => (
                     <span
                       key={tag}
-                      style={{
-                        padding: '4px 12px',
-                        borderRadius: '9999px',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        background: 'var(--bg-alt)',
-                        color: 'var(--text-secondary)',
-                        border: '1px solid var(--border)',
-                      }}
+                      className={pageStyles.label2}
                     >
                       {tag}
                     </span>
@@ -106,7 +87,7 @@ export default function AboutPage() {
             <h2 className="section-title">我们相信什么</h2>
           </div>
 
-          <div className="grid grid-4" style={{ gap: '24px' }}>
+          <div className={["grid grid-4", pageStyles.section4].filter(Boolean).join(' ')} >
             {[
               {
                 icon: '\u{1F3AF}',
@@ -126,7 +107,7 @@ export default function AboutPage() {
                 icon: '\u{1F4AA}',
                 title: '务实落地',
                 desc: '产品设计以园区实际工作场景为核心，追求真正的效率提升，而非技术噱头。',
-                bg: '#fff7ed',
+                bg: 'var(--accent-soft)',
                 color: '#a54709',
               },
               {
@@ -160,13 +141,13 @@ export default function AboutPage() {
             <h2 className="section-title">核心技术能力</h2>
           </div>
 
-          <div className="grid grid-2" style={{ gap: '32px' }}>
-            <div className="card" style={{ padding: '32px', borderTop: '3px solid #126a9a' }}>
-              <div className="card-icon" style={{ background: '#f0f9ff', color: 'var(--teal)' }}>
+          <div className={["grid grid-2", pageStyles.section5].filter(Boolean).join(' ')} >
+            <div className={["card", pageStyles.section6].filter(Boolean).join(' ')} >
+              <div className={["card-icon", pageStyles.section7].filter(Boolean).join(' ')} >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 9 9h-4a5 5 0 0 0-10 0H3a9 9 0 0 1 9-9z" fill="currentColor" stroke="none" opacity=".25"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>
               </div>
               <h3 className="card-title">政策语义理解引擎</h3>
-              <p className="card-desc" style={{ marginBottom: '20px' }}>
+              <p className={["card-desc", pageStyles.description2].filter(Boolean).join(' ')} >
                 基于可配置大语言模型与规则校验提取政策条件，条件要素结构化后进入匹配引擎。
               </p>
               <ul className="module-card-features">
@@ -176,12 +157,12 @@ export default function AboutPage() {
                 <li>政策日期与状态元数据</li>
               </ul>
             </div>
-            <div className="card" style={{ padding: '32px', borderTop: '3px solid #16a34a' }}>
-              <div className="card-icon" style={{ background: '#f0fdf4', color: '#16a34a' }}>
+            <div className={["card", pageStyles.section8].filter(Boolean).join(' ')} >
+              <div className={["card-icon", pageStyles.section9].filter(Boolean).join(' ')} >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
               </div>
               <h3 className="card-title">企业-政策匹配算法</h3>
-              <p className="card-desc" style={{ marginBottom: '20px' }}>
+              <p className={["card-desc", pageStyles.description2].filter(Boolean).join(' ')} >
                 融合规则评分、向量检索与证据门禁，将企业画像与政策条件进行多维度匹配；准确率由评测集衡量。
               </p>
               <ul className="module-card-features">
@@ -206,7 +187,7 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="grid grid-3" style={{ gap: '24px' }}>
+          <div className={["grid grid-3", pageStyles.section4].filter(Boolean).join(' ')} >
             {[
               {
                 initials: 'AI',
@@ -226,25 +207,13 @@ export default function AboutPage() {
                 initials: 'BD',
                 title: '行业与客户团队',
                 desc: '负责政策规则复核、试点验收和客户实施边界。',
-                bg: '#fff7ed',
+                bg: 'var(--accent-soft)',
                 color: '#a54709',
               },
             ].map((team) => (
-              <div key={team.initials} className="card" style={{ textAlign: 'center', padding: '32px' }}>
+              <div key={team.initials} className={["card", pageStyles.section10].filter(Boolean).join(' ')} >
                 <div
-                  style={{
-                    width: '72px',
-                    height: '72px',
-                    margin: '0 auto 16px',
-                    background: team.bg,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '1.5rem',
-                    fontWeight: 800,
-                    color: team.color,
-                  }}
+                  className={pageStyles.inlineLayout} style={{ background: team.bg, color: team.color }}
                 >
                   {team.initials}
                 </div>
@@ -290,9 +259,9 @@ export default function AboutPage() {
             <h2 className="section-title">与我们取得联系</h2>
           </div>
 
-          <div className="grid grid-3" style={{ gap: '24px' }}>
-            <div className="card" style={{ textAlign: 'center', padding: '32px' }}>
-              <div className="card-icon" style={{ margin: '0 auto 16px', background: '#f0f9ff', color: 'var(--teal)' }}>
+          <div className={["grid grid-3", pageStyles.section4].filter(Boolean).join(' ')} >
+            <div className={["card", pageStyles.section10].filter(Boolean).join(' ')} >
+              <div className={["card-icon", pageStyles.section11].filter(Boolean).join(' ')} >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
               </div>
               <h4 className="card-title">邮件联系</h4>
@@ -300,15 +269,15 @@ export default function AboutPage() {
                 <a href="mailto:yanceai@163.com">yanceai@163.com</a>
               </p>
             </div>
-            <div className="card" style={{ textAlign: 'center', padding: '32px' }}>
-              <div className="card-icon" style={{ margin: '0 auto 16px', background: '#f0fdf4', color: '#16a34a' }}>
+            <div className={["card", pageStyles.section10].filter(Boolean).join(' ')} >
+              <div className={["card-icon", pageStyles.section12].filter(Boolean).join(' ')} >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="3" width="10" height="18" rx="1"/><path d="M14 9h5a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-5"/><path d="M7 7h4M7 11h4M7 15h4"/></svg>
               </div>
               <h4 className="card-title">公司地址</h4>
               <p className="card-desc">上海市徐汇区</p>
             </div>
-            <div className="card" style={{ textAlign: 'center', padding: '32px' }}>
-              <div className="card-icon" style={{ margin: '0 auto 16px', background: '#fff7ed', color: '#a54709' }}>
+            <div className={["card", pageStyles.section10].filter(Boolean).join(' ')} >
+              <div className={["card-icon", pageStyles.section13].filter(Boolean).join(' ')} >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/></svg>
               </div>
               <h4 className="card-title">联系邮箱</h4>
@@ -322,10 +291,8 @@ export default function AboutPage() {
 
       {/* CTA */}
       <section
-        className="cta-section"
-        style={{
-          background: 'linear-gradient(135deg, #0d1b2a 0%, #1b2d44 50%, #0d1b2a 100%)',
-        }}
+        className={["cta-section", pageStyles.section14].filter(Boolean).join(' ')}
+
       >
         <div className="container">
           <h2 className="cta-title">从企业的政策需求开始</h2>
@@ -335,8 +302,8 @@ export default function AboutPage() {
           <div className="cta-actions">
             <Link
               href="/login?register=1"
-              className="btn btn-lg"
-              style={{ background: '#f97316', color: '#fff', borderColor: '#f97316', borderRadius: '12px' }}
+              className={["btn btn-lg", pageStyles.link].filter(Boolean).join(' ')}
+
             >
               免费注册
             </Link>

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
 import SmsAuth from '@/components/auth/SmsAuth';
 import { safeReturnPath } from '@/lib/return-path';
+import pageStyles from './page.module.css';
 
 function LoginContent() {
   const router = useRouter();
@@ -241,7 +242,7 @@ function LoginContent() {
   };
 
   return (
-    <div className="yc-auth-page">
+    <div className={pageStyles.scope}>
       <div className="yc-auth-container">
         <div className="yc-auth-card">
           <div className="yc-auth-header">
@@ -472,52 +473,13 @@ function LoginContent() {
           </>}
         </div>
       </div>
-
-      <style jsx>{`
-        .yc-auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--paper); padding: 110px 20px 60px; }
-        .yc-auth-container { width: 100%; max-width: 480px; }
-        .yc-auth-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 40px 36px; box-shadow: var(--shadow-document); }
-        .yc-auth-header { text-align: center; margin-bottom: 28px; }
-        .yc-auth-logo { width: 56px; height: 56px; margin-bottom: 12px; }
-        .yc-auth-header h1 { font-size: 22px; font-weight: 700; color: var(--ink); margin: 0 0 6px; }
-        .yc-auth-subtitle { color: var(--muted); font-size: 13px; margin: 0; }
-        .yc-auth-tabs { display: flex; background: var(--surface-inset); border-radius: 8px; padding: 4px; margin-bottom: 20px; }
-        .yc-auth-tab { flex: 1; padding: 10px; border: none; background: transparent; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all 0.2s; }
-        .yc-auth-tab.active { background: #fff; color: var(--ink); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
-        .yc-auth-subtabs { display: flex; gap: 16px; border-bottom: 1px solid #e2e8f0; margin-bottom: 16px; }
-        .yc-auth-subtab { padding: 8px 2px; border: none; background: transparent; font-size: 13px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
-        .yc-auth-subtab.active { color: #126a9a; font-weight: 600; border-bottom-color: #126a9a; }
-        .yc-auth-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
-        .yc-auth-notice { background: #f0f9ff; border: 1px solid #bae6fd; color: #0369a1; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
-        .yc-auth-form { display: flex; flex-direction: column; gap: 14px; }
-        .yc-form-group label { display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 4px; }
-        .yc-required { color: #f97316; }
-        .yc-form-group input, .yc-form-group select { width: 100%; padding: 11px 14px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 14px; outline: none; background: #fff; }
-        .yc-form-group input:focus, .yc-form-group select:focus { border-color: #126a9a; box-shadow: 0 0 0 3px rgba(18, 106, 154, 0.12); }
-        .yc-form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .yc-code-row { display: flex; gap: 10px; }
-        .yc-code-row input { flex: 1; }
-        .yc-code-send { flex-shrink: 0; padding: 0 16px; border: 1px solid #126a9a; border-radius: 10px; background: #fff; color: #126a9a; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
-        .yc-code-send:hover:not(:disabled) { background: #f0f7fb; }
-        .yc-code-send:disabled { border-color: #cbd5e1; color: #94a3b8; cursor: not-allowed; }
-        .yc-link-btn { background: none; border: none; color: #126a9a; font-size: 12px; cursor: pointer; padding: 0; text-decoration: underline; }
-        .yc-link-btn:hover { color: #0d4f74; }
-        .yc-btn-full { width: 100%; padding: 13px; font-size: 15px; margin-top: 4px; }
-        .yc-auth-hint { text-align: center; font-size: 12px; color: var(--muted); margin: 8px 0 0; }
-        .yc-agree-group { margin-top: 2px; }
-        .yc-agree-label { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: #374151; cursor: pointer; line-height: 1.5; }
-        .yc-agree-label input[type='checkbox'] { width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; cursor: pointer; accent-color: #126a9a; }
-        .yc-agree-label a { color: #126a9a; text-decoration: none; }
-        .yc-agree-label a:hover { text-decoration: underline; }
-        @media (max-width: 500px) { .yc-form-row-2 { grid-template-columns: 1fr; } }
-      `}</style>
     </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>加载中...</div>}>
+    <Suspense fallback={<div className={pageStyles.layout}>加载中...</div>}>
       <LoginContent />
     </Suspense>
   );

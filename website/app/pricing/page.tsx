@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api, { ProductCatalogItem } from '@/lib/api';
 import { productPresentation } from '@/lib/product-presentation';
+import pageStyles from './page.module.css';
 
 export default function PricingPage() {
   const router = useRouter();
@@ -45,9 +46,9 @@ export default function PricingPage() {
 
   return (
     <>
-      <section className="page-banner" style={{ background: 'linear-gradient(135deg, #0d1b2a 0%, #1b2d44 60%, #0d1b2a 100%)' }}>
+      <section className={["page-banner", pageStyles.section].filter(Boolean).join(' ')} >
         <div className="container">
-          <span className="badge" style={{ background: 'rgba(14,165,233,0.2)', color: 'var(--teal)', marginBottom: '16px' }}>按次付费</span>
+          <span className={["badge", pageStyles.label].filter(Boolean).join(' ')} >按次付费</span>
           <h1>按次购买，需要时再买</h1>
           <p>先免费发现机会，再按需要购买。金额来自服务端目录；项目产品单独标注开通状态，购买前请核对交付范围与账户权益。</p>
         </div>
@@ -58,9 +59,9 @@ export default function PricingPage() {
           {loading ? (
             <div role="status"><span className="yc-visually-hidden">加载产品目录...</span><div className="grid grid-4 pricing-loading" aria-hidden="true">{[0,1,2,3].map(item => <div className="pricing-card" key={item}><div className="pricing-placeholder" /><div className="pricing-placeholder" /><div className="pricing-placeholder" /></div>)}</div></div>
           ) : error ? (
-            <div role="alert" style={{ textAlign: 'center', padding: '60px 0', color: '#b91c1c' }}><p>{error}</p><button type="button" className="btn btn-outline" onClick={() => setRetry(value => value + 1)}>重新加载产品目录</button></div>
+            <div role="alert" className={pageStyles.section2}><p>{error}</p><button type="button" className="btn btn-outline" onClick={() => setRetry(value => value + 1)}>重新加载产品目录</button></div>
           ) : products.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--muted)' }}>
+            <div className={pageStyles.section3}>
               当前没有已启用的产品。这里不会用静态价格代替真实服务端目录。
             </div>
           ) : (
@@ -73,13 +74,13 @@ export default function PricingPage() {
                 return (
                   <article aria-label={presentation.name} key={product.code} className={`pricing-card${isFeatured ? ' pricing-card-featured' : ''}`} style={isFeatured ? { borderColor: 'var(--teal)' , borderWidth: '1px' } : {}}>
                     {isFeatured && (
-                      <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', padding: '4px 16px', background: 'var(--teal)' , color: '#fff', fontSize: '0.75rem', fontWeight: 600, borderRadius: '9999px', whiteSpace: 'nowrap' }}>按需首购</div>
+                      <div className={pageStyles.section4}>按需首购</div>
                     )}
                     <h2 className="pricing-name">{presentation.name}</h2>
                     <p className="pricing-desc">{isPurchasableHere ? '按次使用 · 具体权益以购买页面为准' : '待开通 · 目录产品，交付待验收'}</p>
                     <div className="pricing-price">
                       {displayedPrice === 0 ? (
-                        <span style={{ color: '#16a34a' }}>免费</span>
+                        <span className={pageStyles.label2}>免费</span>
                       ) : (
                         <>
                           ¥{displayedPrice}
@@ -96,7 +97,7 @@ export default function PricingPage() {
                       disabled={!isPurchasableHere}
                       className={`btn ${isFeatured ? '' : 'btn-outline'}`}
                       style={isFeatured
-                        ? { background: 'var(--teal)' , color: '#fff', borderColor: 'var(--teal)' , borderRadius: '12px', width: '100%', cursor: isPurchasableHere ? 'pointer' : 'not-allowed' }
+                        ? { background: 'var(--teal)' , color: 'var(--surface)', borderColor: 'var(--teal)' , borderRadius: '12px', width: '100%', cursor: isPurchasableHere ? 'pointer' : 'not-allowed' }
                         : { borderRadius: '12px', width: '100%', cursor: isPurchasableHere ? 'pointer' : 'not-allowed' }}
                     >
                       {product.code === 'FREE_POLICY_MATCH'
@@ -121,8 +122,8 @@ export default function PricingPage() {
             <span className="section-label">产品阶梯</span>
             <h2 className="section-title">按交付选择，按证据推进</h2>
           </div>
-          <div className="card" style={{ padding: '32px', textAlign: 'center' }}>
-            <p style={{ color: '#475569', margin: 0 }}>
+          <div className={["card", pageStyles.section5].filter(Boolean).join(' ')} >
+            <p className={pageStyles.description}>
               企业资料 → 政策初筛 → 条件与证据核对 → 材料准备 → 客户自主复核。目录价格来自服务端；套餐名称是交付范围说明，不改变商品编号、历史订单或已有权益。
             </p>
           </div>
@@ -136,11 +137,11 @@ export default function PricingPage() {
             <span className="section-label">我们的承诺</span>
             <h2 className="section-title">AI 辅助，不伪造</h2>
           </div>
-          <div className="card" style={{ padding: '32px' }}>
-            <p style={{ fontSize: '0.95rem', lineHeight: 1.7, color: '#334155', marginBottom: '16px' }}>
+          <div className={["card", pageStyles.section6].filter(Boolean).join(' ')} >
+            <p className={pageStyles.description2}>
               政策与原文由服务器采集，企业资料由客户提供。采集入库不代表已核验、完整或仍然有效；复核由客户本人或客户授权团队完成。
             </p>
-            <ul style={{ paddingLeft: '24px', color: 'var(--muted)', fontSize: '0.9rem', lineHeight: 1.8 }}>
+            <ul className={pageStyles.section7}>
               <li>核对政策来源、有效期与当期申报截止时间</li>
               <li>缺失资料保持证据不足，客户确认不等于政府认定</li>
               <li>不承诺申报成功率，不承诺获得补贴金额</li>
@@ -160,12 +161,12 @@ export default function PricingPage() {
         </div>
       </section>
       {/* CTA */}
-      <section className="cta-section" style={{ background: 'linear-gradient(135deg, #0d1b2a 0%, #1b2d44 50%, #0d1b2a 100%)' }}>
+      <section className={["cta-section", pageStyles.section8].filter(Boolean).join(' ')} >
         <div className="container">
           <h2 className="cta-title">创建工作区，开始政策机会初筛</h2>
           <p className="cta-subtitle">免费注册即可体验政策匹配，无需信用卡。</p>
           <div className="cta-actions">
-            <button onClick={() => api.isAuthenticated() ? router.push('/dashboard') : router.push('/login?register=1')} className="btn btn-lg" style={{ background: 'var(--teal)' , color: '#fff', borderColor: 'var(--teal)' , borderRadius: '12px', cursor: 'pointer' }}>免费开始</button>
+            <button onClick={() => api.isAuthenticated() ? router.push('/dashboard') : router.push('/login?register=1')} className={["btn btn-lg", pageStyles.action].filter(Boolean).join(' ')} >免费开始</button>
             <a href="mailto:yanceai@163.com" className="btn btn-outline-white btn-lg">企业定制咨询</a>
           </div>
         </div>

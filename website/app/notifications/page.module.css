@@ -1,0 +1,29 @@
+.section {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.section2 {
+  min-width: 0;
+  flex: 1;
+}
+
+.layout {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.section3 {
+  font-size: 14.5px;
+}
+
+.section4 {
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+.section5 {
+  margin-top: 6px;
+}

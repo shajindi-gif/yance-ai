@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import pageStyles from './page.module.css';
 
 export const metadata = {
   title: '政策知识库 | 衍策引擎AI',
@@ -12,19 +13,13 @@ export default function PolicyKnowledgeBasePage() {
     <>
       {/* Page Banner */}
       <section
-        className="page-banner"
-        style={{
-          background: 'linear-gradient(135deg, #0d1b2a 0%, #1b2d44 60%, #0d1b2a 100%)',
-        }}
+        className={["page-banner", pageStyles.section].filter(Boolean).join(' ')}
+
       >
         <div className="container">
           <span
-            className="badge"
-            style={{
-              background: 'rgba(18,106,154,0.16)',
-              color: 'var(--teal)',
-              marginBottom: '16px',
-            }}
+            className={["badge", pageStyles.label].filter(Boolean).join(' ')}
+
           >
             政策知识库
           </span>
@@ -46,7 +41,7 @@ export default function PolicyKnowledgeBasePage() {
             </p>
           </div>
 
-          <div className="card-flat" style={{ padding: '24px 28px', display: 'flex', flexWrap: 'wrap', gap: '8px 28px', alignItems: 'center', justifyContent: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+          <div className={["card-flat", pageStyles.layout].filter(Boolean).join(' ')} >
             <span>政策文件总数 · 待统计</span>
             <span>覆盖城市 · 待统计</span>
             <span>更新频率 · 待统计</span>
@@ -63,9 +58,9 @@ export default function PolicyKnowledgeBasePage() {
             <h2 className="section-title">多维度政策分类</h2>
           </div>
 
-          <div className="grid grid-3" style={{ gap: '24px' }}>
-            <div className="card" style={{ borderTop: '3px solid #126a9a' }}>
-              <div className="card-icon" style={{ background: '#f0f9ff', color: 'var(--teal)' }}>
+          <div className={["grid grid-3", pageStyles.section2].filter(Boolean).join(' ')} >
+            <div className={["card", pageStyles.section3].filter(Boolean).join(' ')} >
+              <div className={["card-icon", pageStyles.section4].filter(Boolean).join(' ')} >
                 &#x1F3DB;&#xFE0F;
               </div>
               <h3 className="card-title">按行政级别</h3>
@@ -76,8 +71,8 @@ export default function PolicyKnowledgeBasePage() {
                 <li>区级政策 (开发区/高新区)</li>
               </ul>
             </div>
-            <div className="card" style={{ borderTop: '3px solid #16a34a' }}>
-              <div className="card-icon" style={{ background: '#f0fdf4', color: '#16a34a' }}>
+            <div className={["card", pageStyles.section5].filter(Boolean).join(' ')} >
+              <div className={["card-icon", pageStyles.section6].filter(Boolean).join(' ')} >
                 &#x1F3ED;
               </div>
               <h3 className="card-title">按行业领域</h3>
@@ -89,8 +84,8 @@ export default function PolicyKnowledgeBasePage() {
                 <li>先进制造与智能制造</li>
               </ul>
             </div>
-            <div className="card" style={{ borderTop: '3px solid #f97316' }}>
-              <div className="card-icon" style={{ background: '#fff7ed', color: '#f97316' }}>
+            <div className={["card", pageStyles.section3].filter(Boolean).join(' ')} >
+              <div className={["card-icon", pageStyles.section7].filter(Boolean).join(' ')} >
                 &#x1F4CB;
               </div>
               <h3 className="card-title">按政策类型</h3>
@@ -123,28 +118,28 @@ export default function PolicyKnowledgeBasePage() {
               <span className="badge badge-success">虚构示例</span>
             </div>
 
-            <div className="grid grid-2" style={{ gap: '24px' }}>
+            <div className={["grid grid-2", pageStyles.section2].filter(Boolean).join(' ')} >
               <div>
-                <h4 style={{ marginBottom: '16px', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                <h4 className={pageStyles.heading}>
                   原始政策文本
                 </h4>
                 <div
-                  className="card-flat"
-                  style={{ background: 'var(--bg-alt)', fontSize: '0.875rem', lineHeight: 1.8 }}
+                  className={["card-flat", pageStyles.section8].filter(Boolean).join(' ')}
+
                 >
-                  <p style={{ color: 'var(--text)', fontWeight: 600 }}>
+                  <p className={pageStyles.description}>
                     示例政策 A（非真实政策文件）
                   </p>
-                  <p style={{ marginTop: '12px', color: 'var(--text-secondary)' }}>
+                  <p className={pageStyles.description2}>
                     本段仅用于演示标题、发布机构、适用条件、日期与权益字段如何被结构化。
                   </p>
                 </div>
               </div>
               <div>
-                <h4 style={{ marginBottom: '16px', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                <h4 className={pageStyles.heading}>
                   结构化输出
                 </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div className={pageStyles.layout2}>
                   {[
                     { label: '政策名称', value: '示例政策 A' },
                     { label: '发布机构', value: '示例发布机构' },
@@ -152,19 +147,13 @@ export default function PolicyKnowledgeBasePage() {
                     { label: '申报截止', value: '待来源解析' },
                     { label: '补贴标准', value: '待来源解析' },
                   ].map((field) => (
-                    <div key={field.label} className="card-flat" style={{ padding: '10px 16px' }}>
+                    <div key={field.label} className={["card-flat", pageStyles.section9].filter(Boolean).join(' ')} >
                       <span
-                        style={{
-                          fontWeight: 600,
-                          fontSize: '0.7rem',
-                          color: 'var(--text-tertiary)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                        }}
+                        className={pageStyles.label2}
                       >
                         {field.label}
                       </span>
-                      <p style={{ color: 'var(--text)', fontSize: '0.875rem', marginTop: '2px' }}>
+                      <p className={pageStyles.description3}>
                         {field.value}
                       </p>
                     </div>
@@ -184,12 +173,12 @@ export default function PolicyKnowledgeBasePage() {
             <h2 className="section-title">政策问答与引用溯源</h2>
           </div>
 
-          <div className="grid grid-2" style={{ gap: '32px' }}>
-            <div className="card" style={{ padding: '32px' }}>
-              <h3 className="card-title" style={{ marginBottom: '24px' }}>
+          <div className={["grid grid-2", pageStyles.section10].filter(Boolean).join(' ')} >
+            <div className={["card", pageStyles.section11].filter(Boolean).join(' ')} >
+              <h3 className={["card-title", pageStyles.heading2].filter(Boolean).join(' ')} >
                 DEMO：无真实来源时的回答边界
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className={pageStyles.layout3}>
                 {[
                   {
                     q: '某项认定需要多少项知识产权？',
@@ -204,33 +193,18 @@ export default function PolicyKnowledgeBasePage() {
                 ].map((qa) => (
                   <div
                     key={qa.q}
-                    style={{
-                      background: 'var(--bg-alt)',
-                      padding: '20px',
-                      borderRadius: '12px',
-                      borderLeft: '3px solid #126a9a',
-                    }}
+                    className={pageStyles.section12}
                   >
                     <p
-                      style={{
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        color: 'var(--text)',
-                        marginBottom: '8px',
-                      }}
+                      className={pageStyles.description4}
                     >
                       Q: {qa.q}
                     </p>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                    <p className={pageStyles.description5}>
                       A: {qa.a}
                     </p>
                     <p
-                      style={{
-                        fontSize: '0.75rem',
-                        color: 'var(--teal)',
-                        marginTop: '8px',
-                        fontWeight: 500,
-                      }}
+                      className={pageStyles.description6}
                     >
                       来源：{qa.src}
                     </p>
@@ -264,10 +238,8 @@ export default function PolicyKnowledgeBasePage() {
 
       {/* CTA */}
       <section
-        className="cta-section"
-        style={{
-          background: 'linear-gradient(135deg, #0d1b2a 0%, #1b2d44 50%, #0d1b2a 100%)',
-        }}
+        className={["cta-section", pageStyles.section13].filter(Boolean).join(' ')}
+
       >
         <div className="container">
           <h2 className="cta-title">注册体验智能政策知识库</h2>
@@ -277,8 +249,8 @@ export default function PolicyKnowledgeBasePage() {
           <div className="cta-actions">
             <Link
               href="/login?register=1"
-              className="btn btn-lg"
-              style={{ background: '#f97316', color: '#fff', borderColor: '#f97316', borderRadius: '12px' }}
+              className={["btn btn-lg", pageStyles.link].filter(Boolean).join(' ')}
+
             >
               免费注册
             </Link>

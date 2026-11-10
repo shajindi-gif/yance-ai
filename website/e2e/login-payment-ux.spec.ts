@@ -23,6 +23,8 @@ test('two identity entrances, code signup and legacy email password access',asyn
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 test('return URL cannot claim payment; retry displays only server-confirmed order state',async({page})=>{
+ const pageErrors:string[]=[];
+ page.on('pageerror',error=>pageErrors.push(error.message));
  await page.addInitScript(()=>localStorage.setItem('yance_token','synthetic-contract'));
  let paid=false;
  await page.route('**/api/v1/orders',r=>r.fulfill({json:[{id:'test-order',order_no:'SYNTHETIC',amount:99,status:paid?'paid':'created'}]}));
@@ -33,6 +35,8 @@ test('return URL cannot claim payment; retry displays only server-confirmed orde
  await page.getByRole('button',{name:'刷新付款结果'}).click();
  await expect(page.getByRole('heading',{name:'付款已确认'})).toBeVisible();
  await expect(page.getByRole('link',{name:'获取报告 →'})).toBeVisible();
+ await expect(page.getByRole('link',{name:'申请开票'})).toHaveAttribute('href','/billing');
+ expect(pageErrors).toEqual([]);
 });
 
 test('resume uses server price and payment channel and never creates another order',async({page})=>{

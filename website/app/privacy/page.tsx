@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
+import pageStyles from './page.module.css';
 
 export const metadata: Metadata = { title: '隐私政策 | 衍策引擎AI' };
 
 export default function PrivacyPage() {
   return (
     <>
-      <section className="page-banner" style={{ background: 'linear-gradient(135deg, #0d1b2a 0%, #1b2d44 60%, #0d1b2a 100%)' }}>
+      <section className={["page-banner", pageStyles.section].filter(Boolean).join(' ')} >
         <div className="container">
           <h1>隐私政策</h1>
           <p>上海衍策引擎人工智能科技有限公司重视并保护用户隐私。</p>

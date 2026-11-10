@@ -1,0 +1,21 @@
+{
+  "pages": 47,
+  "viewports": [
+    390,
+    768,
+    1440
+  ],
+  "render_checks": 141,
+  "render_errors": 0,
+  "core_browser_tests": 13,
+  "payment_final_tests": 6,
+  "unit_tests": 6,
+  "detail_viewport_checks": 15,
+  "detail_authorization_checks": 5,
+  "lint": "passed",
+  "typecheck": "passed",
+  "build": "passed",
+  "real_transactions": "not executed",
+  "cross_browser": "not executed",
+  "performance": "not measured"
+}

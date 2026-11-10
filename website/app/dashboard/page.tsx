@@ -23,6 +23,7 @@ import api, {
   type PolicyScan,
   type Tenant,
 } from "@/lib/api";
+import pageStyles from './page.module.css';
 
 interface DashboardState {
   tenant: Tenant;
@@ -201,7 +202,7 @@ export default function DashboardPage() {
             {Object.keys(data.funding.pipeline).length === 0 ? (
               <p className={content.cardIntro}>尚无申报进入管道。</p>
             ) : (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <div className={pageStyles.layout}>
                 {Object.entries(data.funding.pipeline).map(([status, count]) => (
                   <Badge key={status} tone={status === "completed" ? "success" : status === "cancelled" ? "neutral" : "info"}>
                     {status} · {count}
@@ -209,7 +210,7 @@ export default function DashboardPage() {
                 ))}
               </div>
             )}
-            <div className={content.actionRow} style={{ marginTop: 12 }}>
+            <div className={[content.actionRow, pageStyles.section].filter(Boolean).join(' ')} >
               <Link href="/projects" className={flow.link}>查看完整管道与里程碑</Link>
               <Link href="/notifications" className={flow.link}>通知中心</Link>
             </div>
@@ -235,7 +236,7 @@ export default function DashboardPage() {
       ) : null}
 
       {data.funding && data.funding.upcoming_tasks.length > 0 ? (
-        <section className={content.card} style={{ marginBottom: 20 }}>
+        <section className={[content.card, pageStyles.section2].filter(Boolean).join(' ')} >
           <div className={content.cardHeader}>
             <div><h2>近期任务</h2><p className={content.cardIntro}>未完成里程碑按截止日排序。</p></div>
             <Link href="/projects" className={flow.link}>管理</Link>

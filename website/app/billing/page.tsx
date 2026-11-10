@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import AppShell from "@/components/workspace/AppShell";
 import styles from "@/components/workspace/Enterprise.module.css";
 import api, { type BillingOverview, type InvoiceItem, type PlanCatalogItem } from "@/lib/api";
+import pageStyles from './page.module.css';
 
 const METER_LABELS: Record<string, string> = { policy_scans: "政策扫描", companies: "企业", reports: "报告", documents: "资料", generated_documents: "生成文档", agent_runs: "Agent Runs", users: "用户", storage_bytes: "存储" };
 const INVOICE_STATUS: Record<string, { label: string; tone: "success" | "warning" | "danger" | "neutral" }> = {
@@ -60,20 +61,20 @@ function InvoiceSection({ orders }: { orders: BillingOverview["orders"] }) {
     {message ? <InlineAlert tone="info">{message}</InlineAlert> : null}
     {paidWithoutInvoice.length ? <div className={styles.rows}>
       <div className={styles.row}>
-        <select aria-label="选择订单" value={orderId} onChange={(e) => setOrderId(e.target.value)} style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0" }}>
+        <select aria-label="选择订单" value={orderId} onChange={(e) => setOrderId(e.target.value)} className={pageStyles.section}>
           <option value="">选择已支付订单：{paidWithoutInvoice[0] ? `${paidWithoutInvoice[0].product_code} · ${amount(paidWithoutInvoice[0].amount, paidWithoutInvoice[0].currency)}` : ""}</option>
           {paidWithoutInvoice.map((o) => <option key={o.id} value={o.id}>{o.product_code} · {o.order_no} · {amount(o.amount, o.currency)}</option>)}
         </select>
       </div>
-      <div className={styles.row}><input placeholder="发票抬头（公司全称）" value={title} onChange={(e) => setTitle(e.target.value)} style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", flex: 1 }} /></div>
-      <div className={styles.row}><input placeholder="纳税人识别号（15-20 位）" value={taxNumber} onChange={(e) => setTaxNumber(e.target.value)} style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid #e2e8f0", flex: 1 }} /></div>
+      <div className={styles.row}><input placeholder="发票抬头（公司全称）" value={title} onChange={(e) => setTitle(e.target.value)} className={pageStyles.section2} /></div>
+      <div className={styles.row}><input placeholder="纳税人识别号（15-20 位）" value={taxNumber} onChange={(e) => setTaxNumber(e.target.value)} className={pageStyles.section2} /></div>
       <div className={styles.row}><Button type="button" disabled={busy || !title.trim() || taxNumber.trim().length < 15} onClick={submit}>{busy ? "提交中…" : "申请开票"}</Button></div>
     </div> : <EmptyState icon="—" title="暂无可开票订单" description="完成支付后可在此申请数电票。" />}
     {invoices.length ? <div className={styles.rows}>{invoices.map((inv) => {
       const st = INVOICE_STATUS[inv.status] || { label: inv.status, tone: "neutral" as const };
       return <div className={styles.row} key={inv.id}>
         <strong>{inv.title}<small className={styles.muted}> · {inv.invoice_no} · {amount(inv.total_amount, "CNY")}</small></strong>
-        <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <span className={pageStyles.label}>
           <Badge tone={st.tone}>{st.label}</Badge>
           {inv.status === "rejected" && inv.review_note ? <small className={styles.muted} title={inv.review_note}>原因：{inv.review_note}</small> : null}
           {inv.status === "issued" ? <Button type="button" variant="secondary" onClick={() => download(inv)}>下载发票</Button> : null}

@@ -1,0 +1,21 @@
+.section {
+  border-radius: 4px;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.section2 {
+  text-align: center;
+}
+
+.description {
+  color: var(--text-inverse-secondary);
+  margin-bottom: 24px;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section3 {
+  justify-content: center;
+}

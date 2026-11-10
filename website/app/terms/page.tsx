@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
+import pageStyles from './page.module.css';
 
 export const metadata: Metadata = { title: '服务条款 | 衍策引擎AI' };
 
 export default function TermsPage() {
   return (
     <>
-      <section className="page-banner" style={{ background: 'linear-gradient(135deg, #0d1b2a 0%, #1b2d44 60%, #0d1b2a 100%)' }}>
+      <section className={["page-banner", pageStyles.section].filter(Boolean).join(' ')} >
         <div className="container">
           <h1>服务条款</h1>
           <p>使用衍策引擎AI 服务前，请仔细阅读以下条款。</p>
