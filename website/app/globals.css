@@ -1,9 +1,3 @@
-/* ============================================
-   YanCe Policy Agent — Design System
-   FiscalNote x Phia.com Fusion
-   Global Styles & Component Library
-   ============================================ */
-
 /* -------------------------------------------
    1. CSS Reset & Custom Properties
    ------------------------------------------- */
@@ -38,23 +32,16 @@
   --coral-glow: rgba(249, 115, 22, 0.15);
 
   /* Surfaces */
-  --bg: #ffffff;
-  --bg-alt: #f8fafc;
   --bg-dark: #0d1b2a;
   --bg-dark-alt: #162236;
   --card: #ffffff;
   --card-hover: #f1f5f9;
 
   /* Text */
-  --text: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
   --text-inverse: #f8fafc;
   --text-inverse-secondary: #cbd5e1;
 
   /* Borders */
-  --border: #e2e8f0;
-  --border-light: #f1f5f9;
   --border-dark: #cbd5e1;
 
   /* Status */
@@ -103,9 +90,6 @@
 
   /* Border Radius */
   --radius-sm: 8px;
-  --radius: 12px;
-  --radius-lg: 20px;
-  --radius-xl: 24px;
   --radius-full: 9999px;
 
   /* Shadows */
@@ -116,9 +100,6 @@
     0 4px 6px -4px rgba(0, 0, 0, 0.04);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08),
     0 8px 10px -6px rgba(0, 0, 0, 0.04);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-card-hover: 0 10px 25px rgba(0, 0, 0, 0.08),
-    0 4px 10px rgba(0, 0, 0, 0.04);
   --shadow-glow-teal: 0 0 0 transparent; /* 去霓虹：发光效果统一移除 */
   --shadow-glow-coral: 0 0 0 transparent;
 
@@ -135,6 +116,30 @@
   --z-overlay: 300;
   --z-modal: 400;
   --z-toast: 500;
+  --paper:#f7f6f2;
+  --surface:#ffffff;
+  --ink:#252724;
+  --muted:#60635e;
+  --line:#dedfd7;
+  --accent:#126a9a;
+  --accent-soft:#e9f2f5;
+  --focus:#126a9a;
+  --bg:var(--paper);
+  --bg-alt:#eff1ec;
+  --text:var(--ink);
+  --text-secondary:var(--muted);
+  --text-muted:#637176;
+  --border:var(--line);
+  --border-light:#e9ece7;
+  --radius:8px;
+  --radius-lg:12px;
+  --radius-xl:16px;
+  --shadow-card:0 1px 2px #20303806;
+  --surface-inset:#efeee8;
+  --shadow-document:0 2px 4px #20303805,0 16px 40px -24px #20303830;
+  --shadow-overlay:0 12px 48px -12px #20303840;
+  --space-section:clamp(48px,6vw,88px);
+  --shadow-card-hover:0 4px 14px #20303808;
 }
 
 /* -------------------------------------------
@@ -152,9 +157,8 @@ body {
   font-family: var(--font-sans);
   font-size: var(--text-base);
   line-height: 1.6;
-  color: var(--text);
   background-color: var(--bg);
-  overflow-x: hidden;
+  overflow-x: hidden; color:var(--ink); background:var(--paper);
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -281,10 +285,8 @@ code {
   display: inline-block;
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--teal);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-3); letter-spacing:.05em; color:var(--teal);
 }
 
 .grid {
@@ -339,10 +341,8 @@ code {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 72px;
-  max-width: var(--container);
   margin: 0 auto;
-  padding: 0 var(--space-6);
+  padding: 0 var(--space-6); max-width:1280px; height:76px;
 }
 
 .header-logo {
@@ -401,8 +401,7 @@ code {
 /* Desktop Navigation */
 .header-nav {
   display: flex;
-  align-items: center;
-  gap: var(--space-1);
+  align-items: center; gap:4px;
 }
 
 .header-nav > a,
@@ -537,8 +536,7 @@ code {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  z-index: calc(var(--z-overlay) + 1);
+  z-index: calc(var(--z-overlay) + 1); gap:18px;
 }
 
 .header-login {
@@ -571,10 +569,9 @@ code {
   display: block;
   width: 100%;
   height: 2px;
-  background: var(--text);
   border-radius: 2px;
   transition: transform var(--duration-base) var(--ease-out),
-    opacity var(--duration-fast) var(--ease-out);
+    opacity var(--duration-fast) var(--ease-out); background:var(--ink);
 }
 
 .mobile-toggle.open span:nth-child(1) {
@@ -597,7 +594,6 @@ code {
   bottom: 0;
   width: 320px;
   max-width: 85vw;
-  background: var(--bg);
   z-index: var(--z-overlay);
   padding: 88px var(--space-6) var(--space-8);
   transform: translateX(100%);
@@ -606,7 +602,7 @@ code {
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-1); background:var(--paper);
 }
 
 .mobile-menu.open {
@@ -1260,18 +1256,14 @@ code {
 }
 
 .pricing-card {
-  background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
   padding: var(--space-8);
   position: relative;
   transition: transform var(--duration-base) var(--ease-out),
-    box-shadow var(--duration-base) var(--ease-out);
+    box-shadow var(--duration-base) var(--ease-out); background:var(--surface); border-radius:12px;
 }
 
-.pricing-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-card-hover);
+.pricing-card:hover { box-shadow:var(--shadow-card-hover); transform:none;
 }
 
 .pricing-card.featured {
@@ -1494,9 +1486,8 @@ code {
    15. Footer
    ------------------------------------------- */
 .footer {
-  background: var(--bg-dark);
   color: var(--text-inverse-secondary);
-  padding: 80px 0 0;
+  padding: 80px 0 0; border-top:1px solid var(--line); padding-top:56px; background:var(--surface-inset);
 }
 
 .footer-grid {
@@ -1556,11 +1547,9 @@ code {
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-sm);
-  color: var(--text-inverse-secondary);
   transition: background var(--duration-fast) var(--ease-out),
-    color var(--duration-fast) var(--ease-out);
+    color var(--duration-fast) var(--ease-out); color:var(--teal-dark); border-color:var(--line); background:white;
 }
 
 .footer-social a:hover {
@@ -1632,10 +1621,9 @@ code {
 
 .footer-deploy-tag {
   font-size: var(--text-xs);
-  color: var(--text-muted);
   padding: 2px 8px;
   border: 1px solid var(--border-subtle, rgba(255,255,255,0.1));
-  border-radius: 6px;
+  border-radius: 6px; background:#e1e8e2; border-color:var(--line); color:#465a55;
 }
 
 .footer-legal a:hover {
@@ -1872,10 +1860,8 @@ code {
    19. Page Banner (Sub-pages)
    ------------------------------------------- */
 .page-banner {
-  background: linear-gradient(165deg, var(--navy) 0%, var(--navy-mid) 100%);
-  padding: 140px 0 80px;
   position: relative;
-  overflow: hidden;
+  overflow: hidden; background:var(--paper) !important; border-bottom:1px solid var(--line); padding:140px 0 65px;
 }
 
 .page-banner::before {
@@ -1886,7 +1872,7 @@ code {
   width: 50%;
   height: 100%;
   background: radial-gradient(ellipse at 70% 50%, rgba(18, 106, 154, 0.08) 0%, transparent 60%);
-  pointer-events: none;
+  pointer-events: none; display:none;
 }
 
 .page-banner-content {
@@ -1923,10 +1909,7 @@ code {
 }
 
 .page-banner h1 {
-  font-size: var(--text-4xl);
-  font-weight: 800;
-  color: var(--text-inverse);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-4); color:var(--ink); font-size:clamp(30px,4vw,48px); font-weight:550; line-height:1.4; letter-spacing:-.035em; max-width:24ch; margin-inline:auto;
 }
 
 .page-banner p {
@@ -2499,16 +2482,14 @@ main {
    26. Header Logo Image
    ------------------------------------------- */
 .header-logo-img {
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
+  flex-shrink: 0; width:34px; height:34px; border-radius:6px;
 }
 
 /* -------------------------------------------
    27. Footer Logo Image
    ------------------------------------------- */
 .footer-brand-logo-img {
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
+  flex-shrink: 0; width:36px; height:36px; border-radius:6px;
 }
 
 /* -------------------------------------------
@@ -2516,8 +2497,7 @@ main {
    ------------------------------------------- */
 .btn-outline {
   background: transparent;
-  color: var(--teal);
-  border: 1.5px solid var(--teal);
+  border: 1.5px solid var(--teal); border-color:#bac6c8; color:var(--ink);
 }
 
 .btn-outline:hover {

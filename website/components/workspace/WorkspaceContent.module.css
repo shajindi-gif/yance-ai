@@ -86,7 +86,7 @@
 
 .table th {
   border-bottom: 1px solid var(--line);
-  background: #f4f6f2;
+  background: var(--ink);
   padding: 11px 14px;
   color: var(--muted);
   font-size: 13px;
@@ -99,7 +99,7 @@
 .table td {
   border-bottom: 1px solid #eef1f5;
   padding: 13px 14px;
-  color: #344054;
+  color: var(--ink);
   font-size: 13px;
 }
 
@@ -225,7 +225,7 @@
 
 .stageDone,
 .stageActive {
-  color: #344054;
+  color: var(--ink);
   font-weight: 600;
 }
 
@@ -327,7 +327,7 @@
 .revisionForm label {
   display: block;
   margin-bottom: 6px;
-  color: #344054;
+  color: var(--ink);
   font-size: 13px;
   font-weight: 650;
 }
@@ -336,7 +336,7 @@
   width: 100%;
   min-height: 96px;
   resize: vertical;
-  border: 1px solid #ccd5df;
+  border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
   padding: 10px 11px;

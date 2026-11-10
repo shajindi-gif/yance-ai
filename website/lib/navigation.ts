@@ -70,14 +70,14 @@ export const WORKSPACE_NAVIGATION_GROUPS: { title: string; items: WorkspaceNavIt
       },
       {
         href: "/applications",
-        label: "申报工作台",
+        label: "申报项目",
         description: "材料与执行进度",
         icon: "applications",
         match: (pathname) => pathname === "/applications" || pathname.startsWith("/applications/"),
       },
       {
         href: "/projects",
-        label: "项目管道",
+        label: "项目总览",
         description: "全生命周期与里程碑",
         icon: "projects",
         match: (pathname) => pathname === "/projects",
@@ -89,7 +89,7 @@ export const WORKSPACE_NAVIGATION_GROUPS: { title: string; items: WorkspaceNavIt
     items: [
       {
         href: "/companies",
-        label: "企业档案",
+        label: "企业资料",
         description: "画像与证据",
         icon: "companies",
         match: (pathname) => pathname === "/companies" || pathname.startsWith("/companies/"),

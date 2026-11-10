@@ -7,10 +7,10 @@ import { useNavigationDrawer } from '@/lib/use-navigation-drawer';
 
 /* 扁平导航：每个入口对应一个真实可访问的页面，无占位项、无路线图项。 */
 const NAV_LINKS = [
-  { href: '/intelligence', label: '企业情报中心' },
+  { href: '/discover', label: '查找政策' },
   { href: '/parks', label: '园区服务' },
-  { href: '/brief-maker', label: '报告与材料' },
-  { href: '/policy-knowledge-base', label: '政策库' },
+  { href: '/applications', label: '申报项目' },
+  { href: '/intelligence', label: '企业工具' },
   { href: '/pricing', label: '价格' },
   { href: '/about', label: '关于我们' },
 ];

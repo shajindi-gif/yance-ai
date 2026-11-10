@@ -12,8 +12,7 @@
   width: 248px;
   flex-direction: column;
   border-right: 1px solid var(--line);
-  background: #eef0e9;
-  color: var(--ink);
+  color: var(--ink); background:var(--surface-inset);
 }
 
 .brandRow {
@@ -28,8 +27,7 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: 11px;
-  color: #f4f6f2;
+  gap: 11px; color:var(--ink);
 }
 
 .brand:hover {
@@ -56,9 +54,7 @@
 }
 
 .brand small {
-  color: var(--muted);
-  font-size: 13px;
-  letter-spacing: 0.05em;
+  color: var(--muted); font-size:10px; letter-spacing:0;
 }
 
 .mobileClose {
@@ -71,9 +67,7 @@
   gap: 10px;
   margin: 16px 14px 8px;
   border: 1px solid var(--line);
-  border-radius: 10px;
-  background: #e5eae4;
-  padding: 11px;
+  padding: 11px; margin-top:12px; background:var(--surface); border-radius:8px;
 }
 
 .workspaceAvatar {
@@ -84,15 +78,14 @@
   place-items: center;
   border: 1px solid #b7c9c6;
   border-radius: 8px;
-  background: #dce8e4;
+  background: var(--accent-soft);
   color: var(--teal-dark);
   font-size: 13px;
   font-weight: 700;
 }
 
 .workspaceIdentity small {
-  color: var(--muted);
-  font-size: 13px;
+  color: var(--muted); font-size:11px;
 }
 
 .workspaceIdentity strong {
@@ -116,10 +109,8 @@
 .navLabel {
   margin: 4px 10px 8px;
   color: var(--muted);
-  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  text-transform: uppercase; font-size:11px; letter-spacing:.06em;
 }
 
 .navItem {
@@ -129,19 +120,19 @@
   border: 1px solid transparent;
   border-radius: 9px;
   padding: 10px;
-  color: #46565d;
+  color: var(--muted);
   transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
 .navItem:hover {
-  border-color: #c5d1ca;
-  background: #e5eae4;
-  color: #f4f6f2;
+  border-color: var(--line);
+  background: var(--surface-inset);
+  color: var(--ink);
 }
 
 .navItemActive {
-  border-color: #c1d5dc;
-  background: #e1edf0;
+  border-color: var(--line);
+  background: var(--accent-soft);
   color: var(--ink);
   box-shadow: inset 3px 0 var(--teal);
 }
@@ -160,14 +151,13 @@
 .navItem small {
   overflow: hidden;
   color: var(--muted);
-  font-size: 13px;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: nowrap; font-size:11px;
 }
 
 .navItemActive small,
 .navItem:hover small {
-  color: #47676d;
+  color: var(--muted);
 }
 
 .sidebarFooter {
@@ -181,14 +171,13 @@
 .phaseNote {
   border: 1px solid var(--line);
   border-radius: 9px;
-  background: #e6ece6;
+  background: var(--surface-inset);
   padding: 10px;
 }
 
 .phaseNote span {
-  color: #c2d9df;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 700; color:var(--teal-dark);
 }
 
 .phaseNote p {
@@ -214,8 +203,8 @@
 
 .secondaryAction:hover,
 .logout:hover {
-  border-color: #c5d1ca;
-  background: #e5eae4;
+  border-color: var(--line);
+  background: var(--surface-inset);
   color: var(--ink);
 }
 
@@ -229,12 +218,11 @@
   top: 0;
   z-index: 120;
   display: flex;
-  min-height: 64px;
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid var(--line);
   background: var(--paper);
-  padding: 0 28px;
+  padding: 0 28px; min-height:76px;
 
 }
 
@@ -253,13 +241,13 @@
 }
 
 .topbar strong {
-  color: #1c2738;
+  color: var(--ink);
   font-size: 13px;
   font-weight: 650;
 }
 
 .environmentBadge {
-  border: 1px solid #c2d9df;
+  border: 1px solid var(--line);
   border-radius: 999px;
   background: #f0f9ff;
   padding: 4px 9px;
@@ -270,8 +258,7 @@
 
 .content {
   width: min(100%, 1480px);
-  margin: 0 auto;
-  padding: 28px;
+  margin: 0 auto; padding:32px;
 }
 
 .mobileMenu {
@@ -326,7 +313,7 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
-    border: 1px solid #d8e0e9;
+    border: 1px solid var(--line);
     border-radius: 8px;
     background: var(--surface);
   }
@@ -360,22 +347,10 @@
 }
 
 .sidebarFooter small { color:var(--muted); font-size:11px; line-height:1.6; }
-.topbar > div:last-child { flex:0 0 auto; }
+.topbar > div:last-child { flex:0 0 auto; flex-direction:row; }
 .sidebar[hidden] { display:none; }
 .brand,.navItem:hover,.secondaryAction:hover,.logout:hover { color:var(--ink); }
-.phaseNote span { color:var(--teal-dark); }
-.brand small { font-size:10px; letter-spacing:0; }
-.navLabel { font-size:11px; letter-spacing:.06em; }
-.navItem small { font-size:11px; }
-.workspaceIdentity small { font-size:11px; }
-.workspaceIdentity { margin-top:12px; }
-.topbar { min-height:76px; }
-.content { padding:32px; }
 @media(max-width:640px) { .content { padding:22px 14px; } .topbar { min-height:64px; } }
-.topbar > div:last-child { flex-direction:row; }
 @media(max-width:900px) { .sidebar:not(.sidebarOpen) { visibility:hidden; pointer-events:none; } }
 
 /* Navigation recedes while the current document stays prominent. */
-.sidebar { background:var(--surface-inset); }
-.brand { color:var(--ink); }
-.workspaceIdentity { background:var(--surface); border-radius:8px; }

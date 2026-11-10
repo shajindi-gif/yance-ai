@@ -247,7 +247,7 @@ function LoginContent() {
           <div className="yc-auth-header">
             <img src="/logo.png" alt="衍策引擎AI" className="yc-auth-logo" />
             <h1>衍策引擎AI</h1>
-            <p className="yc-auth-subtitle">新质生产力企业的政策与资源证据工作台</p>
+            <p className="yc-auth-subtitle">企业政策与资源证据工作台</p>
           </div>
 
           {!configReady ? <p role="status">正在准备安全登录…</p> : <>

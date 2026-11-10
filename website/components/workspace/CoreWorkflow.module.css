@@ -53,7 +53,7 @@
 
 .field label,
 .fieldWide label {
-  color: #344054;
+  color: var(--ink);
   font-size: 13px;
   font-weight: 650;
 }
@@ -65,7 +65,7 @@
 .toolbar select {
   width: 100%;
   min-height: 38px;
-  border: 1px solid #ccd5df;
+  border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
   padding: 8px 10px;
@@ -122,7 +122,7 @@
   margin-bottom: 18px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: #f4f6f2;
+  background: var(--ink);
   padding: 13px 15px;
 }
 
@@ -228,7 +228,7 @@
   gap: 5px;
   margin-top: 14px;
   border-radius: 8px;
-  background: #f4f6f2;
+  background: var(--ink);
   padding: 12px;
   color: var(--muted);
   font-size: 13px;
@@ -237,7 +237,7 @@
 .evidenceQuote {
   margin: 14px 0 0;
   border-left: 3px solid var(--teal);
-  background: #f4f6f2;
+  background: var(--ink);
   padding: 13px 15px;
 }
 
@@ -268,7 +268,7 @@
 .traceBlock strong {
   display: block;
   margin-bottom: 6px;
-  color: #344054;
+  color: var(--ink);
   font-size: 13px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -280,9 +280,9 @@
   margin: 0;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #f4f6f2;
+  background: var(--ink);
   padding: 12px;
-  color: #344054;
+  color: var(--ink);
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1.6;
@@ -317,11 +317,11 @@
 
 .requirement select {
   min-height: 36px;
-  border: 1px solid #ccd5df;
+  border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
   padding: 7px 9px;
-  color: #344054;
+  color: var(--ink);
   font: inherit;
   font-size: 13px;
 }
@@ -351,7 +351,7 @@
 
 .activity strong {
   display: block;
-  color: #344054;
+  color: var(--ink);
   font-size: 13px;
 }
 
@@ -363,7 +363,7 @@
 .fileInput {
   border: 1px dashed #aebbc9;
   border-radius: 10px;
-  background: #f4f6f2;
+  background: var(--ink);
   padding: 18px;
 }
 
@@ -413,7 +413,7 @@
 .commentForm textarea {
   width: 100%;
   min-height: 76px;
-  border: 1px solid #ccd5df;
+  border: 1px solid var(--line);
   border-radius: 8px;
   padding: 9px 10px;
   color: #253247;
@@ -500,11 +500,11 @@
 
 .linkDocumentForm select {
   min-height: 38px;
-  border: 1px solid #ccd5df;
+  border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
   padding: 8px 10px;
-  color: #344054;
+  color: var(--ink);
   font: inherit;
   font-size: 13px;
 }
@@ -563,7 +563,7 @@
 .comment {
   margin-bottom: 14px;
   border-radius: 8px;
-  background: #f4f6f2;
+  background: var(--ink);
   padding: 11px 13px;
 }
 
@@ -576,7 +576,7 @@
 
 .comment p {
   margin: 5px 0;
-  color: #344054;
+  color: var(--ink);
   font-size: 13px;
   line-height: 1.55;
 }
