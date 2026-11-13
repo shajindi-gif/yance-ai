@@ -1616,6 +1616,10 @@ class ApiClient {
     return this.request(`/orders/${encodeURIComponent(id)}/checkout`);
   }
 
+  async getOrderByNumber(orderNo: string): Promise<Order> {
+    return this.request<Order>(`/orders/by-no/${encodeURIComponent(orderNo)}`);
+  }
+
   async getOrders(): Promise<Order[]> {
     return this.request<Order[]>('/orders');
   }

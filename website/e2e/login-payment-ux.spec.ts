@@ -102,3 +102,12 @@ test('pending return automatically refreshes the server status without claiming 
  await expect(page.getByRole('heading',{name:'付款已确认'})).toBeVisible({timeout:6000});
  expect(reads).toBe(2);
 });
+
+test('Alipay merchant-number return resolves a tenant order without order UUID', async ({page}) => {
+ await page.addInitScript(()=>localStorage.setItem('yance_token','synthetic-contract'));
+ await page.route('**/api/v1/orders/by-no/YTEST_1790437313', route=>route.fulfill({json:{id:'returned-order',order_no:'YTEST',amount:99,currency:'CNY',status:'created'}}));
+ await page.goto('/success?out_trade_no=YTEST_1790437313&trade_no=untrusted-return');
+ await expect(page.getByText('订单号：YTEST · ¥99.00')).toBeVisible();
+ await expect(page.getByRole('heading',{name:'等待付款确认'})).toBeVisible();
+ await expect(page.getByRole('link',{name:'获取报告 →'})).toHaveCount(0);
+});

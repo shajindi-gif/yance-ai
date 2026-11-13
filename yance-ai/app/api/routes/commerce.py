@@ -4,7 +4,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, get_principal, require_roles
@@ -52,6 +52,25 @@ def list_orders(
     principal: Principal = Depends(get_principal), db: Session = Depends(get_db)
 ) -> list[Order]:
     return list(db.scalars(select(Order).where(Order.tenant_id == principal.tenant_id)).all())
+
+
+@router.get("/orders/by-no/{order_no}", response_model=OrderOut)
+def get_order_by_number(
+    order_no: str,
+    principal: Principal = Depends(get_principal),
+    db: Session = Depends(get_db),
+) -> Order:
+    payment_orders = select(Payment.order_id).where(
+        Payment.tenant_id == principal.tenant_id,
+        Payment.provider_trade_no == order_no,
+    )
+    order = db.scalar(select(Order).where(
+        Order.tenant_id == principal.tenant_id,
+        or_(Order.order_no == order_no, Order.id.in_(payment_orders)),
+    ))
+    if order is None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return order
 
 
 @router.post("/orders", response_model=CommerceOut, status_code=201)

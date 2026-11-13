@@ -13773,6 +13773,71 @@
         ]
       }
     },
+    "/api/v1/orders/by-no/{order_no}": {
+      "get": {
+        "operationId": "get_order_by_number_api_v1_orders_by_no__order_no__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "order_no",
+            "required": true,
+            "schema": {
+              "title": "Order No",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Order By Number",
+        "tags": [
+          "orders",
+          "payments",
+          "invoices"
+        ]
+      }
+    },
     "/api/v1/orders/{order_id}/checkout": {
       "get": {
         "operationId": "checkout_state_api_v1_orders__order_id__checkout_get",
@@ -14450,6 +14515,135 @@
         ]
       }
     },
+    "/api/v1/policies/evidence-search": {
+      "get": {
+        "description": "Keyword evidence search — works with **no model configured**.\n\nReturns chunks with exact character spans inside an immutable policy version,\nso a UI can quote the source and a reviewer can re-check it.  Vector search\n(``POST /policies/search``) stays a separate, budgeted path; this endpoint must\nnever call an embedding provider.",
+        "operationId": "evidence_search_api_v1_policies_evidence_search_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "level",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Level"
+            }
+          },
+          {
+            "in": "query",
+            "name": "jurisdiction",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Jurisdiction"
+            }
+          },
+          {
+            "in": "query",
+            "name": "current_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Current Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_low_quality",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Low Quality",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Evidence Search Api V1 Policies Evidence Search Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Evidence Search",
+        "tags": [
+          "policy",
+          "policy_rule"
+        ]
+      }
+    },
     "/api/v1/policies/parse-amounts": {
       "post": {
         "description": "Deterministically backfill structured funding facts from support_amount text.\n\nPlatform-admin curation tool (writes global knowledge-base rows). Only\nparses values it can extract with confidence; everything else stays NULL\n(INSUFFICIENT EVIDENCE by design). Safe to re-run (idempotent).",
@@ -14502,6 +14696,64 @@
           }
         ],
         "summary": "Parse Support Amounts",
+        "tags": [
+          "policy",
+          "policy_rule"
+        ]
+      }
+    },
+    "/api/v1/policies/quality-summary": {
+      "get": {
+        "description": "Distribution of the quality rubric across the corpus.\n\nThis is the answer to \"what are you actually delivering\": how many documents\npass the reliability/validity/utility bars, which axis they fail on, and why.\nCounts only — no document text leaves the database here.",
+        "operationId": "policy_quality_summary_api_v1_policies_quality_summary_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Policy Quality Summary Api V1 Policies Quality Summary Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Policy Quality Summary",
         "tags": [
           "policy",
           "policy_rule"
@@ -14710,6 +14962,151 @@
           }
         ],
         "summary": "Update Policy",
+        "tags": [
+          "policy",
+          "policy_rule"
+        ]
+      }
+    },
+    "/api/v1/policies/{policy_id}/quality": {
+      "get": {
+        "description": "Per-document verdict: three axis scores, grade, timeline state and every issue.\n\nReturned with the *reasons* rather than a bare score so a customer can dispute a\nspecific finding (e.g. \"this was not repealed\") instead of arguing with a number.",
+        "operationId": "policy_quality_api_v1_policies__policy_id__quality_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Policy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Policy Quality Api V1 Policies  Policy Id  Quality Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Policy Quality",
+        "tags": [
+          "policy",
+          "policy_rule"
+        ]
+      }
+    },
+    "/api/v1/policies/{policy_id}/versions/{version_id}": {
+      "get": {
+        "operationId": "read_policy_version_api_v1_policies__policy_id__versions__version_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Policy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Read Policy Version Api V1 Policies  Policy Id  Versions  Version Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Read Policy Version",
         "tags": [
           "policy",
           "policy_rule"
@@ -15495,6 +15892,30 @@
         "tags": [
           "policy",
           "policy_rule"
+        ]
+      }
+    },
+    "/api/v1/system/version": {
+      "get": {
+        "description": "Read deployment identity and the database revision independently.",
+        "operationId": "runtime_version_api_v1_system_version_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Runtime Version Api V1 System Version Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Runtime Version",
+        "tags": [
+          "health"
         ]
       }
     },
