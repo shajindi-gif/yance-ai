@@ -200,7 +200,7 @@ def evaluate_condition(
             unit=unit,
             period=required_period,
             amount_kind=amount_kind,
-            note="条件尚未与原文核对（review_status=%s）" % review_status,
+            note=f"条件尚未与原文核对（review_status={review_status}）",
             review_required=True,
             **common,
         )

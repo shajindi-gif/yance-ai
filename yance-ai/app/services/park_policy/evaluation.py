@@ -517,7 +517,7 @@ def build_report(eval_set: EvalSet, *, model_name: str | None = None) -> dict[st
         raise ValueError("评测集校验失败: " + "; ".join(problems))
 
     arm_c_spec = describe_arm_c()
-    arm_c = run_arm(eval_set, arm_c_spec, _rule_baseline)
+    _arm_c = run_arm(eval_set, arm_c_spec, _rule_baseline)
     floor = run_arm(
         eval_set,
         ArmSpec(
