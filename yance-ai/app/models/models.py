@@ -802,6 +802,33 @@ class Payment(Base, TimestampMixin, TenantOwnedMixin):
     )  # 银行转账核实时间
     status: Mapped[str] = mapped_column(String(40), default="created")
     raw_response: Mapped[dict] = mapped_column(JSON, default=dict)
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class ReconciliationRun(Base, TimestampMixin):
+    __tablename__ = "reconciliation_runs"
+    __table_args__ = (UniqueConstraint("provider", "bill_date", name="uq_reconciliation_run"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    provider: Mapped[str] = mapped_column(String(40))
+    bill_date: Mapped[date] = mapped_column(Date)
+    status: Mapped[str] = mapped_column(String(40), default="waiting")
+    source_sha256: Mapped[str | None] = mapped_column(String(64))
+    issue_count: Mapped[int] = mapped_column(default=0)
+    error_code: Mapped[str | None] = mapped_column(String(80))
+    last_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ReconciliationIssue(Base, TimestampMixin):
+    __tablename__ = "reconciliation_issues"
+    __table_args__ = (UniqueConstraint("provider", "bill_date", "reference", "issue_type", name="uq_reconciliation_issue"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    provider: Mapped[str] = mapped_column(String(40))
+    bill_date: Mapped[date] = mapped_column(Date)
+    reference: Mapped[str] = mapped_column(String(128))
+    issue_type: Mapped[str] = mapped_column(String(80))
+    expected_amount: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    received_amount: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    status: Mapped[str] = mapped_column(String(40), default="open")
 
 
 class Refund(Base, TimestampMixin, TenantOwnedMixin):

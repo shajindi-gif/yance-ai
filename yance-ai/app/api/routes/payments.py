@@ -10,6 +10,7 @@ from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -22,7 +23,7 @@ from app.services.commerce.availability import purchase_status
 from app.services.commerce.delivery import require_order_report
 from app.services.payments import alipay as ali
 from app.services.payments import wechat as wx
-from app.services.payments.settlement import settle_payment
+from app.services.payments.settlement import provider_paid_time, settle_payment
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -232,7 +233,7 @@ def alipay_page_pay(
     return {"url": payment_url, "out_trade_no": out_trade_no}
 
 
-@router.post("/alipay/notify")
+@router.post("/alipay/notify", response_class=PlainTextResponse)
 async def alipay_notify(request: Request, db: Session = Depends(get_db)) -> str:
     """Alipay async payment notification (POST). Must return 'success' or 'fail'."""
     body = await request.body()
@@ -290,6 +291,7 @@ async def alipay_notify(request: Request, db: Session = Depends(get_db)) -> str:
             paid_amount=form_data.get("total_amount"),
             currency="CNY",
             payload=body,
+            paid_at=provider_paid_time(form_data.get("gmt_payment")),
         )
         return "success" if result.accepted else "fail"
     elif trade_status == "TRADE_CLOSED":
@@ -317,7 +319,8 @@ def query_alipay_payment(db: Session, payment: Payment) -> dict:
         payment.alipay_trade_no = trade_no
         result = settle_payment(db, payment=payment,
             provider_event_id=f"{trade_no}:{status}", event_type=status,
-            paid_amount=state.get("total_amount"), currency="CNY", payload=raw)
+            paid_amount=state.get("total_amount"), currency="CNY", payload=raw,
+            paid_at=provider_paid_time(state.get("send_pay_date")))
         if not result.accepted:
             raise HTTPException(409, detail={"code": result.error_code, "message": "付款结果需要核对，请联系支持"})
         return {"status": "paid", "queried": True, "trade_state": status}
@@ -494,6 +497,7 @@ async def wechat_notify(request: Request, db: Session = Depends(get_db)) -> dict
             paid_amount=Decimal(str(total_fen)) / 100 if isinstance(total_fen, int) and not isinstance(total_fen, bool) else None,
             currency=(result.get("amount") or {}).get("currency", ""),
             payload=body,
+            paid_at=provider_paid_time(result.get("success_time")),
         )
         if not settle.accepted:
             return {"code": "FAIL", "message": settle.error_code or "结算被拒绝"}

@@ -63,7 +63,7 @@ class SchedulerConfig:
     state_path: Path | None = None
 
     @classmethod
-    def from_settings(cls, **overrides) -> "SchedulerConfig":
+    def from_settings(cls, **overrides) -> SchedulerConfig:
         config = cls(
             interval_seconds=float(settings.policy_collection_scheduler_interval_seconds),
             cycle_seconds=float(settings.policy_collection_scheduler_cycle_seconds),

@@ -27,10 +27,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Iterable, Mapping, Sequence
+from typing import Any
 
 import yaml
 
@@ -67,7 +68,7 @@ class EvalTask:
     policy_families: tuple[str, ...] = ()
 
     @classmethod
-    def from_mapping(cls, raw: Mapping[str, Any]) -> "EvalTask":
+    def from_mapping(cls, raw: Mapping[str, Any]) -> EvalTask:
         return cls(
             task_id=str(raw["id"]),
             suite=str(raw["suite"]),
@@ -450,7 +451,7 @@ def run_arm(eval_set: EvalSet, arm: ArmSpec, fn: ArmFn) -> dict[str, Any]:
     return {
         "arm": arm.name,
         "arm_description": dict(arm.describe),
-        "run_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "run_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "eval_set_version": eval_set.version,
         "eval_set_digest": eval_set.digest,
         "evaluated_tasks": len(rows),
@@ -534,7 +535,7 @@ def build_report(eval_set: EvalSet, *, model_name: str | None = None) -> dict[st
     return {
         "eval_set_version": eval_set.version,
         "eval_set_digest": eval_set.digest,
-        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "data_isolation": {
             "splits": {k: v for k, v in eval_set.splits.items()},
             "leak_check": "passed",

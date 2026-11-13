@@ -2,7 +2,9 @@
 
 import hashlib
 from dataclasses import dataclass
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -57,6 +59,16 @@ def _money(value: object) -> Decimal:
         raise ValueError("invalid_amount") from exc
 
 
+def provider_paid_time(value: object) -> datetime | None:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return parsed if parsed.tzinfo else parsed.replace(tzinfo=ZoneInfo("Asia/Shanghai"))
+    except ValueError:
+        return None
+
+
 def validate_settlement(
     *, order: Order, payment: Payment, paid_amount: object, currency: str
 ) -> str | None:
@@ -87,6 +99,7 @@ def settle_payment(
     paid_amount: object,
     currency: str,
     payload: bytes,
+    paid_at: datetime | None = None,
 ) -> SettlementResult:
     existing = db.scalar(
         select(PaymentEvent).where(
@@ -161,6 +174,8 @@ def settle_payment(
         record_event(db, tenant_id=order.tenant_id, user_id=None,
             name="payment_late_success", event_key=f"payment_late_success:{payment.id}",
             properties={"order_id": str(order.id), "payment_id": str(payment.id), "provider": payment.provider})
+    if paid_at is not None:
+        payment.paid_at = paid_at
     payment.status = "completed"
     order.status = "paid"
     entitlement = db.scalar(

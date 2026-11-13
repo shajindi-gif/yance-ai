@@ -15,10 +15,11 @@ says so; a fetch failure only marks ``source_anomaly``.
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
 from enum import StrEnum
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
 
 POLICY_VALIDITY = ("in_force", "superseded", "withdrawn", "expired", "unknown")
 WINDOW_STATE = ("upcoming", "open", "closed", "suspended", "unknown")

@@ -170,6 +170,7 @@ def query_order(out_trade_no: str) -> dict | None:
             "payer_total": amount.get("payer_total") or amount.get("total"),
             "total": amount.get("total"),
             "currency": amount.get("currency"),
+            "success_time": data.get("success_time"),
         }
     except (httpx.HTTPError, ValueError, KeyError):
         return None

@@ -111,7 +111,7 @@ def _authorized(db: Session, delivery: NotificationDelivery) -> bool:
     if (
         not notification
         or notification.read_at
-        or notification.kind != "deadline"
+        or notification.kind not in {"deadline", "payment_reconciliation"}
         or notification.severity not in email.EMAIL_BANDS
     ):
         return False
@@ -129,6 +129,10 @@ def _authorized(db: Session, delivery: NotificationDelivery) -> bool:
             Membership.status == "active",
         )
     )
+    if notification.kind == "payment_reconciliation":
+        if notification.user_id != delivery.recipient_user_id:
+            return False
+        query = query.where(User.is_platform_admin.is_(True))
     if notification.user_id:
         query = query.where(User.id == notification.user_id)
     else:
@@ -136,7 +140,9 @@ def _authorized(db: Session, delivery: NotificationDelivery) -> bool:
     return db.scalar(query) is not None
 
 
-def dispatch_outbox(db: Session, *, tenant_id=None, limit: int = 20) -> int:
+def dispatch_outbox(
+    db: Session, *, tenant_id=None, limit: int = 20, kind: str | None = None
+) -> int:
     _recover_expired(db, tenant_id)
     if not email.is_email_configured():
         return 0
@@ -152,6 +158,15 @@ def dispatch_outbox(db: Session, *, tenant_id=None, limit: int = 20) -> int:
             .with_for_update(skip_locked=True)
             .limit(1)
         )
+        if kind:
+            query = query.where(
+                exists(
+                    select(Notification.id).where(
+                        Notification.id == NotificationDelivery.notification_id,
+                        Notification.kind == kind,
+                    )
+                )
+            )
         if tenant_id:
             query = query.where(NotificationDelivery.tenant_id == tenant_id)
         delivery = db.scalar(query.execution_options(populate_existing=True))

@@ -14,9 +14,10 @@ Design constraints that come straight from the product requirements:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 MONETARY_UNITS = ("元", "万元", "亿元", "人民币元", "人民币万元")
 

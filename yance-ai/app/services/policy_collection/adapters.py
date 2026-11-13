@@ -26,10 +26,8 @@ from .extract import (
     ListEntry,
     detect_client_redirect,
     detect_page_count,
-    discover_page_urls,
-    pagination_urls,
     extract_list_entries,
-    paginate_urls,
+    pagination_urls,
     parse_cn_date,
 )
 

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.models.models import Order, Payment
 from app.services.payments import alipay, wechat
-from app.services.payments.settlement import settle_payment
+from app.services.payments.settlement import provider_paid_time, settle_payment
 
 
 def query_payment(db: Session, payment: Payment) -> dict:
@@ -28,6 +28,11 @@ def query_payment(db: Session, payment: Payment) -> dict:
         transaction = state.get("transaction_id")
         if not transaction or not isinstance(total, int) or isinstance(total, bool):
             raise HTTPException(502, "Invalid WeChat transaction")
+        payment.raw_response = {
+            **(payment.raw_response or {}),
+            "transaction_id": transaction,
+            "success_time": state.get("success_time"),
+        }
         result = settle_payment(
             db,
             payment=payment,
@@ -36,6 +41,7 @@ def query_payment(db: Session, payment: Payment) -> dict:
             paid_amount=Decimal(total) / 100,
             currency=state.get("currency") or "",
             payload=b'{"source":"active_query"}',
+            paid_at=provider_paid_time(state.get("success_time")),
         )
         if not result.accepted:
             raise HTTPException(409, "Payment reconciliation required")

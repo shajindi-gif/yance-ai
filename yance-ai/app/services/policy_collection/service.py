@@ -32,8 +32,8 @@ from app.models.policy_collection import (
     PolicyRawEvidence,
     PolicySourceState,
 )
-from app.services.policy_collection.catalog import Catalog, SourceDefinition, load_catalog
 from app.services.policy_collection import quality
+from app.services.policy_collection.catalog import Catalog, SourceDefinition, load_catalog
 from app.services.policy_collection.rawstore import RawEvidenceStore
 from app.services.policy_collection.runner import (
     CollectionLimits,

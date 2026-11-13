@@ -70,7 +70,7 @@ class BackfillConfig:
     source_ids: tuple[str, ...] = ()
 
     @classmethod
-    def from_settings(cls, **overrides) -> "BackfillConfig":
+    def from_settings(cls, **overrides) -> BackfillConfig:
         base = cls(
             max_sources=int(getattr(settings, "policy_collection_backfill_max_sources", 5) or 5),
             pages_per_batch=max(1, int(settings.policy_collection_backfill_pages_per_batch or 1)),

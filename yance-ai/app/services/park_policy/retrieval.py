@@ -22,20 +22,21 @@ Design rules enforced here (all regressions are covered in
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import ColumnElement, and_, or_, select
+from sqlalchemy import ColumnElement, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.models import Policy, PolicyChunk, PolicyVersion
+from app.services.park_policy.evidence import compute_window_state
 from app.services.policies.applicability import applicable_region_clauses, current_policy_clauses
 from app.services.policies.retrieval import PolicyCandidate, hybrid_policy_candidates
 from app.services.policies.visibility import visible_policy_clause
-from app.services.park_policy.evidence import compute_window_state
 
 # --------------------------------------------------------------------------- #
 # Query normalisation

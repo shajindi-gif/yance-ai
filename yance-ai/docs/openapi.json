@@ -14099,9 +14099,8 @@
         "responses": {
           "200": {
             "content": {
-              "application/json": {
+              "text/plain": {
                 "schema": {
-                  "title": "Response Alipay Notify Api V1 Payments Alipay Notify Post",
                   "type": "string"
                 }
               }
