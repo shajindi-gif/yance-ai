@@ -35,7 +35,7 @@ function CheckoutContent() {
   const attemptRef = useRef<{signature:string; key:string; order?:string} | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [countdown, setCountdown] = useState(600);
+  const [countdown, setCountdown] = useState(0);
 
   const stopTimers = useCallback(() => {
     pollGeneration.current += 1;
@@ -43,11 +43,17 @@ function CheckoutContent() {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
   }, []);
 
-  const startPolling = useCallback((orderId: string) => {
+  const startPolling = useCallback((orderId: string, expiresAt: string) => {
     stopTimers();
-    setCountdown(600); setPollError('');
+    setPollError('');
     const generation = pollGeneration.current;
-    const deadline = Date.now() + 600_000;
+    const deadline = Date.parse(expiresAt);
+    if (!Number.isFinite(deadline) || deadline <= Date.now()) {
+      setCountdown(0);
+      setPollError('付款码已到期，请返回订单核对状态后继续。');
+      return;
+    }
+    setCountdown(Math.ceil((deadline - Date.now()) / 1000));
     const poll = async () => {
       if (generation !== pollGeneration.current) return;
       try {
@@ -158,7 +164,7 @@ function CheckoutContent() {
       }
       const wechat = await api.createWechatNativeOrder(order.id);
       setQrCodeUrl(wechat.code_url);
-      startPolling(order.id);
+      startPolling(order.id, wechat.expires_at);
     } catch (err) {
       setError(err instanceof Error ? err.message : '支付失败，请重试');
     } finally {
@@ -176,7 +182,7 @@ function CheckoutContent() {
   if (!product) return (
     <div className={pageStyles.layout}>
       <div className={pageStyles.section2}>
-        <div className={pageStyles.section3}>❌</div>
+        <div className={pageStyles.section3}>暂时无法结账</div>
         <h2 className={pageStyles.heading}>产品未找到</h2>
         <p className={pageStyles.description}>请从定价页选择产品</p>
         <button onClick={() => router.push('/pricing')} className={pageStyles.action}>返回定价页</button>
@@ -233,7 +239,7 @@ function CheckoutContent() {
             )}
 
             {error && (
-              <div role="alert" className={pageStyles.section15}>{error}{!pendingOrder && <p><a href="/policy-scan">前往政策扫描，准备报告 →</a> · <a href="/orders">查看已有订单</a></p>}{pendingOrder && <p><a href="/orders">查看已有订单，避免重复购买 →</a></p>}</div>
+              <div role="alert" className={pageStyles.section15}>{error}{!pendingOrder && <p><a href="/discover">前往政策扫描，准备报告 →</a> · <a href="/orders">查看已有订单</a></p>}{pendingOrder && <p><a href="/orders">查看已有订单，避免重复购买 →</a></p>}</div>
             )}
           </div>
 

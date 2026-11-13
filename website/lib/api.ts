@@ -690,6 +690,7 @@ export interface Order {
   resource_id?: string;
   status: string;
   created_at: string;
+  expires_at?: string | null;
 }
 
 export interface InvoiceItem {
@@ -1716,8 +1717,8 @@ class ApiClient {
 
   // WeChat Pay Native: returns a code_url to render as a QR, plus the merchant
   // order number used for active-query compensation.
-  async createWechatNativeOrder(orderId: string): Promise<{ code_url: string; out_trade_no: string; amount_fen: number }> {
-    return this.request<{ code_url: string; out_trade_no: string; amount_fen: number }>(
+  async createWechatNativeOrder(orderId: string): Promise<{ code_url: string; out_trade_no: string; amount_fen: number; expires_at: string }> {
+    return this.request<{ code_url: string; out_trade_no: string; amount_fen: number; expires_at: string }>(
       `/payments/wechat/native?order_id=${encodeURIComponent(orderId)}`,
       { method: 'POST' },
     );
