@@ -284,14 +284,14 @@ function CheckoutContent() {
                 <p className={pageStyles.description5}>
                   请使用微信扫码支付
                 </p>
-                <PaymentQr value={qrCodeUrl} />
+                {countdown > 0 && !paid && <PaymentQr value={qrCodeUrl} />}
                 <div className={pageStyles.section17}>
                   {paid ? (
                     <span className={pageStyles.label3}>支付成功，正在跳转…</span>
                   ) : countdown > 0 ? (
                     <>等待支付中… {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, '0')}</>
                   ) : (
-                    <span className={pageStyles.label4}>暂未收到付款确认，请核对订单后再继续</span>
+                    <span className={pageStyles.label4}>付款码已到期，请核对订单后再继续</span>
                   )}
                 </div>
                 {pollError && <p role="status">{pollError}</p>}

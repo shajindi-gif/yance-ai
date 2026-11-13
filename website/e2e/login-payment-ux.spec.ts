@@ -47,7 +47,7 @@ test('resume uses server price and payment channel and never creates another ord
  await page.route('**/api/v1/orders/synthetic/checkout',r=>r.fulfill({json:{order:{id:'synthetic',product_code:'POLICY_REPORT',resource_id:'c',amount:79,currency:'CNY',status:'created'},provider:'wechat',can_continue:true,reason:null}}));
  let orders=0;
  await page.route('**/api/v1/orders',r=>{orders++;return r.fulfill({status:500});});
- await page.route('**/api/v1/payments/wechat/native*',r=>r.fulfill({json:{code_url:'weixin://synthetic'}}));
+ await page.route('**/api/v1/payments/wechat/native*',r=>r.fulfill({json:{code_url:'weixin://synthetic',expires_at:new Date(Date.now()+90000).toISOString()}}));
  await page.goto('/checkout?order=synthetic&amount=1');
  await expect(page.getByRole('button',{name:'生成付款二维码 ¥79'})).toBeVisible();
  await expect(page.getByRole('button',{name:'支付宝',exact:true})).toBeDisabled();

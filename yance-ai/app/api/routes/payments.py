@@ -71,9 +71,9 @@ def _is_unconfigured(value: str | None) -> bool:
 
 
 def _alipay_available() -> bool:
-    return not _is_unconfigured(settings.alipay_app_id) and not _is_unconfigured(
-        settings.alipay_private_key
-    )
+    return (not _is_unconfigured(settings.alipay_app_id)
+        and not _is_unconfigured(settings.alipay_private_key)
+        and _alipay_notify_available())
 
 
 def _alipay_notify_available() -> bool:
@@ -345,7 +345,7 @@ def alipay_query(
 
 
 @router.post("/alipay/return")
-async def alipay_return(request: Request, db: Session = Depends(get_db)) -> dict:
+async def alipay_return(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
     """Alipay sync return (GET redirect). Verify and return order status."""
     params = dict(request.query_params)
     if not _alipay_notify_available():
@@ -360,12 +360,15 @@ async def alipay_return(request: Request, db: Session = Depends(get_db)) -> dict
     if not signature_valid:
         raise HTTPException(status_code=400, detail="Invalid signature")
 
+    if params.get("app_id") != settings.alipay_app_id:
+        raise HTTPException(400, "Alipay application mismatch")
     out_trade_no = params.get("out_trade_no", "")
     trade_no = params.get("trade_no", "")
 
     payment = db.scalar(
         select(Payment).where(
             Payment.provider == "alipay",
+            Payment.tenant_id == principal.tenant_id,
             Payment.provider_trade_no == out_trade_no,
         )
     )

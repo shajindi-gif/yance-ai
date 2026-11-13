@@ -54,6 +54,8 @@ def is_wechat_configured() -> bool:
         and settings.wxpay_serial_no
         and settings.wxpay_private_key
         and settings.wxpay_apiv3_key
+        and settings.wxpay_pubkey
+        and settings.wxpay_pubkey_id
         and not _is_placeholder(settings.wxpay_mch_id)
         and not _is_placeholder(settings.wxpay_private_key)
     )

@@ -216,7 +216,7 @@ def reconcile(db: Session, provider: str, day: date, *, dry_run: bool = False) -
         db.rollback()
         return {"provider": provider, "status": status, "issues": len(issues), "error": error}
     if not run:
-        run = ReconciliationRun(provider=provider, bill_date=day)
+        run = ReconciliationRun(provider=provider, bill_date=day, issue_count=0, status="waiting")
         db.add(run)
     run.status = status
     run.error_code = error
