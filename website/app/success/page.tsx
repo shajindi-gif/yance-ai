@@ -27,7 +27,18 @@ function PaymentResult() {
     const lookup = id
       ? api.getOrders().then(rows => rows.find(row => row.id === id) ?? null)
       : outTradeNo ? api.getOrderByNumber(outTradeNo) : Promise.resolve(null);
-    lookup.then(current => {
+    lookup.then(async current => {
+      if (current && ['created', 'pending'].includes(current.status)) {
+        try {
+          const checkout = await api.getCheckoutState(current.id);
+          if (checkout.provider === 'alipay') {
+            const result = await api.queryAlipayOrder(current.id);
+            if (result.status === 'paid') current = {...current, status: 'paid'};
+          }
+        } catch {
+          // Keep a pending order visible while the signed query is unavailable.
+        }
+      }
       if (!active) return;
       setResolvedReference(reference);
       setOrder(current ?? null);

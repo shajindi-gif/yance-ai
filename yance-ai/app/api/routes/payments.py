@@ -19,6 +19,7 @@ from app.core.db import get_db
 from app.models.models import Order, Payment, Product, UserRole
 from app.services.commerce.availability import purchase_status
 from app.services.commerce.delivery import require_order_report
+from app.services.payments import alipay as ali
 from app.services.payments import wechat as wx
 from app.services.payments.settlement import settle_payment
 
@@ -266,7 +267,7 @@ async def alipay_notify(request: Request, db: Session = Depends(get_db)) -> str:
         "total_amount": form_data.get("total_amount"),
     }
 
-    if trade_status == "TRADE_SUCCESS":
+    if trade_status in {"TRADE_SUCCESS", "TRADE_FINISHED"}:
         if not trade_no:
             return "fail"
         result = settle_payment(
@@ -285,6 +286,47 @@ async def alipay_notify(request: Request, db: Session = Depends(get_db)) -> str:
 
     db.commit()
     return "success"
+
+
+def query_alipay_payment(db: Session, payment: Payment) -> dict:
+    state, raw = ali.call("alipay.trade.query", {"out_trade_no": payment.provider_trade_no}, _build_alipay_sign)
+    if state.get("code") != "10000":
+        return {"status": payment.status, "queried": False}
+    if state.get("out_trade_no") != payment.provider_trade_no:
+        raise HTTPException(502, "Alipay query order mismatch")
+    seller = state.get("seller_id") or state.get("seller_user_id")
+    if settings.alipay_seller_id and seller and seller != settings.alipay_seller_id:
+        raise HTTPException(502, "Alipay query merchant mismatch")
+    status = state.get("trade_status")
+    if status in {"TRADE_SUCCESS", "TRADE_FINISHED"}:
+        trade_no = state.get("trade_no")
+        if not trade_no:
+            raise HTTPException(502, "Alipay query missing transaction")
+        payment.alipay_trade_no = trade_no
+        result = settle_payment(db, payment=payment,
+            provider_event_id=f"{trade_no}:{status}", event_type=status,
+            paid_amount=state.get("total_amount"), currency="CNY", payload=raw)
+        if not result.accepted:
+            raise HTTPException(409, detail={"code": result.error_code, "message": "付款结果需要核对，请联系支持"})
+        return {"status": "paid", "queried": True, "trade_state": status}
+    return {"status": payment.status, "queried": True, "trade_state": status}
+
+
+@router.post("/alipay/query")
+def alipay_query(
+    order_id: uuid.UUID,
+    principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
+    db: Session = Depends(get_db),
+) -> dict:
+    if not _alipay_available() or not _alipay_notify_available():
+        raise HTTPException(503, "Alipay not configured")
+    order = db.scalar(select(Order).where(Order.id == order_id, Order.tenant_id == principal.tenant_id).with_for_update())
+    if not order:
+        raise HTTPException(404, "Order not found")
+    payment = db.scalar(select(Payment).where(Payment.order_id == order.id, Payment.tenant_id == order.tenant_id, Payment.provider == "alipay").order_by(Payment.created_at.desc()))
+    if not payment:
+        return {"status": order.status, "queried": False}
+    return query_alipay_payment(db, payment)
 
 
 @router.post("/alipay/return")

@@ -1723,6 +1723,10 @@ class ApiClient {
     );
   }
 
+  async queryAlipayOrder(orderId: string): Promise<{status: string; queried: boolean}> {
+    return this.request(`/payments/alipay/query?order_id=${encodeURIComponent(orderId)}`, {method: 'POST'});
+  }
+
   async queryWechatOrder(orderId: string): Promise<{ status: string; queried: boolean; trade_state?: string }> {
     return this.request<{ status: string; queried: boolean; trade_state?: string }>(
       `/payments/wechat/query?order_id=${encodeURIComponent(orderId)}`,
