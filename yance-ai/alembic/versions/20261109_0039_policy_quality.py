@@ -20,8 +20,9 @@ the database".
 """
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 revision = "20261109_0039"
 down_revision = "20261106_0038"

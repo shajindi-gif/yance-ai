@@ -112,7 +112,7 @@ def test_unconfirmed_boundary_blocks_park_scope(catalog):
 
 def test_unspecified_park_basis_requires_human_review(catalog):
     park = catalog.by_id()["park_wh_dh"]
-    scope = {
+    _scope = {
         "scope_type": "park",
         "park_id": "park_wh_dh",
         "qualification_basis": "unspecified",

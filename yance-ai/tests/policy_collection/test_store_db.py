@@ -17,8 +17,8 @@ from sqlalchemy import text
 from app.core.db import SessionLocal
 from app.models.models import Policy, PolicyVersion
 from app.models.policy_collection import PolicyOrigin
-from app.services.policy_collection.classify import Classification
 from app.services.policy_collection.catalog import SourceDefinition
+from app.services.policy_collection.classify import Classification
 from app.services.policy_collection.store import DocumentPayload, SqlPolicyStore
 
 TEST_URL_PREFIX = "https://test.invalid/store/"
