@@ -137,7 +137,7 @@ def settle_payment(
     # A late success is a reconciliation event, never permission to undo a
     # cancellation/refund. An expired payment can still receive a valid late
     # notification while its order remains open.
-    if order.status not in {"pending", "created", "paid"} or payment.status not in {
+    if order.status not in {"pending", "created", "expired", "paid"} or payment.status not in {
         "created", "pending", "expired", "completed",
     }:
         event.status = "rejected"
@@ -157,6 +157,10 @@ def settle_payment(
         replay = _commit_or_resolve_replay(db, event=event)
         return replay or SettlementResult(True)
 
+    if order.status == "expired":
+        record_event(db, tenant_id=order.tenant_id, user_id=None,
+            name="payment_late_success", event_key=f"payment_late_success:{payment.id}",
+            properties={"order_id": str(order.id), "payment_id": str(payment.id), "provider": payment.provider})
     payment.status = "completed"
     order.status = "paid"
     entitlement = db.scalar(

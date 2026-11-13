@@ -148,6 +148,8 @@ class Settings(BaseSettings):
     )
     embedding_model: str = "@cf/baai/bge-large-en-v1.5"
 
+    order_payment_ttl_minutes: int = Field(default=30, ge=1, le=1440)
+
     # Stripe (legacy)
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""

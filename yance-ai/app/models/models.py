@@ -780,6 +780,7 @@ class Order(Base, TimestampMixin, TenantOwnedMixin):
     report_deliverable_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("deliverables.id", ondelete="RESTRICT", use_alter=True, name="fk_orders_report_deliverable")
     )
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     status: Mapped[str] = mapped_column(String(40), default="pending")
 
 

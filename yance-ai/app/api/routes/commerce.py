@@ -1,6 +1,7 @@
 import secrets
 import time
 import uuid
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
@@ -177,6 +178,7 @@ def create_order(
         resource_id=payload.resource_id,
         report_deliverable_id=report.id if report else None,
         status="created",
+        expires_at=datetime.now(UTC) + timedelta(minutes=settings.order_payment_ttl_minutes),
     )
     db.add(order)
     db.flush()
@@ -378,7 +380,7 @@ def checkout_state(
         raise HTTPException(404, "订单不存在")
     payment = db.scalar(select(Payment).where(Payment.order_id == order.id,
         Payment.tenant_id == principal.tenant_id).order_by(Payment.created_at.desc()))
-    can_continue = order.status in {"created", "pending"}
+    can_continue = order.status in {"created", "pending"} and (order.expires_at is None or order.expires_at > datetime.now(UTC))
     reason = None
     if can_continue:
         try:
@@ -386,7 +388,7 @@ def checkout_state(
         except HTTPException as exc:
             can_continue = False
             reason = exc.detail.get("message") if isinstance(exc.detail, dict) else exc.detail
-    if payment and (payment.provider not in {"alipay", "wechat"} or payment.status not in {"created", "pending"}):
+    if payment and (payment.provider not in {"alipay", "wechat"} or payment.status not in {"created", "pending", "expired"}):
         can_continue = False
         reason = "请先核对原支付渠道的交易状态；系统不会创建第二笔付款。"
     return {"order": OrderOut.model_validate(order), "provider": payment.provider if payment else None,

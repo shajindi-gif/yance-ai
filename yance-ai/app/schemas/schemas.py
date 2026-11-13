@@ -526,6 +526,7 @@ class OrderOut(ORMModel):
     currency: str
     resource_type: str | None
     resource_id: UUID | None
+    expires_at: datetime | None = None
     status: str
     created_at: datetime
 

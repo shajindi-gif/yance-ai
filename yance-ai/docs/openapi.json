@@ -4140,6 +4140,18 @@
             "title": "Currency",
             "type": "string"
           },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",

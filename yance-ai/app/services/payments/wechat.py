@@ -95,7 +95,7 @@ def _headers(method: str, url_path: str, body: str) -> dict:
 
 
 def create_native_order(
-    out_trade_no: str, total_fen: int, description: str, notify_url: str
+    out_trade_no: str, total_fen: int, description: str, notify_url: str, expires_at: str | None = None
 ) -> tuple[str | None, str | None]:
     """Create a Native order. Returns (code_url, error_code)."""
     if not is_wechat_configured():
@@ -121,6 +121,8 @@ def create_native_order(
             "notify_url": notify_url,
             "amount": {"total": total_fen, "currency": "CNY"},
         }
+    if expires_at:
+        body["time_expire"] = expires_at
     payload = json.dumps(body, ensure_ascii=False, separators=(",", ":"))
     try:
         response = httpx.post(
@@ -224,3 +226,18 @@ def decrypt_resource(resource: dict) -> dict:
     cipher.update((resource.get("associated_data") or "").encode("utf-8"))
     plaintext = cipher.decrypt_and_verify(data, tag)
     return json.loads(plaintext.decode("utf-8"))
+
+
+def close_order(out_trade_no: str) -> bool:
+    if not is_wechat_configured():
+        return False
+    partner = settings.wxpay_mode == 'partner'
+    prefix = '/v3/pay/partner/transactions' if partner else '/v3/pay/transactions'
+    path = f'{prefix}/out-trade-no/{out_trade_no}/close'
+    identity = {'sp_mchid':settings.wxpay_sp_mch_id,'sub_mchid':settings.wxpay_sub_mch_id} if partner else {'mchid':settings.wxpay_mch_id}
+    body = json.dumps(identity,separators=(',',':'))
+    try:
+        response = httpx.post(settings.wxpay_gateway+path,content=body.encode(),headers=_headers('POST',path,body),timeout=10)
+        return response.status_code == 204
+    except httpx.HTTPError:
+        return False
