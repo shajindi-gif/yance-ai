@@ -203,7 +203,11 @@ def verify_notify_signature(
     timestamp: str, nonce: str, body: str, signature_b64: str, serial: str
 ) -> bool:
     """Verify callback signature using the WeChat Pay public key (PUB_KEY_ID mode)."""
-    if not settings.wxpay_pubkey:
+    try:
+        fresh = abs(time.time() - int(timestamp)) <= 300
+    except (ValueError, TypeError):
+        return False
+    if not fresh or not settings.wxpay_pubkey:
         return False
     # In public-key mode the callback serial is the configured PUB_KEY_ID.
     if settings.wxpay_pubkey_id and serial != settings.wxpay_pubkey_id:
