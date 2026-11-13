@@ -1,117 +1,37 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import api, { ProductCatalogItem } from '@/lib/api';
-import { productPresentation } from '@/lib/product-presentation';
+import Link from 'next/link';
+import PricingCatalogue from './PricingCatalogue';
 import pageStyles from './page.module.css';
+import type {ProductCatalogItem} from '@/lib/api';
 
-export default function PricingPage() {
-  const router = useRouter();
-  const [products, setProducts] = useState<ProductCatalogItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [retry, setRetry] = useState(0);
+export const revalidate = 300;
+export const metadata = {title: '价格与交付范围｜衍策引擎 AI', description: '先免费查找政策机会，按需购买企业政策机会简报，核对来源、条件与所需证明。', openGraph: {title: '价格与交付范围｜衍策引擎 AI', description: '免费发现政策机会，按需购买可追溯的企业政策简报。', url: '/pricing'}};
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true); setError('');
-    api.getProducts()
-      .then((data) => {
-        if (!cancelled) setProducts(data);
-      })
-      .catch(() => {
-        if (!cancelled) setError('当前无法读取服务端产品目录，请稍后重试。');
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [retry]);
-
-  const handleCTA = (product: ProductCatalogItem) => {
-    if (product.code === 'FREE_POLICY_MATCH') {
-      if (api.isAuthenticated()) router.push('/dashboard');
-      else router.push('/login?register=1');
-      return;
-    }
-    if (!api.isAuthenticated()) {
-      router.push(`/login?register=1&next=${encodeURIComponent('/checkout?product=' + product.code)}`);
-      return;
-    }
-    router.push(`/checkout?product=${product.code}`);
-  };
-
+export default async function PricingPage() {
+  let products: ProductCatalogItem[] = [];
+  let error = '';
+  try {
+    const target = process.env.API_PROXY_TARGET || 'https://api.yance.ai';
+    const response = await fetch(`${target}/api/v1/products`, {next: {revalidate: 300}, signal: AbortSignal.timeout(8000)});
+    if (!response.ok) throw new Error('catalogue unavailable');
+    const data = await response.json();
+    if (!Array.isArray(data)) throw new Error('invalid catalogue');
+    products = data;
+  } catch {
+    error = '当前无法读取价格，请稍后重试。';
+  }
   return (
     <>
       <section className={["page-banner", pageStyles.section].filter(Boolean).join(' ')} >
         <div className="container">
           <span className={["badge", pageStyles.label].filter(Boolean).join(' ')} >按次付费</span>
           <h1>按次购买，需要时再买</h1>
-          <p>先免费发现机会，再按需要购买。金额来自服务端目录；项目产品单独标注开通状态，购买前请核对交付范围与账户权益。</p>
+          <p>先免费查找政策机会，需要整理判断依据与企业报告时再按份购买。</p>
         </div>
       </section>
 
       <section className="section">
         <div className="container">
-          {loading ? (
-            <div role="status"><span className="yc-visually-hidden">加载产品目录...</span><div className="grid grid-4 pricing-loading" aria-hidden="true">{[0,1,2,3].map(item => <div className="pricing-card" key={item}><div className="pricing-placeholder" /><div className="pricing-placeholder" /><div className="pricing-placeholder" /></div>)}</div></div>
-          ) : error ? (
-            <div role="alert" className={pageStyles.section2}><p>{error}</p><button type="button" className="btn btn-outline" onClick={() => setRetry(value => value + 1)}>重新加载产品目录</button></div>
-          ) : products.length === 0 ? (
-            <div className={pageStyles.section3}>
-              当前没有已启用的产品。这里不会用静态价格代替真实服务端目录。
-            </div>
-          ) : (
-            <div className="grid grid-4 pricing-catalogue">
-              {products.map((product) => {
-                const isFeatured = product.code === 'POLICY_REPORT';
-                const isPurchasableHere = product.code === 'FREE_POLICY_MATCH' || (product.purchase_available !== false && product.code === 'POLICY_REPORT' && product.entitlement_type === 'report');
-                const presentation = productPresentation(product);
-                const displayedPrice = product.promotional_price ?? product.price;
-                return (
-                  <article aria-label={presentation.name} key={product.code} className={`pricing-card${isFeatured ? ' pricing-card-featured' : ''}`} style={isFeatured ? { borderColor: 'var(--teal)' , borderWidth: '1px' } : {}}>
-                    {isFeatured && (
-                      <div className={pageStyles.section4}>按需首购</div>
-                    )}
-                    <h2 className="pricing-name">{presentation.name}</h2>
-                    <p className="pricing-desc">{isPurchasableHere ? '按次使用 · 具体权益以购买页面为准' : '待开通 · 目录产品，交付待验收'}</p>
-                    <div className="pricing-price">
-                      {displayedPrice === 0 ? (
-                        <span className={pageStyles.label2}>免费</span>
-                      ) : (
-                        <>
-                          ¥{displayedPrice}
-                          <span className="pricing-price-unit">{presentation.unit}</span>
-                        </>
-                      )}
-                    </div>
-                    <div className="pricing-divider" />
-                    <ul className="pricing-features">
-                      {presentation.features.map(feature => <li key={feature}>{feature}</li>)}
-                    </ul>
-                    <button
-                      onClick={() => handleCTA(product)}
-                      disabled={!isPurchasableHere}
-                      className={`btn ${isFeatured ? '' : 'btn-outline'}`}
-                      style={isFeatured
-                        ? { background: 'var(--teal)' , color: 'var(--surface)', borderColor: 'var(--teal)' , borderRadius: '12px', width: '100%', cursor: isPurchasableHere ? 'pointer' : 'not-allowed' }
-                        : { borderRadius: '12px', width: '100%', cursor: isPurchasableHere ? 'pointer' : 'not-allowed' }}
-                    >
-                      {product.code === 'FREE_POLICY_MATCH'
-                        ? '免费开始'
-                        : isPurchasableHere
-                          ? '选择企业并购买'
-                          : '待开通'}
-                    </button>
-                    <p className="pricing-boundary">{product.purchase_unavailable_reason || presentation.boundary}</p>
-                  </article>
-                );
-              })}
-            </div>
-          )}
+          <PricingCatalogue initialProducts={products} initialError={error} />
         </div>
       </section>
 
@@ -124,7 +44,7 @@ export default function PricingPage() {
           </div>
           <div className={["card", pageStyles.section5].filter(Boolean).join(' ')} >
             <p className={pageStyles.description}>
-              企业资料 → 政策初筛 → 条件与证据核对 → 材料准备 → 客户自主复核。目录价格来自服务端；套餐名称是交付范围说明，不改变商品编号、历史订单或已有权益。
+              从企业资料出发，查找政策、核对条件与证据，再整理材料。每份简报对应所选企业及固定报告版本，购买后在订单中取得交付物。
             </p>
           </div>
         </div>
@@ -154,7 +74,7 @@ export default function PricingPage() {
       <section className="section section-alt">
         <div className="container container-narrow">
           <h2 className="section-title">持续协作，先把每一次交付做好</h2>
-          <p>团队订阅仍在准备中，暂不开放购买。现有客户的订单与账户权益继续按原约定执行。</p>
+          <p>有团队协作或专项材料需求，可先沟通目标、资料与交付范围。已有订单可在工作区继续查看。</p>
           <details className="pricing-faq"><summary>购买前需要确认什么？</summary><p>先确认企业、政策或批次、输入资料、交付格式及支付渠道。信息不足时可能得到“证据不足”或“不符合”的结果，付款不代表申报资格成立。</p></details>
           <details className="pricing-faq"><summary>衍策会替企业审核和申报吗？</summary><p>业务复核由客户本人或授权团队完成。衍策辅助检索和材料准备，不提供人工业务审核、政府认定或补贴到账保证。</p></details>
           <details className="pricing-faq"><summary>如何查看已有购买记录？</summary><p>登录后在订单与账户权益中核对。已有购买不因展示名称调整而失效；遇到交付异常，请保留订单编号联系支持。</p></details>
@@ -166,7 +86,7 @@ export default function PricingPage() {
           <h2 className="cta-title">创建工作区，开始政策机会初筛</h2>
           <p className="cta-subtitle">免费注册即可体验政策匹配，无需信用卡。</p>
           <div className="cta-actions">
-            <button onClick={() => api.isAuthenticated() ? router.push('/dashboard') : router.push('/login?register=1')} className={["btn btn-lg", pageStyles.action].filter(Boolean).join(' ')} >免费开始</button>
+            <Link href="/login?register=1" className={["btn btn-lg", pageStyles.action].join(" ")}>免费开始</Link>
             <a href="mailto:yanceai@163.com" className="btn btn-outline-white btn-lg">企业定制咨询</a>
           </div>
         </div>
