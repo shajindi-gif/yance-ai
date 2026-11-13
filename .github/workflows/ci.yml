@@ -118,6 +118,11 @@ jobs:
     name: Frontend audit, typecheck, and build
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      # An unavailable local catalogue is an honest SSR fallback during this
+      # build-only job. Never fetch the production API from an isolated check.
+      API_PROXY_TARGET: http://127.0.0.1:9
+      NEXT_PUBLIC_API_URL: /api/v1
     defaults:
       run:
         working-directory: website
@@ -280,6 +285,7 @@ jobs:
       NEXT_PUBLIC_API_URL: http://localhost:8011/api/v1
       PLAYWRIGHT_BASE_URL: http://localhost:3000
       PLAYWRIGHT_API_BASE_URL: http://localhost:8011/api/v1
+      API_PROXY_TARGET: http://localhost:8011
     steps:
       - name: Check out repository
         uses: actions/checkout@v7

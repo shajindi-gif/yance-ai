@@ -57,7 +57,8 @@ write_env('restore.env',restore)
 testenv={k:v for k,v in original.items() if not k.startswith(('ALIPAY_','WXPAY_','OSS_','SMTP_','TENCENT_','OPENAI_','ANTHROPIC_','DASHSCOPE_','STRIPE_'))}
 testenv.update(APP_ENV='test',DATABASE_URL=urlunsplit((u.scheme,u.netloc,'/yance_payment_1113_test',u.query,u.fragment)),EMAIL_ENABLED='false',SMS_ENABLED='false',LLM_DEFAULT_PROVIDER='mock',POLICY_COLLECTION_ENABLED='false',JWT_SECRET='synthetic-candidate-jwt-key-at-least-32-characters',API_KEY_PEPPER='synthetic-candidate-pepper-at-least-32-characters',BOOTSTRAP_TOKEN='synthetic-bootstrap-token',TENANT_PROVISIONING_TOKEN='synthetic-provisioning-token',PAYMENT_OPS_USER_ID='')
 write_env('candidate.env',testenv)
-base=rollback['api']['image']
+base='yance-backend:payment-20261113-base'
+subprocess.run(['docker','tag',rollback['api']['image'],base],check=True)
 paths=json.loads((r/'PATCH_FILES.json').read_text())
 assert 'yance-ai/app/services/policy_collection/scheduler.py' not in paths
 dockerfile='FROM '+base+'\n'
