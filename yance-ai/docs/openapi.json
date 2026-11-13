@@ -5376,6 +5376,42 @@
         "title": "PresignedUploadOut",
         "type": "object"
       },
+      "RefundRequest": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "idempotency_key": {
+            "format": "uuid",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "idempotency_key"
+        ],
+        "title": "RefundRequest",
+        "type": "object"
+      },
       "RegisterRequest": {
         "description": "Public self-service registration: tenant + owner + default company.",
         "properties": {
@@ -7135,6 +7171,82 @@
           }
         ],
         "summary": "Admin Reject Invoice",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/orders/{order_id}/refund": {
+      "post": {
+        "operationId": "refund_order_api_v1_admin_orders__order_id__refund_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Order Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefundRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Refund Order Api V1 Admin Orders  Order Id  Refund Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Refund Order",
         "tags": [
           "admin"
         ]
@@ -14466,6 +14578,29 @@
           }
         ],
         "summary": "Wechat Query",
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/api/v1/payments/wechat/refund-notify": {
+      "post": {
+        "operationId": "wechat_refund_notify_api_v1_payments_wechat_refund_notify_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Wechat Refund Notify Api V1 Payments Wechat Refund Notify Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Wechat Refund Notify",
         "tags": [
           "payments"
         ]

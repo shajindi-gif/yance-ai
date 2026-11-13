@@ -241,3 +241,18 @@ def close_order(out_trade_no: str) -> bool:
         return response.status_code == 204
     except httpx.HTTPError:
         return False
+
+
+def request_refund(out_trade_no: str, refund_no: str, total: int, reason: str) -> tuple[dict, bytes]:
+    path = '/v3/refund/domestic/refunds'
+    body = {'out_trade_no':out_trade_no,'out_refund_no':refund_no,'reason':reason,
+            'notify_url':settings.wxpay_refund_notify_url,
+            'amount':{'refund':total,'total':total,'currency':'CNY'}}
+    if settings.wxpay_mode == 'partner':
+        body['sub_mchid'] = settings.wxpay_sub_mch_id
+    payload = json.dumps(body,ensure_ascii=False,separators=(',',':'))
+    response = httpx.post(settings.wxpay_gateway+path,content=payload.encode(),headers=_headers('POST',path,payload),timeout=10)
+    response.raise_for_status()
+    if not verify_notify_signature(response.headers.get('Wechatpay-Timestamp',''),response.headers.get('Wechatpay-Nonce',''),response.text,response.headers.get('Wechatpay-Signature',''),response.headers.get('Wechatpay-Serial','')):
+        raise ValueError('WeChat refund response signature failed')
+    return response.json(),response.content

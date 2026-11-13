@@ -175,6 +175,7 @@ class Settings(BaseSettings):
     wxpay_serial_no: str = ""  # 商户 API 证书序列号
     wxpay_private_key: str = ""  # apiclient_key.pem 内容（单行，\n 表示换行）
     wxpay_apiv3_key: str = ""  # 32 位 APIv3 密钥
+    wxpay_refund_notify_url: str = "https://yance.ai/api/v1/payments/wechat/refund-notify"
     wxpay_notify_url: str = "https://api.yance.ai/api/v1/payments/wechat/notify"
     wxpay_gateway: str = "https://api.mch.weixin.qq.com"
     # 微信支付公钥模式（新商户无平台证书）

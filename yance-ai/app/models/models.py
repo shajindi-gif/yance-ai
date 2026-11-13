@@ -804,6 +804,24 @@ class Payment(Base, TimestampMixin, TenantOwnedMixin):
     raw_response: Mapped[dict] = mapped_column(JSON, default=dict)
 
 
+class Refund(Base, TimestampMixin, TenantOwnedMixin):
+    __tablename__ = "refunds"
+    __table_args__ = (UniqueConstraint("order_id", name="uq_refunds_full_order"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    order_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("orders.id"), index=True)
+    payment_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("payments.id"))
+    idempotency_key: Mapped[str] = mapped_column(String(128))
+    provider: Mapped[str] = mapped_column(String(40))
+    provider_refund_no: Mapped[str] = mapped_column(String(64), unique=True)
+    provider_refund_id: Mapped[str | None] = mapped_column(String(128))
+    reason: Mapped[str] = mapped_column(String(500))
+    amount: Mapped[float] = mapped_column(Numeric(12, 2))
+    currency: Mapped[str] = mapped_column(String(8))
+    status: Mapped[str] = mapped_column(String(40), default="requested")
+    requested_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    error_code: Mapped[str | None] = mapped_column(String(120))
+
+
 class PaymentEvent(Base, TimestampMixin, TenantOwnedMixin):
     """Immutable provider event receipt used for replay-safe settlement."""
 

@@ -1,7 +1,10 @@
 import re
+import uuid
+from decimal import Decimal
 from typing import Literal
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
@@ -23,7 +26,9 @@ from app.models.models import (
     Membership,
     Notification,
     Order,
+    Payment,
     Policy,
+    Refund,
     Tenant,
     TenantFeatureFlag,
     User,
@@ -67,6 +72,7 @@ def _flag_out(flag: FeatureFlag) -> dict:
         "created_at": flag.created_at,
         "updated_at": flag.updated_at,
     }
+
 
 AdminResource = Literal[
     "users",
@@ -421,9 +427,16 @@ def update_feedback_status(
     feedback.status = payload.status
     if previous != payload.status:
         from app.services.enterprise.audit import record_audit
-        record_audit(db, tenant_id=feedback.tenant_id, actor_user_id=_.user.id,
-                     action="feedback.status_changed", resource_type="feedback", resource_id=str(feedback.id),
-                     details={"previous_status": previous, "status": payload.status})
+
+        record_audit(
+            db,
+            tenant_id=feedback.tenant_id,
+            actor_user_id=_.user.id,
+            action="feedback.status_changed",
+            resource_type="feedback",
+            resource_id=str(feedback.id),
+            details={"previous_status": previous, "status": payload.status},
+        )
     db.commit()
     return {"id": str(feedback.id), "status": feedback.status}
 
@@ -648,13 +661,17 @@ def admin_list_invoices(
         query = query.where(Invoice.status == status)
     invoices = db.scalars(query.limit(limit).offset(offset)).all()
     total = db.scalar(
-        select(func.count()).select_from(Invoice).where(Invoice.status == status) if status
+        select(func.count()).select_from(Invoice).where(Invoice.status == status)
+        if status
         else select(func.count()).select_from(Invoice)
     )
     rows = []
     for invoice in invoices:
         owner_email = db.scalar(
-            select(User.email).where(User.tenant_id == invoice.tenant_id).order_by(User.created_at).limit(1)
+            select(User.email)
+            .where(User.tenant_id == invoice.tenant_id)
+            .order_by(User.created_at)
+            .limit(1)
         )
         rows.append(_invoice_row(invoice, owner_email))
     return {"total": total, "limit": limit, "offset": offset, "items": rows}
@@ -695,10 +712,21 @@ async def admin_issue_invoice(
     invoice.issued_at = now_utc()
     if note:
         invoice.review_note = note
-    record_audit(db, tenant_id=invoice.tenant_id, actor_user_id=principal.user.id, action="invoice.issue", resource_type="invoice", resource_id=str(invoice.id))
+    record_audit(
+        db,
+        tenant_id=invoice.tenant_id,
+        actor_user_id=principal.user.id,
+        action="invoice.issue",
+        resource_type="invoice",
+        resource_id=str(invoice.id),
+    )
     db.commit()
     _notify_invoice(db, invoice, issued=True)
-    return {"id": str(invoice.id), "status": invoice.status, "voucher_filename": invoice.voucher_filename}
+    return {
+        "id": str(invoice.id),
+        "status": invoice.status,
+        "voucher_filename": invoice.voucher_filename,
+    }
 
 
 @router.post("/invoices/{invoice_id}/reject")
@@ -715,7 +743,88 @@ def admin_reject_invoice(
         raise HTTPException(status_code=409, detail="该发票已开具，无法驳回")
     invoice.status = "rejected"
     invoice.review_note = payload.reason
-    record_audit(db, tenant_id=invoice.tenant_id, actor_user_id=principal.user.id, action="invoice.reject", resource_type="invoice", resource_id=str(invoice.id))
+    record_audit(
+        db,
+        tenant_id=invoice.tenant_id,
+        actor_user_id=principal.user.id,
+        action="invoice.reject",
+        resource_type="invoice",
+        resource_id=str(invoice.id),
+    )
     db.commit()
     _notify_invoice(db, invoice, issued=False, reason=payload.reason)
     return {"id": str(invoice.id), "status": invoice.status}
+
+
+class RefundRequest(BaseModel):
+    reason: str = Field(min_length=1, max_length=500)
+    idempotency_key: UUID
+    amount: Decimal | None = None
+
+
+@router.post("/orders/{order_id}/refund")
+def refund_order(
+    order_id: UUID,
+    payload: RefundRequest,
+    principal: Principal = Depends(require_platform_admin),
+    db: Session = Depends(get_db),
+) -> dict:
+    from app.services.payments.refunds import submit_refund
+
+    order = db.scalar(select(Order).where(Order.id == order_id).with_for_update())
+    if not order:
+        raise HTTPException(404, "Order not found")
+    if payload.amount is not None and payload.amount != Decimal(str(order.amount)):
+        raise HTTPException(422, "仅支持全额退款；部分退款请人工处理")
+    refund = db.scalar(select(Refund).where(Refund.order_id == order.id))
+    if refund:
+        if (
+            refund.idempotency_key != str(payload.idempotency_key)
+            or refund.reason != payload.reason
+        ):
+            raise HTTPException(409, "该订单已有退款请求，请使用原请求号继续核对")
+        if refund.status == "succeeded":
+            return {"id": str(refund.id), "status": refund.status}
+    elif order.status != "paid":
+        raise HTTPException(409, "仅支持已付款订单退款")
+    payments = list(
+        db.scalars(
+            select(Payment).where(
+                Payment.order_id == order.id,
+                Payment.tenant_id == order.tenant_id,
+                Payment.status == "completed",
+            )
+        )
+    )
+    if len(payments) != 1:
+        raise HTTPException(409, "支付记录需先对账，无法自动退款")
+    payment = payments[0]
+    if not refund:
+        refund_id = uuid.uuid4()
+        refund = Refund(
+            id=refund_id,
+            tenant_id=order.tenant_id,
+            order_id=order.id,
+            payment_id=payment.id,
+            idempotency_key=str(payload.idempotency_key),
+            provider=payment.provider,
+            provider_refund_no="YR" + refund_id.hex,
+            reason=payload.reason,
+            amount=order.amount,
+            currency=order.currency,
+            requested_by=principal.user.id,
+            status="requested",
+        )
+        db.add(refund)
+        db.commit()
+        db.scalar(select(Order).where(Order.id == order.id).with_for_update())
+        db.refresh(refund)
+        if refund.status == "succeeded":
+            return {"id": str(refund.id), "status": refund.status}
+    try:
+        submit_refund(db, refund, payment)
+    except HTTPException:
+        raise
+    except (ValueError, ArithmeticError, httpx.HTTPError) as exc:
+        raise HTTPException(502, "退款响应需核对，请使用原请求号重试") from exc
+    return {"id": str(refund.id), "status": refund.status}

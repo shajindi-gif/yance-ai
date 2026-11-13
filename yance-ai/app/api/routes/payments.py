@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import Principal, get_principal, require_roles
 from app.core.config import settings
 from app.core.db import get_db
-from app.models.models import Order, Payment, Product, UserRole
+from app.models.models import Order, Payment, Product, Refund, UserRole
 from app.services.commerce.availability import purchase_status
 from app.services.commerce.delivery import require_order_report
 from app.services.payments import alipay as ali
@@ -706,3 +706,37 @@ def verify_bank_transfer(
 ):
     """管理端核实银行转账到账，将订单标记为已支付。"""
     raise HTTPException(status_code=501, detail="Bank transfer verification is not available")
+
+
+@router.post("/wechat/refund-notify")
+async def wechat_refund_notify(request: Request, db: Session = Depends(get_db)) -> dict:
+    from app.services.payments.refunds import complete_refund
+    body = await request.body()
+    if not wx.is_wechat_configured() or not wx.verify_notify_signature(
+        request.headers.get("wechatpay-timestamp", ""), request.headers.get("wechatpay-nonce", ""),
+        body.decode("utf-8", errors="replace"), request.headers.get("wechatpay-signature", ""),
+        request.headers.get("wechatpay-serial", ""),
+    ):
+        raise HTTPException(400, "Invalid refund signature")
+    try:
+        result = wx.decrypt_resource(json.loads(body).get("resource") or {})
+        refund = db.scalar(select(Refund).where(Refund.provider == "wechat", Refund.provider_refund_no == result.get("out_refund_no")))
+        if not refund:
+            raise HTTPException(404, "Refund not found")
+        payment = db.get(Payment, refund.payment_id)
+        merchant = settings.wxpay_sp_mch_id if settings.wxpay_mode == "partner" else settings.wxpay_mch_id
+        if result.get("mchid") != merchant or result.get("out_trade_no") != payment.provider_trade_no:
+            raise HTTPException(400, "Refund merchant or order mismatch")
+        if result.get("refund_status") != "SUCCESS":
+            return {"code": "SUCCESS", "message": "退款尚未完成，保留待核对状态"}
+        amounts = result.get("amount") or {}
+        if amounts.get("total") != int(Decimal(str(payment.amount)) * 100):
+            raise HTTPException(400, "Refund total mismatch")
+        amount = amounts.get("refund")
+        if not isinstance(amount, int) or isinstance(amount, bool):
+            raise HTTPException(400, "Invalid refund amount")
+        complete_refund(db, refund, provider_id=result.get("refund_id", ""), amount=Decimal(amount)/100,
+            currency=amounts.get("currency", ""), payload=body)
+    except (ValueError, KeyError, TypeError) as exc:
+        raise HTTPException(400, "Invalid refund notification") from exc
+    return {"code": "SUCCESS", "message": "成功"}
