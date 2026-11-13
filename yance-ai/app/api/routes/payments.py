@@ -171,7 +171,10 @@ def alipay_page_pay(
         raise HTTPException(status_code=400, detail="Alipay checkout requires CNY")
 
     existing = _checkout_payment(db, order, "alipay")
-    if existing and existing.status == "expired":
+    if existing and (
+        existing.status == "expired"
+        or existing.created_at + timedelta(minutes=settings.order_payment_ttl_minutes) <= datetime.now(UTC)
+    ):
         from app.services.payments.lifecycle import close_payment
         if not close_payment(db, existing):
             raise HTTPException(409, "原支付状态正在核对，请稍后重试")
