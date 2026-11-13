@@ -20,6 +20,14 @@ from app.models.models import (  # noqa: F401
     User,
 )
 
+# Include park models when Alembic loads metadata without importing API routes.
+from app.models.park_policy import (  # noqa: F401
+    Park,
+    ParkPolicyScope,
+    PolicyCondition,
+    PolicyEvalRun,
+)
+
 # Policy collection runtime tables (additive; imported for Alembic metadata).
 from app.models.policy_collection import (  # noqa: F401
     PolicyApplicationWindow,

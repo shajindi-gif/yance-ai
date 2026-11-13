@@ -32,7 +32,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -59,7 +59,7 @@ class PolicySourceState(Base, TimestampMixin):
     last_items_new: Mapped[int] = mapped_column(Integer, default=0)
     last_items_changed: Mapped[int] = mapped_column(Integer, default=0)
     last_items_failed: Mapped[int] = mapped_column(Integer, default=0)
-    cursor: Mapped[dict] = mapped_column(JSON, default=dict)
+    cursor: Mapped[dict | None] = mapped_column(JSON, default=dict)
 
 
 class PolicyCollectionRun(Base, TimestampMixin):
@@ -88,7 +88,7 @@ class PolicyCollectionRun(Base, TimestampMixin):
     models_used: Mapped[int] = mapped_column(Integer, default=0)
     error_kind: Mapped[str | None] = mapped_column(String(40))
     error_summary: Mapped[str | None] = mapped_column(Text)
-    stats: Mapped[dict] = mapped_column(JSON, default=dict)
+    stats: Mapped[dict | None] = mapped_column(JSON, default=dict)
 
 
 class PolicyRawEvidence(Base, TimestampMixin):
@@ -119,7 +119,7 @@ class PolicyRawEvidence(Base, TimestampMixin):
     byte_size: Mapped[int] = mapped_column(Integer, default=0)
     content_sha256: Mapped[str | None] = mapped_column(String(64), index=True)
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, index=True)
-    http_meta: Mapped[dict] = mapped_column(JSON, default=dict)
+    http_meta: Mapped[dict | None] = mapped_column(JSON, default=dict)
     storage_path: Mapped[str | None] = mapped_column(String(1000))
     parser_name: Mapped[str | None] = mapped_column(String(80))
     parser_version: Mapped[str | None] = mapped_column(String(40))
@@ -244,16 +244,17 @@ class PolicyQualityAssessment(Base, TimestampMixin):
         UniqueConstraint(
             "policy_version_id", "rubric_version", name="uq_policy_quality_version_rubric"
         ),
+        Index("ix_policy_quality_policy", "policy_id"),
         Index("ix_policy_quality_grade", "rubric_version", "grade"),
         Index("ix_policy_quality_deliverable", "rubric_version", "deliverable"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     policy_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("policies.id", ondelete="CASCADE"), index=True
+        UUID(as_uuid=True), ForeignKey("policies.id", ondelete="CASCADE")
     )
     policy_version_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("policy_versions.id", ondelete="CASCADE"), index=True
+        UUID(as_uuid=True), ForeignKey("policy_versions.id", ondelete="CASCADE")
     )
     rubric_version: Mapped[str] = mapped_column(String(40))
     reliability: Mapped[float] = mapped_column(Numeric(5, 2))
@@ -266,6 +267,6 @@ class PolicyQualityAssessment(Base, TimestampMixin):
     timeline_state: Mapped[str] = mapped_column(String(24), default="unknown")
     source_tier: Mapped[str] = mapped_column(String(2), default="D")
     verdict: Mapped[str | None] = mapped_column(String(400))
-    issues: Mapped[dict] = mapped_column(JSON, default=list)
-    signals: Mapped[dict] = mapped_column(JSON, default=dict)
+    issues: Mapped[list[dict]] = mapped_column(JSONB, default=list)
+    signals: Mapped[dict] = mapped_column(JSONB, default=dict)
     assessed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)

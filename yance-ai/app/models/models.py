@@ -17,6 +17,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -323,6 +324,10 @@ class Policy(Base, TimestampMixin):
     """Global Policy Knowledge Base — platform-level, shared by all tenants."""
 
     __tablename__ = "policies"
+    __table_args__ = (
+        Index("ix_policies_title_trgm", text("lower(title) gin_trgm_ops"), postgresql_using="gin"),
+        Index("ix_policies_quality_deliverable", "quality_deliverable", "quality_grade"),
+    )
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), index=True, nullable=True
@@ -389,7 +394,10 @@ class PolicyVersion(Base, TimestampMixin):
     """Immutable, checksum-addressed policy source snapshot."""
 
     __tablename__ = "policy_versions"
-    __table_args__ = (UniqueConstraint("policy_id", "version", name="uq_policy_version"),)
+    __table_args__ = (
+        UniqueConstraint("policy_id", "version", name="uq_policy_version"),
+        Index("ix_policy_versions_title_trgm", text("lower(title) gin_trgm_ops"), postgresql_using="gin"),
+    )
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     policy_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("policies.id", ondelete="CASCADE"), index=True
@@ -420,6 +428,7 @@ class PolicyChunk(Base, TimestampMixin):
     __tablename__ = "policy_chunks"
     __table_args__ = (
         UniqueConstraint("policy_version_id", "chunk_index", name="uq_policy_chunk_index"),
+        Index("ix_policy_chunks_content_trgm", text("lower(content) gin_trgm_ops"), postgresql_using="gin"),
     )
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     policy_id: Mapped[uuid.UUID] = mapped_column(
