@@ -2,14 +2,14 @@ import {readFileSync} from 'node:fs';
 import {test,expect} from '@playwright/test';
 
 test.beforeEach(async({page,baseURL})=>{
-  expect(new URL(baseURL!).hostname).toBe('127.0.0.1');
-  await page.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.abort());
+  expect(new URL(baseURL!).hostname).toMatch(/^(localhost|127\.0\.0\.1)$/);
+  await page.route('**/*',route=>['localhost','127.0.0.1'].includes(new URL(route.request().url()).hostname)?route.continue():route.abort());
 });
 
 test('prices are present before browser JavaScript executes',async({browser,baseURL})=>{
   const context=await browser.newContext({javaScriptEnabled:false});
   const page=await context.newPage();
-  await page.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.abort());
+  await page.route('**/*',route=>['localhost','127.0.0.1'].includes(new URL(route.request().url()).hostname)?route.continue():route.abort());
   await page.goto(baseURL+'/pricing');
   await expect(page.locator('.pricing-price').filter({hasText:'¥99'})).toBeVisible();
   await expect(page.locator('.pricing-card')).toHaveCount(2);
