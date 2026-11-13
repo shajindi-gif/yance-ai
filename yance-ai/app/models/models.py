@@ -17,7 +17,8 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
-    text,
+    column,
+    func,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -325,7 +326,7 @@ class Policy(Base, TimestampMixin):
 
     __tablename__ = "policies"
     __table_args__ = (
-        Index("ix_policies_title_trgm", text("lower(title) gin_trgm_ops"), postgresql_using="gin"),
+        Index("ix_policies_title_trgm", func.lower(column("title")).label("title_trgm"), postgresql_using="gin", postgresql_ops={"title_trgm": "gin_trgm_ops"}),
         Index("ix_policies_quality_deliverable", "quality_deliverable", "quality_grade"),
     )
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -396,7 +397,7 @@ class PolicyVersion(Base, TimestampMixin):
     __tablename__ = "policy_versions"
     __table_args__ = (
         UniqueConstraint("policy_id", "version", name="uq_policy_version"),
-        Index("ix_policy_versions_title_trgm", text("lower(title) gin_trgm_ops"), postgresql_using="gin"),
+        Index("ix_policy_versions_title_trgm", func.lower(column("title")).label("title_trgm"), postgresql_using="gin", postgresql_ops={"title_trgm": "gin_trgm_ops"}),
     )
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     policy_id: Mapped[uuid.UUID] = mapped_column(
@@ -428,7 +429,7 @@ class PolicyChunk(Base, TimestampMixin):
     __tablename__ = "policy_chunks"
     __table_args__ = (
         UniqueConstraint("policy_version_id", "chunk_index", name="uq_policy_chunk_index"),
-        Index("ix_policy_chunks_content_trgm", text("lower(content) gin_trgm_ops"), postgresql_using="gin"),
+        Index("ix_policy_chunks_content_trgm", func.lower(column("content")).label("content_trgm"), postgresql_using="gin", postgresql_ops={"content_trgm": "gin_trgm_ops"}),
     )
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     policy_id: Mapped[uuid.UUID] = mapped_column(

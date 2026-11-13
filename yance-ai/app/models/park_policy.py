@@ -24,6 +24,7 @@ from datetime import datetime
 from sqlalchemy import (
     JSON,
     Boolean,
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Index,
@@ -79,8 +80,10 @@ class Park(Base, TimestampMixin):
 
     __tablename__ = "parks"
     __table_args__ = (
-        Index("ix_parks_admin_division", "province", "city", "district"),
-        Index("ix_parks_type_status", "park_type", "status"),
+        CheckConstraint("park_type IN ('national_high_tech_zone','provincial_high_tech_zone','economic_dev_zone','tech_park','science_city','incubator','other')", name='ck_parks_park_type'),
+        CheckConstraint("boundary_status IN ('confirmed','needs_confirmation','partial','unknown')", name='ck_parks_boundary_status'),
+        CheckConstraint("verification_status IN ('registered','reachable','metadata_verified','unreachable','withdrawn')", name='ck_parks_verification_status'),
+
     )
 
     park_id: Mapped[str] = mapped_column(String(80), primary_key=True)
@@ -120,6 +123,9 @@ class ParkPolicyScope(Base, TimestampMixin):
 
     __tablename__ = "park_policy_scopes"
     __table_args__ = (
+        CheckConstraint("scope_type IN ('national','province','city','district','park')", name='ck_park_policy_scopes_scope_type'),
+        CheckConstraint("qualification_basis IN ('registered_in_park','tax_in_park','operating_in_park','statistical_in_park','unspecified')", name='ck_park_policy_scopes_qualification_basis'),
+        CheckConstraint("scope_type <> 'park' OR park_id IS NOT NULL", name='ck_park_policy_scopes_park_requires_id'),
         UniqueConstraint(
             "policy_id", "scope_key", name="uq_park_policy_scope_key"
         ),
@@ -158,6 +164,9 @@ class PolicyCondition(Base, TimestampMixin):
 
     __tablename__ = "policy_conditions"
     __table_args__ = (
+        CheckConstraint("group_logic IN ('all','any')", name='ck_policy_conditions_group_logic'),
+        CheckConstraint("operator IN ('gte','lte','eq','ne','in','not_in','between','exists','matches')", name='ck_policy_conditions_operator'),
+        CheckConstraint('quote_char_start IS NULL OR quote_char_end IS NULL OR quote_char_end >= quote_char_start', name='ck_policy_conditions_quote_span'),
         Index("ix_policy_conditions_policy_group", "policy_id", "group_key"),
         Index("ix_policy_conditions_version", "policy_version_id"),
     )
@@ -195,6 +204,7 @@ class PolicyEvalRun(Base, TimestampMixin):
 
     __tablename__ = "policy_eval_runs"
     __table_args__ = (
+        CheckConstraint("arm IN ('A','B','C')", name='ck_policy_eval_runs_arm'),
         Index("ix_policy_eval_runs_dataset_arm", "dataset_version", "arm"),
     )
 
