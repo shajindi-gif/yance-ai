@@ -4,7 +4,7 @@ import pageStyles from './page.module.css';
 
 export const metadata = {
   title: '关于我们 | 衍策引擎AI',
-  openGraph: {title: '关于衍策引擎 AI', description: '以可追溯的数据和流程支持企业政策申报准备。', url: '/about'},
+  openGraph: {images: [{url: '/og-brand.png', width: 1200, height: 630, alt: '衍策引擎AI'}], title: '关于衍策引擎 AI', description: '以可追溯的数据和流程支持企业政策申报准备。', url: '/about'},
   description:
     '团队、产品理念与责任域说明：衍策引擎AI 如何以可追溯的数据与流程服务科技企业政策申报。',
 };

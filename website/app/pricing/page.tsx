@@ -4,7 +4,7 @@ import pageStyles from './page.module.css';
 import type {ProductCatalogItem} from '@/lib/api';
 
 export const revalidate = 300;
-export const metadata = {title: '价格与交付范围｜衍策引擎 AI', description: '先免费查找政策机会，按需购买企业政策机会简报，核对来源、条件与所需证明。', openGraph: {title: '价格与交付范围｜衍策引擎 AI', description: '免费发现政策机会，按需购买可追溯的企业政策简报。', url: '/pricing'}};
+export const metadata = {title: '价格与交付范围｜衍策引擎 AI', description: '先免费查找政策机会，按需购买企业政策机会简报，核对来源、条件与所需证明。', openGraph: {images: [{url: '/og-brand.png', width: 1200, height: 630, alt: '衍策引擎AI'}], title: '价格与交付范围｜衍策引擎 AI', description: '免费发现政策机会，按需购买可追溯的企业政策简报。', url: '/pricing'}};
 
 export default async function PricingPage() {
   let products: ProductCatalogItem[] = [];

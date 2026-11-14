@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import pageStyles from './page.module.css';
 
-export const metadata: Metadata = { title: '安全合规 | 衍策引擎AI', description: '了解账户权限、企业数据保护与客户复核流程。', openGraph: {title: '安全与数据保护｜衍策引擎 AI', description: '了解账户权限、企业数据保护与客户复核流程。', url: '/security'} };
+export const metadata: Metadata = { title: '安全合规 | 衍策引擎AI', description: '了解账户权限、企业数据保护与客户复核流程。', openGraph: {images: [{url: '/og-brand.png', width: 1200, height: 630, alt: '衍策引擎AI'}], title: '安全与数据保护｜衍策引擎 AI', description: '了解账户权限、企业数据保护与客户复核流程。', url: '/security'} };
 
 export default function SecurityPage() {
   return (

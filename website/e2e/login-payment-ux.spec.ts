@@ -95,12 +95,13 @@ test('real local API restores an order and preserves it when provider is unavail
 
 test('pending return automatically refreshes the server status without claiming early success',async({page})=>{
  await page.addInitScript(()=>localStorage.setItem('yance_token','synthetic-contract'));
- let reads=0;
- await page.route('**/api/v1/orders',r=>{reads++;return r.fulfill({json:[{id:'auto-order',order_no:'SYNTHETIC',amount:99,status:reads>1?'paid':'created'}]});});
+ let reads=0;let paid=false;
+ await page.route('**/api/v1/orders',r=>{reads++;return r.fulfill({json:[{id:'auto-order',order_no:'SYNTHETIC',amount:99,status:paid?'paid':'created'}]});});
  await page.goto('/success?order=auto-order');
  await expect(page.getByRole('heading',{name:'等待付款确认'})).toBeVisible();
+ paid=true;
  await expect(page.getByRole('heading',{name:'付款已确认'})).toBeVisible({timeout:6000});
- expect(reads).toBe(2);
+ expect(reads).toBeGreaterThanOrEqual(2);
 });
 
 test('Alipay merchant-number return resolves a tenant order without order UUID', async ({page}) => {

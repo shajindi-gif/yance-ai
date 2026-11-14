@@ -28,6 +28,7 @@ function PaymentResult() {
       ? api.getOrders().then(rows => rows.find(row => row.id === id) ?? null)
       : outTradeNo ? api.getOrderByNumber(outTradeNo) : Promise.resolve(null);
     lookup.then(async current => {
+      if (!active) return;
       if (current && ['created', 'pending'].includes(current.status)) {
         try {
           const checkout = await api.getCheckoutState(current.id);
@@ -50,7 +51,7 @@ function PaymentResult() {
   }, [id, outTradeNo, reference, retry]);
   const currentOrder = reference && resolvedReference === reference ? order : null;
   const paid = currentOrder?.status === 'paid';
-  const labels: Record<string,string> = {created:'等待付款确认',pending:'等待付款确认',cancelled:'订单已取消',refunded:'订单已退款',failed:'付款未完成'};
+  const labels: Record<string,string> = {created:'等待付款确认',pending:'等待付款确认',expired:'付款时限已过',cancelled:'订单已取消',refunded:'订单已退款',failed:'付款未完成'};
   return <main className={pageStyles.section}>
     <section className={pageStyles.section2} aria-busy={loading}>
       <h1 className={pageStyles.heading}>{loading && !currentOrder ? '正在核对付款结果…' : paid ? '付款已确认' : labels[currentOrder?.status ?? ''] ?? '核对订单结果'}</h1>

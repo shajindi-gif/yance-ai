@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import styles from './Home.module.css';
 
-export const metadata = {title: '企业政策与资源证据工作台｜衍策引擎 AI', description: '查找企业政策机会，核对条件与原文，整理证明和材料，由企业团队复核。', openGraph: {title: '找到政策机会，看清条件依据｜衍策引擎 AI', description: '连接企业事实、政策条款与申报材料。', url: '/'}};
+export const metadata = {title: '企业政策与资源证据工作台｜衍策引擎 AI', description: '查找企业政策机会，核对条件与原文，整理证明和材料，由企业团队复核。', openGraph: {images: [{url: '/og-brand.png', width: 1200, height: 630, alt: '衍策引擎AI'}], title: '找到政策机会，看清条件依据｜衍策引擎 AI', description: '连接企业事实、政策条款与申报材料。', url: '/'}};
 
 const JOURNEY = [
   ['01', '确认企业资料', '经营情况、研发投入、知识产权。由你提供，并保留确认与版本。', '/companies'],

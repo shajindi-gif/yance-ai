@@ -70,6 +70,9 @@
   background: linear-gradient(135deg, #0d1b2a 0%, #1b2d44 50%, #0d1b2a 100%);
 }
 
+.section8 h2 { color: #fff; }
+.section8 p { color: #dbe5ef; }
+
 .action {
   background: var(--teal);
   color: var(--surface);
