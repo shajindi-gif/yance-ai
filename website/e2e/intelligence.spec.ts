@@ -2,13 +2,13 @@ import {readFileSync} from 'node:fs';
 import {test,expect} from '@playwright/test';
 
 test.beforeEach(async ({page,baseURL})=>{
-  expect(new URL(baseURL!).hostname).toBe('127.0.0.1');
-  await page.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
+  expect(new URL(baseURL!).hostname).toMatch(/^(localhost|127\.0\.0\.1)$/);
+  await page.route('**/*',r=>['localhost','127.0.0.1'].includes(new URL(r.request().url()).hostname)?r.continue():r.abort());
 });
 
 test('transaction review keeps draft text in this page and totals the current list',async({page})=>{
   await page.goto('/');
-  await page.getByRole('link',{name:'交易审查',exact:true}).click();
+  await page.getByRole('link',{name:'企业工具',exact:true}).click();
   await page.getByLabel('采购文件原文').fill('须提供资质。验收后结算。');
   await expect(page.locator('dd').filter({hasText:'须提供资质'})).toBeVisible();
   await page.getByRole('button',{name:'合同条款'}).click();

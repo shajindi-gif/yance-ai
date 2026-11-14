@@ -51,3 +51,6 @@ test('email account binds phone through authenticated local API', async ({ page,
   await page.getByRole('button', { name: '验证并绑定手机号', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('手机号绑定成功');
 });
+
+// Independent synthetic source per suite; production rate limits remain unchanged.
+test.use({extraHTTPHeaders: {'X-Forwarded-For': '127.0.0.64'}});

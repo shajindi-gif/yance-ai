@@ -61,7 +61,7 @@ base='yance-backend:payment-20261113-base'
 subprocess.run(['docker','tag',rollback['api']['image'],base],check=True)
 paths=json.loads((r/'PATCH_FILES.json').read_text())
 assert 'yance-ai/app/services/policy_collection/scheduler.py' not in paths
-dockerfile='FROM '+base+'\n'
+dockerfile='FROM '+base+'\nENV PYTHONPATH=/app\n'
 for path in paths:
  assert path.startswith('yance-ai/') and '..' not in path
  dockerfile+='COPY --chown=yance:yance '+path+' /app/'+path.removeprefix('yance-ai/')+'\n'

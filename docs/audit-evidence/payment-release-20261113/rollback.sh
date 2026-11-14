@@ -16,6 +16,14 @@ fi
 ln -sfn "$(cat "$b/website-path.txt")" /opt/yance/website
 systemctl daemon-reload
 systemctl restart yance-website
-curl --fail --silent http://127.0.0.1:8000/health/ready > /dev/null
-curl --fail --silent http://127.0.0.1:3000/ > /dev/null
+python3 - <<'PY'
+import time,urllib.request
+for url in ['http://127.0.0.1:8000/health/ready','http://127.0.0.1:3000/']:
+ for _ in range(60):
+  try:
+   with urllib.request.urlopen(url,timeout=5) as response:assert response.status==200
+   break
+  except Exception:time.sleep(1)
+ else:raise SystemExit('Restored application readiness failed')
+PY
 echo OLD_APPLICATIONS_RESTORED_DATABASE_RETAINED

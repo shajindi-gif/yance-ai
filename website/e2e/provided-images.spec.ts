@@ -5,7 +5,7 @@ test('provided imagery replaces generated scenes on desktop and mobile',async({p
  await page.route('**/*',r=>{const u=new URL(r.request().url());if(!['localhost','127.0.0.1'].includes(u.hostname)||u.pathname.startsWith('/api/'))return r.abort();return r.continue()});
  await page.goto('/');
  await expect(page.locator('#industry-scenes article')).toHaveCount(6);
- await expect(page.locator('img[src*="provided-20261029"]')).toHaveCount(6);
+ await expect(page.locator('#industry-scenes img[src*="provided-20261029"]')).toHaveCount(6);
  await expect(page.locator('body')).not.toContainText('AI 生成');
  for(const old of ['manufacturing.webp','research.webp','business.webp'])await expect(page.locator(`img[src*="${old}"]`)).toHaveCount(0);
  for(const img of await page.locator('#industry-scenes img').all()){await img.scrollIntoViewIfNeeded();await expect.poll(()=>img.evaluate(e=>(e as HTMLImageElement).naturalWidth)).toBeGreaterThan(0)}

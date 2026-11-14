@@ -34,7 +34,7 @@ def main():
     from app.models.models import EligibilityRule, Opportunity, Policy, PolicyChunk, PolicyVersion
     from app.services.policies.eligibility import evaluate_opportunity
 
-    with TestClient(app) as c:
+    with TestClient(app, client=("127.0.0.21", 50321)) as c:
         h, token = _register(c, "v2-browser-" + uuid.uuid4().hex)
         company = c.get("/api/v1/companies", headers=h).json()[0]
         profile = _complete_profile()

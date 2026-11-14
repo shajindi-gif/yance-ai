@@ -28,7 +28,7 @@ test('payment QR is rendered locally without an external image service', async (
   await page.route('**/api/v1/companies',r=>r.fulfill({json:[{id:'c',name:'合成企业'}]}));
   let orders=0;
   await page.route('**/api/v1/orders',r=>{orders++;return r.fulfill({json:{id:'synthetic-order'}});});
-  await page.route('**/api/v1/payments/wechat/native*',r=>r.fulfill({json:{code_url:'weixin://wxpay/bizpayurl?pr=synthetic-only',out_trade_no:'synthetic',amount_fen:9900}}));
+  await page.route('**/api/v1/payments/wechat/native*',r=>r.fulfill({json:{code_url:'weixin://wxpay/bizpayurl?pr=synthetic-only',out_trade_no:'synthetic',amount_fen:9900,expires_at:new Date(Date.now()+90000).toISOString()}}));
   await page.goto('/checkout?product=POLICY_REPORT');
   await page.getByText('微信支付', {exact:true}).click();
   await page.getByRole('button',{name:'生成付款二维码 ¥99'}).click();

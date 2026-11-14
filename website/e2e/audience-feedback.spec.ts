@@ -15,16 +15,15 @@ test('homepage broadens audience while marking examples and feedback honestly', 
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('看清每项条件的依据');
   const businesses = page.locator('#for-business');
-  await businesses.locator('summary').click();
   for (const label of ['新质生产力企业','科技与研发型企业','各类有政策需求的企业']) {
-    await expect(businesses.locator('details p')).toContainText(label);
+    await expect(businesses.getByRole('heading', {name:label, exact:true})).toBeVisible();
   }
   const cases = page.locator('#scenarios');
   await expect(cases.getByRole('article')).toHaveCount(3);
-  await expect(cases).toContainText('使用场景示例');
-  await expect(page.locator('#customer-feedback')).toContainText('公开引用须另获授权');
+  await expect(cases).toContainText('以下为场景示例，不是真实客户案例');
+  await expect(page.locator('#customer-feedback')).toContainText('案例内容仅在取得单独授权后公开');
   await page.screenshot({ path: `${evidenceDir}/home-desktop.png`, fullPage: true });
-  await page.getByRole('link', { name: '分享使用反馈' }).click();
+  await page.getByRole('link', { name: '分享使用反馈 ↗' }).click();
   await expect(page).toHaveURL(/\/feedback$/);
   await expect(page.getByRole('button', { name: '提交反馈' })).toBeDisabled();
   await expect(page.getByRole('link', { name: '登录账号' })).toHaveAttribute('href', '/login?next=%2Ffeedback');
@@ -36,8 +35,8 @@ test('mobile scene links, focus and FAQ remain usable', async ({ page }) => {
   await page.goto('/');
   const faq = page.locator('summary').filter({ hasText: '适合哪些企业' });
   await faq.focus(); await page.keyboard.press('Enter');
-  await expect(page.getByText('重点服务新质生产力企业、科技与研发型企业', { exact: false })).toBeVisible();
-  const feedback = page.getByRole('link', { name: '分享使用反馈' });
+  await expect(page.locator('details[open]')).toContainText('重点服务新质生产力与科技企业');
+  const feedback = page.getByRole('link', { name: '分享使用反馈 ↗' });
   await feedback.focus(); await expect(feedback).toBeFocused();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: `${evidenceDir}/home-mobile.png`, fullPage: true });

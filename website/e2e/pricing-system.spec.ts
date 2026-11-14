@@ -7,7 +7,7 @@ const catalogue = [
   { code: 'POLICY_REPORT', name: '企业政策AI体检报告', price: 99, original_price: 199, entitlement_type: 'report' },
   { code: 'POLICY_DIAGNOSIS', name: '单项目申报诊断', price: 299, original_price: 399, entitlement_type: 'diagnosis' },
   { code: 'APPLICATION_PLAN', name: 'AI申报方案包', price: 699, original_price: 999, entitlement_type: 'application' },
-].map((product, i) => ({ ...product, id: `synthetic-${i}`, promotional_price: null, product_type: 'service', description: 'Synthetic legacy description' }));
+].map((product, i) => ({ ...product, id: `synthetic-${i}`, purchase_available:i<2, promotional_price: null, product_type: 'service', description: 'Synthetic legacy description' }));
 
 test.beforeEach(async ({ page, baseURL }) => {
   expect(new URL(baseURL!).hostname).toMatch(/^(localhost|127\.0\.0\.1)$/);
@@ -26,12 +26,11 @@ test('catalogue controls price; unaccepted project tiers stay visible and unavai
   await expect(report).toContainText('¥99');
   await expect(report).not.toContainText('¥199');
   await expect(report.getByRole('button', { name: '选择企业并购买' })).toBeEnabled();
-  for (const name of ['单项政策条件核对包', '申报材料工作稿包']) {
-    const card = page.getByRole('article', { name });
-    await expect(card).toContainText('待验收');
-    await expect(card.getByRole('button', { name: '待开通' })).toBeDisabled();
-  }
-  await expect(page.getByText('团队订阅仍在准备中', { exact: false })).toBeVisible();
+  await page.getByText('更多服务 · 预约咨询',{exact:true}).click();
+  const consultation=page.locator('details[open]').filter({hasText:'更多服务 · 预约咨询'});
+  for (const name of ['单项政策条件核对包', '申报材料工作稿包']) await expect(consultation).toContainText(name);
+  await expect(consultation.getByRole('button')).toHaveCount(0);
+  await expect(page.getByRole('article')).toHaveCount(2);
   await page.screenshot({ path: `${evidenceDir}/catalogue-desktop.png`, fullPage: true });
   await report.getByRole('button').click();
   await expect(page).toHaveURL(/\/login\?register=1&next=/);
@@ -40,15 +39,18 @@ test('catalogue controls price; unaccepted project tiers stay visible and unavai
 test('server promotional price wins; no hard-coded fallback catalogue on failure', async ({ page }) => {
   await page.route('**/api/v1/products', route => route.fulfill({ json: [{ ...catalogue[1], price: 123, promotional_price: 87 }] }));
   await page.goto('/pricing');
-  await expect(page.getByRole('article')).toContainText('¥87');
-  await expect(page.getByRole('article')).not.toContainText('¥99');
+  const report=page.getByRole('article',{name:'企业政策机会简报'});
+  await expect(report).toContainText('¥87');
+  await expect(report).not.toContainText('¥99');
   await page.route('**/api/v1/products', route => route.fulfill({ status: 503, json: {} }));
   await page.reload();
   await expect(page.getByRole('alert').filter({ hasText: '当前无法读取' })).toBeVisible();
-  await expect(page.getByRole('article')).toHaveCount(0);
+  // The verified SSR catalogue remains readable; this is not a hard-coded fallback.
+  await expect(report).toContainText('¥99');
   await page.route('**/api/v1/products', route => route.fulfill({ json: [] }));
   await page.getByRole('button', { name: '重新加载产品目录' }).click();
-  await expect(page.getByText('当前没有已启用的产品。', { exact: false })).toBeVisible();
+  await expect(page.getByText('当前暂无可购买的服务。', { exact: false })).toBeVisible();
+  await expect(page.getByRole('article')).toHaveCount(0);
 });
 
 test('mobile scope and customer review FAQ remain readable with keyboard', async ({ page }) => {
