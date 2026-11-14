@@ -67,7 +67,13 @@ def call(method: str, business: dict, signer: Callable[[dict], str]) -> tuple[di
         else settings.alipay_gateway
     )
     try:
-        response = httpx.post(gateway, data=params, timeout=10)
+        response = httpx.post(
+            gateway,
+            data=params,
+            headers={"Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+                     "Accept": "application/json"},
+            timeout=10,
+        )
         response.raise_for_status()
     except httpx.HTTPError as exc:
         raise HTTPException(502, "Alipay gateway temporarily unavailable") from exc

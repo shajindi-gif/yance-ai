@@ -81,3 +81,18 @@ def test_gateway_rejects_modified_raw_response(gateway):
     with pytest.raises(HTTPException) as failure:
         alipay.call("alipay.trade.query", {}, lambda _: "test-request")
     assert failure.value.status_code == 502
+
+
+def test_gateway_declares_utf8_before_verifying_chinese_response(gateway, monkeypatch):
+    gateway({"code": "40004", "sub_code": "NO_BILL_DATA", "sub_msg": "账单不存在"})
+    mocked_post = alipay.httpx.post
+
+    def post(*args, **kwargs):
+        # Alipay otherwise defaults this transport to GBK even when the form
+        # contains charset=utf-8, invalidating UTF-8 signature verification.
+        assert kwargs["headers"]["Content-Type"] == "application/x-www-form-urlencoded;charset=utf-8"
+        return mocked_post(*args, **kwargs)
+
+    monkeypatch.setattr(alipay.httpx, "post", post)
+    result, _ = alipay.call("alipay.trade.query", {}, lambda _: "synthetic-request")
+    assert result["sub_msg"] == "账单不存在"
