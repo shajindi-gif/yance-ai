@@ -9,6 +9,25 @@ grep -q CANDIDATE_PG16_CONTRACTS_AND_WEB_PASSED "$r/approved.txt"
 test "$(readlink -f /opt/yance/website)" = "$(cat "$b/website-path.txt")"
 test "$(docker inspect -f '{{.Image}}' yance-prod-api-1)" = "$(cat "$b/api-image.txt")"
 dc=(docker compose -p yance-prod --env-file "$base/.env.prod" -f "$base/docker-compose.prod.yml" -f "$base/release.override.yml" -f /opt/yance/releases/web-20261031-01/compat.override.yml -f /opt/yance/releases/commercial-20261108-01/api.override.json -f /opt/yance/releases/commercial-20261108-01/quality.override.json)
+# Refresh the recovery point immediately before the switch; never overwrite the
+# earlier verified backup. Restore and migrate it before touching the live DB.
+test ! -e "$b/database-preswitch.dump"
+docker exec yance-prod-db-1 sh -ec 'exec pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > "$b/database-preswitch.dump"
+docker exec yance-prod-db-1 sh -ec 'exec createdb -U "$POSTGRES_USER" yance_payment_1114_preswitch_restore'
+docker exec -i yance-prod-db-1 sh -ec 'exec pg_restore -U "$POSTGRES_USER" -d yance_payment_1114_preswitch_restore --exit-on-error' < "$b/database-preswitch.dump"
+python3 - "$r" <<'PY'
+from pathlib import Path
+import sys
+from urllib.parse import urlsplit,urlunsplit
+r=Path(sys.argv[1]);env=dict(x.split('=',1) for x in (r/'production.env').read_text().splitlines());u=urlsplit(env['DATABASE_URL'])
+env['DATABASE_URL']=urlunsplit((u.scheme,u.netloc,'/yance_payment_1114_preswitch_restore',u.query,u.fragment))
+(r/'preswitch_restore.env').write_text('\n'.join(k+'='+v for k,v in env.items())+'\n')
+PY
+docker run --rm --network yance-prod_default --env-file "$r/preswitch_restore.env" -v "$r/check_database.py:/tmp/check_database.py:ro" --entrypoint python yance-backend:payment-20261113-01 /tmp/check_database.py write > "$r/preswitch-before.log"
+docker run --rm --network yance-prod_default --env-file "$r/preswitch_restore.env" --entrypoint alembic yance-backend:payment-20261113-01 upgrade head > "$r/preswitch-restore-migration.log" 2>&1
+docker run --rm --network yance-prod_default --env-file "$r/preswitch_restore.env" -v "$r/check_database.py:/tmp/check_database.py:ro" --entrypoint python yance-backend:payment-20261113-01 /tmp/check_database.py write > "$r/preswitch-after.log"
+cmp "$r/preswitch-before.log" "$r/preswitch-after.log"
+echo FRESH_PRESWITCH_BACKUP_RESTORED_AND_MIGRATION_DATA_PRESERVED
 trap 'bash "$r/rollback.sh"' ERR
 # Additive DDL was rehearsed against the restored production database. Old API
 # remains compatible during this short migration; no financial data is rewritten.

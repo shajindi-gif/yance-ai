@@ -9,7 +9,12 @@ from pathlib import Path
 r=Path(sys.argv[1]);revision=(r/'SOURCE_REVISION').read_text().strip()
 p=r/'Dockerfile.patch';lines=p.read_text().splitlines()
 if 'ENV PYTHONPATH=/app' not in lines:
- lines.insert(1,'ENV PYTHONPATH=/app');p.write_text('\n'.join(lines)+'\n')
+ lines.insert(1,'ENV PYTHONPATH=/app')
+if not any('install_dependency.py' in line for line in lines):
+ manifest=json.loads((r/'dependency-manifest.json').read_text());wheel=manifest['filename']
+ assert wheel=='dnspython-2.9.2-py3-none-any.whl'
+ lines[2:2]=['COPY dependency/'+wheel+' /tmp/'+wheel,'COPY dependency-manifest.json /tmp/dependency-manifest.json','COPY install_dependency.py /tmp/install_dependency.py','USER root','RUN apt-get update && apt-get install -y --no-install-recommends zlib1g && rm -rf /var/lib/apt/lists/*','RUN python /tmp/install_dependency.py /tmp/'+wheel+' /tmp/dependency-manifest.json','USER yance']
+p.write_text('\n'.join(lines)+'\n')
 for name in ['production.env','restore.env','candidate.env']:
  p=r/name;lines=p.read_text().splitlines();p.write_text('\n'.join('APP_SOURCE_REVISION='+revision if x.startswith('APP_SOURCE_REVISION=') else x for x in lines)+'\n')
 p=r/'release.override.json';j=json.loads(p.read_text())
