@@ -1,0 +1,16 @@
+(node:51216) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/shajindi/yance-backup/yance/website/lib/artifact-diff.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/shajindi/yance-backup/yance/website/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ object key order does not invent evidence changes (16.683791ms)
+✔ missing and null remain distinct, deletion is visible (0.514459ms)
+✔ changed nested citations and ordered arrays are visible (0.239792ms)
+✔ source comparison covers unknown metadata without dropping fields (0.08525ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 139.168417

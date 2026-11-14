@@ -126,6 +126,7 @@ def test_auth_config_reports_enabled(email_on):
     config = client.get("/api/v1/auth/config")
     assert config.status_code == 200
     assert config.json()["email_login_enabled"] is True
+    assert config.json()["application_workspace_revision"] == 2
 
 
 # ── DB-backed rate limits ─────────────────────────────────────────────

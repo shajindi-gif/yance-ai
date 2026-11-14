@@ -1,0 +1,46 @@
+.layout {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+
+
+        .scope { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--paper); padding: 110px 20px 60px; }
+        .scope :global(.yc-auth-container) { width: 100%; max-width: 480px; }
+        .scope :global(.yc-auth-card) { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 40px 36px; box-shadow: var(--shadow-document); }
+        .scope :global(.yc-auth-header) { text-align: center; margin-bottom: 28px; }
+        .scope :global(.yc-auth-logo) { width: 56px; height: 56px; margin-bottom: 12px; }
+        .scope :global(.yc-auth-header h1) { font-size: 22px; font-weight: 700; color: var(--ink); margin: 0 0 6px; }
+        .scope :global(.yc-auth-subtitle) { color: var(--muted); font-size: 13px; margin: 0; }
+        .scope :global(.yc-auth-tabs) { display: flex; background: var(--surface-inset); border-radius: 8px; padding: 4px; margin-bottom: 20px; }
+        .scope :global(.yc-auth-tab) { flex: 1; padding: 10px; border: none; background: transparent; border-radius: 8px; font-size: 14px; font-weight: 500; color: var(--muted); cursor: pointer; transition: all 0.2s; }
+        .scope :global(.yc-auth-tab.active) { background: var(--surface); color: var(--ink); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
+        .scope :global(.yc-auth-subtabs) { display: flex; gap: 16px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+        .scope :global(.yc-auth-subtab) { padding: 8px 2px; border: none; background: transparent; font-size: 13px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+        .scope :global(.yc-auth-subtab.active) { color: var(--accent); font-weight: 600; border-bottom-color: var(--accent); }
+        .scope :global(.yc-auth-error) { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+        .scope :global(.yc-auth-notice) { background: #f0f9ff; border: 1px solid #bae6fd; color: #0369a1; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+        .scope :global(.yc-auth-form) { display: flex; flex-direction: column; gap: 14px; }
+        .scope :global(.yc-form-group label) { display: block; font-size: 13px; font-weight: 500; color: var(--ink); margin-bottom: 4px; }
+        .scope :global(.yc-required) { color: var(--error); }
+        .scope :global(.yc-form-group input), .scope :global(.yc-form-group select) { width: 100%; padding: 11px 14px; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; outline: none; background: var(--surface); }
+        .scope :global(.yc-form-group input:focus), .scope :global(.yc-form-group select:focus) { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(18, 106, 154, 0.12); }
+        .scope :global(.yc-form-row-2) { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .scope :global(.yc-code-row) { display: flex; gap: 10px; }
+        .scope :global(.yc-code-row input) { flex: 1; }
+        .scope :global(.yc-code-send) { flex-shrink: 0; padding: 0 16px; border: 1px solid var(--accent); border-radius: 10px; background: var(--surface); color: var(--accent); font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+        .scope :global(.yc-code-send:hover:not(:disabled)) { background: var(--accent-soft); }
+        .scope :global(.yc-code-send:disabled) { border-color: var(--line); color: var(--text-muted); cursor: not-allowed; }
+        .scope :global(.yc-link-btn) { background: none; border: none; color: var(--accent); font-size: 12px; cursor: pointer; padding: 0; text-decoration: underline; }
+        .scope :global(.yc-link-btn:hover) { color: var(--teal-dark); }
+        .scope :global(.yc-btn-full) { width: 100%; padding: 13px; font-size: 15px; margin-top: 4px; }
+        .scope :global(.yc-auth-hint) { text-align: center; font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+        .scope :global(.yc-agree-group) { margin-top: 2px; }
+        .scope :global(.yc-agree-label) { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--ink); cursor: pointer; line-height: 1.5; }
+        .scope :global(.yc-agree-label input[type='checkbox']) { width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; cursor: pointer; accent-color: var(--accent); }
+        .scope :global(.yc-agree-label a) { color: var(--accent); text-decoration: none; }
+        .scope :global(.yc-agree-label a:hover) { text-decoration: underline; }
+        @media (max-width: 500px) { .scope :global(.yc-form-row-2) { grid-template-columns: 1fr; } }
+      

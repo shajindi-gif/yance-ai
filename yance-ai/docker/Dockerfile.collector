@@ -1,0 +1,65 @@
+# Collector image — an overlay on the backend image that is already deployed.
+#
+# Why overlay instead of `build: .`:
+#   the server has no git checkout and no guarantee of package-index access at deploy
+#   time.  Building the full backend from scratch would need hundreds of MB of pip
+#   downloads and would produce an image that is *not* the running application.
+#   This file copies only the pinned revision's application code on top of the exact
+#   backend image that is already serving traffic, so:
+#     - no network is needed to build (base image is present locally),
+#     - the running `yance-prod-api-1` container keeps its own image untouched,
+#     - the collector runs byte-identical code to the tested revision 20261106-r3.
+#
+# Build:
+#   docker build -f docker/Dockerfile.collector \
+#     --build-arg BASE_IMAGE=yance-backend:web-auth-20261031-01 \
+#     -t yance-collector:20261106-r3 .
+#
+# The revision 20261106-r3 introduced no new Python dependencies, which is why no pip
+# step appears here.  If a later revision adds one, add a `RUN /opt/venv/bin/pip
+# install ...` line *and* vendor the wheel — do not assume PyPI is reachable.
+
+ARG BASE_IMAGE=yance-backend:web-auth-20261031-01
+FROM ${BASE_IMAGE}
+
+# The base image runs as uid 999 (yance).  Copying as root and chowning in the same
+# instruction keeps a single layer and avoids a root-owned tree the worker cannot read.
+USER root
+
+COPY --chown=yance:yance app/ /app/app/
+COPY --chown=yance:yance alembic/ /app/alembic/
+COPY --chown=yance:yance alembic.ini /app/alembic.ini
+COPY --chown=yance:yance scripts/ /app/scripts/
+
+# The source catalogue is data, not code, and it is not part of the backend image:
+# without it the CLI dies with `FileNotFoundError: config/policy_sources` before the
+# first request is made.  Only the catalogue subdirectory is copied — /app/config in
+# the base image may hold unrelated configuration that has no business in this
+# container.
+COPY --chown=yance:yance config/policy_sources/ /app/config/policy_sources/
+
+# /app/policy_raw must exist *in the image* with the right owner: when Docker first
+# attaches an empty named volume it copies the image directory (owner included) into
+# the volume.  Without this line the volume comes up root:root and a non-root worker
+# cannot write a single byte of evidence — a silent failure that only shows up as
+# "download failed" in the logs.
+#
+# The `find ... -delete` is not cosmetic: a release tarball built on macOS carries
+# AppleDouble `._*.py` files, and alembic loads every *.py under /app/alembic, so one
+# stray `._0038_*.py` aborts `alembic heads` with
+# "source code string cannot contain null bytes".  Deleting them here makes the image
+# immune to however the tarball was produced.
+RUN mkdir -p /app/policy_raw/attachments \
+ && find /app -name '._*' -delete \
+ && find /app -name '.DS_Store' -delete \
+ && chown -R yance:yance /app/policy_raw
+
+USER yance
+WORKDIR /app
+
+ENV POLICY_COLLECTION_RAW_DIR=/app/policy_raw \
+    POLICY_COLLECTION_ATTACHMENT_DIR=/app/policy_raw/attachments
+
+# Same entry point as the compose command; kept here so `docker run` without
+# arguments also behaves correctly (useful for the smoke test).
+CMD ["python", "-m", "app.workers.policy_collector"]

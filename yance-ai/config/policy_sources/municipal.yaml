@@ -1,0 +1,569 @@
+catalog_version: "2026.11.06-municipal.1"
+generated_at: "2026-11-06T13:40:00+08:00"
+notes: |
+  首批 30 个重点城市中的 26 个非直辖市城市来源（北京、上海、天津、重庆在
+  provincial.yaml 中以 shared_jurisdiction 登记，此处不重复）。
+  entry_url 取自 2026-11-06 本机真实抓取首页后提取的栏目链接。
+  标注 502 的城市：本机出口（代理链路）被目标站拒绝，站点本身在公网可访问，
+  属“本机不可验证”，不是“来源不存在”，须在生产服务器复核后再启用。
+
+sources:
+  - source_id: city_shenzhen_stic
+    name: 深圳市科技创新局-通知公告
+    authority: 深圳市科技创新局
+    level: municipal
+    province: 广东省
+    city: 深圳市
+    channel: application
+    entry_url: https://stic.sz.gov.cn/xxgk/tzgg/index.html
+    allowed_domains: [stic.sz.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 原 kjj.sz.gov.cn 返回 502，实际域名为 stic.sz.gov.cn。；2026-11-06 干跑：列表 20 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_shenzhen_stic_zcfg
+    name: 深圳市科技创新局-政策法规
+    authority: 深圳市科技创新局
+    level: municipal
+    province: 广东省
+    city: 深圳市
+    channel: policy_document
+    entry_url: https://stic.sz.gov.cn/xxgk/zcfg/index.html
+    allowed_domains: [stic.sz.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:31:42+08:00"
+    notes: 2026-11-06 复核：NFCMS 站群列表由 /postmeta JSON + JS 渲染，静态页无文章锚点；本轮按该 JSON 端点接入后列表 33 条、正文解析成功，状态改为 document_verified。（未入库）；2026-11-06 干跑：列表 33 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_guangzhou_kjj
+    name: 广州市科学技术局-文件公告
+    authority: 广州市科学技术局
+    level: municipal
+    province: 广东省
+    city: 广州市
+    channel: application
+    entry_url: http://kjj.gz.gov.cn/xxgk/zwdt/tztg/wjgg/index.html
+    allowed_domains: [kjj.gz.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 20 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_guangzhou_kjj_zcfg
+    name: 广州市科学技术局-政策法规
+    authority: 广州市科学技术局
+    level: municipal
+    province: 广东省
+    city: 广州市
+    channel: policy_document
+    entry_url: http://kjj.gz.gov.cn/xxgk/zcfg/index.html
+    allowed_domains: [kjj.gz.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 20 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_hangzhou_kj
+    name: 杭州市科学技术局（待定位栏目）
+    authority: 杭州市科学技术局
+    level: municipal
+    province: 浙江省
+    city: 杭州市
+    channel: policy_document
+    entry_url: http://kj.hangzhou.gov.cn/
+    allowed_domains: [kj.hangzhou.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: false
+    verification_state: registered
+    last_verified_at: "2026-11-06T13:44:00+08:00"
+    notes: 入口首页 HTTP 200，但政策法规栏目指向根路径，静态 HTML 未暴露列表页；需站点内导航定位后启用，当前不采集，避免把首页误当列表页。
+
+  - source_id: city_nanjing_kjj
+    name: 南京市科学技术局-法规文件及解读
+    authority: 南京市科学技术局
+    level: municipal
+    province: 江苏省
+    city: 南京市
+    channel: policy_document
+    entry_url: https://kjj.nanjing.gov.cn/zwgk/fgwjjjd/
+    allowed_domains: [kjj.nanjing.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 原 kjw.nanjing.gov.cn 502，实际域名为 kjj.nanjing.gov.cn。；2026-11-06 干跑：列表 2 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_nanjing_kjj_bmwj
+    name: 南京市科学技术局-部门文件
+    authority: 南京市科学技术局
+    level: municipal
+    province: 江苏省
+    city: 南京市
+    channel: policy_document
+    entry_url: http://kjj.nanjing.gov.cn/njskxjswyh/?id=xxgk_224
+    allowed_domains: [kjj.nanjing.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 2 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_suzhou_kjj
+    name: 苏州市科学技术局-公告公示
+    authority: 苏州市科学技术局
+    level: municipal
+    province: 江苏省
+    city: 苏州市
+    channel: application
+    entry_url: https://kjj.suzhou.gov.cn/szkj/tzgg/common_list.shtml
+    allowed_domains: [kjj.suzhou.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 16 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_suzhou_kjj_kjzc
+    name: 苏州市科学技术局-科技政策
+    authority: 苏州市科学技术局
+    level: municipal
+    province: 江苏省
+    city: 苏州市
+    channel: policy_document
+    entry_url: https://kjj.suzhou.gov.cn/szkj/kjzc/kjzc.shtml
+    allowed_domains: [kjj.suzhou.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 2 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_wuhan_kjj
+    name: 武汉市科技创新局-通知公告
+    authority: 武汉市科技创新局
+    level: municipal
+    province: 湖北省
+    city: 武汉市
+    channel: application
+    entry_url: https://kjj.wuhan.gov.cn/wmfw/tzgg/
+    allowed_domains: [kjj.wuhan.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 20 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_wuhan_kjj_xmsb
+    name: 武汉市科技创新局-项目申报与管理
+    authority: 武汉市科技创新局
+    level: municipal
+    province: 湖北省
+    city: 武汉市
+    channel: application
+    entry_url: https://kjj.wuhan.gov.cn/wmfw/fwsx/xmsbygl/
+    allowed_domains: [kjj.wuhan.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 2 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_changsha_kjj
+    name: 长沙市科学技术局-通知公告
+    authority: 长沙市科学技术局
+    level: municipal
+    province: 湖南省
+    city: 长沙市
+    channel: application
+    entry_url: http://kjj.changsha.gov.cn/zfxxgk/tzgg_27202/
+    allowed_domains: [kjj.changsha.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: list_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 10 条可解析，正文过短或需附件解析，待补
+
+  - source_id: city_changsha_kjj_fggw
+    name: 长沙市科学技术局-政策文件
+    authority: 长沙市科学技术局
+    level: municipal
+    province: 湖南省
+    city: 长沙市
+    channel: policy_document
+    entry_url: http://kjj.changsha.gov.cn/zfxxgk/fdzdgk/fggw/
+    allowed_domains: [kjj.changsha.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 10 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_xiamen_sti
+    name: 厦门市科学技术局-通知公告
+    authority: 厦门市科学技术局
+    level: municipal
+    province: 福建省
+    city: 厦门市
+    channel: application
+    entry_url: http://sti.xm.gov.cn/xxgk/tzgg/
+    allowed_domains: [sti.xm.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 原 kjj.xm.gov.cn 502，实际域名为 sti.xm.gov.cn。；2026-11-06 干跑：列表 20 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_xiamen_sti_zcfg
+    name: 厦门市科学技术局-政策法规
+    authority: 厦门市科学技术局
+    level: municipal
+    province: 福建省
+    city: 厦门市
+    channel: policy_document
+    entry_url: http://sti.xm.gov.cn/xxgk/zcfg/
+    allowed_domains: [sti.xm.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 18 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_nanchang_kjj
+    name: 南昌市科学技术局-通知公告
+    authority: 南昌市科学技术局
+    level: municipal
+    province: 江西省
+    city: 南昌市
+    channel: application
+    entry_url: https://kjj.nc.gov.cn/nckjj/tztg/nav_list.shtml
+    allowed_domains: [kjj.nc.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: list_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 16 条可解析，正文过短或需附件解析，待补
+
+  - source_id: city_nanchang_kjj_zcfg
+    name: 南昌市科学技术局-政策法规
+    authority: 南昌市科学技术局
+    level: municipal
+    province: 江西省
+    city: 南昌市
+    channel: policy_document
+    entry_url: https://kjj.nc.gov.cn/nckjj/zcfg/list.shtml
+    allowed_domains: [kjj.nc.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: list_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 16 条可解析，正文过短或需附件解析，待补
+
+  - source_id: city_shenyang_kjj
+    name: 沈阳市科学技术局-部门文件
+    authority: 沈阳市科学技术局
+    level: municipal
+    province: 辽宁省
+    city: 沈阳市
+    channel: policy_document
+    entry_url: https://kjj.shenyang.gov.cn/zwgk/fdzdgknr/bmwj/
+    allowed_domains: [kjj.shenyang.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 3 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_dalian_kjj
+    name: 大连市科学技术局-通知公告
+    authority: 大连市科学技术局
+    level: municipal
+    province: 辽宁省
+    city: 大连市
+    channel: application
+    entry_url: https://kjj.dl.gov.cn/col/col4901/index.html
+    allowed_domains: [kjj.dl.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: blocked_by_robots
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 复核：robots.txt 明确禁止采集该栏目，按合规要求停用，不绕过。；2026-11-06 干跑实测 robots.txt 禁止，按规则不采
+
+  - source_id: city_kunming_kjj
+    name: 昆明市科学技术局-政策文件
+    authority: 昆明市科学技术局
+    level: municipal
+    province: 云南省
+    city: 昆明市
+    channel: policy_document
+    entry_url: https://kjj.km.gov.cn/zfxxgk/zcwj/
+    allowed_domains: [kjj.km.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 20 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_guiyang_kjj
+    name: 贵阳市科学技术局-通知公告
+    authority: 贵阳市科学技术局
+    level: municipal
+    province: 贵州省
+    city: 贵阳市
+    channel: application
+    entry_url: https://kjj.guiyang.gov.cn/zfxxgk/fdzdgknr/tzgg/
+    allowed_domains: [kjj.guiyang.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 15 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_guiyang_kjj_kjzc
+    name: 贵阳市科学技术局-科技政策
+    authority: 贵阳市科学技术局
+    level: municipal
+    province: 贵州省
+    city: 贵阳市
+    channel: policy_document
+    entry_url: http://kjj.guiyang.gov.cn/kjzc/
+    allowed_domains: [kjj.guiyang.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 15 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_changchun_kjj
+    name: 长春市科学技术局-通知通告
+    authority: 长春市科学技术局
+    level: municipal
+    province: 吉林省
+    city: 长春市
+    channel: application
+    entry_url: http://kjj.changchun.gov.cn/sy/tzgg/
+    allowed_domains: [kjj.changchun.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 22 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: city_ningbo_kjj
+    name: 宁波市科学技术局（待定位栏目）
+    authority: 宁波市科学技术局
+    level: municipal
+    province: 浙江省
+    city: 宁波市
+    channel: policy_document
+    entry_url: https://kjj.ningbo.gov.cn/
+    allowed_domains: [kjj.ningbo.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: false
+    verification_state: registered
+    last_verified_at: "2026-11-06T13:33:00+08:00"
+    notes: 入口首页 HTTP 200，但栏目以 jpaas 动态接口与附件表单呈现，静态列表页需站点适配；当前不采集。
+
+  - source_id: city_chengdu_kjj
+    name: 成都市科学技术局（本机不可验证）
+    authority: 成都市科学技术局
+    level: municipal
+    province: 四川省
+    city: 成都市
+    channel: application
+    entry_url: https://cdst.chengdu.gov.cn/
+    allowed_domains: [cdst.chengdu.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: false
+    verification_state: unreachable
+    last_verified_at: "2026-11-06T13:44:00+08:00"
+    notes: 本机请求返回 HTTP 412（站点访问控制），未取得栏目证据；待生产服务器复核，禁止绕过。
+
+  - source_id: city_xian_kjj
+    name: 西安市科学技术局（本机不可验证）
+    authority: 西安市科学技术局
+    level: municipal
+    province: 陕西省
+    city: 西安市
+    channel: application
+    entry_url: https://kjj.xa.gov.cn/
+    allowed_domains: [kjj.xa.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: false
+    verification_state: unreachable
+    last_verified_at: "2026-11-06T13:44:00+08:00"
+    notes: 本机请求返回 HTTP 502（出口被拒），属本机链路限制；待生产服务器复核。
+
+  - source_id: city_hefei_kjj
+    name: 合肥市科学技术局（本机不可验证）
+    authority: 合肥市科学技术局
+    level: municipal
+    province: 安徽省
+    city: 合肥市
+    channel: application
+    entry_url: https://kjj.hefei.gov.cn/
+    allowed_domains: [kjj.hefei.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: false
+    verification_state: unreachable
+    last_verified_at: "2026-11-06T13:44:00+08:00"
+    notes: 本机请求返回 HTTP 521（源站防护），属本机链路限制；待生产服务器复核。
+
+  - source_id: city_qingdao_kjj
+    name: 青岛市科学技术局（本机不可验证）
+    authority: 青岛市科学技术局
+    level: municipal
+    province: 山东省
+    city: 青岛市
+    channel: application
+    entry_url: https://kjj.qingdao.gov.cn/
+    allowed_domains: [kjj.qingdao.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: false
+    verification_state: unreachable
+    last_verified_at: "2026-11-06T13:44:00+08:00"
+    notes: 本机请求返回 HTTP 502，属本机链路限制；待生产服务器复核。
+
+  - source_id: city_jinan_kjj
+    name: 济南市科学技术局（本机不可验证）
+    authority: 济南市科学技术局
+    level: municipal
+    province: 山东省
+    city: 济南市
+    channel: application
+    entry_url: https://kjj.jinan.gov.cn/
+    allowed_domains: [kjj.jinan.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: false
+    verification_state: unreachable
+    last_verified_at: "2026-11-06T13:44:00+08:00"
+    notes: 本机请求返回 HTTP 502，属本机链路限制；待生产服务器复核。
+
+  - source_id: city_wuxi_kjj
+    name: 无锡市科学技术局（本机不可验证）
+    authority: 无锡市科学技术局
+    level: municipal
+    province: 江苏省
+    city: 无锡市
+    channel: application
+    entry_url: https://kjj.wuxi.gov.cn/
+    allowed_domains: [kjj.wuxi.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: false
+    verification_state: unreachable
+    last_verified_at: "2026-11-06T13:44:00+08:00"
+    notes: 本机请求返回 HTTP 502，属本机链路限制；待生产服务器复核。
+
+  - source_id: city_zhengzhou_kjj
+    name: 郑州市科学技术局（本机不可验证）
+    authority: 郑州市科学技术局
+    level: municipal
+    province: 河南省
+    city: 郑州市
+    channel: application
+    entry_url: https://kjj.zhengzhou.gov.cn/
+    allowed_domains: [kjj.zhengzhou.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: false
+    verification_state: unreachable
+    last_verified_at: "2026-11-06T13:44:00+08:00"
+    notes: 本机请求返回 HTTP 502，属本机链路限制；待生产服务器复核。
+
+  - source_id: city_dongguan_kjj
+    name: 东莞市科学技术局（本机不可验证）
+    authority: 东莞市科学技术局
+    level: municipal
+    province: 广东省
+    city: 东莞市
+    channel: application
+    entry_url: https://dgst.dg.gov.cn/
+    allowed_domains: [dgst.dg.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: false
+    verification_state: unreachable
+    last_verified_at: "2026-11-06T13:44:00+08:00"
+    notes: 本机请求返回 HTTP 502，属本机链路限制；待生产服务器复核。
+
+  - source_id: city_fuzhou_kjj
+    name: 福州市科学技术局（本机不可验证）
+    authority: 福州市科学技术局
+    level: municipal
+    province: 福建省
+    city: 福州市
+    channel: application
+    entry_url: https://kjj.fuzhou.gov.cn/
+    allowed_domains: [kjj.fuzhou.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: false
+    verification_state: unreachable
+    last_verified_at: "2026-11-06T13:44:00+08:00"
+    notes: 本机请求返回 HTTP 502，属本机链路限制；待生产服务器复核。
+
+  - source_id: city_harbin_kjj
+    name: 哈尔滨市科学技术局（本机不可验证）
+    authority: 哈尔滨市科学技术局
+    level: municipal
+    province: 黑龙江省
+    city: 哈尔滨市
+    channel: application
+    entry_url: https://kjj.harbin.gov.cn/
+    allowed_domains: [kjj.harbin.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: false
+    verification_state: unreachable
+    last_verified_at: "2026-11-06T13:44:00+08:00"
+    notes: 本机请求返回 HTTP 502，属本机链路限制；待生产服务器复核。
+
+  - source_id: city_lanzhou_kjj
+    name: 兰州市科学技术局（本机不可验证）
+    authority: 兰州市科学技术局
+    level: municipal
+    province: 甘肃省
+    city: 兰州市
+    channel: application
+    entry_url: https://kjj.lanzhou.gov.cn/
+    allowed_domains: [kjj.lanzhou.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: false
+    verification_state: unreachable
+    last_verified_at: "2026-11-06T13:44:00+08:00"
+    notes: 本机请求返回 HTTP 412（站点访问控制），未取得栏目证据；待生产服务器复核。

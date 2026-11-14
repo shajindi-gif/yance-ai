@@ -1,0 +1,28 @@
+{
+  "health": {
+    "status": "ok",
+    "service": "yance.ai API",
+    "version": "4587e34251a1ebcd85c55ae706f1a82ceb25de2b"
+  },
+  "checkout_idempotency_revision": 1,
+  "backup": {
+    "verified": true,
+    "container": "yance-recovery-growth-preflight",
+    "database": "yance_release_test",
+    "network": "none",
+    "table_count": 79,
+    "row_count": 1440,
+    "backup_seconds": 1.687,
+    "restore_seconds": 2.65,
+    "plain_sha256": "d72eb182065314986e32c54831fc684025c7ff23df26d4336228e9cf77674c12",
+    "cipher_sha256": "4c5dd4aa9a4e312fea8dedd3253a2d23e6d30f1925bdc996edd8f6e78055aaaa"
+  },
+  "website_backup_sha256": "ab4bcb4e25d0e5404f653e16d2be52d04c8a7febc173acda54577a73741ad2e4",
+  "website_restore_hash_verified": true,
+  "website": "WorkingDirectory=/opt/yance/releases/growth-20261029-01/website\nActiveState=active",
+  "containers": "yance-prod-api-1 yance-backend:growth-20261029-01 Up About a minute (healthy)\nyance-prod-agent-worker-1 yance-backend:growth-20261029-01 Up About a minute (healthy)\nyance-prod-db-1 pgvector/pgvector:pg16 Up 11 days (healthy)\nyance-prod-clamav-1 clamav/clamav:1.4 Up 5 weeks (healthy)",
+  "image_id": "sha256:4e7b3766bcea6d6ca740f82b033491ff70a050a6d8eaba872e97e436c5eec1be",
+  "database_revision": "20261027_0033",
+  "at_utc": "2026-10-28T17:36:04Z",
+  "production_business_tests": false
+}

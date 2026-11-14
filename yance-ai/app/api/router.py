@@ -18,6 +18,7 @@ from app.api.routes import (
     policies,
     policy_engine,
     reports,
+    sms_auth,
     tasks,
     telemetry,
     tenants,
@@ -26,6 +27,7 @@ from app.api.routes import (
 
 api_router = APIRouter()
 api_router.include_router(auth.router)
+api_router.include_router(sms_auth.router)
 api_router.include_router(billing.router)
 api_router.include_router(admin.router)
 api_router.include_router(admin_evals.router)

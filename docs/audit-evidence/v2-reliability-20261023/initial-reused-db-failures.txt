@@ -1,0 +1,14 @@
+Reused synthetic database; preserved, not cleared. Final suite used a new database.
+E   assert 48 == 2
+E   AssertionError: assert UUID('d3b6fd4a-3114-4160-9cf4-f03d6789570f') == UUID('ef0f6800-6ce2-451f-892e-f3b2466d2ab1')
+E    +  where UUID('ef0f6800-6ce2-451f-892e-f3b2466d2ab1') = <app.models.models.AgentRun object at 0x11bbfd640>.id
+E   AssertionError: assert UUID('ef0f6800-6ce2-451f-892e-f3b2466d2ab1') == UUID('a45c5911-2de4-4e51-af9c-7070b3bc7149')
+E    +  where UUID('ef0f6800-6ce2-451f-892e-f3b2466d2ab1') = <function run at 0x10b520c20>(<coroutine object AgentHarness.run_once at 0x11b4dbbc0>)
+E    +    where <function run at 0x10b520c20> = asyncio.run
+E    +    and   <coroutine object AgentHarness.run_once at 0x11b4dbbc0> = run_once(<sqlalchemy.orm.session.Session object at 0x11bcfef90>, 'failure-worker')
+E    +      where run_once = <app.services.agents.harness.AgentHarness object at 0x11bae1430>.run_once
+E    +  and   UUID('a45c5911-2de4-4e51-af9c-7070b3bc7149') = <app.models.models.AgentRun object at 0x11bcfdd90>.id
+FAILED tests/test_admin_analytics.py::test_platform_admin_metrics_permissions_provenance_and_safe_resources
+FAILED tests/test_agent_harness.py::test_expired_lease_is_reclaimed_and_recorded
+FAILED tests/test_agent_harness.py::test_execution_failure_retries_then_fails_closed
+3 failed, 215 passed, 6 warnings in 28.81s

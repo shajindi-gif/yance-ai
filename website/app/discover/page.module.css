@@ -1,0 +1,63 @@
+.link {
+  text-decoration: none;
+}
+
+.section {
+  flex: 1;
+  min-width: 220px;
+  padding: 9px 12px;
+  border: 1px solid #dde3eb;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.section2 {
+  padding: 9px 12px;
+  border: 1px solid #dde3eb;
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--surface);
+}
+
+.section3 {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.section4 {
+  min-width: 0;
+  flex: 1;
+}
+
+.layout {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.section5 {
+  font-size: 15px;
+}
+
+.section6 {
+  margin-top: 6px;
+}
+
+.section7 {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.section8 {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.section9 {
+  font-size: 12px;
+}
+
+.section10 {
+  margin-top: 12px;
+}

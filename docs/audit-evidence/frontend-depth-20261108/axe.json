@@ -1,0 +1,14 @@
+[
+  {
+    "path": "/",
+    "violations": []
+  },
+  {
+    "path": "/login",
+    "violations": []
+  },
+  {
+    "path": "/pricing",
+    "violations": []
+  }
+]

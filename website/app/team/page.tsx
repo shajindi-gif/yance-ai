@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import AppShell from "@/components/workspace/AppShell";
 import content from "@/components/workspace/WorkspaceContent.module.css";
 import api, { type TeamMember } from "@/lib/api";
+import pageStyles from './page.module.css';
 
 export default function TeamPage() {
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -81,9 +82,9 @@ export default function TeamPage() {
             <div key={member.id} className={content.row}>
               <div>
                 <strong>{member.full_name}</strong>
-                <div className={content.subtle} style={{ fontSize: 12 }}>{member.email}</div>
+                <div className={[content.subtle, pageStyles.section].filter(Boolean).join(' ')} >{member.email || (member.phone ? `${member.phone.slice(0, 6)}****${member.phone.slice(-4)}` : "未设置邮箱")}</div>
               </div>
-              <div style={{ display: "flex", gap: 8 }}>
+              <div className={pageStyles.layout}>
                 <Badge tone={member.role === "owner" ? "success" : "neutral"}>{member.role}</Badge>
                 {member.is_active ? null : <Badge tone="warning">停用</Badge>}
               </div>
@@ -92,35 +93,35 @@ export default function TeamPage() {
         </div>
       </section>
 
-      <section className={content.card} style={{ marginTop: 16 }}>
+      <section className={[content.card, pageStyles.section2].filter(Boolean).join(' ')} >
         <div className={content.cardHeader}>
           <div>
             <strong>添加成员</strong>
-            <div className={content.subtle} style={{ fontSize: 12, marginTop: 4 }}>
+            <div className={[content.subtle, pageStyles.section3].filter(Boolean).join(' ')} >
               新成员以 member 角色创建（当前产品阶段暂不支持自定义角色分配）。
             </div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div className={pageStyles.layout2}>
           <input
             value={form.full_name}
             onChange={(event) => setForm({ ...form, full_name: event.target.value })}
             placeholder="姓名"
-            style={{ flex: 1, minWidth: 140, padding: "10px 12px", border: "1px solid #dde3eb", borderRadius: 8, fontSize: 13 }}
+            className={pageStyles.section4}
           />
           <input
             value={form.email}
             onChange={(event) => setForm({ ...form, email: event.target.value })}
             placeholder="工作邮箱"
             type="email"
-            style={{ flex: 1, minWidth: 180, padding: "10px 12px", border: "1px solid #dde3eb", borderRadius: 8, fontSize: 13 }}
+            className={pageStyles.section5}
           />
           <input
             value={form.password}
             onChange={(event) => setForm({ ...form, password: event.target.value })}
             placeholder="初始密码（≥12 位）"
             type="password"
-            style={{ flex: 1, minWidth: 160, padding: "10px 12px", border: "1px solid #dde3eb", borderRadius: 8, fontSize: 13 }}
+            className={pageStyles.section6}
           />
           <Button onClick={addMember} disabled={busy}>
             {busy ? "创建中…" : "添加"}

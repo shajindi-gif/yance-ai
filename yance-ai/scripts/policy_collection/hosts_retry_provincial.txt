@@ -1,0 +1,14 @@
+# retry candidates for hosts that failed TLS / DNS on the first probe
+http://kjj.tj.gov.cn/
+https://www.kjj.tj.gov.cn/
+http://kjt.jiangsu.gov.cn/
+http://kjt.jiangxi.gov.cn/
+http://kjt.shandong.gov.cn/
+http://kjt.hunan.gov.cn/
+https://kjt.hunan.gov.cn/
+http://kjt.gxzf.gov.cn/
+http://kjt.hainan.gov.cn/
+https://kjt.hainan.gov.cn/
+http://kjt.xizang.gov.cn/
+http://kjt.gansu.gov.cn/
+https://kjt.gansu.gov.cn/

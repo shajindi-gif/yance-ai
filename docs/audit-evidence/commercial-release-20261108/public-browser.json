@@ -1,0 +1,38 @@
+[
+  {
+    "width": 1440,
+    "route": "/",
+    "elapsed_ms": 2040,
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "route": "/pricing",
+    "elapsed_ms": 611,
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "route": "/login",
+    "elapsed_ms": 776,
+    "overflow": false
+  },
+  {
+    "width": 390,
+    "route": "/",
+    "elapsed_ms": 1619,
+    "overflow": false
+  },
+  {
+    "width": 390,
+    "route": "/pricing",
+    "elapsed_ms": 448,
+    "overflow": false
+  },
+  {
+    "width": 390,
+    "route": "/login",
+    "elapsed_ms": 829,
+    "overflow": false
+  }
+]

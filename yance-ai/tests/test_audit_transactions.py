@@ -6,6 +6,7 @@ from threading import Barrier
 
 import pytest
 from fastapi.testclient import TestClient
+from report_fixture import ready_report
 from sqlalchemy import func, select
 from test_invoice_flow import _paid_order, _register
 from test_payment_settlement import _records
@@ -89,6 +90,7 @@ def test_checkout_reuses_provider_intent_and_blocks_channel_switch(monkeypatch):
     client = TestClient(app)
     headers, _ = _register(f"checkout-{uuid.uuid4().hex}")
     company = client.get("/api/v1/companies", headers=headers).json()[0]
+    ready_report(company["id"])
     order = client.post("/api/v1/orders", headers=headers, json={"product_code":"POLICY_REPORT", "resource_id":company["id"]})
     assert order.status_code == 201, order.text
     order_id = order.json()["id"]

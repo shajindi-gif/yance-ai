@@ -30,3 +30,6 @@ test('older API supports profile saving and local logout without new endpoints',
   expect(await page.evaluate(() => localStorage.getItem('yance_token'))).toBeNull();
   expect(logoutRequests).toBe(0);
 });
+
+// Independent synthetic source per suite; production rate limits remain unchanged.
+test.use({extraHTTPHeaders: {'X-Forwarded-For': '127.0.0.63'}});

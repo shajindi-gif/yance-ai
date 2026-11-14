@@ -1,0 +1,9 @@
+
+Running 2 tests using 1 worker
+
+(node:34366) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › e2e/sms-auth.spec.ts:8:5 › mobile registration through real local API, OTP replay rejected, company accessible (3.1s)
+  ✓  2 [chromium] › e2e/sms-auth.spec.ts:39:5 › email account binds phone through authenticated local API (968ms)
+
+  2 passed (4.8s)

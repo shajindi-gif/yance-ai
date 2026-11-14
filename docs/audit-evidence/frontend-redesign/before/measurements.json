@@ -1,0 +1,77 @@
+{
+  "environment": "Local Chromium; no CPU/network throttling; warm server; one sample per page/device; screenshot-time LCP/CLS observation",
+  "results": [
+    {
+      "name": "home",
+      "device": "desktop",
+      "dom_content_loaded_ms": 116.5,
+      "lcp": 132,
+      "cls": 0,
+      "horizontal_overflow": false,
+      "response_start_ms": 20.899999976158142
+    },
+    {
+      "name": "application",
+      "device": "desktop",
+      "dom_content_loaded_ms": 44.299999952316284,
+      "lcp": 276,
+      "cls": 0.0015923828124999998,
+      "horizontal_overflow": false,
+      "response_start_ms": 18.200000047683716
+    },
+    {
+      "name": "pricing",
+      "device": "desktop",
+      "dom_content_loaded_ms": 23.200000047683716,
+      "lcp": 80,
+      "cls": 0.11882317708333333,
+      "horizontal_overflow": false,
+      "response_start_ms": 2.799999952316284
+    },
+    {
+      "name": "login",
+      "device": "desktop",
+      "dom_content_loaded_ms": 17.899999976158142,
+      "lcp": 68,
+      "cls": 0,
+      "horizontal_overflow": false,
+      "response_start_ms": 2.399999976158142
+    },
+    {
+      "name": "home",
+      "device": "mobile",
+      "dom_content_loaded_ms": 54.5,
+      "lcp": 64,
+      "cls": 0,
+      "horizontal_overflow": false,
+      "response_start_ms": 3.8000000715255737
+    },
+    {
+      "name": "application",
+      "device": "mobile",
+      "dom_content_loaded_ms": 25.899999976158142,
+      "lcp": 104,
+      "cls": 0,
+      "horizontal_overflow": false,
+      "response_start_ms": 8.099999904632568
+    },
+    {
+      "name": "pricing",
+      "device": "mobile",
+      "dom_content_loaded_ms": 21.899999976158142,
+      "lcp": 280,
+      "cls": 0.3253870688508276,
+      "horizontal_overflow": false,
+      "response_start_ms": 4.600000023841858
+    },
+    {
+      "name": "login",
+      "device": "mobile",
+      "dom_content_loaded_ms": 18,
+      "lcp": 60,
+      "cls": 0,
+      "horizontal_overflow": false,
+      "response_start_ms": 2.600000023841858
+    }
+  ]
+}

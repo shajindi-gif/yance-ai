@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import Principal, require_roles
 from app.core.db import get_db
 from app.models.models import AnalyticsEvent, Company, Policy, UserRole
+from app.services.llm.budget import LLMLimitExceeded, llm_budget_scope
 from app.services.policies.applicability import policy_context_issues
 from app.services.policies.ingestion import latest_policy_version
 from app.services.policy_engine.evaluator import evaluate_policy
@@ -60,21 +61,28 @@ async def evaluate(
     if issues:
         return PolicyEvaluationResult(
             overall_result=OverallResult.INSUFFICIENT_INFO,
-            matched_policy_id=str(policy.id), matched_policy_title=policy.title,
+            matched_policy_id=str(policy.id),
+            matched_policy_title=policy.title,
             summary="政策时效、地域或来源尚不满足评估前提，需人工复核。",
             missing_information=issues,
             model_metadata={"gate": "policy_context_v1", "llm_called": False},
         ).model_dump()
 
-    result = await evaluate_policy(
-        policy_id=str(policy.id),
-        policy_title=policy.title,
-        policy_content=policy.content or "",
-        policy_level=policy.level or "",
-        company_name=company.name,
-        company_profile=company_profile,
-        provider=req.provider,
-    )
+    try:
+        with llm_budget_scope(principal.tenant_id, principal.user.id):
+            result = await evaluate_policy(
+                policy_id=str(policy.id),
+                policy_title=policy.title,
+                policy_content=policy.content or "",
+                policy_level=policy.level or "",
+                company_name=company.name,
+                company_profile=company_profile,
+                provider=req.provider,
+            )
+    except LLMLimitExceeded as exc:
+        raise HTTPException(
+            status_code=429, detail="模型调用预算或输入限制已达到，请稍后重试或联系管理员"
+        ) from exc
 
     # Track event
     event = AnalyticsEvent(

@@ -1,0 +1,41 @@
+.section {
+  min-height: 100vh;
+  background: var(--paper);
+  padding: 140px 24px 48px;
+}
+
+.section2 {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 32px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.description {
+  color: #b45309;
+  font-weight: 700;
+}
+
+.heading {
+  color: #0d1b2a;
+  font-size: 24px;
+  margin: 8px 0 12px;
+}
+
+.description2 {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.layout {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.link {
+  padding: 10px 16px;
+  color: var(--accent);
+}

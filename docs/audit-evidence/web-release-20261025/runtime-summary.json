@@ -1,0 +1,24 @@
+{
+  "website": {
+    "website_status": "active",
+    "working_directory": "/opt/yance/releases/website-web-20261025-01/website",
+    "source_commit": "68a4b46054e6107d21a555842f4fda79c7e47ffe",
+    "archive_sha256": "79afa17956d256a636bed8d1e350fece90880e04424cbd01c09c4da9ed8e2784",
+    "next": "16.4.3",
+    "build_id": "MKQeEVVQ8ql5FnK-lYdA4",
+    "runtime_audit": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "fallback_next": "16.4.3"
+  },
+  "backend": {
+    "status": "ok",
+    "service": "yance.ai API",
+    "version": "e58a7c46d6ed296aa1854455b3f4a4d4940afc35"
+  }
+}

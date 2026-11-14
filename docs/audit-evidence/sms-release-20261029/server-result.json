@@ -1,0 +1,61 @@
+{
+  "source": "b408a53583ddac3b3021c9fa92a7fd906c422ced",
+  "at_utc": "2026-10-29T15:32:41.410786+00:00",
+  "preflight_backup": {
+    "verified": true,
+    "container": "yance-recovery-sms-preflight",
+    "database": "yance_release_test",
+    "network": "none",
+    "table_count": 79,
+    "row_count": 1440,
+    "backup_seconds": 2.352,
+    "restore_seconds": 2.597,
+    "plain_sha256": "4f7ef8c81efb922513377b950e520a1ee6f0a6bd009b5652db42a83c7f04a624",
+    "cipher_sha256": "866e39c4a79a7b1f97374b25c92c9982312145e65333b85a07d61c13024fc63b"
+  },
+  "clone_preservation": {
+    "verified": true,
+    "existing_tables": 78,
+    "changed_tables": [],
+    "revision": "20261029_0034"
+  },
+  "final_backup": {
+    "verified": true,
+    "container": "yance-recovery-sms-final",
+    "database": "yance_release_test",
+    "network": "none",
+    "table_count": 79,
+    "row_count": 1440,
+    "backup_seconds": 0.943,
+    "restore_seconds": 2.592,
+    "plain_sha256": "395e21e20d35ff4af06ed9363982da2842e62e596c3ab56274aa6c6a592cf9aa",
+    "cipher_sha256": "b2454e939d127949a9cb7cb964e21a520a31c82ab35857c56d57f995c17202b6"
+  },
+  "production_preservation": {
+    "verified": true,
+    "existing_tables": 78,
+    "changed_tables": [],
+    "revision": "20261029_0034"
+  },
+  "website_backup_sha256": "3244a0896ae121671288a5a2941abc4c8bdace453910d4546794821d7830cb69",
+  "website_backup_restored": true,
+  "website": "WorkingDirectory=/opt/yance/releases/sms-20261029-01/website\nActiveState=active",
+  "database_revision": "20261029_0034",
+  "containers": "yance-prod-api-1 yance-backend:sms-20261029-01 Up 3 minutes (healthy)\nyance-prod-agent-worker-1 yance-backend:sms-20261029-01 Up 3 minutes (healthy)\nyance-prod-db-1 pgvector/pgvector:pg16 Up 12 days (healthy)\nyance-prod-clamav-1 clamav/clamav:1.4 Up 5 weeks (healthy)",
+  "health": {
+    "status": "ok",
+    "service": "yance.ai API",
+    "version": "b408a53583ddac3b3021c9fa92a7fd906c422ced"
+  },
+  "auth_config": {
+    "email_login_enabled": true,
+    "sms_login_enabled": true,
+    "logout_all_devices_enabled": true,
+    "agent_cancellation_enabled": true,
+    "district_profile_enabled": true,
+    "application_workspace_revision": 2,
+    "feedback_revision": 1,
+    "checkout_idempotency_revision": 1
+  },
+  "activation_success": "Result=success\nExecMainStatus=0"
+}

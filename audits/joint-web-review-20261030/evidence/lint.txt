@@ -1,0 +1,9 @@
+npm error Missing script: "lint"
+npm error
+npm error Did you mean this?
+npm error   npm link # Symlink a package folder
+npm error
+npm error To see a list of scripts, run:
+npm error   npm run
+npm error Log files were not written due to an error writing to the directory: /Users/shajindi/.npm/_logs
+npm error You can rerun the command with `--loglevel=verbose` to see the logs in your terminal

@@ -1,0 +1,43 @@
+{
+  "source_commit": "e549923b0f9023a1beb03d3176595420abf1be0f",
+  "source_archive_sha256": "4945417bff89713e67e83ec46f745d98142fcd90218f89eb9c41f5bd4349ec42",
+  "working_directory": "/opt/yance/releases/website-restore-web-20261026-01",
+  "active": "active",
+  "build_id": "_FkxuMqNK5Z6GSO3HBD8x",
+  "backend": {
+    "status": "ok",
+    "service": "yance.ai API",
+    "version": "e58a7c46d6ed296aa1854455b3f4a4d4940afc35"
+  },
+  "dependency_vulnerabilities": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "catalogue": [
+    {
+      "code": "FREE_POLICY_MATCH",
+      "price": 0.0,
+      "promotional_price": null
+    },
+    {
+      "code": "POLICY_REPORT",
+      "price": 99.0,
+      "promotional_price": null
+    },
+    {
+      "code": "POLICY_DIAGNOSIS",
+      "price": 299.0,
+      "promotional_price": null
+    },
+    {
+      "code": "APPLICATION_PLAN",
+      "price": 699.0,
+      "promotional_price": null
+    }
+  ],
+  "phase": "after-first-rollback"
+}

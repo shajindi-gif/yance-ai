@@ -1,0 +1,182 @@
+{
+  "eval_set_version": "2026-11-06.1",
+  "eval_set_digest": "2191663da79c70c0",
+  "generated_at": "2026-11-06T07:17:21+00:00",
+  "data_isolation": {
+    "splits": {
+      "dev": {
+        "policy_families": [
+          "demo_family_a"
+        ]
+      },
+      "test": {
+        "policy_families": [
+          "demo_family_b",
+          "demo_family_c"
+        ]
+      }
+    },
+    "leak_check": "passed"
+  },
+  "arms": [
+    {
+      "name": "A_general_model",
+      "describe": {
+        "model": "未配置",
+        "provider_configured": false,
+        "web_access": "未配置，不得以离线冒充联网",
+        "budget_cny": 0
+      },
+      "runnable": false,
+      "blocked_reason": "缺少模型供应商配置与调用预算，禁止用更弱基线替代",
+      "runnable_suites": [
+        "engineering"
+      ],
+      "result": null
+    },
+    {
+      "name": "B_same_model_with_corpus",
+      "describe": {
+        "model": "未配置",
+        "provider_configured": false,
+        "corpus": "同一政策语料，无规则引擎与证据结构",
+        "budget_cny": 0
+      },
+      "runnable": false,
+      "blocked_reason": "需模型供应商配置；语料注入路径已就绪但未获调用预算",
+      "runnable_suites": [
+        "engineering"
+      ],
+      "result": null
+    },
+    {
+      "name": "C_yance_evidence",
+      "describe": {
+        "model": "deterministic_rule_core",
+        "provider_configured": false,
+        "note": "本地可跑确定性核心；模型辅助抽取阶段同样待预算",
+        "budget_cny": 0
+      },
+      "runnable": true,
+      "blocked_reason": null,
+      "runnable_suites": [
+        "engineering"
+      ],
+      "result": {
+        "by_suite": {
+          "engineering": {
+            "tasks": 21,
+            "behavior_match_rate": 1.0,
+            "severe_error_count": 0,
+            "severe_error_rate": 0.0,
+            "invented_support_count": 0,
+            "prohibited_violations": 0
+          }
+        },
+        "by_category": {
+          "amounts": {
+            "tasks": 3,
+            "behavior_match_rate": 1.0,
+            "severe_error_rate": 0.0
+          },
+          "dates": {
+            "tasks": 4,
+            "behavior_match_rate": 1.0,
+            "severe_error_rate": 0.0
+          },
+          "eligibility": {
+            "tasks": 4,
+            "behavior_match_rate": 1.0,
+            "severe_error_rate": 0.0
+          },
+          "geography": {
+            "tasks": 3,
+            "behavior_match_rate": 1.0,
+            "severe_error_rate": 0.0
+          },
+          "security": {
+            "tasks": 4,
+            "behavior_match_rate": 1.0,
+            "severe_error_rate": 0.0
+          },
+          "versioning": {
+            "tasks": 3,
+            "behavior_match_rate": 1.0,
+            "severe_error_rate": 0.0
+          }
+        },
+        "skipped_tasks": [
+          {
+            "task_id": "RET-CIT-001",
+            "suite": "retrieval",
+            "reason": "需真实采集并解析的上海市官方原文；本地库未就绪"
+          },
+          {
+            "task_id": "RET-CIT-002",
+            "suite": "retrieval",
+            "reason": "需带附件隐藏条件的真实政策原文"
+          },
+          {
+            "task_id": "ELI-BIZ-001",
+            "suite": "eligibility",
+            "reason": "需获授权的脱敏企业事实与客户复核标签"
+          }
+        ]
+      }
+    }
+  ],
+  "floor_arm": {
+    "spec": "F_lexical_floor",
+    "by_suite": {
+      "engineering": {
+        "tasks": 21,
+        "behavior_match_rate": 0.4286,
+        "severe_error_count": 12,
+        "severe_error_rate": 0.5714,
+        "invented_support_count": 21,
+        "prohibited_violations": 0
+      }
+    },
+    "by_category": {
+      "amounts": {
+        "tasks": 3,
+        "behavior_match_rate": 0.6667,
+        "severe_error_rate": 0.3333
+      },
+      "dates": {
+        "tasks": 4,
+        "behavior_match_rate": 0.75,
+        "severe_error_rate": 0.25
+      },
+      "eligibility": {
+        "tasks": 4,
+        "behavior_match_rate": 0.0,
+        "severe_error_rate": 1.0
+      },
+      "geography": {
+        "tasks": 3,
+        "behavior_match_rate": 0.6667,
+        "severe_error_rate": 0.3333
+      },
+      "security": {
+        "tasks": 4,
+        "behavior_match_rate": 0.0,
+        "severe_error_rate": 1.0
+      },
+      "versioning": {
+        "tasks": 3,
+        "behavior_match_rate": 0.6667,
+        "severe_error_rate": 0.3333
+      }
+    }
+  },
+  "conclusion": {
+    "engineering": "可直接引用上方工程类结果",
+    "business_quality": "insufficient",
+    "blocked_suites": [
+      "eligibility",
+      "retrieval"
+    ],
+    "statement": "缺少真实采集材料与授权企业样本，业务准确率结论不成立；工程类通过率不得用于证明业务准确率"
+  }
+}

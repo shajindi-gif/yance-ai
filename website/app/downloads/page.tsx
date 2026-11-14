@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import pageStyles from './page.module.css';
 /* --- Downloads Data --- */
 const DOWNLOADS = [
   {
@@ -145,7 +146,7 @@ export default function DownloadsPage() {
             </div>
           ))}
 
-          <div className="yc-dl-requirements" style={{ padding: 24, textAlign: 'center' }}>
+          <div className={["yc-dl-requirements", pageStyles.section].filter(Boolean).join(' ')} >
             客户端发布后，此处将提供经过签名的安装包与版本说明。
           </div>
         </div>
@@ -153,12 +154,12 @@ export default function DownloadsPage() {
 
       {/* CTA */}
       <div className="yc-cta-section">
-        <div className="container" style={{ textAlign: 'center' }}>
+        <div className={["container", pageStyles.section2].filter(Boolean).join(' ')} >
           <h2 className="yc-cta-title">需要企业定制方案？</h2>
-          <p style={{ color: 'var(--text-inverse-secondary)', marginBottom: 24, maxWidth: 500, marginLeft: 'auto', marginRight: 'auto' }}>
+          <p className={pageStyles.description}>
             如需评估私有化部署或白标需求，请联系我们确认当前能力、范围与交付条件。
           </p>
-          <div className="yc-cta-actions" style={{ justifyContent: 'center' }}>
+          <div className={["yc-cta-actions", pageStyles.section3].filter(Boolean).join(' ')} >
             <a href="/login?register=1" className="yc-btn-primary">打开 Web 工作区</a>
             <a href="mailto:yanceai@163.com" className="yc-btn-outline-white">联系销售</a>
           </div>

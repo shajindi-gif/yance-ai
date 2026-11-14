@@ -1,0 +1,54 @@
+[
+  {
+    "id": "V2-001",
+    "severity": "P0",
+    "evidence_level": "isolated tests passed",
+    "file": "yance-ai/app/services/applications/workspace.py",
+    "line": 185,
+    "problem_before": "未知及REQUIRES_REVIEW资格状态原可进入就绪状态",
+    "status": "implemented locally; not deployed",
+    "reproduction": "See test_v2_evidence_workspace.py and test_core_workflow.py plus readiness-baseline-reproduction.json",
+    "expected": "Unknown/stale decisions blocked; concurrent edits conflict; repeated gap requests create one checklist item",
+    "impact": "Invalid review/export or inconsistent project work; scope and severity depend on issue",
+    "acceptance": "197 backend tests passed with source-change, two-tenant, viewer and two-thread API assertions; browser first-batch flow passed"
+  },
+  {
+    "id": "V2-002",
+    "severity": "P0",
+    "evidence_level": "isolated tests passed",
+    "file": "yance-ai/app/api/routes/workflow.py",
+    "line": 1240,
+    "problem_before": "原批准未绑定生成后的来源变化",
+    "status": "implemented locally; not deployed",
+    "reproduction": "See test_v2_evidence_workspace.py and test_core_workflow.py plus readiness-baseline-reproduction.json",
+    "expected": "Unknown/stale decisions blocked; concurrent edits conflict; repeated gap requests create one checklist item",
+    "impact": "Invalid review/export or inconsistent project work; scope and severity depend on issue",
+    "acceptance": "197 backend tests passed with source-change, two-tenant, viewer and two-thread API assertions; browser first-batch flow passed"
+  },
+  {
+    "id": "V2-003",
+    "severity": "P1",
+    "evidence_level": "isolated tests passed",
+    "file": "yance-ai/app/api/routes/workflow.py",
+    "line": 1324,
+    "problem_before": "原编辑在父行锁前检查最新版本",
+    "status": "implemented locally; not deployed",
+    "reproduction": "See test_v2_evidence_workspace.py and test_core_workflow.py plus readiness-baseline-reproduction.json",
+    "expected": "Unknown/stale decisions blocked; concurrent edits conflict; repeated gap requests create one checklist item",
+    "impact": "Invalid review/export or inconsistent project work; scope and severity depend on issue",
+    "acceptance": "197 backend tests passed with source-change, two-tenant, viewer and two-thread API assertions; browser first-batch flow passed"
+  },
+  {
+    "id": "V2-004",
+    "severity": "P1",
+    "evidence_level": "isolated tests passed",
+    "file": "yance-ai/app/api/routes/workflow.py",
+    "line": 1437,
+    "problem_before": "原缺少从资格缺口创建幂等待办的路径",
+    "status": "implemented locally; not deployed",
+    "reproduction": "See test_v2_evidence_workspace.py and test_core_workflow.py plus readiness-baseline-reproduction.json",
+    "expected": "Unknown/stale decisions blocked; concurrent edits conflict; repeated gap requests create one checklist item",
+    "impact": "Invalid review/export or inconsistent project work; scope and severity depend on issue",
+    "acceptance": "197 backend tests passed with source-change, two-tenant, viewer and two-thread API assertions; browser first-batch flow passed"
+  }
+]

@@ -1,3 +1,5 @@
+import { apiErrorMessage } from './api-errors';
+
 // Yance.ai API Client
 // Connects the Next.js frontend to the FastAPI backend
 
@@ -5,9 +7,15 @@ export const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
 export interface AuthConfig {
   email_login_enabled: boolean;
+  sms_login_enabled?: boolean;
   logout_all_devices_enabled?: boolean;
   agent_cancellation_enabled?: boolean;
   district_profile_enabled?: boolean;
+  application_workspace_revision?: number;
+  feedback_revision?: number;
+  sales_request_revision?: number;
+  checkout_idempotency_revision?: number;
+  checkout_resume_revision?: number;
 }
 
 export interface LoginResponse {
@@ -26,7 +34,8 @@ export interface Tenant {
 export interface User {
   id: string;
   tenant_id: string;
-  email: string;
+  email: string | null;
+  phone?: string | null;
   role: string;
   is_active: boolean;
   is_platform_admin: boolean;
@@ -314,7 +323,8 @@ export interface FundingSummary {
 export interface TeamMember {
   id: string;
   tenant_id: string;
-  email: string;
+  email: string | null;
+  phone?: string | null;
   full_name: string;
   role: string;
   is_active: boolean;
@@ -574,7 +584,19 @@ export interface ApplicationActivity {
   occurred_at: string;
 }
 
+export interface EvidenceMatrix {
+  status: string;
+  context_issues: string[];
+  missing_information: string[];
+  rows: Array<{
+    rule_id?: string; name: string; fact_key?: string; actual?: unknown; expected?: unknown;
+    status: string; is_hard_gate?: boolean; fact_source: string; profile_version_id: string | null;
+    policy_evidence: Array<{ id: string; quote: string; article: string | null; source_url: string | null; verified: boolean }>;
+  }>;
+}
+
 export interface ApplicationDetail extends ApplicationSummary {
+  evidence_matrix?: EvidenceMatrix;
   company_name: string;
   opportunity: Opportunity | null;
   requirements: ApplicationRequirement[];
@@ -618,6 +640,9 @@ export interface ApplicationDetail extends ApplicationSummary {
     current_stage: string | null;
   }>;
   comments: Array<{
+    proposed_summary?: string | null;
+    resolution?: { decision: "accept" | "reject"; artifact_id: string | null } | null;
+    artifact_id?: string | null;
     id: string;
     user_id: string | null;
     body: string;
@@ -634,6 +659,7 @@ export interface ApplicationArtifact {
   generation_method: string;
   checksum_sha256: string;
   source_snapshot: Record<string, unknown>;
+  source_state?: { current: boolean; reasons: string[] };
   content: {
     executive_summary?: string;
     disclaimer?: string;
@@ -664,6 +690,7 @@ export interface Order {
   resource_id?: string;
   status: string;
   created_at: string;
+  expires_at?: string | null;
 }
 
 export interface InvoiceItem {
@@ -713,6 +740,7 @@ export interface BillingOverview {
   budgets: Array<{ id: string; scope_type: string; scope_id: string; meter_key: string; hard_limit: number; warning_threshold: number | null }>;
   orders: Order[];
   tax_invoices: Array<{ id: string; order_id: string; invoice_no: string | null; total_amount: number; status: string; created_at: string }>;
+  metering_policy?: { revision: number; manual_artifact_revisions_consume_generation: boolean };
   paid_plan_checkout_available: boolean;
   paid_plan_checkout_message: string;
 }
@@ -745,6 +773,10 @@ export interface Report {
   created_at: string;
 }
 
+export interface FeedbackItem {
+  id: string; category: string; message: string; status: string; created_at: string; updated_at: string;
+}
+
 export interface ProductCatalogItem {
   id: string;
   code: string;
@@ -755,10 +787,13 @@ export interface ProductCatalogItem {
   original_price: number | null;
   promotional_price: number | null;
   entitlement_type: string;
+  purchase_available?: boolean;
+  purchase_unavailable_reason?: string | null;
 }
 
 export interface Entitlement {
   id: string;
+  order_id?: string;
   product_code: string;
   product_name: string;
   resource_type: string;
@@ -1052,7 +1087,7 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '请求失败' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      throw new Error(apiErrorMessage(error.detail, `HTTP ${response.status}`));
     }
 
     if (response.status === 204) return undefined as T;
@@ -1071,7 +1106,7 @@ class ApiClient {
     }
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '下载失败' }));
-      throw new Error(error.detail || '下载失败');
+      throw new Error(apiErrorMessage(error.detail, '下载失败'));
     }
     return response.blob();
   }
@@ -1090,7 +1125,7 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '登录失败' }));
-      throw new Error(error.detail || '登录失败');
+      throw new Error(apiErrorMessage(error.detail, '登录失败'));
     }
 
     const data = await response.json();
@@ -1115,7 +1150,7 @@ class ApiClient {
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '注册失败' }));
-      throw new Error(error.detail || '注册失败');
+      throw new Error(apiErrorMessage(error.detail, '注册失败'));
     }
     const result = await response.json();
     if (result.access_token) this.setToken(result.access_token);
@@ -1129,11 +1164,21 @@ class ApiClient {
   // ── Email code login（验证码登录，未注册邮箱自动建号）──────────
   async getAuthConfig(): Promise<AuthConfig> {
     try {
-      return await this.request<AuthConfig>('/auth/config');
+      return await this.request<AuthConfig>('/auth/config', { signal: AbortSignal.timeout(10_000) });
     } catch {
       // 配置接口不可用时保守回退：只显示密码登录
       return { email_login_enabled: false };
     }
+  }
+
+  async smsAction(action: 'send' | 'verify' | 'bind/send' | 'bind', data: { phone: string; code?: string; owner_name?: string; company_name?: string; agreed_terms_version?: string }): Promise<{ access_token?: string; message?: string }> {
+    const response = await fetch(`${API_BASE}/auth/sms/${action}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(action.startsWith('bind') && this.token ? { Authorization: `Bearer ${this.token}` } : {}) },
+      body: JSON.stringify(data), signal: AbortSignal.timeout(20_000),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(apiErrorMessage(result.detail, '短信操作失败，请稍后重试'));
+    return result;
   }
 
   async sendEmailCode(email: string): Promise<void> {
@@ -1144,7 +1189,7 @@ class ApiClient {
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '验证码发送失败' }));
-      throw new Error(error.detail || `验证码发送失败（HTTP ${response.status}）`);
+      throw new Error(apiErrorMessage(error.detail, `验证码发送失败（HTTP ${response.status}）`));
     }
   }
 
@@ -1162,7 +1207,7 @@ class ApiClient {
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '验证码校验失败' }));
-      throw new Error(error.detail || '验证码校验失败');
+      throw new Error(apiErrorMessage(error.detail, '验证码校验失败'));
     }
     const result = await response.json();
     if (result.access_token) this.setToken(result.access_token);
@@ -1178,7 +1223,7 @@ class ApiClient {
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '重置邮件发送失败' }));
-      throw new Error(error.detail || `重置邮件发送失败（HTTP ${response.status}）`);
+      throw new Error(apiErrorMessage(error.detail, `重置邮件发送失败（HTTP ${response.status}）`));
     }
   }
 
@@ -1194,7 +1239,7 @@ class ApiClient {
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '密码重置失败' }));
-      throw new Error(error.detail || '密码重置失败');
+      throw new Error(apiErrorMessage(error.detail, '密码重置失败'));
     }
     const result = await response.json();
     if (result.access_token) this.setToken(result.access_token);
@@ -1467,10 +1512,18 @@ class ApiClient {
     });
   }
 
-  async addApplicationComment(applicationId: string, body: string): Promise<void> {
+  async addApplicationComment(applicationId: string, body: string, artifactId?: string, proposedSummary?: string, clientRequestId?: string): Promise<void> {
     await this.request(`/applications/${encodeURIComponent(applicationId)}/comments`, {
-      method: 'POST', body: JSON.stringify({ body }),
+      method: 'POST', body: JSON.stringify({ body, artifact_id: artifactId, proposed_summary: proposedSummary, client_request_id: clientRequestId }),
     });
+  }
+
+  async decideSuggestion(applicationId: string, commentId: string, decision: 'accept' | 'reject'): Promise<void> {
+    await this.request(`/applications/${encodeURIComponent(applicationId)}/comments/${encodeURIComponent(commentId)}/decision`, { method: 'POST', body: JSON.stringify({ decision }) });
+  }
+
+  async createEvidenceTasks(applicationId: string): Promise<{ created_requirement_ids: string[] }> {
+    return this.request(`/applications/${encodeURIComponent(applicationId)}/evidence-tasks`, { method: 'POST' });
   }
 
   async runApplicationAction(applicationId: string, action: ApplicationAgentResponse['action'], input?: { question?: string; instruction?: string }): Promise<ApplicationAgentResponse> {
@@ -1496,6 +1549,17 @@ class ApiClient {
   }
 
   // Policies
+  async searchPolicyEvidence(query: string, level = '') {
+    const params = new URLSearchParams({ q: query, limit: '20' });
+    if (level) params.set('level', level);
+    return this.request<{ hits: EvidenceHit[] }>(`/policies/evidence-search?${params}`);
+  }
+
+  async getPolicyVersion(policyId: string, versionId: string) {
+    return this.request<{ content: string; title: string; content_sha256: string }>(
+      `/policies/${encodeURIComponent(policyId)}/versions/${encodeURIComponent(versionId)}`);
+  }
+
   async getPolicies(): Promise<Policy[]> {
     return this.request<Policy[]>('/policies');
   }
@@ -1542,13 +1606,21 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: '报告生成失败' }));
-      throw new Error(error.detail || '报告生成失败');
+      throw new Error(apiErrorMessage(error.detail, '报告生成失败'));
     }
 
     return response.json();
   }
 
   // Orders
+  async getCheckoutState(id: string): Promise<{order:Order; provider:string|null; can_continue:boolean; reason:string|null}> {
+    return this.request(`/orders/${encodeURIComponent(id)}/checkout`);
+  }
+
+  async getOrderByNumber(orderNo: string): Promise<Order> {
+    return this.request<Order>(`/orders/by-no/${encodeURIComponent(orderNo)}`);
+  }
+
   async getOrders(): Promise<Order[]> {
     return this.request<Order[]>('/orders');
   }
@@ -1603,11 +1675,16 @@ class ApiClient {
     await this.request(`/enterprise/deletion-request/${encodeURIComponent(requestId)}/cancel`, { method: 'POST' });
   }
 
-  async submitFeedback(category: string, message: string): Promise<{ id: string; status: string }> {
+  async submitFeedback(category: string, message: string, clientRequestId?: string): Promise<{ id: string; status: string }> {
     return this.request('/feedback', {
       method: 'POST',
-      body: JSON.stringify({ category, message, route: typeof window !== 'undefined' ? window.location.pathname : null }),
+      body: JSON.stringify({ category, message, route: typeof window !== 'undefined' ? window.location.pathname : null, ...(clientRequestId ? { client_request_id: clientRequestId } : {}) }),
+      signal: AbortSignal.timeout(15_000),
     });
+  }
+
+  async getMyFeedback(): Promise<FeedbackItem[]> {
+    return this.request<FeedbackItem[]>('/feedback', { signal: AbortSignal.timeout(15_000) });
   }
 
   async getProducts(): Promise<ProductCatalogItem[]> {
@@ -1621,6 +1698,7 @@ class ApiClient {
   async createOrder(data: {
     product_code: string;
     resource_id: string;
+    client_request_id?: string;
   }): Promise<Order> {
     return this.request<Order>('/orders', {
       method: 'POST',
@@ -1639,11 +1717,15 @@ class ApiClient {
 
   // WeChat Pay Native: returns a code_url to render as a QR, plus the merchant
   // order number used for active-query compensation.
-  async createWechatNativeOrder(orderId: string): Promise<{ code_url: string; out_trade_no: string; amount_fen: number }> {
-    return this.request<{ code_url: string; out_trade_no: string; amount_fen: number }>(
+  async createWechatNativeOrder(orderId: string): Promise<{ code_url: string; out_trade_no: string; amount_fen: number; expires_at: string }> {
+    return this.request<{ code_url: string; out_trade_no: string; amount_fen: number; expires_at: string }>(
       `/payments/wechat/native?order_id=${encodeURIComponent(orderId)}`,
       { method: 'POST' },
     );
+  }
+
+  async queryAlipayOrder(orderId: string): Promise<{status: string; queried: boolean}> {
+    return this.request(`/payments/alipay/query?order_id=${encodeURIComponent(orderId)}`, {method: 'POST'});
   }
 
   async queryWechatOrder(orderId: string): Promise<{ status: string; queried: boolean; trade_state?: string }> {
@@ -1657,8 +1739,8 @@ class ApiClient {
   async matchReport(companyId: string, provider: string = 'qwen'): Promise<{
     company_name: string;
     total_matches: number;
-    preview: any[];
-    full: any[];
+    preview: Record<string, unknown>[];
+    full: Record<string, unknown>[];
     ai_summary: string;
     provider_used: string;
   }> {
@@ -1669,8 +1751,8 @@ class ApiClient {
   }
 
   // Authorized report download
-  async downloadReport(companyId: string): Promise<Blob> {
-    return this.requestBlob(`/reports/${companyId}/download`);
+  async downloadReport(companyId: string, orderId?: string): Promise<Blob> {
+    return this.requestBlob(`/reports/${companyId}/download${orderId ? `?order_id=${encodeURIComponent(orderId)}` : ""}`);
   }
 
   // Tasks
@@ -1886,3 +1968,11 @@ class ApiClient {
 
 export const api = new ApiClient();
 export default api;
+
+export interface EvidenceHit {
+  policy_id: string; version_id: string; chunk_id: string; title: string;
+  snippet: string; version_no: number; char_start: number; char_end: number;
+  jurisdiction: string | null; issuing_authority: string | null;
+  published_at: string | null; deadline: string | null; expires_at: string | null;
+  source_url: string | null; review_state: string; metadata_gaps: string[];
+}

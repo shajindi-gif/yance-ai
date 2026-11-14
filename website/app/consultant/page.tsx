@@ -10,6 +10,7 @@ import AppShell from "@/components/workspace/AppShell";
 import content from "@/components/workspace/WorkspaceContent.module.css";
 import flow from "@/components/workspace/CoreWorkflow.module.css";
 import api, { type Company, type ConsultantAnswer } from "@/lib/api";
+import pageStyles from './page.module.css';
 
 const PRESETS = [
   "我们最近有哪些能申请的资金？",
@@ -33,7 +34,7 @@ function Citation({ citation }: { citation?: Record<string, unknown> | null }) {
   const title = typeof citation.title === "string" ? citation.title : null;
   if (!quote && !url && !title) return null;
   return (
-    <div className={flow.evidenceQuote} style={{ marginTop: 8 }}>
+    <div className={[flow.evidenceQuote, pageStyles.section].filter(Boolean).join(' ')} >
       {article ? <strong>{article}：</strong> : null}
       {quote || title}
       {url ? (
@@ -127,7 +128,7 @@ export default function ConsultantPage() {
             aria-label="选择企业"
             value={companyId}
             onChange={(event) => setCompanyId(event.target.value)}
-            style={{ padding: "9px 12px", border: "1px solid #dde3eb", borderRadius: 8, fontSize: 13 }}
+            className={pageStyles.section2}
           >
             {companies.map((company) => (
               <option key={company.id} value={company.id}>{company.name}</option>
@@ -136,11 +137,11 @@ export default function ConsultantPage() {
         ) : null}
       </div>
 
-      <div className={content.stack} style={{ minHeight: 220 }}>
+      <div className={[content.stack, pageStyles.section3].filter(Boolean).join(' ')} >
         {turns.length === 0 ? (
           <div className={content.card}>
-            <div className={content.cardIntro} style={{ marginBottom: 12 }}>试试这些问题：</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <div className={[content.cardIntro, pageStyles.section4].filter(Boolean).join(' ')} >试试这些问题：</div>
+            <div className={pageStyles.layout}>
               {PRESETS.map((preset) => (
                 <Button key={preset} variant="secondary" disabled={!companyId || asking} onClick={() => ask(preset)}>
                   {preset}
@@ -152,29 +153,29 @@ export default function ConsultantPage() {
 
         {turns.map((turn, index) => (
           <div key={index} className={content.card}>
-            <div className={flow.itemTitle} style={{ marginBottom: 10 }}>
+            <div className={[flow.itemTitle, pageStyles.section5].filter(Boolean).join(' ')} >
               <strong>{turn.question}</strong>
             </div>
             {turn.pending ? <div className={content.subtle}>正在检索证据…</div> : null}
             {turn.error ? <InlineAlert tone="error">{turn.error}</InlineAlert> : null}
             {turn.answer ? (
               <>
-                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 8 }}>
+                <div className={pageStyles.layout2}>
                   <Badge tone={turn.answer.insufficient ? "warning" : "success"}>
                     {turn.answer.insufficient ? "证据不足" : "有据可查"}
                   </Badge>
-                  <span className={content.subtle} style={{ fontSize: 12 }}>
+                  <span className={[content.subtle, pageStyles.label].filter(Boolean).join(' ')} >
                     意图识别：{turn.answer.intent}
                   </span>
                 </div>
-                <p style={{ margin: "0 0 10px", fontSize: 14 }}>{turn.answer.summary}</p>
+                <p className={pageStyles.description}>{turn.answer.summary}</p>
                 {turn.answer.blocks.length ? (
                   <div className={flow.criteriaList}>
                     {turn.answer.blocks.map((block, blockIndex) => (
                       <div key={blockIndex} className={flow.criterion}>
                         <strong>{block.title}</strong>
                         {block.detail ? (
-                          <div className={content.subtle} style={{ fontSize: 12, marginTop: 4 }}>
+                          <div className={[content.subtle, pageStyles.section6].filter(Boolean).join(' ')} >
                             {Object.entries(block.detail)
                               .filter(([, value]) => value !== null && value !== undefined && value !== "")
                               .map(([key, value]) => `${key}: ${String(value)}`)
@@ -187,15 +188,15 @@ export default function ConsultantPage() {
                   </div>
                 ) : null}
                 {turn.answer.missing_evidence?.length ? (
-                  <div className={flow.gapList} style={{ marginTop: 10 }}>
+                  <div className={[flow.gapList, pageStyles.section7].filter(Boolean).join(' ')} >
                     {turn.answer.missing_evidence.map((item, itemIndex) => (
-                      <div key={itemIndex} className={content.subtle} style={{ fontSize: 13 }}>缺证据：{item}</div>
+                      <div key={itemIndex} className={[content.subtle, pageStyles.section8].filter(Boolean).join(' ')} >缺证据：{item}</div>
                     ))}
                   </div>
                 ) : null}
                 {turn.answer.next_actions.length ? (
-                  <div className={content.actionRow} style={{ marginTop: 10 }}>
-                    <span className={content.subtle} style={{ fontSize: 12 }}>建议：</span>
+                  <div className={[content.actionRow, pageStyles.section7].filter(Boolean).join(' ')} >
+                    <span className={[content.subtle, pageStyles.label].filter(Boolean).join(' ')} >建议：</span>
                     {turn.answer.next_actions.map((action) => (
                       <Badge key={action} tone="neutral">{action}</Badge>
                     ))}
@@ -213,14 +214,14 @@ export default function ConsultantPage() {
           event.preventDefault();
           void ask(question);
         }}
-        style={{ display: "flex", gap: 10, marginTop: 16 }}
+        className={pageStyles.layout3}
       >
         <input
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
           placeholder="例如：高企认定我们还差什么条件？"
           disabled={!companyId || asking}
-          style={{ flex: 1, padding: "11px 14px", border: "1px solid #dde3eb", borderRadius: 10, fontSize: 14 }}
+          className={pageStyles.section9}
         />
         <Button type="submit" disabled={!companyId || asking || question.trim().length < 2}>
           {asking ? "检索中…" : "提问"}

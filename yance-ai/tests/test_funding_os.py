@@ -260,7 +260,7 @@ def test_application_inherits_policy_deadline_and_notifies():
             json={"due_at": new_due},
         )
         assert patched.status_code == 200
-        assert patched.json()["due_at"][:10] == new_due[:10]
+        assert datetime.fromisoformat(patched.json()["due_at"]) == datetime.fromisoformat(new_due)
 
         scan = client.post("/api/v1/notifications/scan", headers=headers)
         assert scan.status_code == 200 and scan.json()["created"] >= 1
@@ -366,11 +366,11 @@ def test_email_dispatch_sends_high_severity_only(monkeypatch):
     sent = []
     monkeypatch.setattr(settings, "email_enabled", True)
     monkeypatch.setattr(settings, "resend_api_key", "re_test_key")
-    monkeypatch.setattr(email_svc, "send_email", lambda to, subject, body: (sent.append((to, subject, body)) or True))
+    monkeypatch.setattr(email_svc, "send_notification_email", lambda to, subject, body: (sent.append((to, subject, body)) or email_svc.DeliveryOutcome("sent")))
     with SessionLocal() as db:
         count = email_svc.dispatch_deadline_emails(db, tenant_id=uuid.UUID(me["tenant_id"]))
     assert count == 1  # only the warning band
     assert len(sent) == 1 and "测试warning" in sent[0][1]
-    # idempotent: second dispatch does not re-email (dedup key suffixed)
+    # idempotent: delivery ledger prevents a second email; dedup key is immutable
     with SessionLocal() as db:
         assert email_svc.dispatch_deadline_emails(db, tenant_id=uuid.UUID(me["tenant_id"])) == 0

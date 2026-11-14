@@ -43,6 +43,7 @@ from app.services.email_code import (
     send_reset_code,
 )
 from app.services.notifications.email import is_email_configured
+from app.services.sms import is_sms_configured
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = structlog.get_logger()
@@ -305,9 +306,15 @@ def auth_config() -> dict:
     """Public capability flags so the login page can hide unavailable tabs."""
     return {
         "email_login_enabled": is_email_configured(),
+        "sms_login_enabled": is_sms_configured(),
         "logout_all_devices_enabled": True,
         "agent_cancellation_enabled": True,
         "district_profile_enabled": True,
+        "application_workspace_revision": 2,
+        "feedback_revision": 1,
+        "sales_request_revision": 1,
+        "checkout_idempotency_revision": 1,
+        "checkout_resume_revision": 1,
     }
 
 
@@ -595,8 +602,8 @@ def password_reset_confirm(
 
 
 @router.get("/me", response_model=UserOut)
-def me(principal: Principal = Depends(get_principal)) -> User:
-    return principal.user
+def me(principal: Principal = Depends(get_principal)) -> UserOut:
+    return UserOut.model_validate(principal.user).model_copy(update={"role": principal.role})
 
 
 @router.post("/logout", status_code=204)

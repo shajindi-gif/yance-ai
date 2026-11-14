@@ -1,0 +1,13 @@
+const {chromium}=require('/Users/shajindi/yance-backup/yance/website/node_modules/@playwright/test');
+const fs=require('node:fs');
+(async()=>{const browser=await chromium.launch();const results=[];
+for(const width of [1440,390])for(const path of ['/','/pricing','/login']){
+ const context=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1});
+ await context.route('**/*',r=>new URL(r.request().url()).origin==='https://yance.ai'&&['GET','HEAD','OPTIONS'].includes(r.request().method())?r.continue():r.abort());
+ const page=await context.newPage();const cdp=await context.newCDPSession(page);await cdp.send('Network.enable');await cdp.send('Network.setCacheDisabled',{cacheDisabled:true});await cdp.send('Network.emulateNetworkConditions',{offline:false,latency:150,downloadThroughput:200000,uploadThroughput:93750});await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
+ await page.addInitScript(()=>{window.__lab={lcp:null,cls:0};new PerformanceObserver(list=>{for(const e of list.getEntries())window.__lab.lcp=e.startTime}).observe({type:'largest-contentful-paint',buffered:true});new PerformanceObserver(list=>{for(const e of list.getEntries())if(!e.hadRecentInput)window.__lab.cls+=e.value}).observe({type:'layout-shift',buffered:true});});
+ try{const response=await page.goto('https://yance.ai'+path,{waitUntil:'networkidle',timeout:60000});await page.waitForTimeout(2000);
+ const data=await page.evaluate(()=>({metrics:window.__lab,ttfb:performance.getEntriesByType('navigation')[0]?.responseStart,resources:performance.getEntriesByType('resource').reduce((s,e)=>s+e.transferSize,0),h1:document.querySelectorAll('h1').length,overflow:document.documentElement.scrollWidth>innerWidth,missingAlt:[...document.images].filter(i=>!i.hasAttribute('alt')).length,unnamedButtons:[...document.querySelectorAll('button')].filter(b=>b.getBoundingClientRect().width&&!b.textContent.trim()&&!b.getAttribute('aria-label')&&!b.getAttribute('aria-labelledby')).length,unlabelledInputs:[...document.querySelectorAll('input:not([type=hidden]),select,textarea')].filter(e=>e.getBoundingClientRect().width&&!e.labels?.length&&!e.getAttribute('aria-label')&&!e.getAttribute('aria-labelledby')).length}));
+ results.push({path,width,status:response.status(),...data});await page.screenshot({path:__dirname+`/lab-${width}-${path==='/'?'home':path.slice(1)}.png`});
+ }catch(e){results.push({path,width,error:String(e)})}await context.close();}
+fs.writeFileSync(__dirname+'/browser-lab.json',JSON.stringify({at:new Date().toISOString(),environment:'Chromium/macOS; fresh context; cache disabled; 4x CPU; 1.6Mbps down, 0.75Mbps up, 150ms latency; one sample per page/width',inp:null,fieldP75:null,results},null,2));await browser.close();})();

@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -60,6 +60,73 @@ class Settings(BaseSettings):
     document_url_connect_timeout_seconds: float = 5.0
     document_url_read_timeout_seconds: float = 15.0
     document_url_total_timeout_seconds: float = 30.0
+
+    # ------------------------------------------------------------------ #
+    # Continuous policy collection (docs/policy-collection-runbook.md)
+    # Every switch defaults to the safe/OFF position: enabling collection is an
+    # explicit production decision, never a side effect of a deploy.
+    # ------------------------------------------------------------------ #
+    policy_collection_enabled: bool = False
+    policy_collection_catalog_dir: str = "config/policy_sources"
+    policy_collection_raw_dir: str = ""  # empty -> <app>/crawler_output/policy_raw
+    policy_collection_user_agent: str = "YancePolicyCollector/3.0 (+https://yance.ai)"
+    policy_collection_max_pages_per_source: int = 3
+    policy_collection_max_items_per_source: int = 20
+    policy_collection_max_detail_bytes: int = 5_000_000
+    policy_collection_max_attachment_bytes: int = 25_000_000
+    policy_collection_max_attachments_per_doc: int = 12
+    policy_collection_min_host_interval_seconds: float = 2.0
+    policy_collection_request_timeout_seconds: float = 20.0
+    policy_collection_max_retries: int = 2
+    policy_collection_respect_robots: bool = True
+    policy_collection_run_timeout_seconds: int = 900
+    policy_collection_source_failure_pause_threshold: int = 5
+    # Budget guards: the deterministic pipeline needs no LLM; this only caps the
+    # optional classification/embedding stage.
+    policy_collection_llm_enabled: bool = False
+    policy_collection_daily_model_budget_calls: int = 0
+    policy_collection_attachment_parse_enabled: bool = True
+    # Global kill switch: True stops every scheduled queue (backfill + incremental)
+    # without touching the website. Sources stay readable/searchable.
+    policy_collection_paused: bool = False
+    # A file-based pause flag, checked on every cycle.  The env switch needs a
+    # process restart; this one takes effect within one cycle and is what
+    # ``cli.py pause --global`` writes, so an operator can stop downloads without
+    # redeploying anything.
+    policy_collection_pause_flag_path: str = ""  # empty -> <raw_dir>/PAUSED
+    # Storage guard: stop *new* downloads when free space drops below this, so a
+    # full disk can never take down login/payment/report services.
+    policy_collection_min_free_disk_mb: int = 2048
+    policy_collection_backfill_pages_per_batch: int = 3
+    policy_collection_backfill_docs_per_batch: int = 15
+    policy_collection_backfill_window_seconds: int = 900
+    # How many consecutive "page answered 200 but yielded no candidates" rounds a
+    # source may repeat before its cursor is parked for manual review.  Without a
+    # limit the same page is re-read every cycle forever, which looks like activity
+    # in the logs and hides the fact that history is stuck behind a broken selector.
+    policy_collection_gap_streak_limit: int = 3
+    # Attachment storage is content addressed under this folder; must be on the
+    # persistent volume, never inside a container's tmp layer.
+    policy_collection_attachment_dir: str = ""
+    # DEV ONLY, comma separated CIDRs. On a laptop whose DNS is taken over by a
+    # local TUN/fake-IP proxy (Clash & co.) every hostname resolves into
+    # 198.18.0.0/15, which the SSRF guard must otherwise reject. Leave empty in
+    # production: it weakens the guard to make local download tests possible.
+    policy_collection_dns_proxy_cidrs: str = ""
+
+    # Long-running scheduler (incremental queue). One cycle = every source whose
+    # own interval elapsed; a cycle never outlives its budget.
+    policy_collection_scheduler_interval_seconds: int = 300
+    policy_collection_scheduler_cycle_seconds: int = 600
+    policy_collection_scheduler_max_sources_per_cycle: int = 12
+    # Low-frequency re-check of archives that were already declared exhausted:
+    # conditional requests make this cheap and it is how a page added years later
+    # is discovered without re-downloading the archive.
+    policy_collection_recheck_interval_hours: float = 168.0
+    policy_collection_alert_failure_threshold: int = 4
+    policy_collection_alert_stale_hours: float = 72.0
+    policy_collection_alerts_json_path: str = ""
+
     malware_scan_mode: Literal["disabled", "optional", "required"] = "disabled"
     clamd_host: str = ""
     clamd_port: int = 3310
@@ -80,6 +147,9 @@ class Settings(BaseSettings):
         "https://api.cloudflare.com/client/v4/accounts/9620a910f114a4ee7a5c45ef2d2b3bbd/ai/v1"
     )
     embedding_model: str = "@cf/baai/bge-large-en-v1.5"
+
+    payment_ops_user_id: str = ""
+    order_payment_ttl_minutes: int = Field(default=30, ge=1, le=1440)
 
     # Stripe (legacy)
     stripe_secret_key: str = ""
@@ -106,6 +176,7 @@ class Settings(BaseSettings):
     wxpay_serial_no: str = ""  # 商户 API 证书序列号
     wxpay_private_key: str = ""  # apiclient_key.pem 内容（单行，\n 表示换行）
     wxpay_apiv3_key: str = ""  # 32 位 APIv3 密钥
+    wxpay_refund_notify_url: str = "https://yance.ai/api/v1/payments/wechat/refund-notify"
     wxpay_notify_url: str = "https://api.yance.ai/api/v1/payments/wechat/notify"
     wxpay_gateway: str = "https://api.mch.weixin.qq.com"
     # 微信支付公钥模式（新商户无平台证书）
@@ -122,6 +193,16 @@ class Settings(BaseSettings):
     company_bank_name: str = ""
     company_bank_account: str = ""
 
+    # SMS is explicitly disabled until a reviewed release and delivery acceptance.
+    sms_enabled: bool = False
+    tencent_sms_secret_id: str = ""
+    tencent_sms_secret_key: str = ""
+    tencent_sms_app_id: str = ""
+    tencent_sms_sign_name: str = ""
+    tencent_sms_template_id: str = ""
+    tencent_sms_region: str = "ap-guangzhou"
+    sms_daily_limit: int = Field(default=100, ge=1, le=10000)
+
     # 事务邮件：截止日 T-7/T-3/T-1 强触达 + 登录验证码；未配置则仅站内通知/接口503
     # email_provider: resend | smtp（腾讯企业邮箱等 SMTP 通道）
     email_provider: str = "resend"
@@ -137,6 +218,10 @@ class Settings(BaseSettings):
     agent_log_prompts: bool = False
     agent_worker_poll_seconds: float = 1.0
     agent_lease_seconds: int = 180
+    llm_daily_call_limit: int = Field(default=100, ge=1)
+    llm_daily_output_token_limit: int = Field(default=60000, ge=1)
+    llm_max_output_tokens: int = Field(default=6000, ge=1)
+    llm_max_input_bytes: int = Field(default=64000, ge=1)
     agent_max_retries: int = 2
     agent_run_timeout_seconds: float = 120.0
     trusted_proxy_count: int = 1

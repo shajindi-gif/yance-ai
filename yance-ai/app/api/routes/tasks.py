@@ -19,14 +19,12 @@ from app.models.models import (
     Deliverable,
     Opportunity,
     Order,
-    Policy,
     Product,
     RevisionRequest,
     Task,
     UserRole,
 )
-from app.services.policies.visibility import visible_policy_clause
-from app.services.report.pdf import generate_match_report_pdf
+from app.services.report.snapshot import report_bytes
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -307,50 +305,30 @@ async def accept_task(
 @router.get("/{task_id}/download")
 async def download_pdf(
     task_id: uuid.UUID,
+    deliverable_id: uuid.UUID | None = None,
     principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
     db: Session = Depends(get_db),
 ):
     task = db.scalar(select(Task).where(Task.id == task_id, Task.tenant_id == principal.tenant_id))
     if not task:
         raise HTTPException(404, "任务不存在")
+    if task.status not in {"delivered", "accepted", "revision_requested"}:
+        raise HTTPException(409, "任务尚未形成可交付报告，请检查执行状态后重试")
     deliverable = db.scalar(
         select(Deliverable)
-        .where(Deliverable.task_id == task_id, Deliverable.tenant_id == principal.tenant_id)
+        .where(Deliverable.task_id == task_id, Deliverable.tenant_id == principal.tenant_id,
+               Deliverable.id == deliverable_id if deliverable_id else Deliverable.id.is_not(None))
         .order_by(Deliverable.version.desc())
     )
     if not deliverable:
         raise HTTPException(404, "未找到交付物")
-    company = db.scalar(
-        select(Company).where(
-            Company.id == task.company_id,
-            Company.tenant_id == principal.tenant_id,
-        )
-    )
-    opportunities = db.scalars(
-        select(Opportunity)
-        .where(
-            Opportunity.company_id == task.company_id,
-            Opportunity.tenant_id == principal.tenant_id,
-        )
-        .order_by(Opportunity.score.desc())
-    ).all()
-    policy_ids = [o.policy_id for o in opportunities]
-    policies = (
-        db.scalars(
-            select(Policy).where(
-                Policy.id.in_(policy_ids),
-                visible_policy_clause(principal.tenant_id),
-            )
-        ).all()
-        if policy_ids
-        else []
-    )
-    pdf_bytes = generate_match_report_pdf(company, opportunities, policies)
-    filename = f"{company.name}_{deliverable.title}_{deliverable.version}.pdf"
+    pdf_bytes = report_bytes(deliverable)
+    filename = f"{deliverable.title}_v{deliverable.version}.pdf"
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}"},
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(filename)}",
+                 "Cache-Control": "private, no-store"},
     )
 
 

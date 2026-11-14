@@ -8,10 +8,12 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import PolicyEvidenceSearch from "@/components/workspace/PolicyEvidenceSearch";
 import AppShell from "@/components/workspace/AppShell";
 import content from "@/components/workspace/WorkspaceContent.module.css";
 import flow from "@/components/workspace/CoreWorkflow.module.css";
 import api, { type Company, type Policy } from "@/lib/api";
+import pageStyles from './page.module.css';
 
 const LEVEL_LABELS: Record<string, string> = {
   national: "国家级",
@@ -119,12 +121,14 @@ export default function DiscoverPage() {
               {scanning ? "启动中…" : "为企业扫描资格"}
             </Button>
           ) : (
-            <Link className="yc-btn-primary" href="/companies" style={{ textDecoration: "none" }}>先创建企业档案</Link>
+            <Link className={["yc-btn-primary", pageStyles.link].filter(Boolean).join(' ')} href="/companies" >先创建企业档案</Link>
           )
         }
       />
       {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}
       {scanMessage ? <InlineAlert tone="info">{scanMessage}</InlineAlert> : null}
+
+      <PolicyEvidenceSearch />
 
       <div className={flow.toolbar}>
         <input
@@ -132,13 +136,13 @@ export default function DiscoverPage() {
           placeholder="搜索政策名称、发文机关、行业…"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          style={{ flex: 1, minWidth: 220, padding: "9px 12px", border: "1px solid #dde3eb", borderRadius: 8, fontSize: 13 }}
+          className={pageStyles.section}
         />
         <select
           aria-label="按层级筛选"
           value={levelFilter}
           onChange={(event) => setLevelFilter(event.target.value)}
-          style={{ padding: "9px 12px", border: "1px solid #dde3eb", borderRadius: 8, fontSize: 13, background: "#fff" }}
+          className={pageStyles.section2}
         >
           <option value="">全部层级</option>
           {Object.entries(LEVEL_LABELS).map(([key, label]) => (
@@ -161,30 +165,30 @@ export default function DiscoverPage() {
             const daysLeft = deadline ? Math.ceil((deadline.getTime() - Date.now()) / 86400000) : null;
             return (
               <article key={policy.id} className={content.card}>
-                <div className={content.rowBetween} style={{ gap: 12, flexWrap: "wrap" }}>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                      <strong style={{ fontSize: 15 }}>{policy.title}</strong>
+                <div className={[content.rowBetween, pageStyles.section3].filter(Boolean).join(' ')} >
+                  <div className={pageStyles.section4}>
+                    <div className={pageStyles.layout}>
+                      <strong className={pageStyles.section5}>{policy.title}</strong>
                       {policy.level ? <Badge tone="neutral">{LEVEL_LABELS[policy.level] || policy.level}</Badge> : null}
                       {policy.funding_type ? (
                         <Badge tone="info">{FUNDING_TYPE_LABELS[policy.funding_type] || policy.funding_type}</Badge>
                       ) : null}
                     </div>
-                    <div className={content.meta} style={{ marginTop: 6 }}>
+                    <div className={[content.meta, pageStyles.section6].filter(Boolean).join(' ')} >
                       {[policy.issuing_authority, policy.province, policy.city, policy.industry]
                         .filter(Boolean)
                         .join(" · ") || "发布机关待补充"}
                     </div>
                     {policy.support_amount && !policy.funding_amount_max ? (
-                      <div className={content.subtle} style={{ marginTop: 6, fontSize: 12 }}>
+                      <div className={[content.subtle, pageStyles.section7].filter(Boolean).join(' ')} >
                         官方金额表述：{policy.support_amount}（尚未结构化为数值，以原文为准）
                       </div>
                     ) : null}
                   </div>
-                  <div style={{ textAlign: "right", flexShrink: 0 }}>
-                    {amount ? <div className={flow.metric}><strong>{amount}</strong></div> : <div className={content.subtle} style={{ fontSize: 12 }}>金额：见官方条款</div>}
+                  <div className={pageStyles.section8}>
+                    {amount ? <div className={flow.metric}><strong>{amount}</strong></div> : <div className={[content.subtle, pageStyles.section9].filter(Boolean).join(' ')} >金额：见官方条款</div>}
                     {daysLeft != null ? (
-                      <div style={{ marginTop: 6 }}>
+                      <div className={pageStyles.section6}>
                         <Badge tone={daysLeft < 0 ? "neutral" : daysLeft <= 14 ? "warning" : "success"}>
                           {daysLeft < 0 ? "本轮已截止" : `剩 ${daysLeft} 天`}
                         </Badge>
@@ -192,13 +196,13 @@ export default function DiscoverPage() {
                     ) : null}
                   </div>
                 </div>
-                <div className={content.actionRow} style={{ marginTop: 12 }}>
+                <div className={[content.actionRow, pageStyles.section10].filter(Boolean).join(' ')} >
                   {policy.source_url ? (
                     <a href={policy.source_url} target="_blank" rel="noopener noreferrer" className={flow.link}>
                       查看官方原文
                     </a>
                   ) : (
-                    <span className={content.subtle} style={{ fontSize: 12 }}>原文链接待运营补充</span>
+                    <span className={[content.subtle, pageStyles.section9].filter(Boolean).join(' ')} >原文链接待运营补充</span>
                   )}
                 </div>
               </article>

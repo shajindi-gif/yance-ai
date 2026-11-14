@@ -1,0 +1,364 @@
+catalog_version: "2026.11.06-national.1"
+generated_at: "2026-11-06T13:40:00+08:00"
+notes: |
+  国家级来源。entry_url 全部来自 2026-11-06 本机真实抓取首页后提取的官方栏目链接，
+  未使用推测路径。verification_state 含义：
+    registered       已登记，入口未验证
+    reachable        入口可访问（HTTP 200）
+    list_verified    列表页可解析出条目
+    document_verified 已成功采到政策原文
+    unreachable      当前不可访问（网络/TLS/站点访问控制）
+  reachable 不等于已采集，需试运行后才升级为 list_verified / document_verified。
+
+sources:
+  - source_id: nat_gov_policy
+    name: 中国政府网-政策
+    authority: 国务院
+    level: national
+    channel: policy_document
+    entry_url: https://www.gov.cn/zhengce/index.htm
+    allowed_domains: [www.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 国务院及各部门政策文件总入口，含最新政策与政策解读。；2026-11-06 干跑：列表 26 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: nat_gov_qiye
+    name: 中国政府网-惠企助企政策集纳
+    authority: 国务院
+    level: national
+    channel: portal
+    entry_url: https://www.gov.cn/zhengce/qiye/
+    allowed_domains: [www.gov.cn]
+    adapter: portal
+    check_interval_hours: 24
+    enabled: false
+    verification_state: unreachable
+    last_verified_at: "2026-11-06T16:10:00+08:00"
+    last_error: "entry page is a Vue SPA (empty #app); list rendered by JS/API"
+    notes: >-
+      实测入口返回 1.3KB 空壳（<div id="app"></div>），列表由前端接口渲染，
+      通用适配器取不到条目；sousuo.www.gov.cn/search-gov/data 接口需完整
+      参数才能返回结果。待接入官方搜索接口后再启用，当前列为待接入。
+
+
+  - source_id: nat_most_gfxwj
+    name: 科学技术部-规范性文件（法规政策子栏目）
+    authority: 科学技术部
+    level: national
+    channel: policy_document
+    entry_url: https://www.most.gov.cn/xxgk/xinxifenlei/fdzdgknr/fgzc/gfxwj/
+    allowed_domains: [www.most.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:21:18+08:00"
+    notes: >-
+      父栏目 /fgzc/ 本身只是栏目导航（只含"政府信息公开指南/制度"等链接），
+      实测其下子栏目 /gfxwj/ 才含文章条目（10 条/页），故直接登记子栏目。
+
+  - source_id: nat_most_flfg
+    name: 科学技术部-法律法规
+    authority: 科学技术部
+    level: national
+    channel: policy_document
+    entry_url: https://www.most.gov.cn/xxgk/xinxifenlei/fdzdgknr/fgzc/flfg/
+    allowed_domains: [www.most.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 168
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 实测列表 10 条/页，含《科学技术普及法（2024年修订）》等法律文本，变更频率低故按周轮巡。；2026-11-06 干跑：列表 10 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: nat_most_bmgz
+    name: 科学技术部-部门规章
+    authority: 科学技术部
+    level: national
+    channel: policy_document
+    entry_url: https://www.most.gov.cn/xxgk/xinxifenlei/fdzdgknr/fgzc/bmgz/
+    allowed_domains: [www.most.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 168
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 实测列表 10 条/页，含科技部令，按周轮巡。；2026-11-06 干跑：列表 10 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: nat_most_zcjd
+    name: 科学技术部-政策解读
+    authority: 科学技术部
+    level: national
+    channel: notice
+    entry_url: https://www.most.gov.cn/xxgk/xinxifenlei/fdzdgknr/fgzc/zcjd/
+    allowed_domains: [www.most.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 72
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 解读稿不是政策依据本体，入库时 channel=notice，检索排序应低于正文。；2026-11-06 干跑：列表 10 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: nat_most_notice
+    name: 科学技术部-通知通告
+    authority: 科学技术部
+    level: national
+    channel: application
+    entry_url: https://www.most.gov.cn/tztg/
+    allowed_domains: [www.most.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 国家科技计划项目申报通知的主要发布口。；2026-11-06 干跑：列表 16 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: nat_miit_policy
+    name: 工业和信息化部-政策文件
+    authority: 工业和信息化部
+    level: national
+    channel: policy_document
+    entry_url: https://www.miit.gov.cn/zwgk/zcwj/wjfb/index.html
+    allowed_domains: [www.miit.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: needs_site_adapter
+    last_verified_at: "2026-11-06T16:20:46+08:00"
+    notes: 制造业、软件、专精特新、设备更新相关政策。2026-11-06 干跑：入口为 JS 跳转壳，跟随后落到 layui 搜索页，列表由客户端渲染、静态无条目，需接站点检索接口或浏览器渲染；本批不宣称已覆盖。；2026-11-06 干跑列表页解析出 0 条：静态 HTML 无条目锚点或选择器未命中，需核查适配器
+
+  - source_id: nat_miit_zxzc
+    name: 工业和信息化部-最新政策
+    authority: 工业和信息化部
+    level: national
+    channel: notice
+    entry_url: https://www.miit.gov.cn/xwfb/zxzc/index.html
+    allowed_domains: [www.miit.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 12
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 24 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: nat_mof_policy
+    name: 财政部-政策发布
+    authority: 财政部
+    level: national
+    channel: policy_document
+    entry_url: https://www.mof.gov.cn/zhengwuxinxi/zhengcefabu/
+    allowed_domains: [mof.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 财政奖补、贴息、专项资金政策主来源；含财政部子站链接，白名单放行 mof.gov.cn 全域。；2026-11-06 干跑：列表 25 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: nat_mof_notice
+    name: 财政部-通知公告
+    authority: 财政部
+    level: national
+    channel: notice
+    entry_url: https://www.mof.gov.cn/gkml/bulinggonggao/
+    allowed_domains: [mof.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 12
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 22 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: nat_ndrc_tzgg
+    name: 国家发展改革委-通知公告
+    authority: 国家发展和改革委员会
+    level: national
+    channel: application
+    entry_url: https://www.ndrc.gov.cn/xwdt/tzgg/
+    allowed_domains: [www.ndrc.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 25 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: nat_ndrc_wjk
+    name: 国家发展改革委-文件库
+    authority: 国家发展和改革委员会
+    level: national
+    channel: policy_document
+    entry_url: https://www.ndrc.gov.cn/xxgk/wjk/
+    allowed_domains: [www.ndrc.gov.cn, fwfx.ndrc.gov.cn]
+    adapter: open_api
+    # The 文件库 column renders client-side and calls the official public search
+    # API; the per-visit key is read from the column page itself, never stored.
+    api:
+      url: https://fwfx.ndrc.gov.cn/api/query
+      key_from_page: "key:\\s*'([^']+)'"
+      key_param: key
+      items_path: data.resultList
+      title_field: title
+      url_field: url
+      date_field: docDate
+      page_param: page
+      page_size_param: pageSize
+      page_size: 20
+      first_page: 1
+      max_pages: 3
+      params:
+        qt: ""
+        tab: ""
+        siteCode: bm04000fgk
+        startDateStr: ""
+        endDateStr: ""
+        timeOption: ""
+        sort: dateDesc
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 复核：改为官方公开检索接口 open_api，实测 20 条/页。；2026-11-06 干跑：列表 20 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: nat_ndrc_gfxwj
+    name: 国家发展改革委-规范性文件
+    authority: 国家发展和改革委员会
+    level: national
+    channel: policy_document
+    entry_url: https://www.ndrc.gov.cn/xxgk/wjk/
+    allowed_domains: [www.ndrc.gov.cn, fwfx.ndrc.gov.cn]
+    adapter: open_api
+    api:
+      url: https://fwfx.ndrc.gov.cn/api/query
+      key_from_page: "key:\\s*'([^']+)'"
+      key_param: key
+      items_path: data.resultList
+      title_field: title
+      url_field: url
+      date_field: docDate
+      page_param: page
+      page_size_param: pageSize
+      page_size: 20
+      first_page: 1
+      max_pages: 3
+      params:
+        qt: ""
+        tab: gfxwj
+        siteCode: bm04000fgk
+        startDateStr: ""
+        endDateStr: ""
+        timeOption: ""
+        sort: dateDesc
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    notes: 按“规范性文件”类别取数，避免混入答记者问等解读类稿件。；2026-11-06 干跑：列表 20 条，取 1 篇，解析成功 1 篇（未入库）
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+
+  - source_id: nat_ndrc_tz
+    name: 国家发展改革委-通知
+    authority: 国家发展和改革委员会
+    level: national
+    channel: application
+    entry_url: https://www.ndrc.gov.cn/xxgk/wjk/
+    allowed_domains: [www.ndrc.gov.cn, fwfx.ndrc.gov.cn]
+    adapter: open_api
+    api:
+      url: https://fwfx.ndrc.gov.cn/api/query
+      key_from_page: "key:\\s*'([^']+)'"
+      key_param: key
+      items_path: data.resultList
+      title_field: title
+      url_field: url
+      date_field: docDate
+      page_param: page
+      page_size_param: pageSize
+      page_size: 20
+      first_page: 1
+      max_pages: 2
+      params:
+        qt: ""
+        tab: tz
+        siteCode: bm04000fgk
+        startDateStr: ""
+        endDateStr: ""
+        timeOption: ""
+        sort: dateDesc
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    notes: 通知类栏目按申报通知频率 6 小时检查。；2026-11-06 干跑：列表 20 条，取 1 篇，解析成功 1 篇（未入库）
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+
+  - source_id: nat_tax_policy
+    name: 国家税务总局-政策法规
+    authority: 国家税务总局
+    level: national
+    channel: policy_document
+    entry_url: https://www.chinatax.gov.cn/zcfgk/c100006/listflfg.html
+    allowed_domains: [www.chinatax.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: unreachable
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 税收优惠类支持的权威来源，用于区分“税收优惠”与“现金补贴”。 2026-11-06 复核：原列表页 404；fgk.chinatax.gov.cn 政策库列表由 JS 渲染，静态仅 1 条自指链接，需站点适配器。；2026-11-06 干跑实测 http 404，入口已失效，待重定位栏目 URL
+
+  - source_id: nat_cnipa_notice
+    name: 国家知识产权局-工作通知
+    authority: 国家知识产权局
+    level: national
+    channel: notice
+    entry_url: https://www.cnipa.gov.cn/col/col75/index.html
+    allowed_domains: [www.cnipa.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 12
+    enabled: true
+    verification_state: list_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 60 条可解析，正文过短或需附件解析，待补
+
+  - source_id: nat_cnipa_gongbao
+    name: 国家知识产权局-公告公报
+    authority: 国家知识产权局
+    level: national
+    channel: policy_document
+    entry_url: https://www.cnipa.gov.cn/col/col74/index.html
+    allowed_domains: [www.cnipa.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 60 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: nat_mofcom_policy
+    name: 商务部-政策发布
+    authority: 商务部
+    level: national
+    channel: policy_document
+    entry_url: https://www.mofcom.gov.cn/zwgk/zcfb/index.html
+    allowed_domains: [mofcom.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 15 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: nat_mohrss
+    name: 人力资源和社会保障部-政策栏目（待适配）
+    authority: 人力资源和社会保障部
+    level: national
+    channel: policy_document
+    entry_url: https://www.mohrss.gov.cn/
+    allowed_domains: [www.mohrss.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: false
+    verification_state: registered
+    last_verified_at: "2026-11-06T13:31:00+08:00"
+    notes: 首页为 JS 渲染，栏目链接未能在静态 HTML 中确证；需站点适配后启用，当前不采集。

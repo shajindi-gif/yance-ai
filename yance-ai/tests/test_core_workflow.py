@@ -2,6 +2,7 @@ import asyncio
 import hashlib
 import os
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -14,6 +15,7 @@ from app.models.models import (
     AgentRun,
     AgentStep,
     Artifact,
+    Document,
     EligibilityResult,
     EligibilityRule,
     Evidence,
@@ -659,6 +661,13 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             )
             assert reviewing.status_code == 200, reviewing.text
 
+            stale_source_approval = client.post(
+                f"/api/v1/applications/{application_id}/artifacts/{artifact_v1['id']}/review",
+                headers=headers,
+                json={"decision": "approve"},
+            )
+            assert stale_source_approval.status_code == 409
+
             rejected = client.post(
                 f"/api/v1/applications/{application_id}/artifacts/{artifact_v1['id']}/review",
                 headers=headers,
@@ -674,11 +683,19 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             assert fixed.status_code == 200
             artifact_v2 = fixed.json()["artifact"]
             assert artifact_v2["version"] == 2
-            edited = client.post(
-                f"/api/v1/applications/{application_id}/artifacts/{artifact_v2['id']}/edit",
-                headers=headers,
-                json={"executive_summary": "人工确认后的申报摘要。"},
-            )
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                concurrent_edits = list(
+                    pool.map(
+                        lambda _: client.post(
+                            f"/api/v1/applications/{application_id}/artifacts/{artifact_v2['id']}/edit",
+                            headers=headers,
+                            json={"executive_summary": "人工确认后的申报摘要。"},
+                        ),
+                        range(2),
+                    )
+                )
+            assert sorted(response.status_code for response in concurrent_edits) == [201, 409]
+            edited = next(response for response in concurrent_edits if response.status_code == 201)
             assert edited.status_code == 201
             artifact_v3 = edited.json()
             assert artifact_v3["version"] == 3
@@ -752,6 +769,82 @@ def test_persisted_company_to_application_workflow(monkeypatch):
             assert len(updated_workspace.json()["generated"]) == 3
             assert len(updated_workspace.json()["documents"]) == 1
             assert len(updated_workspace.json()["comments"]) == 1
+
+            matrix = updated_workspace.json()["evidence_matrix"]
+            assert matrix["rows"][0]["policy_evidence"][0]["quote"] == quote
+            assert matrix["rows"][0]["profile_version_id"]
+            assert not matrix["context_issues"]
+            assert updated_workspace.json()["generated"][0]["source_state"]["current"]
+            with SessionLocal() as db:
+                document = db.get(Document, uuid.UUID(document_id))
+                document.checksum_sha256 = "changed-synthetic-content-digest"
+                db.commit()
+            stale_download = client.get(
+                f"/api/v1/applications/{application_id}/artifacts/{artifact_v3['id']}/download?format=json",
+                headers=headers,
+            )
+            assert stale_download.status_code == 409
+            stale_submission = client.patch(
+                f"/api/v1/applications/{application_id}/status",
+                headers=headers,
+                json={"status": "submitted"},
+            )
+            assert stale_submission.status_code == 409
+            returning = client.patch(
+                f"/api/v1/applications/{application_id}/status",
+                headers=headers,
+                json={"status": "revision_requested"},
+            )
+            assert returning.status_code == 200
+            with SessionLocal() as db:
+                result = db.scalar(
+                    select(EligibilityResult).where(
+                        EligibilityResult.opportunity_id == uuid.UUID(opportunity["id"])
+                    )
+                )
+                result.criteria_json = list(result.criteria_json) + [
+                    {
+                        "rule_id": str(uuid.uuid4()),
+                        "name": "合成缺失研发证明",
+                        "fact_key": "rd_proof",
+                        "status": "MISSING",
+                        "is_hard_gate": True,
+                    }
+                ]
+                db.commit()
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                gap_responses = list(
+                    pool.map(
+                        lambda _: client.post(
+                            f"/api/v1/applications/{application_id}/evidence-tasks", headers=headers
+                        ),
+                        range(2),
+                    )
+                )
+            assert all(response.status_code == 200 for response in gap_responses)
+            assert sorted(
+                len(response.json()["created_requirement_ids"]) for response in gap_responses
+            ) == [0, 1]
+            repeat_gaps = client.post(
+                f"/api/v1/applications/{application_id}/evidence-tasks", headers=headers
+            )
+            assert repeat_gaps.json()["created_requirement_ids"] == []
+            cross_gaps = client.post(
+                f"/api/v1/applications/{application_id}/evidence-tasks", headers=other_headers
+            )
+            assert cross_gaps.status_code == 404
+            with SessionLocal() as db:
+                membership = db.scalar(select(Membership).where(Membership.tenant_id == tenant_id))
+                membership.role = "viewer"
+                db.commit()
+            forbidden_gaps = client.post(
+                f"/api/v1/applications/{application_id}/evidence-tasks", headers=headers
+            )
+            assert forbidden_gaps.status_code == 403
+            with SessionLocal() as db:
+                membership = db.scalar(select(Membership).where(Membership.tenant_id == tenant_id))
+                membership.role = "owner"
+                db.commit()
 
             second_company = client.post(
                 "/api/v1/companies",

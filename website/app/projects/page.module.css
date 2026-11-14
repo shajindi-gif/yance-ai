@@ -1,0 +1,59 @@
+.section {
+  font-size: 13px;
+  padding: 8px 0;
+}
+
+.section2 {
+  min-width: 0;
+}
+
+.section3 {
+  font-size: 12px;
+}
+
+.section4 {
+  margin-top: 20px;
+}
+
+.section5 {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.layout {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.section6 {
+  flex: 1;
+  min-width: 220px;
+  padding: 10px 12px;
+  border: 1px solid #dde3eb;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.section7 {
+  padding: 9px 12px;
+  border: 1px solid #dde3eb;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.section8 {
+  font-size: 13px;
+}
+
+.layout2 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.inlineAction {
+  text-align: left;
+  cursor: pointer;
+}

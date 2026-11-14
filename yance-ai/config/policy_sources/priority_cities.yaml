@@ -1,0 +1,195 @@
+catalog_version: "2026.11.06-cities.1"
+generated_at: "2026-11-06T13:40:00+08:00"
+notes: |
+  首批重点覆盖城市（30 个）。选择方法为多指标可核验资料 + 区域覆盖校准，
+  不宣称存在官方“全国科创前 30 名”排名。指标线索：
+    1. 研发投入：各市统计局年度国民经济和社会发展统计公报、科技经费投入统计公报；
+    2. 科技企业与产业集群：工信部专精特新“小巨人”企业名单、科技部火炬中心高新区评价、
+       各市高新技术企业与科技型中小企业入库公告；
+    3. 创新成果：世界知识产权组织（WIPO）全球创新指数（GII）科技集群排名；
+    4. 企业政策需求：本地上市与规上工业结构、申报通知密度；
+    5. 区域覆盖：31 个省级行政区均有代表城市，兼顾东北、西部与中部。
+  直辖市（北京、上海、天津、重庆）的省级与城市级共用同一官方来源，
+  在来源目录中只登记一次并标记 shared_jurisdiction，不重复采集。
+
+priority_cities:
+  - city: 北京市
+    province: 北京市
+    rank: 1
+    year: 2025
+    reasons: [全国科技创新中心定位, 研发投入与高企数量长期居前, 人工智能与集成电路产业集聚]
+    data_sources: [WIPO 全球创新指数科技集群排名, 北京市统计公报, 工信部专精特新名单]
+  - city: 上海市
+    province: 上海市
+    rank: 2
+    year: 2025
+    reasons: [国际科技创新中心, 生物医药与集成电路产业集群, 外资研发中心集中]
+    data_sources: [WIPO 全球创新指数科技集群排名, 上海市统计公报]
+  - city: 深圳市
+    province: 广东省
+    rank: 3
+    year: 2025
+    reasons: [研发投入强度全国领先, 电子信息与机器人产业链完整, 科技型企业密度高]
+    data_sources: [WIPO 全球创新指数科技集群排名, 深圳市统计公报]
+  - city: 广州市
+    province: 广东省
+    rank: 4
+    year: 2025
+    reasons: [国家创新型城市, 生物医药与新能源汽车产业规模大, 高校科研资源集中]
+    data_sources: [科技部创新型城市评价, 广州市统计公报]
+  - city: 杭州市
+    province: 浙江省
+    rank: 5
+    year: 2025
+    reasons: [数字经济与人工智能产业集聚, 企业研发机构活跃]
+    data_sources: [WIPO 全球创新指数科技集群排名, 杭州市统计公报]
+  - city: 南京市
+    province: 江苏省
+    rank: 6
+    year: 2025
+    reasons: [高校与科研院所密集, 集成电路与软件产业基础强]
+    data_sources: [科技部创新型城市评价, 南京市统计公报]
+  - city: 苏州市
+    province: 江苏省
+    rank: 7
+    year: 2025
+    reasons: [规上工业与外资制造业规模大, 纳米技术与生物医药集群]
+    data_sources: [WIPO 全球创新指数科技集群排名, 苏州市统计公报]
+  - city: 成都市
+    province: 四川省
+    rank: 8
+    year: 2025
+    reasons: [西部创新中心, 电子信息产业集聚, 高校资源丰富]
+    data_sources: [WIPO 全球创新指数科技集群排名, 成都市统计公报]
+  - city: 武汉市
+    province: 湖北省
+    rank: 9
+    year: 2025
+    reasons: [中部创新中心, 光电子信息产业集群, 高校与实验室密集]
+    data_sources: [WIPO 全球创新指数科技集群排名, 武汉市统计公报]
+  - city: 西安市
+    province: 陕西省
+    rank: 10
+    year: 2025
+    reasons: [西北创新中心, 航空航天与电子信息产业, 高校科研资源集中]
+    data_sources: [WIPO 全球创新指数科技集群排名, 西安市统计公报]
+  - city: 合肥市
+    province: 安徽省
+    rank: 11
+    year: 2025
+    reasons: [综合性国家科学中心, 量子信息与新型显示产业, 科技成果转化活跃]
+    data_sources: [WIPO 全球创新指数科技集群排名, 合肥市统计公报]
+  - city: 天津市
+    province: 天津市
+    rank: 12
+    year: 2025
+    reasons: [北方工业重镇, 信创与生物医药产业基础, 京津冀协同创新]
+    data_sources: [天津市统计公报, 科技部创新型城市评价]
+  - city: 重庆市
+    province: 重庆市
+    rank: 13
+    year: 2025
+    reasons: [西部制造业基地, 智能网联新能源汽车与电子信息产业]
+    data_sources: [重庆市统计公报]
+  - city: 青岛市
+    province: 山东省
+    rank: 14
+    year: 2025
+    reasons: [海洋科技与家电制造, 国家创新型城市]
+    data_sources: [WIPO 全球创新指数科技集群排名, 青岛市统计公报]
+  - city: 济南市
+    province: 山东省
+    rank: 15
+    year: 2025
+    reasons: [省会创新中心, 信息技术与生物医药产业]
+    data_sources: [济南市统计公报, 科技部创新型城市评价]
+  - city: 宁波市
+    province: 浙江省
+    rank: 16
+    year: 2025
+    reasons: [制造业单项冠军与专精特新企业密集, 新材料产业突出]
+    data_sources: [工信部单项冠军与专精特新名单, 宁波市统计公报]
+  - city: 无锡市
+    province: 江苏省
+    rank: 17
+    year: 2025
+    reasons: [集成电路与物联网产业, 人均研发投入居前]
+    data_sources: [无锡市统计公报, 工信部专精特新名单]
+  - city: 长沙市
+    province: 湖南省
+    rank: 18
+    year: 2025
+    reasons: [工程机械与先进计算产业, 媒体与数字创意产业]
+    data_sources: [长沙市统计公报, 工信部专精特新名单]
+  - city: 郑州市
+    province: 河南省
+    rank: 19
+    year: 2025
+    reasons: [中原创新中心, 电子信息与新能源汽车产业快速扩张]
+    data_sources: [郑州市统计公报]
+  - city: 东莞市
+    province: 广东省
+    rank: 20
+    year: 2025
+    reasons: [先进制造业集群, 电子信息产业链完整, 高企数量增长快]
+    data_sources: [东莞市统计公报, 工信部专精特新名单]
+  - city: 厦门市
+    province: 福建省
+    rank: 21
+    year: 2025
+    reasons: [平板显示与集成电路产业, 国家创新型城市]
+    data_sources: [厦门市统计公报, 科技部创新型城市评价]
+  - city: 福州市
+    province: 福建省
+    rank: 22
+    year: 2025
+    reasons: [数字福建核心承载区, 省会创新资源集中]
+    data_sources: [福州市统计公报]
+  - city: 南昌市
+    province: 江西省
+    rank: 23
+    year: 2025
+    reasons: [中部省会, 电子信息与航空产业培育]
+    data_sources: [南昌市统计公报]
+  - city: 沈阳市
+    province: 辽宁省
+    rank: 24
+    year: 2025
+    reasons: [东北装备制造基地, 高端装备与机器人产业]
+    data_sources: [沈阳市统计公报]
+  - city: 大连市
+    province: 辽宁省
+    rank: 25
+    year: 2025
+    reasons: [东北沿海开放城市, 洁净能源与软件服务]
+    data_sources: [大连市统计公报]
+  - city: 长春市
+    province: 吉林省
+    rank: 26
+    year: 2025
+    reasons: [汽车与轨道客车产业, 东北创新资源集中]
+    data_sources: [长春市统计公报]
+  - city: 哈尔滨市
+    province: 黑龙江省
+    rank: 27
+    year: 2025
+    reasons: [东北科教资源密集, 航空航天与寒地装备]
+    data_sources: [哈尔滨市统计公报]
+  - city: 昆明市
+    province: 云南省
+    rank: 28
+    year: 2025
+    reasons: [西南省会, 生物医药与高原特色产业]
+    data_sources: [昆明市统计公报]
+  - city: 贵阳市
+    province: 贵州省
+    rank: 29
+    year: 2025
+    reasons: [大数据产业集聚, 数据中心与算力枢纽]
+    data_sources: [贵阳市统计公报, 国家算力枢纽节点布局文件]
+  - city: 兰州市
+    province: 甘肃省
+    rank: 30
+    year: 2025
+    reasons: [西北科教资源集中, 核技术、新材料与寒旱农业科技]
+    data_sources: [兰州市统计公报]

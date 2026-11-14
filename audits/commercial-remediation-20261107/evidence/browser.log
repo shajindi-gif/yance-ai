@@ -1,0 +1,72 @@
+
+Running 19 tests using 1 worker
+
+(node:8246) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › e2e/evidence-workspace.spec.ts:5:5 › evidence matrix links real API results and creates persistent gap tasks (2.8s)
+  ✘   2 [chromium] › e2e/login-payment-ux.spec.ts:8:5 › two identity entrances, code signup and legacy email password access (361ms)
+(node:8282) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   3 [chromium] › e2e/login-payment-ux.spec.ts:25:5 › return URL cannot claim payment; retry displays only server-confirmed order state (344ms)
+  ✓   4 [chromium] › e2e/login-payment-ux.spec.ts:38:5 › resume uses server price and payment channel and never creates another order (433ms)
+  ✓   5 [chromium] › e2e/login-payment-ux.spec.ts:56:5 › price change requires another confirmation before contacting a payment provider (399ms)
+  ✓   6 [chromium] › e2e/login-payment-ux.spec.ts:73:5 › real local API restores an order and preserves it when provider is unavailable (489ms)
+  ✓   7 [chromium] › e2e/login-payment-ux.spec.ts:92:5 › pending return automatically refreshes the server status without claiming early success (3.6s)
+  ✓   8 [chromium] › e2e/policy-evidence.spec.ts:4:5 › customer searches collected evidence and reads its immutable source version (561ms)
+  ✘   9 [chromium] › e2e/remediation.spec.ts:10:5 › nine audited page/viewport samples have no automated WCAG violations (9.0s)
+(node:8367) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  10 [chromium] › e2e/remediation.spec.ts:23:5 › payment QR is rendered locally without an external image service (388ms)
+  ✓  11 [chromium] › e2e/remediation.spec.ts:41:5 › real isolated API: demo request is persisted privately and displayed with a server status (413ms)
+  ✓  12 [chromium] › e2e/remediation.spec.ts:57:5 › private entrances are excluded from indexing and base/embed protection is present (313ms)
+(node:8379) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  13 [chromium] › e2e/frontend-redesign.spec.ts:11:5 › public design: real product image, readable mobile menu, focus containment and Escape (352ms)
+  ✓  14 [chromium] › e2e/frontend-redesign.spec.ts:35:5 › pricing error recovers into the real server catalogue without a purchase (191ms)
+  ✓  15 [chromium] › e2e/frontend-redesign.spec.ts:45:5 › real workspace: keyboard tabs, unsaved edit protection and mobile navigation (357ms)
+  ✓  16 [chromium] › e2e/frontend-redesign.spec.ts:77:5 › real workspace route sweep preserves existing core and billing entrances on mobile (1.3s)
+  ✓  17 [chromium] › e2e/frontend-redesign.spec.ts:93:5 › real isolated workflow: customer reviews a source-bound version, then downloads DOCX (564ms)
+  ✓  18 [chromium] › e2e/frontend-redesign.spec.ts:118:5 › login and registration fields expose their visible Chinese labels (154ms)
+  ✓  19 [chromium] › e2e/workspace-roles.spec.ts:5:5 › real isolated API: owner edits and rejects stale suggestion; viewer reads but cannot write (1.1s)
+
+
+  1) [chromium] › e2e/login-payment-ux.spec.ts:8:5 › two identity entrances, code signup and legacy email password access 
+
+    Error: browserContext.close: ENOENT: no such file or directory, open '/Users/shajindi/yance-backup/yance/website/test-results/.playwright-artifacts-0/traces/5b24198c74d860106473-165a6503d54d47894939-recording2.trace'
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/login-payment-ux-two-ident-e9f80-egacy-email-password-access-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/login-payment-ux-two-ident-e9f80-egacy-email-password-access-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/login-payment-ux-two-ident-e9f80-egacy-email-password-access-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/login-payment-ux-two-ident-e9f80-egacy-email-password-access-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e/remediation.spec.ts:10:5 › nine audited page/viewport samples have no automated WCAG violations 
+
+    Error: browserContext.close: ENOENT: no such file or directory, open '/Users/shajindi/yance-backup/yance/website/test-results/.playwright-artifacts-1/traces/0d05ebcea0ae69581659-bd0018be106c65c90d9f-recording12.trace'
+
+    attachment #2: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/remediation-nine-audited-p-2c1ce-o-automated-WCAG-violations-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/remediation-nine-audited-p-2c1ce-o-automated-WCAG-violations-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/remediation-nine-audited-p-2c1ce-o-automated-WCAG-violations-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/remediation-nine-audited-p-2c1ce-o-automated-WCAG-violations-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium] › e2e/login-payment-ux.spec.ts:8:5 › two identity entrances, code signup and legacy email password access 
+    [chromium] › e2e/remediation.spec.ts:10:5 › nine audited page/viewport samples have no automated WCAG violations 
+  17 passed (25.1s)

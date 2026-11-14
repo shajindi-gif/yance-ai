@@ -75,3 +75,6 @@ benchmark/results/v21/probe/
 benchmark/results/v21/stats_v21.json
 benchmark/results/v21/*.json
 benchmark/results/v21/*.xlsx
+
+# Policy collection runtime raw bytes (regenerate via scripts/policy_collection/harvest_dry_run.py)
+yance-ai/crawler_output/

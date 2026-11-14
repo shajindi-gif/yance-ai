@@ -1,15 +1,29 @@
 import secrets
 import time
+import uuid
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.api.deps import Principal, get_principal, require_roles
 from app.core.config import settings
 from app.core.db import get_db
-from app.models.models import Company, Invoice, Opportunity, Order, Payment, Product, UserRole
+from app.models.models import (
+    Company,
+    Deliverable,
+    Entitlement,
+    Invoice,
+    Opportunity,
+    Order,
+    Payment,
+    Product,
+    Task,
+    User,
+    UserRole,
+)
 from app.schemas.schemas import (
     CommerceOut,
     InvoiceCreate,
@@ -19,7 +33,10 @@ from app.schemas.schemas import (
     PaymentCreate,
 )
 from app.services.analytics.events import record_event
+from app.services.commerce.availability import purchase_status
+from app.services.commerce.delivery import require_order_report
 from app.services.invoice.generator import generate_invoice_pdf
+from app.services.report.snapshot import report_bytes
 
 router = APIRouter(tags=["orders", "payments", "invoices"])
 
@@ -38,17 +55,68 @@ def list_orders(
     return list(db.scalars(select(Order).where(Order.tenant_id == principal.tenant_id)).all())
 
 
+@router.get("/orders/by-no/{order_no}", response_model=OrderOut)
+def get_order_by_number(
+    order_no: str,
+    principal: Principal = Depends(get_principal),
+    db: Session = Depends(get_db),
+) -> Order:
+    payment_orders = select(Payment.order_id).where(
+        Payment.tenant_id == principal.tenant_id,
+        Payment.provider_trade_no == order_no,
+    )
+    order = db.scalar(select(Order).where(
+        Order.tenant_id == principal.tenant_id,
+        or_(Order.order_no == order_no, Order.id.in_(payment_orders)),
+    ))
+    if order is None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return order
+
+
 @router.post("/orders", response_model=CommerceOut, status_code=201)
 def create_order(
     payload: OrderCreate,
     principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
     db: Session = Depends(get_db),
 ) -> Order:
+    request_order_id = None
+    if payload.client_request_id:
+        # Stable, principal-scoped ID plus a row lock make retries atomic without
+        # changing the schema or historical orders. UUID is never authorization.
+        request_order_id = uuid.uuid5(
+            uuid.NAMESPACE_URL,
+            f"https://yance.ai/orders/v1/{principal.tenant_id}/{principal.user.id}/{payload.client_request_id}",
+        )
+        db.execute(select(User.id).where(User.id == principal.user.id).with_for_update())
+        existing = db.scalar(
+            select(Order).where(
+                Order.id == request_order_id, Order.tenant_id == principal.tenant_id
+            )
+        )
+        if existing:
+            if (
+                existing.product_code != payload.product_code
+                or existing.resource_id != payload.resource_id
+            ):
+                raise HTTPException(
+                    status_code=409, detail="该请求已关联其他订单内容，请返回订单核对"
+                )
+            return existing
     product = db.scalar(
         select(Product).where(Product.code == payload.product_code, Product.active.is_(True))
     )
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+    availability = purchase_status(product)
+    if not availability["purchase_available"]:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "product_not_available_for_new_orders",
+                "message": availability["purchase_unavailable_reason"],
+            },
+        )
     if not payload.resource_id:
         raise HTTPException(status_code=400, detail="A product resource is required")
     resource_model = Company if product.entitlement_type == "report" else Opportunity
@@ -56,19 +124,61 @@ def create_order(
         select(resource_model).where(
             resource_model.id == payload.resource_id,
             resource_model.tenant_id == principal.tenant_id,
-        )
+        ).with_for_update()
     )
     if not resource:
         raise HTTPException(status_code=404, detail="Product resource not found")
+    report = None
+    if product.entitlement_type == "report":
+        report = db.scalar(
+            select(Deliverable).join(Task, Task.id == Deliverable.task_id).where(
+                Task.tenant_id == principal.tenant_id,
+                Task.company_id == payload.resource_id,
+                Task.status.in_(["delivered", "accepted"]),
+                Deliverable.tenant_id == principal.tenant_id,
+                Deliverable.company_id == payload.resource_id,
+                Deliverable.deliverable_type == "policy_scan",
+                Deliverable.status.in_(["generated", "delivered", "accepted"]),
+                Deliverable.frozen_pdf.is_not(None),
+            ).order_by(Deliverable.created_at.desc(), Deliverable.version.desc())
+        )
+        if report is None or not (report.content_json or {}).get("total_matches", 0):
+            raise HTTPException(409, detail={
+                "code": "report_not_ready",
+                "message": "请先完成政策扫描并生成有匹配记录的报告，再购买该固定版本。尚未创建订单。",
+            })
+        report_bytes(report)
+        owned = db.scalar(select(Entitlement.id).join(Order, Order.id == Entitlement.order_id).where(
+            Entitlement.tenant_id == principal.tenant_id, Entitlement.status == "active",
+            Order.tenant_id == principal.tenant_id, Order.status == "paid",
+            Order.report_deliverable_id == report.id, Order.resource_id == payload.resource_id,
+        ))
+        if owned:
+            raise HTTPException(409, detail={"code": "report_already_owned",
+                "message": "当前报告版本已有有效权益，请前往报告页下载，无需重复购买。"})
+        open_order = db.scalar(select(Order).where(
+            Order.tenant_id == principal.tenant_id, Order.resource_id == payload.resource_id,
+            Order.report_deliverable_id == report.id, Order.product_code == product.code,
+            Order.status.in_(["created", "pending"]),
+        ))
+        if open_order:
+            raise HTTPException(409, detail={"code": "open_order_exists",
+                "message": "该报告已有待付款订单，请到订单列表继续付款，避免重复下单。",
+                "order_id": str(open_order.id)})
     order = Order(
+        **({"id": request_order_id} if request_order_id else {}),
         tenant_id=principal.tenant_id,
         order_no=f"Y{secrets.token_hex(8).upper()}",
         product_code=product.code,
-        amount=product.promotional_price if product.promotional_price is not None else product.price,
+        amount=product.promotional_price
+        if product.promotional_price is not None
+        else product.price,
         currency="CNY",
         resource_type=product.entitlement_type,
         resource_id=payload.resource_id,
+        report_deliverable_id=report.id if report else None,
         status="created",
+        expires_at=datetime.now(UTC) + timedelta(minutes=settings.order_payment_ttl_minutes),
     )
     db.add(order)
     db.flush()
@@ -161,16 +271,14 @@ def create_invoice(
 
 @router.post("/invoices/{invoice_id}/generate-pdf")
 async def generate_invoice(
-    invoice_id: str,
+    invoice_id: uuid.UUID,
     principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin)),
     db: Session = Depends(get_db),
 ) -> dict:
     """Generate PDF for an existing invoice."""
-    from uuid import UUID
-
     invoice = db.scalar(
         select(Invoice).where(
-            Invoice.id == UUID(invoice_id),
+            Invoice.id == invoice_id,
             Invoice.tenant_id == principal.tenant_id,
         )
     )
@@ -190,16 +298,14 @@ async def generate_invoice(
 
 @router.get("/invoices/{invoice_id}/download")
 async def download_invoice(
-    invoice_id: str,
+    invoice_id: uuid.UUID,
     principal: Principal = Depends(get_principal),
     db: Session = Depends(get_db),
 ):
     """Download payment voucher PDF (not a tax invoice)."""
-    from uuid import UUID
-
     invoice = db.scalar(
         select(Invoice).where(
-            Invoice.id == UUID(invoice_id),
+            Invoice.id == invoice_id,
             Invoice.tenant_id == principal.tenant_id,
         )
     )
@@ -212,21 +318,20 @@ async def download_invoice(
         invoice.pdf_path,
         media_type="application/pdf",
         filename=f"付款凭证_{invoice.invoice_no}.pdf",
+        headers={"Cache-Control": "private, no-store"},
     )
 
 
 @router.get("/invoices/{invoice_id}/voucher")
 async def download_invoice_voucher(
-    invoice_id: str,
+    invoice_id: uuid.UUID,
     principal: Principal = Depends(get_principal),
     db: Session = Depends(get_db),
 ):
     """Download the issued e-invoice file (数电票) uploaded by the operator."""
-    from uuid import UUID
-
     invoice = db.scalar(
         select(Invoice).where(
-            Invoice.id == UUID(invoice_id),
+            Invoice.id == invoice_id,
             Invoice.tenant_id == principal.tenant_id,
         )
     )
@@ -244,7 +349,8 @@ async def download_invoice_voucher(
         content=invoice.voucher_data,
         media_type=invoice.voucher_content_type or "application/octet-stream",
         headers={
-            "Content-Disposition": f"attachment; filename*=UTF-8''{filename}"
+            "Content-Disposition": f"attachment; filename*=UTF-8''{filename}",
+            "Cache-Control": "private, no-store"
         },
     )
 
@@ -261,3 +367,29 @@ def list_invoices(
             .order_by(Invoice.created_at.desc())
         ).all()
     )
+
+
+@router.get("/orders/{order_id}/checkout")
+def checkout_state(
+    order_id: uuid.UUID,
+    principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
+    db: Session = Depends(get_db),
+):
+    order = db.scalar(select(Order).where(Order.id == order_id, Order.tenant_id == principal.tenant_id))
+    if not order:
+        raise HTTPException(404, "订单不存在")
+    payment = db.scalar(select(Payment).where(Payment.order_id == order.id,
+        Payment.tenant_id == principal.tenant_id).order_by(Payment.created_at.desc()))
+    can_continue = order.status in {"created", "pending"} and (order.expires_at is None or order.expires_at > datetime.now(UTC))
+    reason = None
+    if can_continue:
+        try:
+            require_order_report(db, order)
+        except HTTPException as exc:
+            can_continue = False
+            reason = exc.detail.get("message") if isinstance(exc.detail, dict) else exc.detail
+    if payment and (payment.provider not in {"alipay", "wechat"} or payment.status not in {"created", "pending", "expired"}):
+        can_continue = False
+        reason = "请先核对原支付渠道的交易状态；系统不会创建第二笔付款。"
+    return {"order": OrderOut.model_validate(order), "provider": payment.provider if payment else None,
+            "can_continue": can_continue, "reason": reason}
