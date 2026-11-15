@@ -13,6 +13,8 @@ from app.models.models import (
     Company,
     Opportunity,
     Order,
+    Payment,
+    PaymentEvent,
     Tenant,
     User,
 )
@@ -116,6 +118,30 @@ def test_platform_admin_metrics_permissions_provenance_and_safe_resources():
                     ),
                 ]
             )
+            db.flush()
+            order = db.scalar(select(Order).where(Order.order_no == f"METRICS-{suffix}"))
+            payment = Payment(
+                tenant_id=tenant.id,
+                order_id=order.id,
+                provider="wechat",
+                provider_trade_no=f"METRICS-PAY-{suffix}",
+                amount=123,
+                currency="CNY",
+                status="completed",
+            )
+            db.add(payment)
+            db.flush()
+            db.add(
+                PaymentEvent(
+                    tenant_id=tenant.id,
+                    payment_id=payment.id,
+                    provider="wechat",
+                    provider_event_id=f"METRICS-RECEIPT-{suffix}",
+                    event_type="TRANSACTION.SUCCESS",
+                    payload_sha256="a" * 64,
+                    status="processed",
+                )
+            )
             for name in (
                 "company_profile_completed",
                 "policy_scan_completed",
@@ -160,9 +186,7 @@ def test_platform_admin_metrics_permissions_provenance_and_safe_resources():
             )
             assert opened_count == 1
 
-        metrics_response = client.get(
-            "/api/v1/admin/investor-metrics", headers=platform_headers
-        )
+        metrics_response = client.get("/api/v1/admin/investor-metrics", headers=platform_headers)
         assert metrics_response.status_code == 200, metrics_response.text
         metrics = metrics_response.json()
         assert metrics["scope"] == "platform"
@@ -189,9 +213,7 @@ def test_platform_admin_metrics_permissions_provenance_and_safe_resources():
         assert evaluations.status_code == 200
         assert evaluations.json()["message"] == "No evaluation data yet."
 
-        feedback_rows = client.get(
-            "/api/v1/admin/resources/feedback", headers=platform_headers
-        )
+        feedback_rows = client.get("/api/v1/admin/resources/feedback", headers=platform_headers)
         assert feedback_rows.status_code == 200
         assert feedback_rows.json()["total"] == 1
         feedback_id = feedback_rows.json()["items"][0]["id"]
