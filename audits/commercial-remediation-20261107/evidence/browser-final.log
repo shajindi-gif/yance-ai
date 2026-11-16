@@ -1,0 +1,209 @@
+
+Running 19 tests using 1 worker
+
+(node:8524) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   1 [chromium] › e2e/evidence-workspace.spec.ts:5:5 › evidence matrix links real API results and creates persistent gap tasks (5.7s)
+(node:8540) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   2 [chromium] › e2e/login-payment-ux.spec.ts:8:5 › two identity entrances, code signup and legacy email password access (407ms)
+  ✓   3 [chromium] › e2e/login-payment-ux.spec.ts:25:5 › return URL cannot claim payment; retry displays only server-confirmed order state (265ms)
+  ✓   4 [chromium] › e2e/login-payment-ux.spec.ts:38:5 › resume uses server price and payment channel and never creates another order (395ms)
+  ✓   5 [chromium] › e2e/login-payment-ux.spec.ts:56:5 › price change requires another confirmation before contacting a payment provider (391ms)
+  ✓   6 [chromium] › e2e/login-payment-ux.spec.ts:73:5 › real local API restores an order and preserves it when provider is unavailable (415ms)
+  ✓   7 [chromium] › e2e/login-payment-ux.spec.ts:92:5 › pending return automatically refreshes the server status without claiming early success (3.6s)
+  ✘   8 [chromium] › e2e/policy-evidence.spec.ts:4:5 › customer searches collected evidence and reads its immutable source version (5.4s)
+(node:8576) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   9 [chromium] › e2e/remediation.spec.ts:10:5 › nine audited page/viewport samples have no automated WCAG violations (9.0s)
+  ✓  10 [chromium] › e2e/remediation.spec.ts:23:5 › payment QR is rendered locally without an external image service (374ms)
+  ✘  11 [chromium] › e2e/remediation.spec.ts:41:5 › real isolated API: demo request is persisted privately and displayed with a server status (434ms)
+(node:8663) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  12 [chromium] › e2e/remediation.spec.ts:57:5 › private entrances are excluded from indexing and base/embed protection is present (366ms)
+(node:8673) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  13 [chromium] › e2e/frontend-redesign.spec.ts:11:5 › public design: real product image, readable mobile menu, focus containment and Escape (381ms)
+  ✓  14 [chromium] › e2e/frontend-redesign.spec.ts:35:5 › pricing error recovers into the real server catalogue without a purchase (198ms)
+  ✘  15 [chromium] › e2e/frontend-redesign.spec.ts:45:5 › real workspace: keyboard tabs, unsaved edit protection and mobile navigation (1.0m)
+(node:8865) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  16 [chromium] › e2e/frontend-redesign.spec.ts:77:5 › real workspace route sweep preserves existing core and billing entrances on mobile (1.3s)
+  ✘  17 [chromium] › e2e/frontend-redesign.spec.ts:93:5 › real isolated workflow: customer reviews a source-bound version, then downloads DOCX (1.0m)
+(node:9026) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  18 [chromium] › e2e/frontend-redesign.spec.ts:118:5 › login and registration fields expose their visible Chinese labels (286ms)
+  ✓  19 [chromium] › e2e/workspace-roles.spec.ts:5:5 › real isolated API: owner edits and rejects stale suggestion; viewer reads but cannot write (1.1s)
+
+
+  1) [chromium] › e2e/evidence-workspace.spec.ts:5:5 › evidence matrix links real API results and creates persistent gap tasks 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('cell', { name: /证据不足/ }).first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('cell', { name: /证据不足/ }).first() with timeout 5000ms
+      - waiting for getByRole('cell', { name: /证据不足/ }).first()
+
+
+      16 |   await page.goto(`/applications/${fixture.application_id}`);
+      17 |   await expect(page.getByRole('heading', { name: '资格审查矩阵' })).toBeVisible();
+    > 18 |   await expect(page.getByRole('cell', { name: /证据不足/ }).first()).toBeVisible();
+         |                                                                  ^
+      19 |   await page.getByText('查看政策原文 · 逐字核验', { exact: true }).first().click();
+      20 |   await expect(page.getByText('支持人工智能企业', { exact: true })).toBeVisible();
+      21 |   await expect(page.getByText(/企业自述，不代表第三方鉴证/).first()).toBeVisible();
+        at /Users/shajindi/yance-backup/yance/website/e2e/evidence-workspace.spec.ts:18:66
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/evidence-workspace-evidenc-bf580-reates-persistent-gap-tasks-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/evidence-workspace-evidenc-bf580-reates-persistent-gap-tasks-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/evidence-workspace-evidenc-bf580-reates-persistent-gap-tasks-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/evidence-workspace-evidenc-bf580-reates-persistent-gap-tasks-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/evidence-workspace-evidenc-bf580-reates-persistent-gap-tasks-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e/frontend-redesign.spec.ts:45:5 › real workspace: keyboard tabs, unsaved edit protection and mobile navigation 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.focus: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByRole('region', { name: '可横向滚动的数据表' })
+
+
+      70 |   await first.click();
+      71 |   const table=page.getByRole('region',{name:'可横向滚动的数据表'});
+    > 72 |   await table.focus();
+         |               ^
+      73 |   await expect(table).toBeFocused();
+      74 |   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      75 | });
+        at /Users/shajindi/yance-backup/yance/website/e2e/frontend-redesign.spec.ts:72:15
+
+    Error Context: test-results/frontend-redesign-real-wor-1528c-ction-and-mobile-navigation-chromium/error-context.md
+
+  3) [chromium] › e2e/frontend-redesign.spec.ts:93:5 › real isolated workflow: customer reviews a source-bound version, then downloads DOCX 
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: '开始准备', exact: true })
+
+
+       97 |   await page.addInitScript(token => localStorage.setItem('yance_token',token),data.export_token);
+       98 |   await page.goto(`/applications/${data.export_application_id}`);
+    >  99 |   await page.getByRole('button',{name:'开始准备',exact:true}).click();
+          |                                                           ^
+      100 |   await expect(page.getByRole('button',{name:'提交复核',exact:true})).toBeEnabled();
+      101 |   await page.getByRole('button',{name:'提交复核',exact:true}).click();
+      102 |   await page.getByRole('tab',{name:/工作稿/}).click();
+        at /Users/shajindi/yance-backup/yance/website/e2e/frontend-redesign.spec.ts:99:59
+
+    Error Context: ../../../../../private/tmp/yance-remediation-ui-results/frontend-redesign-real-iso-3a4c0-version-then-downloads-DOCX-chromium/error-context.md
+
+  4) [chromium] › e2e/policy-evidence.spec.ts:4:5 › customer searches collected evidence and reads its immutable source version 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('button', { name: '查看对应版本原文' }).first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('button', { name: '查看对应版本原文' }).first() with timeout 5000ms
+      - waiting for getByRole('button', { name: '查看对应版本原文' }).first()
+
+
+      12 |   await page.getByRole('button', {name:'检索原文', exact:true}).click();
+      13 |   const read = page.getByRole('button', {name:'查看对应版本原文'}).first();
+    > 14 |   await expect(read).toBeVisible();
+         |                      ^
+      15 |   await read.click();
+      16 |   await expect(page.getByText('对应版本完整原文', {exact:true})).toBeVisible();
+      17 |   await expect(page.locator('details[open]')).toContainText('合成');
+        at /Users/shajindi/yance-backup/yance/website/e2e/policy-evidence.spec.ts:14:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/policy-evidence-customer-s-b395d-ts-immutable-source-version-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/policy-evidence-customer-s-b395d-ts-immutable-source-version-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/policy-evidence-customer-s-b395d-ts-immutable-source-version-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/policy-evidence-customer-s-b395d-ts-immutable-source-version-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/policy-evidence-customer-s-b395d-ts-immutable-source-version-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) [chromium] › e2e/remediation.spec.ts:41:5 › real isolated API: demo request is persisted privately and displayed with a server status 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('已收到', { exact: true })
+    Expected: visible
+    Error: strict mode violation: getByText('已收到', { exact: true }) resolved to 2 elements:
+        1) <span>已收到</span> aka getByText('已收到').first()
+        2) <span>已收到</span> aka getByText('已收到').nth(1)
+
+    Call log:
+      - Expect "toBeVisible" getByText('已收到', { exact: true }) with timeout 5000ms
+      - waiting for getByText('已收到', { exact: true })
+
+
+      51 |   expect((await response).status()).toBe(201);
+      52 |   await expect(page.getByText(message,{exact:true})).toBeVisible();
+    > 53 |   await expect(page.getByText('已收到',{exact:true})).toBeVisible();
+         |                                                    ^
+      54 |   await page.screenshot({path:testInfo.outputPath('demo-request.png'),fullPage:true});
+      55 | });
+      56 |
+        at /Users/shajindi/yance-backup/yance/website/e2e/remediation.spec.ts:53:52
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/remediation-real-isolated--4b330-played-with-a-server-status-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/remediation-real-isolated--4b330-played-with-a-server-status-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/remediation-real-isolated--4b330-played-with-a-server-status-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/remediation-real-isolated--4b330-played-with-a-server-status-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/remediation-real-isolated--4b330-played-with-a-server-status-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5 failed
+    [chromium] › e2e/evidence-workspace.spec.ts:5:5 › evidence matrix links real API results and creates persistent gap tasks 
+    [chromium] › e2e/frontend-redesign.spec.ts:45:5 › real workspace: keyboard tabs, unsaved edit protection and mobile navigation 
+    [chromium] › e2e/frontend-redesign.spec.ts:93:5 › real isolated workflow: customer reviews a source-bound version, then downloads DOCX 
+    [chromium] › e2e/policy-evidence.spec.ts:4:5 › customer searches collected evidence and reads its immutable source version 
+    [chromium] › e2e/remediation.spec.ts:41:5 › real isolated API: demo request is persisted privately and displayed with a server status 
+  14 passed (2.5m)

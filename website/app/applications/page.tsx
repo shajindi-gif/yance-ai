@@ -10,7 +10,6 @@ import { InlineAlert } from "@/components/ui/InlineAlert";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import AppShell from "@/components/workspace/AppShell";
-import flow from "@/components/workspace/CoreWorkflow.module.css";
 import content from "@/components/workspace/WorkspaceContent.module.css";
 import api, { type ApplicationSummary } from "@/lib/api";
 

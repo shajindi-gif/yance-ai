@@ -8,6 +8,7 @@ Deterministic by design: no LLM, no invented dates — only existing records.
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.models.models import Application, Milestone, Notification, Opportunity, Policy
@@ -53,13 +54,15 @@ def add_notification(
     """Insert a notification unless the dedup key already exists. Returns True on insert."""
     exists = db.scalar(
         select(Notification.id).where(
-            Notification.tenant_id == tenant_id, Notification.dedup_key == dedup_key
+            Notification.tenant_id == tenant_id,
+            Notification.dedup_key.in_([dedup_key[:200], (dedup_key[:200] + ":emailed")[:200]]),
         )
     )
     if exists:
         return False
-    db.add(
-        Notification(
+    result = db.execute(
+        insert(Notification)
+        .values(
             tenant_id=tenant_id,
             user_id=user_id,
             kind=kind,
@@ -70,8 +73,10 @@ def add_notification(
             entity_id=str(entity_id) if entity_id is not None else None,
             dedup_key=dedup_key[:200],
         )
+        .on_conflict_do_nothing(constraint="uq_notification_tenant_key")
+        .returning(Notification.id)
     )
-    return True
+    return result.scalar_one_or_none() is not None
 
 
 def scan_deadlines(db: Session, *, tenant_id=None, now: datetime | None = None) -> int:

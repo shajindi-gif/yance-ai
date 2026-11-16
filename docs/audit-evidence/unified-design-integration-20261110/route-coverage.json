@@ -1,0 +1,378 @@
+[
+  {
+    "file": "page.tsx",
+    "path": "/",
+    "http": 200,
+    "title": "找到适合企业的政策，看清每项条件的依据。",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "terms/page.tsx",
+    "path": "/terms",
+    "http": 200,
+    "title": "服务条款",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "team/page.tsx",
+    "path": "/team",
+    "http": 200,
+    "title": "团队",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "tasks/page.tsx",
+    "path": "/tasks",
+    "http": 200,
+    "title": "任务与申报",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "tasks/[taskId]/page.tsx",
+    "path": "/tasks/650c1908-c723-4a51-b2c4-20e47182109a",
+    "http": 200,
+    "title": "合成设计验收任务",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "success/page.tsx",
+    "path": "/success",
+    "http": 200,
+    "title": "核对订单结果",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "settings/page.tsx",
+    "path": "/settings",
+    "http": 200,
+    "title": "企业设置",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "security/page.tsx",
+    "path": "/security",
+    "http": 200,
+    "title": "安全现状与责任边界",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "roadshow/page.tsx",
+    "path": "/roadshow",
+    "http": 200,
+    "title": "园区试点方案",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "reports/page.tsx",
+    "path": "/reports",
+    "http": 200,
+    "title": "报告",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "projects/page.tsx",
+    "path": "/projects",
+    "http": 200,
+    "title": "项目管道",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "privacy/page.tsx",
+    "path": "/privacy",
+    "http": 200,
+    "title": "隐私政策",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "pricing/page.tsx",
+    "path": "/pricing",
+    "http": 200,
+    "title": "按次购买，需要时再买",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "policy-knowledge-base/page.tsx",
+    "path": "/policy-knowledge-base",
+    "http": 200,
+    "title": "政策知识库",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "policies/page.tsx",
+    "path": "/policies",
+    "http": 200,
+    "title": "全国政策知识库",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "parks/page.tsx",
+    "path": "/parks",
+    "http": 200,
+    "title": "重新定义园区企业服务",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "orders/page.tsx",
+    "path": "/orders",
+    "http": 200,
+    "title": "订单与账单",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "opportunities/page.tsx",
+    "path": "/opportunities",
+    "http": 200,
+    "title": "政策机会",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "opportunities/[opportunityId]/page.tsx",
+    "path": "/opportunities/b4c7a25c-3d29-4f39-bf9c-e4180c196925",
+    "http": 200,
+    "title": "合成设计验收机会",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "onboarding/page.tsx",
+    "path": "/onboarding",
+    "http": 200,
+    "title": "完善企业画像",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "notifications/page.tsx",
+    "path": "/notifications",
+    "http": 200,
+    "title": "通知",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "login/page.tsx",
+    "path": "/login",
+    "http": 200,
+    "title": "衍策引擎AI",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "intelligence/page.tsx",
+    "path": "/intelligence",
+    "http": 200,
+    "title": "企业情报中心",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "feedback/page.tsx",
+    "path": "/feedback",
+    "http": 200,
+    "title": "分享使用反馈",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "downloads/page.tsx",
+    "path": "/downloads",
+    "http": 200,
+    "title": "客户端路线图",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "documents/page.tsx",
+    "path": "/documents",
+    "http": 200,
+    "title": "企业资料",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "discover/page.tsx",
+    "path": "/discover",
+    "http": 200,
+    "title": "发现资金",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "demo/page.tsx",
+    "path": "/demo",
+    "http": 200,
+    "title": "在 3–5 分钟内，看 AI 完成一次企业政策与申报工作。",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "dashboard/page.tsx",
+    "path": "/dashboard",
+    "http": 200,
+    "title": "指挥中心",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "consultant/page.tsx",
+    "path": "/consultant",
+    "http": 200,
+    "title": "资金顾问",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "company-match/page.tsx",
+    "path": "/company-match",
+    "http": 200,
+    "title": "从企业事实，找到有依据的政策机会。",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "companies/page.tsx",
+    "path": "/companies",
+    "http": 200,
+    "title": "企业",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "companies/[companyId]/page.tsx",
+    "path": "/companies/065c7684-fa96-43b4-a474-30a8fbf3c9e8",
+    "http": 200,
+    "title": "Workflow Company v2-browser-163586351e9c48b882d21590b6c959f6",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "chrome-extension/page.tsx",
+    "path": "/chrome-extension",
+    "http": 200,
+    "title": "衍策引擎AI 政策助手",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "checkout/page.tsx",
+    "path": "/checkout",
+    "http": 200,
+    "title": "确认订单",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "cancel/page.tsx",
+    "path": "/cancel",
+    "http": 200,
+    "title": "订单仍保留，可随时重新支付",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "brief-maker/page.tsx",
+    "path": "/brief-maker",
+    "http": 200,
+    "title": "把依据带入材料，把修改留在版本里。",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "billing/page.tsx",
+    "path": "/billing",
+    "http": 200,
+    "title": "用量与账单",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "applications/page.tsx",
+    "path": "/applications",
+    "http": 200,
+    "title": "申报项目",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "applications/[applicationId]/page.tsx",
+    "path": "/applications/0b640895-f457-4740-b86d-26e50dbb211a",
+    "http": 200,
+    "title": "合成证据工作台浏览器验收",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "agents/page.tsx",
+    "path": "/agents",
+    "http": 200,
+    "title": "Agent 运行",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "agents/[runId]/page.tsx",
+    "path": "/agents/2f70c391-dd0c-44ad-b83f-07af3eb238dd",
+    "http": 200,
+    "title": "合成设计验收任务 · 未命名工作流",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "admin/page.tsx",
+    "path": "/admin",
+    "http": 200,
+    "title": "无法访问管理后台",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "admin/investor-metrics/page.tsx",
+    "path": "/admin/investor-metrics",
+    "http": 200,
+    "title": "无法访问融资指标",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "admin/evals/page.tsx",
+    "path": "/admin/evals",
+    "http": 200,
+    "title": "Agent 质量评测",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "admin/evals/[runId]/page.tsx",
+    "path": "/admin/evals/bef6ce04-a8c4-420e-92bb-3d971d45c60d",
+    "http": 200,
+    "title": "Eval Run 不可用",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  },
+  {
+    "file": "about/page.tsx",
+    "path": "/about",
+    "http": 200,
+    "title": "关于我们",
+    "overflow": false,
+    "status": "共享样式与局部静态样式已整合，页面渲染已检查"
+  }
+]

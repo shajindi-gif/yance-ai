@@ -1,0 +1,56 @@
+[
+  {
+    "path": "/",
+    "width": 390,
+    "status": 200,
+    "overflow": false
+  },
+  {
+    "path": "/pricing",
+    "width": 390,
+    "status": 200,
+    "overflow": false
+  },
+  {
+    "path": "/login",
+    "width": 390,
+    "status": 200,
+    "overflow": false
+  },
+  {
+    "path": "/",
+    "width": 768,
+    "status": 200,
+    "overflow": false
+  },
+  {
+    "path": "/pricing",
+    "width": 768,
+    "status": 200,
+    "overflow": false
+  },
+  {
+    "path": "/login",
+    "width": 768,
+    "status": 200,
+    "overflow": false
+  },
+  {
+    "path": "/",
+    "width": 1440,
+    "status": 200,
+    "overflow": false
+  },
+  {
+    "path": "/pricing",
+    "width": 1440,
+    "status": 200,
+    "overflow": false
+  },
+  {
+    "path": "/login",
+    "width": 1440,
+    "status": 200,
+    "overflow": false
+  }
+]

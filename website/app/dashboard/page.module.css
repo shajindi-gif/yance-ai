@@ -1,0 +1,13 @@
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.section {
+  margin-top: 12px;
+}
+
+.section2 {
+  margin-bottom: 20px;
+}

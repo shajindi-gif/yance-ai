@@ -19,6 +19,7 @@ import re
 from datetime import UTC, datetime
 
 from app.services.llm.base import LLMRequest
+from app.services.llm.budget import LLMLimitExceeded
 from app.services.llm.router import LLMRouter
 from app.services.policies.eligibility import exact_quote_span
 from app.services.policy_engine.deterministic import (
@@ -126,6 +127,8 @@ async def extract_criteria(policy_content: str, provider: str = "deepseek") -> l
         )
         parsed = _loads_json(response.content)
         return parsed.get("criteria", [])
+    except LLMLimitExceeded:
+        raise
     except Exception:
         # Fallback: 关键词句子提取（保守，只提取不判定）
         sentences = re.split(r"[。；！？\n]", policy_content)
@@ -240,6 +243,8 @@ async def evaluate_criteria(
             overall_result=OverallResult.INSUFFICIENT_INFO,
             summary=parsed.get("summary", ""),
         ), telemetry
+    except LLMLimitExceeded:
+        raise
     except Exception as e:
         # D6: fallback 保守化 —— 永不输出 PASS
         results = []

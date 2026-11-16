@@ -178,3 +178,64 @@ def test_smtp_login_rejected_returns_false(monkeypatch):
 
     monkeypatch.setattr(svc.smtplib, "SMTP_SSL", RejectSMTP)
     assert svc.send_email("user@example.com", "s", "b") is False
+
+
+@pytest.mark.parametrize(
+    ("status_code", "expected"),
+    [
+        (202, "sent"),
+        (429, "retryable"),
+        (500, "uncertain"),
+        (408, "uncertain"),
+        (409, "uncertain"),
+        (401, "failed"),
+    ],
+)
+def test_http_delivery_classifies_acceptance_uncertainty(monkeypatch, status_code, expected):
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(
+        svc.httpx, "post", lambda *_a, **_k: SimpleNamespace(status_code=status_code)
+    )
+    assert svc._deliver_resend("synthetic@example.invalid", "主题", "内容").status == expected
+
+
+def test_http_timeout_never_authorizes_blind_retry(monkeypatch):
+    def timeout(*_a, **_k):
+        raise svc.httpx.ReadTimeout("synthetic timeout")
+
+    monkeypatch.setattr(svc.httpx, "post", timeout)
+    assert svc._deliver_resend("synthetic@example.invalid", "主题", "内容").status == "uncertain"
+
+
+@pytest.mark.parametrize(
+    ("phase", "error", "expected"),
+    [
+        ("connect", OSError(), "retryable"),
+        ("send", OSError(), "uncertain"),
+        ("send", svc.smtplib.SMTPDataError(451, b"temporary"), "retryable"),
+        ("send", svc.smtplib.SMTPDataError(550, b"rejected"), "failed"),
+    ],
+)
+def test_smtp_retry_requires_known_non_acceptance(monkeypatch, phase, error, expected):
+    monkeypatch.setattr(settings, "smtp_user", "synthetic@example.invalid")
+
+    class Transport:
+        def __init__(self, *_a, **_k):
+            if phase == "connect":
+                raise error
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_a):
+            return False
+
+        def login(self, *_a):
+            pass
+
+        def send_message(self, *_a):
+            raise error
+
+    monkeypatch.setattr(svc.smtplib, "SMTP_SSL", Transport)
+    assert svc._deliver_smtp("synthetic@example.invalid", "主题", "内容").status == expected

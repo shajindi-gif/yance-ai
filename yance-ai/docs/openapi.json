@@ -985,11 +985,48 @@
       },
       "ApplicationCommentCreate": {
         "properties": {
+          "artifact_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artifact Id"
+          },
           "body": {
             "maxLength": 4000,
             "minLength": 1,
             "title": "Body",
             "type": "string"
+          },
+          "client_request_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Request Id"
+          },
+          "proposed_summary": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "minLength": 2,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposed Summary"
           }
         },
         "required": [
@@ -3187,10 +3224,23 @@
               "data",
               "policy",
               "billing",
-              "support"
+              "support",
+              "sales"
             ],
             "title": "Category",
             "type": "string"
+          },
+          "client_request_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Request Id"
           },
           "message": {
             "maxLength": 5000,
@@ -4040,6 +4090,18 @@
       },
       "OrderCreate": {
         "properties": {
+          "client_request_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Request Id"
+          },
           "product_code": {
             "title": "Product Code",
             "type": "string"
@@ -4077,6 +4139,18 @@
           "currency": {
             "title": "Currency",
             "type": "string"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
           },
           "id": {
             "format": "uuid",
@@ -5302,6 +5376,42 @@
         "title": "PresignedUploadOut",
         "type": "object"
       },
+      "RefundRequest": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "idempotency_key": {
+            "format": "uuid",
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "idempotency_key"
+        ],
+        "title": "RefundRequest",
+        "type": "object"
+      },
       "RegisterRequest": {
         "description": "Public self-service registration: tenant + owner + default company.",
         "properties": {
@@ -5633,6 +5743,95 @@
         "title": "RevisionCreate",
         "type": "object"
       },
+      "SmsRequest": {
+        "properties": {
+          "phone": {
+            "maxLength": 20,
+            "title": "Phone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "phone"
+        ],
+        "title": "SmsRequest",
+        "type": "object"
+      },
+      "SmsVerify": {
+        "properties": {
+          "agreed_terms_version": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agreed Terms Version"
+          },
+          "code": {
+            "pattern": "^[0-9]{6}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "company_name": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "minLength": 2,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name"
+          },
+          "owner_name": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "minLength": 2,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Name"
+          },
+          "phone": {
+            "maxLength": 20,
+            "title": "Phone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "phone",
+          "code"
+        ],
+        "title": "SmsVerify",
+        "type": "object"
+      },
+      "SuggestionDecision": {
+        "properties": {
+          "decision": {
+            "enum": [
+              "accept",
+              "reject"
+            ],
+            "title": "Decision",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "title": "SuggestionDecision",
+        "type": "object"
+      },
       "TaskCreate": {
         "properties": {
           "company_id": {
@@ -5898,9 +6097,16 @@
       "UserOut": {
         "properties": {
           "email": {
-            "format": "email",
-            "title": "Email",
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "email",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
           },
           "full_name": {
             "title": "Full Name",
@@ -5918,6 +6124,17 @@
           "is_platform_admin": {
             "title": "Is Platform Admin",
             "type": "boolean"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
           },
           "role": {
             "$ref": "#/components/schemas/UserRole"
@@ -6954,6 +7171,82 @@
           }
         ],
         "summary": "Admin Reject Invoice",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/orders/{order_id}/refund": {
+      "post": {
+        "operationId": "refund_order_api_v1_admin_orders__order_id__refund_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Order Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefundRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Refund Order Api V1 Admin Orders  Order Id  Refund Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Refund Order",
         "tags": [
           "admin"
         ]
@@ -8458,6 +8751,90 @@
         ]
       }
     },
+    "/api/v1/applications/{application_id}/comments/{comment_id}/decision": {
+      "post": {
+        "operationId": "decide_application_suggestion_api_v1_applications__application_id__comments__comment_id__decision_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "comment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Comment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestionDecision"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Decide Application Suggestion",
+        "tags": [
+          "policy-scan",
+          "opportunity",
+          "application"
+        ]
+      }
+    },
     "/api/v1/applications/{application_id}/documents": {
       "post": {
         "operationId": "link_application_document_api_v1_applications__application_id__documents_post",
@@ -8525,6 +8902,70 @@
           }
         ],
         "summary": "Link Application Document",
+        "tags": [
+          "policy-scan",
+          "opportunity",
+          "application"
+        ]
+      }
+    },
+    "/api/v1/applications/{application_id}/evidence-tasks": {
+      "post": {
+        "operationId": "create_evidence_tasks_api_v1_applications__application_id__evidence_tasks_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "application_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Application Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Evidence Tasks",
         "tags": [
           "policy-scan",
           "opportunity",
@@ -9326,6 +9767,210 @@
           }
         },
         "summary": "Register",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/sms/bind": {
+      "post": {
+        "operationId": "bind_api_v1_auth_sms_bind_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmsVerify"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Bind",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/sms/bind/send": {
+      "post": {
+        "operationId": "bind_send_api_v1_auth_sms_bind_send_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Bind Send",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/sms/send": {
+      "post": {
+        "operationId": "send_api_v1_auth_sms_send_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Send",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/sms/verify": {
+      "post": {
+        "operationId": "verify_api_v1_auth_sms_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmsVerify"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify",
         "tags": [
           "auth"
         ]
@@ -11884,6 +12529,77 @@
       }
     },
     "/api/v1/feedback": {
+      "get": {
+        "description": "Private history for this user in this tenant, never a public review feed.",
+        "operationId": "list_my_feedback_api_v1_feedback_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "title": "Response List My Feedback Api V1 Feedback Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List My Feedback",
+        "tags": [
+          "analytics",
+          "feedback"
+        ]
+      },
       "post": {
         "operationId": "create_feedback_api_v1_feedback_post",
         "parameters": [
@@ -12159,6 +12875,7 @@
             "name": "invoice_id",
             "required": true,
             "schema": {
+              "format": "uuid",
               "title": "Invoice Id",
               "type": "string"
             }
@@ -12223,6 +12940,7 @@
             "name": "invoice_id",
             "required": true,
             "schema": {
+              "format": "uuid",
               "title": "Invoice Id",
               "type": "string"
             }
@@ -12291,6 +13009,7 @@
             "name": "invoice_id",
             "required": true,
             "schema": {
+              "format": "uuid",
               "title": "Invoice Id",
               "type": "string"
             }
@@ -13178,6 +13897,135 @@
         ]
       }
     },
+    "/api/v1/orders/by-no/{order_no}": {
+      "get": {
+        "operationId": "get_order_by_number_api_v1_orders_by_no__order_no__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "order_no",
+            "required": true,
+            "schema": {
+              "title": "Order No",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Order By Number",
+        "tags": [
+          "orders",
+          "payments",
+          "invoices"
+        ]
+      }
+    },
+    "/api/v1/orders/{order_id}/checkout": {
+      "get": {
+        "operationId": "checkout_state_api_v1_orders__order_id__checkout_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Order Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Checkout State",
+        "tags": [
+          "orders",
+          "payments",
+          "invoices"
+        ]
+      }
+    },
     "/api/v1/payments": {
       "post": {
         "operationId": "create_payment_skeleton_api_v1_payments_post",
@@ -13251,9 +14099,8 @@
         "responses": {
           "200": {
             "content": {
-              "application/json": {
+              "text/plain": {
                 "schema": {
-                  "title": "Response Alipay Notify Api V1 Payments Alipay Notify Post",
                   "type": "string"
                 }
               }
@@ -13334,10 +14181,94 @@
         ]
       }
     },
+    "/api/v1/payments/alipay/query": {
+      "post": {
+        "operationId": "alipay_query_api_v1_payments_alipay_query_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Order Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Alipay Query Api V1 Payments Alipay Query Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Alipay Query",
+        "tags": [
+          "payments"
+        ]
+      }
+    },
     "/api/v1/payments/alipay/return": {
       "post": {
         "description": "Alipay sync return (GET redirect). Verify and return order status.",
         "operationId": "alipay_return_api_v1_payments_alipay_return_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -13350,8 +14281,23 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
         "summary": "Alipay Return",
         "tags": [
           "payments"
@@ -13669,6 +14615,29 @@
         ]
       }
     },
+    "/api/v1/payments/wechat/refund-notify": {
+      "post": {
+        "operationId": "wechat_refund_notify_api_v1_payments_wechat_refund_notify_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Wechat Refund Notify Api V1 Payments Wechat Refund Notify Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Wechat Refund Notify",
+        "tags": [
+          "payments"
+        ]
+      }
+    },
     "/api/v1/policies": {
       "get": {
         "operationId": "list_policies_api_v1_policies_get",
@@ -13791,6 +14760,135 @@
         ]
       }
     },
+    "/api/v1/policies/evidence-search": {
+      "get": {
+        "description": "Keyword evidence search — works with **no model configured**.\n\nReturns chunks with exact character spans inside an immutable policy version,\nso a UI can quote the source and a reviewer can re-check it.  Vector search\n(``POST /policies/search``) stays a separate, budgeted path; this endpoint must\nnever call an embedding provider.",
+        "operationId": "evidence_search_api_v1_policies_evidence_search_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "level",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Level"
+            }
+          },
+          {
+            "in": "query",
+            "name": "jurisdiction",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Jurisdiction"
+            }
+          },
+          {
+            "in": "query",
+            "name": "current_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Current Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_low_quality",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Low Quality",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Evidence Search Api V1 Policies Evidence Search Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Evidence Search",
+        "tags": [
+          "policy",
+          "policy_rule"
+        ]
+      }
+    },
     "/api/v1/policies/parse-amounts": {
       "post": {
         "description": "Deterministically backfill structured funding facts from support_amount text.\n\nPlatform-admin curation tool (writes global knowledge-base rows). Only\nparses values it can extract with confidence; everything else stays NULL\n(INSUFFICIENT EVIDENCE by design). Safe to re-run (idempotent).",
@@ -13843,6 +14941,64 @@
           }
         ],
         "summary": "Parse Support Amounts",
+        "tags": [
+          "policy",
+          "policy_rule"
+        ]
+      }
+    },
+    "/api/v1/policies/quality-summary": {
+      "get": {
+        "description": "Distribution of the quality rubric across the corpus.\n\nThis is the answer to \"what are you actually delivering\": how many documents\npass the reliability/validity/utility bars, which axis they fail on, and why.\nCounts only — no document text leaves the database here.",
+        "operationId": "policy_quality_summary_api_v1_policies_quality_summary_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Policy Quality Summary Api V1 Policies Quality Summary Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Policy Quality Summary",
         "tags": [
           "policy",
           "policy_rule"
@@ -14051,6 +15207,151 @@
           }
         ],
         "summary": "Update Policy",
+        "tags": [
+          "policy",
+          "policy_rule"
+        ]
+      }
+    },
+    "/api/v1/policies/{policy_id}/quality": {
+      "get": {
+        "description": "Per-document verdict: three axis scores, grade, timeline state and every issue.\n\nReturned with the *reasons* rather than a bare score so a customer can dispute a\nspecific finding (e.g. \"this was not repealed\") instead of arguing with a number.",
+        "operationId": "policy_quality_api_v1_policies__policy_id__quality_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Policy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Policy Quality Api V1 Policies  Policy Id  Quality Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Policy Quality",
+        "tags": [
+          "policy",
+          "policy_rule"
+        ]
+      }
+    },
+    "/api/v1/policies/{policy_id}/versions/{version_id}": {
+      "get": {
+        "operationId": "read_policy_version_api_v1_policies__policy_id__versions__version_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "policy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Policy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-API-Key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Api-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Read Policy Version Api V1 Policies  Policy Id  Versions  Version Id  Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Read Policy Version",
         "tags": [
           "policy",
           "policy_rule"
@@ -14710,6 +16011,23 @@
             }
           },
           {
+            "in": "query",
+            "name": "order_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Order Id"
+            }
+          },
+          {
             "in": "header",
             "name": "X-API-Key",
             "required": false,
@@ -14819,6 +16137,30 @@
         "tags": [
           "policy",
           "policy_rule"
+        ]
+      }
+    },
+    "/api/v1/system/version": {
+      "get": {
+        "description": "Read deployment identity and the database revision independently.",
+        "operationId": "runtime_version_api_v1_system_version_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Runtime Version Api V1 System Version Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Runtime Version",
+        "tags": [
+          "health"
         ]
       }
     },
@@ -15122,6 +16464,23 @@
               "format": "uuid",
               "title": "Task Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "deliverable_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Deliverable Id"
             }
           },
           {

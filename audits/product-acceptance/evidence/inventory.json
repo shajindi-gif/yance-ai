@@ -1,0 +1,2054 @@
+{
+  "pages": [
+    {
+      "route": "/about",
+      "file": "website/app/about/page.tsx"
+    },
+    {
+      "route": "/admin/evals/[runId]",
+      "file": "website/app/admin/evals/[runId]/page.tsx"
+    },
+    {
+      "route": "/admin/evals",
+      "file": "website/app/admin/evals/page.tsx"
+    },
+    {
+      "route": "/admin/investor-metrics",
+      "file": "website/app/admin/investor-metrics/page.tsx"
+    },
+    {
+      "route": "/admin",
+      "file": "website/app/admin/page.tsx"
+    },
+    {
+      "route": "/agents/[runId]",
+      "file": "website/app/agents/[runId]/page.tsx"
+    },
+    {
+      "route": "/agents",
+      "file": "website/app/agents/page.tsx"
+    },
+    {
+      "route": "/applications/[applicationId]",
+      "file": "website/app/applications/[applicationId]/page.tsx"
+    },
+    {
+      "route": "/applications",
+      "file": "website/app/applications/page.tsx"
+    },
+    {
+      "route": "/billing",
+      "file": "website/app/billing/page.tsx"
+    },
+    {
+      "route": "/brief-maker",
+      "file": "website/app/brief-maker/page.tsx"
+    },
+    {
+      "route": "/cancel",
+      "file": "website/app/cancel/page.tsx"
+    },
+    {
+      "route": "/checkout",
+      "file": "website/app/checkout/page.tsx"
+    },
+    {
+      "route": "/chrome-extension",
+      "file": "website/app/chrome-extension/page.tsx"
+    },
+    {
+      "route": "/companies/[companyId]",
+      "file": "website/app/companies/[companyId]/page.tsx"
+    },
+    {
+      "route": "/companies",
+      "file": "website/app/companies/page.tsx"
+    },
+    {
+      "route": "/company-match",
+      "file": "website/app/company-match/page.tsx"
+    },
+    {
+      "route": "/consultant",
+      "file": "website/app/consultant/page.tsx"
+    },
+    {
+      "route": "/dashboard",
+      "file": "website/app/dashboard/page.tsx"
+    },
+    {
+      "route": "/demo",
+      "file": "website/app/demo/page.tsx"
+    },
+    {
+      "route": "/discover",
+      "file": "website/app/discover/page.tsx"
+    },
+    {
+      "route": "/documents",
+      "file": "website/app/documents/page.tsx"
+    },
+    {
+      "route": "/downloads",
+      "file": "website/app/downloads/page.tsx"
+    },
+    {
+      "route": "/feedback",
+      "file": "website/app/feedback/page.tsx"
+    },
+    {
+      "route": "/login",
+      "file": "website/app/login/page.tsx"
+    },
+    {
+      "route": "/notifications",
+      "file": "website/app/notifications/page.tsx"
+    },
+    {
+      "route": "/onboarding",
+      "file": "website/app/onboarding/page.tsx"
+    },
+    {
+      "route": "/opportunities/[opportunityId]",
+      "file": "website/app/opportunities/[opportunityId]/page.tsx"
+    },
+    {
+      "route": "/opportunities",
+      "file": "website/app/opportunities/page.tsx"
+    },
+    {
+      "route": "/orders",
+      "file": "website/app/orders/page.tsx"
+    },
+    {
+      "route": "/.",
+      "file": "website/app/page.tsx"
+    },
+    {
+      "route": "/parks",
+      "file": "website/app/parks/page.tsx"
+    },
+    {
+      "route": "/policies",
+      "file": "website/app/policies/page.tsx"
+    },
+    {
+      "route": "/policy-knowledge-base",
+      "file": "website/app/policy-knowledge-base/page.tsx"
+    },
+    {
+      "route": "/pricing",
+      "file": "website/app/pricing/page.tsx"
+    },
+    {
+      "route": "/privacy",
+      "file": "website/app/privacy/page.tsx"
+    },
+    {
+      "route": "/projects",
+      "file": "website/app/projects/page.tsx"
+    },
+    {
+      "route": "/reports",
+      "file": "website/app/reports/page.tsx"
+    },
+    {
+      "route": "/roadshow",
+      "file": "website/app/roadshow/page.tsx"
+    },
+    {
+      "route": "/security",
+      "file": "website/app/security/page.tsx"
+    },
+    {
+      "route": "/settings",
+      "file": "website/app/settings/page.tsx"
+    },
+    {
+      "route": "/success",
+      "file": "website/app/success/page.tsx"
+    },
+    {
+      "route": "/tasks/[taskId]",
+      "file": "website/app/tasks/[taskId]/page.tsx"
+    },
+    {
+      "route": "/tasks",
+      "file": "website/app/tasks/page.tsx"
+    },
+    {
+      "route": "/team",
+      "file": "website/app/team/page.tsx"
+    },
+    {
+      "route": "/terms",
+      "file": "website/app/terms/page.tsx"
+    }
+  ],
+  "api_declarations": [
+    {
+      "module": "admin",
+      "method": "GET",
+      "path": "/overview",
+      "handler": "get_admin_overview",
+      "file": "yance-ai/app/api/routes/admin.py",
+      "line": 119,
+      "full_path": "/api/v1/admin/overview"
+    },
+    {
+      "module": "admin",
+      "method": "GET",
+      "path": "/investor-metrics",
+      "handler": "get_investor_metrics",
+      "file": "yance-ai/app/api/routes/admin.py",
+      "line": 127,
+      "full_path": "/api/v1/admin/investor-metrics"
+    },
+    {
+      "module": "admin",
+      "method": "GET",
+      "path": "/system-health",
+      "handler": "get_system_health",
+      "file": "yance-ai/app/api/routes/admin.py",
+      "line": 135,
+      "full_path": "/api/v1/admin/system-health"
+    },
+    {
+      "module": "admin",
+      "method": "GET",
+      "path": "/resources/{resource}",
+      "handler": "list_admin_resources",
+      "file": "yance-ai/app/api/routes/admin.py",
+      "line": 143,
+      "full_path": "/api/v1/admin/resources/{resource}"
+    },
+    {
+      "module": "admin",
+      "method": "PATCH",
+      "path": "/organizations/{tenant_id}",
+      "handler": "update_tenant_account_stage",
+      "file": "yance-ai/app/api/routes/admin.py",
+      "line": 396,
+      "full_path": "/api/v1/admin/organizations/{tenant_id}"
+    },
+    {
+      "module": "admin",
+      "method": "PATCH",
+      "path": "/feedback/{feedback_id}",
+      "handler": "update_feedback_status",
+      "file": "yance-ai/app/api/routes/admin.py",
+      "line": 411,
+      "full_path": "/api/v1/admin/feedback/{feedback_id}"
+    },
+    {
+      "module": "admin",
+      "method": "GET",
+      "path": "/feature-flags",
+      "handler": "list_feature_flags",
+      "file": "yance-ai/app/api/routes/admin.py",
+      "line": 432,
+      "full_path": "/api/v1/admin/feature-flags"
+    },
+    {
+      "module": "admin",
+      "method": "PUT",
+      "path": "/feature-flags/{key}",
+      "handler": "upsert_feature_flag",
+      "file": "yance-ai/app/api/routes/admin.py",
+      "line": 458,
+      "full_path": "/api/v1/admin/feature-flags/{key}"
+    },
+    {
+      "module": "admin",
+      "method": "PUT",
+      "path": "/feature-flags/{key}/tenants/{tenant_id}",
+      "handler": "set_tenant_feature_flag",
+      "file": "yance-ai/app/api/routes/admin.py",
+      "line": 492,
+      "full_path": "/api/v1/admin/feature-flags/{key}/tenants/{tenant_id}"
+    },
+    {
+      "module": "admin",
+      "method": "DELETE",
+      "path": "/feature-flags/{key}/tenants/{tenant_id}",
+      "handler": "remove_tenant_feature_flag",
+      "file": "yance-ai/app/api/routes/admin.py",
+      "line": 542,
+      "full_path": "/api/v1/admin/feature-flags/{key}/tenants/{tenant_id}"
+    },
+    {
+      "module": "admin",
+      "method": "GET",
+      "path": "/invoices",
+      "handler": "admin_list_invoices",
+      "file": "yance-ai/app/api/routes/admin.py",
+      "line": 638,
+      "full_path": "/api/v1/admin/invoices"
+    },
+    {
+      "module": "admin",
+      "method": "POST",
+      "path": "/invoices/{invoice_id}/issue",
+      "handler": "admin_issue_invoice",
+      "file": "yance-ai/app/api/routes/admin.py",
+      "line": 664,
+      "full_path": "/api/v1/admin/invoices/{invoice_id}/issue"
+    },
+    {
+      "module": "admin",
+      "method": "POST",
+      "path": "/invoices/{invoice_id}/reject",
+      "handler": "admin_reject_invoice",
+      "file": "yance-ai/app/api/routes/admin.py",
+      "line": 705,
+      "full_path": "/api/v1/admin/invoices/{invoice_id}/reject"
+    },
+    {
+      "module": "admin_evals",
+      "method": "GET",
+      "path": "/overview",
+      "handler": "get_evaluation_overview",
+      "file": "yance-ai/app/api/routes/admin_evals.py",
+      "line": 52,
+      "full_path": "/api/v1/admin/evals/overview"
+    },
+    {
+      "module": "admin_evals",
+      "method": "GET",
+      "path": "/runs",
+      "handler": "list_evaluation_runs",
+      "file": "yance-ai/app/api/routes/admin_evals.py",
+      "line": 61,
+      "full_path": "/api/v1/admin/evals/runs"
+    },
+    {
+      "module": "admin_evals",
+      "method": "POST",
+      "path": "/runs",
+      "handler": "create_evaluation_runs",
+      "file": "yance-ai/app/api/routes/admin_evals.py",
+      "line": 72,
+      "full_path": "/api/v1/admin/evals/runs"
+    },
+    {
+      "module": "admin_evals",
+      "method": "GET",
+      "path": "/runs/{run_id}",
+      "handler": "get_evaluation_run",
+      "file": "yance-ai/app/api/routes/admin_evals.py",
+      "line": 99,
+      "full_path": "/api/v1/admin/evals/runs/{run_id}"
+    },
+    {
+      "module": "agents",
+      "method": "POST",
+      "path": "/agent-runs/{run_id}/cancel",
+      "handler": "cancel_agent_run",
+      "file": "yance-ai/app/api/routes/agents.py",
+      "line": 32,
+      "full_path": "/api/v1/agent-runs/{run_id}/cancel"
+    },
+    {
+      "module": "agents",
+      "method": "GET",
+      "path": "/agents",
+      "handler": "list_agents",
+      "file": "yance-ai/app/api/routes/agents.py",
+      "line": 211,
+      "full_path": "/api/v1/agents"
+    },
+    {
+      "module": "agents",
+      "method": "GET",
+      "path": "/agent-runs",
+      "handler": "list_agent_runs",
+      "file": "yance-ai/app/api/routes/agents.py",
+      "line": 266,
+      "full_path": "/api/v1/agent-runs"
+    },
+    {
+      "module": "agents",
+      "method": "GET",
+      "path": "/agent-runs/{run_id}",
+      "handler": "get_agent_run",
+      "file": "yance-ai/app/api/routes/agents.py",
+      "line": 285,
+      "full_path": "/api/v1/agent-runs/{run_id}"
+    },
+    {
+      "module": "analytics",
+      "method": "GET",
+      "path": "/feedback",
+      "handler": "list_my_feedback",
+      "file": "yance-ai/app/api/routes/analytics.py",
+      "line": 26,
+      "full_path": "/api/v1/feedback"
+    },
+    {
+      "module": "analytics",
+      "method": "POST",
+      "path": "/feedback",
+      "handler": "create_feedback",
+      "file": "yance-ai/app/api/routes/analytics.py",
+      "line": 45,
+      "full_path": "/api/v1/feedback"
+    },
+    {
+      "module": "auth",
+      "method": "POST",
+      "path": "/bootstrap",
+      "handler": "bootstrap",
+      "file": "yance-ai/app/api/routes/auth.py",
+      "line": 107,
+      "full_path": "/api/v1/auth/bootstrap"
+    },
+    {
+      "module": "auth",
+      "method": "POST",
+      "path": "/provision-tenant",
+      "handler": "provision_tenant",
+      "file": "yance-ai/app/api/routes/auth.py",
+      "line": 120,
+      "full_path": "/api/v1/auth/provision-tenant"
+    },
+    {
+      "module": "auth",
+      "method": "POST",
+      "path": "/register",
+      "handler": "register",
+      "file": "yance-ai/app/api/routes/auth.py",
+      "line": 132,
+      "full_path": "/api/v1/auth/register"
+    },
+    {
+      "module": "auth",
+      "method": "POST",
+      "path": "/login",
+      "handler": "login",
+      "file": "yance-ai/app/api/routes/auth.py",
+      "line": 233,
+      "full_path": "/api/v1/auth/login"
+    },
+    {
+      "module": "auth",
+      "method": "GET",
+      "path": "/config",
+      "handler": "auth_config",
+      "file": "yance-ai/app/api/routes/auth.py",
+      "line": 305,
+      "full_path": "/api/v1/auth/config"
+    },
+    {
+      "module": "auth",
+      "method": "POST",
+      "path": "/email/send",
+      "handler": "email_code_send",
+      "file": "yance-ai/app/api/routes/auth.py",
+      "line": 320,
+      "full_path": "/api/v1/auth/email/send"
+    },
+    {
+      "module": "auth",
+      "method": "POST",
+      "path": "/email/verify",
+      "handler": "email_code_verify",
+      "file": "yance-ai/app/api/routes/auth.py",
+      "line": 354,
+      "full_path": "/api/v1/auth/email/verify"
+    },
+    {
+      "module": "auth",
+      "method": "POST",
+      "path": "/password/reset/request",
+      "handler": "password_reset_request",
+      "file": "yance-ai/app/api/routes/auth.py",
+      "line": 509,
+      "full_path": "/api/v1/auth/password/reset/request"
+    },
+    {
+      "module": "auth",
+      "method": "POST",
+      "path": "/password/reset/confirm",
+      "handler": "password_reset_confirm",
+      "file": "yance-ai/app/api/routes/auth.py",
+      "line": 544,
+      "full_path": "/api/v1/auth/password/reset/confirm"
+    },
+    {
+      "module": "auth",
+      "method": "GET",
+      "path": "/me",
+      "handler": "me",
+      "file": "yance-ai/app/api/routes/auth.py",
+      "line": 603,
+      "full_path": "/api/v1/auth/me"
+    },
+    {
+      "module": "auth",
+      "method": "POST",
+      "path": "/logout",
+      "handler": "logout",
+      "file": "yance-ai/app/api/routes/auth.py",
+      "line": 608,
+      "full_path": "/api/v1/auth/logout"
+    },
+    {
+      "module": "billing",
+      "method": "GET",
+      "path": "/plans",
+      "handler": "get_plans",
+      "file": "yance-ai/app/api/routes/billing.py",
+      "line": 35,
+      "full_path": "/api/v1/billing/plans"
+    },
+    {
+      "module": "billing",
+      "method": "GET",
+      "path": "/overview",
+      "handler": "get_billing_overview",
+      "file": "yance-ai/app/api/routes/billing.py",
+      "line": 40,
+      "full_path": "/api/v1/billing/overview"
+    },
+    {
+      "module": "billing",
+      "method": "POST",
+      "path": "/budgets",
+      "handler": "upsert_budget",
+      "file": "yance-ai/app/api/routes/billing.py",
+      "line": 123,
+      "full_path": "/api/v1/billing/budgets"
+    },
+    {
+      "module": "commerce",
+      "method": "GET",
+      "path": "/orders",
+      "handler": "list_orders",
+      "file": "yance-ai/app/api/routes/commerce.py",
+      "line": 37,
+      "full_path": "/api/v1/orders"
+    },
+    {
+      "module": "commerce",
+      "method": "POST",
+      "path": "/orders",
+      "handler": "create_order",
+      "file": "yance-ai/app/api/routes/commerce.py",
+      "line": 44,
+      "full_path": "/api/v1/orders"
+    },
+    {
+      "module": "commerce",
+      "method": "POST",
+      "path": "/payments",
+      "handler": "create_payment_skeleton",
+      "file": "yance-ai/app/api/routes/commerce.py",
+      "line": 126,
+      "full_path": "/api/v1/payments"
+    },
+    {
+      "module": "commerce",
+      "method": "POST",
+      "path": "/invoices",
+      "handler": "create_invoice",
+      "file": "yance-ai/app/api/routes/commerce.py",
+      "line": 138,
+      "full_path": "/api/v1/invoices"
+    },
+    {
+      "module": "commerce",
+      "method": "POST",
+      "path": "/invoices/{invoice_id}/generate-pdf",
+      "handler": "generate_invoice",
+      "file": "yance-ai/app/api/routes/commerce.py",
+      "line": 200,
+      "full_path": "/api/v1/invoices/{invoice_id}/generate-pdf"
+    },
+    {
+      "module": "commerce",
+      "method": "GET",
+      "path": "/invoices/{invoice_id}/download",
+      "handler": "download_invoice",
+      "file": "yance-ai/app/api/routes/commerce.py",
+      "line": 229,
+      "full_path": "/api/v1/invoices/{invoice_id}/download"
+    },
+    {
+      "module": "commerce",
+      "method": "GET",
+      "path": "/invoices/{invoice_id}/voucher",
+      "handler": "download_invoice_voucher",
+      "file": "yance-ai/app/api/routes/commerce.py",
+      "line": 256,
+      "full_path": "/api/v1/invoices/{invoice_id}/voucher"
+    },
+    {
+      "module": "commerce",
+      "method": "GET",
+      "path": "/invoices",
+      "handler": "list_invoices",
+      "file": "yance-ai/app/api/routes/commerce.py",
+      "line": 290,
+      "full_path": "/api/v1/invoices"
+    },
+    {
+      "module": "companies",
+      "method": "GET",
+      "path": "",
+      "handler": "list_companies",
+      "file": "yance-ai/app/api/routes/companies.py",
+      "line": 30,
+      "full_path": "/api/v1/companies"
+    },
+    {
+      "module": "companies",
+      "method": "POST",
+      "path": "",
+      "handler": "create_company",
+      "file": "yance-ai/app/api/routes/companies.py",
+      "line": 37,
+      "full_path": "/api/v1/companies"
+    },
+    {
+      "module": "companies",
+      "method": "GET",
+      "path": "/{company_id}",
+      "handler": "get_company",
+      "file": "yance-ai/app/api/routes/companies.py",
+      "line": 73,
+      "full_path": "/api/v1/companies/{company_id}"
+    },
+    {
+      "module": "companies",
+      "method": "PUT",
+      "path": "/{company_id}",
+      "handler": "update_company",
+      "file": "yance-ai/app/api/routes/companies.py",
+      "line": 82,
+      "full_path": "/api/v1/companies/{company_id}"
+    },
+    {
+      "module": "companies",
+      "method": "GET",
+      "path": "/{company_id}/profile",
+      "handler": "get_company_profile",
+      "file": "yance-ai/app/api/routes/companies.py",
+      "line": 97,
+      "full_path": "/api/v1/companies/{company_id}/profile"
+    },
+    {
+      "module": "companies",
+      "method": "PUT",
+      "path": "/{company_id}/profile",
+      "handler": "update_company_profile",
+      "file": "yance-ai/app/api/routes/companies.py",
+      "line": 110,
+      "full_path": "/api/v1/companies/{company_id}/profile"
+    },
+    {
+      "module": "companies",
+      "method": "POST",
+      "path": "/{company_id}/profile/publish",
+      "handler": "publish_profile",
+      "file": "yance-ai/app/api/routes/companies.py",
+      "line": 133,
+      "full_path": "/api/v1/companies/{company_id}/profile/publish"
+    },
+    {
+      "module": "companies",
+      "method": "GET",
+      "path": "/{company_id}/profile/versions",
+      "handler": "list_profile_versions",
+      "file": "yance-ai/app/api/routes/companies.py",
+      "line": 159,
+      "full_path": "/api/v1/companies/{company_id}/profile/versions"
+    },
+    {
+      "module": "companies",
+      "method": "DELETE",
+      "path": "/{company_id}",
+      "handler": "delete_company",
+      "file": "yance-ai/app/api/routes/companies.py",
+      "line": 178,
+      "full_path": "/api/v1/companies/{company_id}"
+    },
+    {
+      "module": "demo",
+      "method": "GET",
+      "path": "/scenarios",
+      "handler": "list_demo_scenarios",
+      "file": "yance-ai/app/api/routes/demo.py",
+      "line": 63,
+      "full_path": "/api/v1/demo/scenarios"
+    },
+    {
+      "module": "demo",
+      "method": "GET",
+      "path": "/scenarios/{key}",
+      "handler": "get_demo_scenario",
+      "file": "yance-ai/app/api/routes/demo.py",
+      "line": 85,
+      "full_path": "/api/v1/demo/scenarios/{key}"
+    },
+    {
+      "module": "demo",
+      "method": "GET",
+      "path": "/scenarios/{key}/artifacts/{artifact_id}/download",
+      "handler": "download_demo_artifact",
+      "file": "yance-ai/app/api/routes/demo.py",
+      "line": 309,
+      "full_path": "/api/v1/demo/scenarios/{key}/artifacts/{artifact_id}/download"
+    },
+    {
+      "module": "demo_match",
+      "method": "POST",
+      "path": "/reports/match",
+      "handler": "generate_match_report",
+      "file": "yance-ai/app/api/routes/demo_match.py",
+      "line": 82,
+      "full_path": "/api/v1/reports/match"
+    },
+    {
+      "module": "demo_match",
+      "method": "GET",
+      "path": "/reports/{company_id}/download",
+      "handler": "download_match_report_pdf",
+      "file": "yance-ai/app/api/routes/demo_match.py",
+      "line": 182,
+      "full_path": "/api/v1/reports/{company_id}/download"
+    },
+    {
+      "module": "demo_match",
+      "method": "GET",
+      "path": "/products",
+      "handler": "get_products",
+      "file": "yance-ai/app/api/routes/demo_match.py",
+      "line": 239,
+      "full_path": "/api/v1/products"
+    },
+    {
+      "module": "demo_match",
+      "method": "POST",
+      "path": "/payments/demo-pay",
+      "handler": "demo_payment",
+      "file": "yance-ai/app/api/routes/demo_match.py",
+      "line": 269,
+      "full_path": "/api/v1/payments/demo-pay"
+    },
+    {
+      "module": "demo_match",
+      "method": "GET",
+      "path": "/entitlements",
+      "handler": "get_entitlements",
+      "file": "yance-ai/app/api/routes/demo_match.py",
+      "line": 378,
+      "full_path": "/api/v1/entitlements"
+    },
+    {
+      "module": "demo_match",
+      "method": "GET",
+      "path": "/analytics/stats",
+      "handler": "get_analytics_stats",
+      "file": "yance-ai/app/api/routes/demo_match.py",
+      "line": 408,
+      "full_path": "/api/v1/analytics/stats"
+    },
+    {
+      "module": "documents",
+      "method": "GET",
+      "path": "",
+      "handler": "list_documents",
+      "file": "yance-ai/app/api/routes/documents.py",
+      "line": 70,
+      "full_path": "/api/v1/documents"
+    },
+    {
+      "module": "documents",
+      "method": "POST",
+      "path": "/url",
+      "handler": "import_document_url",
+      "file": "yance-ai/app/api/routes/documents.py",
+      "line": 93,
+      "full_path": "/api/v1/documents/url"
+    },
+    {
+      "module": "documents",
+      "method": "GET",
+      "path": "/{document_id}",
+      "handler": "get_document",
+      "file": "yance-ai/app/api/routes/documents.py",
+      "line": 236,
+      "full_path": "/api/v1/documents/{document_id}"
+    },
+    {
+      "module": "documents",
+      "method": "POST",
+      "path": "/presign-upload",
+      "handler": "presign_upload",
+      "file": "yance-ai/app/api/routes/documents.py",
+      "line": 245,
+      "full_path": "/api/v1/documents/presign-upload"
+    },
+    {
+      "module": "documents",
+      "method": "POST",
+      "path": "/{document_id}/complete",
+      "handler": "complete_upload",
+      "file": "yance-ai/app/api/routes/documents.py",
+      "line": 293,
+      "full_path": "/api/v1/documents/{document_id}/complete"
+    },
+    {
+      "module": "documents",
+      "method": "POST",
+      "path": "/{document_id}/ingest",
+      "handler": "ingest_document",
+      "file": "yance-ai/app/api/routes/documents.py",
+      "line": 334,
+      "full_path": "/api/v1/documents/{document_id}/ingest"
+    },
+    {
+      "module": "documents",
+      "method": "POST",
+      "path": "/{document_id}/facts/review",
+      "handler": "review_document_facts",
+      "file": "yance-ai/app/api/routes/documents.py",
+      "line": 376,
+      "full_path": "/api/v1/documents/{document_id}/facts/review"
+    },
+    {
+      "module": "enterprise",
+      "method": "GET",
+      "path": "/api-keys",
+      "handler": "list_api_keys",
+      "file": "yance-ai/app/api/routes/enterprise.py",
+      "line": 77,
+      "full_path": "/api/v1/enterprise/api-keys"
+    },
+    {
+      "module": "enterprise",
+      "method": "POST",
+      "path": "/api-keys",
+      "handler": "issue_api_key",
+      "file": "yance-ai/app/api/routes/enterprise.py",
+      "line": 83,
+      "full_path": "/api/v1/enterprise/api-keys"
+    },
+    {
+      "module": "enterprise",
+      "method": "POST",
+      "path": "/api-keys/{key_id}/revoke",
+      "handler": "revoke_api_key",
+      "file": "yance-ai/app/api/routes/enterprise.py",
+      "line": 91,
+      "full_path": "/api/v1/enterprise/api-keys/{key_id}/revoke"
+    },
+    {
+      "module": "enterprise",
+      "method": "GET",
+      "path": "/retention",
+      "handler": "get_retention",
+      "file": "yance-ai/app/api/routes/enterprise.py",
+      "line": 103,
+      "full_path": "/api/v1/enterprise/retention"
+    },
+    {
+      "module": "enterprise",
+      "method": "PUT",
+      "path": "/retention",
+      "handler": "update_retention",
+      "file": "yance-ai/app/api/routes/enterprise.py",
+      "line": 110,
+      "full_path": "/api/v1/enterprise/retention"
+    },
+    {
+      "module": "enterprise",
+      "method": "GET",
+      "path": "/exports",
+      "handler": "list_exports",
+      "file": "yance-ai/app/api/routes/enterprise.py",
+      "line": 121,
+      "full_path": "/api/v1/enterprise/exports"
+    },
+    {
+      "module": "enterprise",
+      "method": "POST",
+      "path": "/exports",
+      "handler": "create_export",
+      "file": "yance-ai/app/api/routes/enterprise.py",
+      "line": 127,
+      "full_path": "/api/v1/enterprise/exports"
+    },
+    {
+      "module": "enterprise",
+      "method": "GET",
+      "path": "/exports/{job_id}/download",
+      "handler": "download_export",
+      "file": "yance-ai/app/api/routes/enterprise.py",
+      "line": 135,
+      "full_path": "/api/v1/enterprise/exports/{job_id}/download"
+    },
+    {
+      "module": "enterprise",
+      "method": "GET",
+      "path": "/deletion-request",
+      "handler": "get_deletion_request",
+      "file": "yance-ai/app/api/routes/enterprise.py",
+      "line": 143,
+      "full_path": "/api/v1/enterprise/deletion-request"
+    },
+    {
+      "module": "enterprise",
+      "method": "POST",
+      "path": "/deletion-request",
+      "handler": "schedule_deletion",
+      "file": "yance-ai/app/api/routes/enterprise.py",
+      "line": 149,
+      "full_path": "/api/v1/enterprise/deletion-request"
+    },
+    {
+      "module": "enterprise",
+      "method": "POST",
+      "path": "/deletion-request/{request_id}/cancel",
+      "handler": "cancel_deletion",
+      "file": "yance-ai/app/api/routes/enterprise.py",
+      "line": 165,
+      "full_path": "/api/v1/enterprise/deletion-request/{request_id}/cancel"
+    },
+    {
+      "module": "enterprise",
+      "method": "GET",
+      "path": "/feature-flags",
+      "handler": "get_feature_flags",
+      "file": "yance-ai/app/api/routes/enterprise.py",
+      "line": 177,
+      "full_path": "/api/v1/enterprise/feature-flags"
+    },
+    {
+      "module": "enterprise",
+      "method": "GET",
+      "path": "/audit-logs",
+      "handler": "list_audit_logs",
+      "file": "yance-ai/app/api/routes/enterprise.py",
+      "line": 182,
+      "full_path": "/api/v1/enterprise/audit-logs"
+    },
+    {
+      "module": "funding_os",
+      "method": "GET",
+      "path": "/notifications",
+      "handler": "list_notifications",
+      "file": "yance-ai/app/api/routes/funding_os.py",
+      "line": 97,
+      "full_path": "/api/v1/notifications"
+    },
+    {
+      "module": "funding_os",
+      "method": "GET",
+      "path": "/notifications/unread-count",
+      "handler": "unread_count",
+      "file": "yance-ai/app/api/routes/funding_os.py",
+      "line": 110,
+      "full_path": "/api/v1/notifications/unread-count"
+    },
+    {
+      "module": "funding_os",
+      "method": "POST",
+      "path": "/notifications/scan",
+      "handler": "trigger_deadline_scan",
+      "file": "yance-ai/app/api/routes/funding_os.py",
+      "line": 126,
+      "full_path": "/api/v1/notifications/scan"
+    },
+    {
+      "module": "funding_os",
+      "method": "POST",
+      "path": "/notifications/{notification_id}/read",
+      "handler": "mark_read",
+      "file": "yance-ai/app/api/routes/funding_os.py",
+      "line": 135,
+      "full_path": "/api/v1/notifications/{notification_id}/read"
+    },
+    {
+      "module": "funding_os",
+      "method": "POST",
+      "path": "/notifications/read-all",
+      "handler": "mark_all_read",
+      "file": "yance-ai/app/api/routes/funding_os.py",
+      "line": 155,
+      "full_path": "/api/v1/notifications/read-all"
+    },
+    {
+      "module": "funding_os",
+      "method": "POST",
+      "path": "/consultant/ask",
+      "handler": "ask_consultant",
+      "file": "yance-ai/app/api/routes/funding_os.py",
+      "line": 173,
+      "full_path": "/api/v1/consultant/ask"
+    },
+    {
+      "module": "funding_os",
+      "method": "GET",
+      "path": "/funding/summary",
+      "handler": "funding_summary",
+      "file": "yance-ai/app/api/routes/funding_os.py",
+      "line": 187,
+      "full_path": "/api/v1/funding/summary"
+    },
+    {
+      "module": "funding_os",
+      "method": "GET",
+      "path": "/applications/{application_id}/milestones",
+      "handler": "list_milestones",
+      "file": "yance-ai/app/api/routes/funding_os.py",
+      "line": 324,
+      "full_path": "/api/v1/applications/{application_id}/milestones"
+    },
+    {
+      "module": "funding_os",
+      "method": "POST",
+      "path": "/applications/{application_id}/milestones",
+      "handler": "create_milestone",
+      "file": "yance-ai/app/api/routes/funding_os.py",
+      "line": 350,
+      "full_path": "/api/v1/applications/{application_id}/milestones"
+    },
+    {
+      "module": "funding_os",
+      "method": "PATCH",
+      "path": "/milestones/{milestone_id}",
+      "handler": "update_milestone",
+      "file": "yance-ai/app/api/routes/funding_os.py",
+      "line": 379,
+      "full_path": "/api/v1/milestones/{milestone_id}"
+    },
+    {
+      "module": "funding_os",
+      "method": "DELETE",
+      "path": "/milestones/{milestone_id}",
+      "handler": "delete_milestone",
+      "file": "yance-ai/app/api/routes/funding_os.py",
+      "line": 408,
+      "full_path": "/api/v1/milestones/{milestone_id}"
+    },
+    {
+      "module": "health",
+      "method": "GET",
+      "path": "/health",
+      "handler": "health",
+      "file": "yance-ai/app/api/routes/health.py",
+      "line": 12,
+      "full_path": "/api/v1/health"
+    },
+    {
+      "module": "health",
+      "method": "GET",
+      "path": "/health/ready",
+      "handler": "readiness",
+      "file": "yance-ai/app/api/routes/health.py",
+      "line": 17,
+      "full_path": "/api/v1/health/ready"
+    },
+    {
+      "module": "payments",
+      "method": "POST",
+      "path": "/alipay/page-pay",
+      "handler": "alipay_page_pay",
+      "file": "yance-ai/app/api/routes/payments.py",
+      "line": 147,
+      "full_path": "/api/v1/payments/alipay/page-pay"
+    },
+    {
+      "module": "payments",
+      "method": "POST",
+      "path": "/alipay/notify",
+      "handler": "alipay_notify",
+      "file": "yance-ai/app/api/routes/payments.py",
+      "line": 221,
+      "full_path": "/api/v1/payments/alipay/notify"
+    },
+    {
+      "module": "payments",
+      "method": "POST",
+      "path": "/alipay/return",
+      "handler": "alipay_return",
+      "file": "yance-ai/app/api/routes/payments.py",
+      "line": 289,
+      "full_path": "/api/v1/payments/alipay/return"
+    },
+    {
+      "module": "payments",
+      "method": "POST",
+      "path": "/wechat/native",
+      "handler": "wechat_native",
+      "file": "yance-ai/app/api/routes/payments.py",
+      "line": 332,
+      "full_path": "/api/v1/payments/wechat/native"
+    },
+    {
+      "module": "payments",
+      "method": "POST",
+      "path": "/wechat/notify",
+      "handler": "wechat_notify",
+      "file": "yance-ai/app/api/routes/payments.py",
+      "line": 384,
+      "full_path": "/api/v1/payments/wechat/notify"
+    },
+    {
+      "module": "payments",
+      "method": "POST",
+      "path": "/wechat/query",
+      "handler": "wechat_query",
+      "file": "yance-ai/app/api/routes/payments.py",
+      "line": 448,
+      "full_path": "/api/v1/payments/wechat/query"
+    },
+    {
+      "module": "payments",
+      "method": "POST",
+      "path": "/checkout",
+      "handler": "create_checkout_session",
+      "file": "yance-ai/app/api/routes/payments.py",
+      "line": 490,
+      "full_path": "/api/v1/payments/checkout"
+    },
+    {
+      "module": "payments",
+      "method": "POST",
+      "path": "/webhook",
+      "handler": "stripe_webhook",
+      "file": "yance-ai/app/api/routes/payments.py",
+      "line": 554,
+      "full_path": "/api/v1/payments/webhook"
+    },
+    {
+      "module": "payments",
+      "method": "GET",
+      "path": "/info",
+      "handler": "get_bank_info",
+      "file": "yance-ai/app/api/routes/payments.py",
+      "line": 622,
+      "full_path": "/api/v1/bank/info"
+    },
+    {
+      "module": "payments",
+      "method": "POST",
+      "path": "/orders/{order_id}/receipt",
+      "handler": "upload_bank_receipt",
+      "file": "yance-ai/app/api/routes/payments.py",
+      "line": 648,
+      "full_path": "/api/v1/bank/orders/{order_id}/receipt"
+    },
+    {
+      "module": "payments",
+      "method": "POST",
+      "path": "/payments/{payment_id}/verify",
+      "handler": "verify_bank_transfer",
+      "file": "yance-ai/app/api/routes/payments.py",
+      "line": 659,
+      "full_path": "/api/v1/bank/payments/{payment_id}/verify"
+    },
+    {
+      "module": "policies",
+      "method": "GET",
+      "path": "/policies",
+      "handler": "list_policies",
+      "file": "yance-ai/app/api/routes/policies.py",
+      "line": 41,
+      "full_path": "/api/v1/policies"
+    },
+    {
+      "module": "policies",
+      "method": "POST",
+      "path": "/policies",
+      "handler": "create_policy",
+      "file": "yance-ai/app/api/routes/policies.py",
+      "line": 48,
+      "full_path": "/api/v1/policies"
+    },
+    {
+      "module": "policies",
+      "method": "GET",
+      "path": "/policies/{policy_id}",
+      "handler": "get_policy",
+      "file": "yance-ai/app/api/routes/policies.py",
+      "line": 63,
+      "full_path": "/api/v1/policies/{policy_id}"
+    },
+    {
+      "module": "policies",
+      "method": "PUT",
+      "path": "/policies/{policy_id}",
+      "handler": "update_policy",
+      "file": "yance-ai/app/api/routes/policies.py",
+      "line": 80,
+      "full_path": "/api/v1/policies/{policy_id}"
+    },
+    {
+      "module": "policies",
+      "method": "POST",
+      "path": "/test-embed",
+      "handler": "test_embed",
+      "file": "yance-ai/app/api/routes/policies.py",
+      "line": 101,
+      "full_path": "/api/v1/test-embed"
+    },
+    {
+      "module": "policies",
+      "method": "POST",
+      "path": "/policies/search",
+      "handler": "search_policies",
+      "file": "yance-ai/app/api/routes/policies.py",
+      "line": 114,
+      "full_path": "/api/v1/policies/search"
+    },
+    {
+      "module": "policies",
+      "method": "GET",
+      "path": "/policy-rules",
+      "handler": "list_policy_rules",
+      "file": "yance-ai/app/api/routes/policies.py",
+      "line": 137,
+      "full_path": "/api/v1/policy-rules"
+    },
+    {
+      "module": "policies",
+      "method": "POST",
+      "path": "/policy-rules",
+      "handler": "create_policy_rule",
+      "file": "yance-ai/app/api/routes/policies.py",
+      "line": 146,
+      "full_path": "/api/v1/policy-rules"
+    },
+    {
+      "module": "policies",
+      "method": "GET",
+      "path": "/eligibility-rules",
+      "handler": "list_eligibility_rules",
+      "file": "yance-ai/app/api/routes/policies.py",
+      "line": 167,
+      "full_path": "/api/v1/eligibility-rules"
+    },
+    {
+      "module": "policies",
+      "method": "POST",
+      "path": "/eligibility-rules",
+      "handler": "create_eligibility_rule",
+      "file": "yance-ai/app/api/routes/policies.py",
+      "line": 191,
+      "full_path": "/api/v1/eligibility-rules"
+    },
+    {
+      "module": "policies",
+      "method": "POST",
+      "path": "/required-materials",
+      "handler": "create_required_material",
+      "file": "yance-ai/app/api/routes/policies.py",
+      "line": 250,
+      "full_path": "/api/v1/required-materials"
+    },
+    {
+      "module": "policies",
+      "method": "POST",
+      "path": "/policy-benefits",
+      "handler": "create_policy_benefit",
+      "file": "yance-ai/app/api/routes/policies.py",
+      "line": 274,
+      "full_path": "/api/v1/policy-benefits"
+    },
+    {
+      "module": "policies",
+      "method": "POST",
+      "path": "/policies/parse-amounts",
+      "handler": "parse_support_amounts",
+      "file": "yance-ai/app/api/routes/policies.py",
+      "line": 298,
+      "full_path": "/api/v1/policies/parse-amounts"
+    },
+    {
+      "module": "policy_engine",
+      "method": "POST",
+      "path": "/evaluate",
+      "handler": "evaluate",
+      "file": "yance-ai/app/api/routes/policy_engine.py",
+      "line": 29,
+      "full_path": "/api/v1/policy-engine/evaluate"
+    },
+    {
+      "module": "reports",
+      "method": "POST",
+      "path": "/reports/generate",
+      "handler": "generate_report",
+      "file": "yance-ai/app/api/routes/reports.py",
+      "line": 34,
+      "full_path": "/api/v1/reports/generate"
+    },
+    {
+      "module": "sms_auth",
+      "method": "POST",
+      "path": "/send",
+      "handler": "send",
+      "file": "yance-ai/app/api/routes/sms_auth.py",
+      "line": 134,
+      "full_path": "/api/v1/auth/sms/send"
+    },
+    {
+      "module": "sms_auth",
+      "method": "POST",
+      "path": "/verify",
+      "handler": "verify",
+      "file": "yance-ai/app/api/routes/sms_auth.py",
+      "line": 139,
+      "full_path": "/api/v1/auth/sms/verify"
+    },
+    {
+      "module": "sms_auth",
+      "method": "POST",
+      "path": "/bind/send",
+      "handler": "bind_send",
+      "file": "yance-ai/app/api/routes/sms_auth.py",
+      "line": 218,
+      "full_path": "/api/v1/auth/sms/bind/send"
+    },
+    {
+      "module": "sms_auth",
+      "method": "POST",
+      "path": "/bind",
+      "handler": "bind",
+      "file": "yance-ai/app/api/routes/sms_auth.py",
+      "line": 228,
+      "full_path": "/api/v1/auth/sms/bind"
+    },
+    {
+      "module": "tasks",
+      "method": "POST",
+      "path": "",
+      "handler": "create_task",
+      "file": "yance-ai/app/api/routes/tasks.py",
+      "line": 55,
+      "full_path": "/api/v1/tasks"
+    },
+    {
+      "module": "tasks",
+      "method": "GET",
+      "path": "",
+      "handler": "list_tasks",
+      "file": "yance-ai/app/api/routes/tasks.py",
+      "line": 72,
+      "full_path": "/api/v1/tasks"
+    },
+    {
+      "module": "tasks",
+      "method": "GET",
+      "path": "/{task_id}",
+      "handler": "get_task",
+      "file": "yance-ai/app/api/routes/tasks.py",
+      "line": 95,
+      "full_path": "/api/v1/tasks/{task_id}"
+    },
+    {
+      "module": "tasks",
+      "method": "POST",
+      "path": "/{task_id}/execute",
+      "handler": "execute_task",
+      "file": "yance-ai/app/api/routes/tasks.py",
+      "line": 176,
+      "full_path": "/api/v1/tasks/{task_id}/execute"
+    },
+    {
+      "module": "tasks",
+      "method": "POST",
+      "path": "/{task_id}/pay",
+      "handler": "pay_task",
+      "file": "yance-ai/app/api/routes/tasks.py",
+      "line": 205,
+      "full_path": "/api/v1/tasks/{task_id}/pay"
+    },
+    {
+      "module": "tasks",
+      "method": "POST",
+      "path": "/{task_id}/revision",
+      "handler": "request_revision",
+      "file": "yance-ai/app/api/routes/tasks.py",
+      "line": 252,
+      "full_path": "/api/v1/tasks/{task_id}/revision"
+    },
+    {
+      "module": "tasks",
+      "method": "POST",
+      "path": "/{task_id}/accept",
+      "handler": "accept_task",
+      "file": "yance-ai/app/api/routes/tasks.py",
+      "line": 285,
+      "full_path": "/api/v1/tasks/{task_id}/accept"
+    },
+    {
+      "module": "tasks",
+      "method": "GET",
+      "path": "/{task_id}/download",
+      "handler": "download_pdf",
+      "file": "yance-ai/app/api/routes/tasks.py",
+      "line": 308,
+      "full_path": "/api/v1/tasks/{task_id}/download"
+    },
+    {
+      "module": "tasks",
+      "method": "GET",
+      "path": "/{task_id}/next-actions",
+      "handler": "next_best_actions",
+      "file": "yance-ai/app/api/routes/tasks.py",
+      "line": 358,
+      "full_path": "/api/v1/tasks/{task_id}/next-actions"
+    },
+    {
+      "module": "tasks",
+      "method": "GET",
+      "path": "/admin/all",
+      "handler": "admin_tasks",
+      "file": "yance-ai/app/api/routes/tasks.py",
+      "line": 407,
+      "full_path": "/api/v1/tasks/admin/all"
+    },
+    {
+      "module": "telemetry",
+      "method": "POST",
+      "path": "/analytics/events",
+      "handler": "capture_event",
+      "file": "yance-ai/app/api/routes/telemetry.py",
+      "line": 14,
+      "full_path": "/api/v1/analytics/events"
+    },
+    {
+      "module": "telemetry",
+      "method": "POST",
+      "path": "/agent-runs",
+      "handler": "start_agent_run",
+      "file": "yance-ai/app/api/routes/telemetry.py",
+      "line": 26,
+      "full_path": "/api/v1/agent-runs"
+    },
+    {
+      "module": "telemetry",
+      "method": "PATCH",
+      "path": "/agent-runs/{run_id}",
+      "handler": "finish_agent_run",
+      "file": "yance-ai/app/api/routes/telemetry.py",
+      "line": 38,
+      "full_path": "/api/v1/agent-runs/{run_id}"
+    },
+    {
+      "module": "tenants",
+      "method": "GET",
+      "path": "/tenant",
+      "handler": "current_tenant",
+      "file": "yance-ai/app/api/routes/tenants.py",
+      "line": 17,
+      "full_path": "/api/v1/tenant"
+    },
+    {
+      "module": "tenants",
+      "method": "GET",
+      "path": "/users",
+      "handler": "list_users",
+      "file": "yance-ai/app/api/routes/tenants.py",
+      "line": 27,
+      "full_path": "/api/v1/users"
+    },
+    {
+      "module": "tenants",
+      "method": "POST",
+      "path": "/users",
+      "handler": "create_user",
+      "file": "yance-ai/app/api/routes/tenants.py",
+      "line": 35,
+      "full_path": "/api/v1/users"
+    },
+    {
+      "module": "workflow",
+      "method": "GET",
+      "path": "/policy-scans",
+      "handler": "list_policy_scans",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 134,
+      "full_path": "/api/v1/policy-scans"
+    },
+    {
+      "module": "workflow",
+      "method": "POST",
+      "path": "/policy-scans",
+      "handler": "create_policy_scan",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 146,
+      "full_path": "/api/v1/policy-scans"
+    },
+    {
+      "module": "workflow",
+      "method": "GET",
+      "path": "/policy-scans/{scan_id}",
+      "handler": "get_policy_scan",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 275,
+      "full_path": "/api/v1/policy-scans/{scan_id}"
+    },
+    {
+      "module": "workflow",
+      "method": "GET",
+      "path": "/opportunities",
+      "handler": "list_opportunities",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 284,
+      "full_path": "/api/v1/opportunities"
+    },
+    {
+      "module": "workflow",
+      "method": "POST",
+      "path": "/opportunities",
+      "handler": "create_opportunity_disabled",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 301,
+      "full_path": "/api/v1/opportunities"
+    },
+    {
+      "module": "workflow",
+      "method": "GET",
+      "path": "/opportunities/{opportunity_id}",
+      "handler": "get_opportunity",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 311,
+      "full_path": "/api/v1/opportunities/{opportunity_id}"
+    },
+    {
+      "module": "workflow",
+      "method": "POST",
+      "path": "/opportunities/{opportunity_id}/opened",
+      "handler": "record_opportunity_opened",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 432,
+      "full_path": "/api/v1/opportunities/{opportunity_id}/opened"
+    },
+    {
+      "module": "workflow",
+      "method": "GET",
+      "path": "/applications",
+      "handler": "list_applications",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 461,
+      "full_path": "/api/v1/applications"
+    },
+    {
+      "module": "workflow",
+      "method": "POST",
+      "path": "/applications",
+      "handler": "create_application",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 474,
+      "full_path": "/api/v1/applications"
+    },
+    {
+      "module": "workflow",
+      "method": "GET",
+      "path": "/applications/{application_id}",
+      "handler": "get_application",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 634,
+      "full_path": "/api/v1/applications/{application_id}"
+    },
+    {
+      "module": "workflow",
+      "method": "PATCH",
+      "path": "/applications/{application_id}",
+      "handler": "update_application",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 798,
+      "full_path": "/api/v1/applications/{application_id}"
+    },
+    {
+      "module": "workflow",
+      "method": "PATCH",
+      "path": "/applications/{application_id}/status",
+      "handler": "update_application_status",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 825,
+      "full_path": "/api/v1/applications/{application_id}/status"
+    },
+    {
+      "module": "workflow",
+      "method": "PATCH",
+      "path": "/applications/{application_id}/requirements/{requirement_id}",
+      "handler": "update_requirement_status",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 940,
+      "full_path": "/api/v1/applications/{application_id}/requirements/{requirement_id}"
+    },
+    {
+      "module": "workflow",
+      "method": "POST",
+      "path": "/applications/{application_id}/documents",
+      "handler": "link_application_document",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 977,
+      "full_path": "/api/v1/applications/{application_id}/documents"
+    },
+    {
+      "module": "workflow",
+      "method": "POST",
+      "path": "/applications/{application_id}/comments",
+      "handler": "create_application_comment",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 1046,
+      "full_path": "/api/v1/applications/{application_id}/comments"
+    },
+    {
+      "module": "workflow",
+      "method": "POST",
+      "path": "/applications/{application_id}/agent-actions",
+      "handler": "application_agent_action",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 1160,
+      "full_path": "/api/v1/applications/{application_id}/agent-actions"
+    },
+    {
+      "module": "workflow",
+      "method": "POST",
+      "path": "/applications/{application_id}/artifacts/{artifact_id}/review",
+      "handler": "review_application_artifact",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 1307,
+      "full_path": "/api/v1/applications/{application_id}/artifacts/{artifact_id}/review"
+    },
+    {
+      "module": "workflow",
+      "method": "POST",
+      "path": "/applications/{application_id}/artifacts/{artifact_id}/edit",
+      "handler": "edit_application_artifact",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 1391,
+      "full_path": "/api/v1/applications/{application_id}/artifacts/{artifact_id}/edit"
+    },
+    {
+      "module": "workflow",
+      "method": "GET",
+      "path": "/applications/{application_id}/artifacts/{artifact_id}/download",
+      "handler": "download_application_artifact",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 1459,
+      "full_path": "/api/v1/applications/{application_id}/artifacts/{artifact_id}/download"
+    },
+    {
+      "module": "workflow",
+      "method": "POST",
+      "path": "/applications/{application_id}/evidence-tasks",
+      "handler": "create_evidence_tasks",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 1495,
+      "full_path": "/api/v1/applications/{application_id}/evidence-tasks"
+    },
+    {
+      "module": "workflow",
+      "method": "POST",
+      "path": "/applications/{application_id}/comments/{comment_id}/decision",
+      "handler": "decide_application_suggestion",
+      "file": "yance-ai/app/api/routes/workflow.py",
+      "line": 1558,
+      "full_path": "/api/v1/applications/{application_id}/comments/{comment_id}/decision"
+    }
+  ],
+  "models": [
+    {
+      "model": "Tenant",
+      "table": "tenants",
+      "line": 51
+    },
+    {
+      "model": "DemoScenario",
+      "table": "demo_scenarios",
+      "line": 62
+    },
+    {
+      "model": "User",
+      "table": "users",
+      "line": 109
+    },
+    {
+      "model": "Membership",
+      "table": "memberships",
+      "line": 123
+    },
+    {
+      "model": "Company",
+      "table": "companies",
+      "line": 136
+    },
+    {
+      "model": "CompanyProfile",
+      "table": "company_profiles",
+      "line": 147
+    },
+    {
+      "model": "CompanyProfileVersion",
+      "table": "company_profile_versions",
+      "line": 163
+    },
+    {
+      "model": "CompanyFact",
+      "table": "company_facts",
+      "line": 184
+    },
+    {
+      "model": "Document",
+      "table": "documents",
+      "line": 208
+    },
+    {
+      "model": "DocumentIngestionRun",
+      "table": "document_ingestion_runs",
+      "line": 227
+    },
+    {
+      "model": "DocumentContent",
+      "table": "document_contents",
+      "line": 253
+    },
+    {
+      "model": "DocumentChunk",
+      "table": "document_chunks",
+      "line": 272
+    },
+    {
+      "model": "DocumentFactCandidate",
+      "table": "document_fact_candidates",
+      "line": 293
+    },
+    {
+      "model": "Policy",
+      "table": "policies",
+      "line": 322
+    },
+    {
+      "model": "PolicyRule",
+      "table": "policy_rules",
+      "line": 370
+    },
+    {
+      "model": "PolicyVersion",
+      "table": "policy_versions",
+      "line": 382
+    },
+    {
+      "model": "PolicyChunk",
+      "table": "policy_chunks",
+      "line": 411
+    },
+    {
+      "model": "EligibilityRule",
+      "table": "eligibility_rules",
+      "line": 438
+    },
+    {
+      "model": "RequiredMaterial",
+      "table": "required_materials",
+      "line": 462
+    },
+    {
+      "model": "PolicyBenefit",
+      "table": "policy_benefits",
+      "line": 481
+    },
+    {
+      "model": "PolicyScan",
+      "table": "policy_scans",
+      "line": 500
+    },
+    {
+      "model": "Opportunity",
+      "table": "opportunities",
+      "line": 532
+    },
+    {
+      "model": "EligibilityResult",
+      "table": "eligibility_results",
+      "line": 562
+    },
+    {
+      "model": "Evidence",
+      "table": "evidence",
+      "line": 589
+    },
+    {
+      "model": "Application",
+      "table": "applications",
+      "line": 621
+    },
+    {
+      "model": "ApplicationRequirement",
+      "table": "application_requirements",
+      "line": 641
+    },
+    {
+      "model": "ApplicationActivity",
+      "table": "application_activities",
+      "line": 656
+    },
+    {
+      "model": "ApplicationDocumentLink",
+      "table": "application_document_links",
+      "line": 671
+    },
+    {
+      "model": "ApplicationArtifact",
+      "table": "application_artifacts",
+      "line": 702
+    },
+    {
+      "model": "ApplicationComment",
+      "table": "application_comments",
+      "line": 733
+    },
+    {
+      "model": "Order",
+      "table": "orders",
+      "line": 762
+    },
+    {
+      "model": "Payment",
+      "table": "payments",
+      "line": 777
+    },
+    {
+      "model": "PaymentEvent",
+      "table": "payment_events",
+      "line": 797
+    },
+    {
+      "model": "Invoice",
+      "table": "invoices",
+      "line": 816
+    },
+    {
+      "model": "AnalyticsEvent",
+      "table": "analytics_events",
+      "line": 847
+    },
+    {
+      "model": "Feedback",
+      "table": "feedback",
+      "line": 864
+    },
+    {
+      "model": "EvalDataset",
+      "table": "eval_datasets",
+      "line": 880
+    },
+    {
+      "model": "EvalDatasetVersion",
+      "table": "eval_dataset_versions",
+      "line": 894
+    },
+    {
+      "model": "EvalCase",
+      "table": "eval_cases",
+      "line": 912
+    },
+    {
+      "model": "EvalRun",
+      "table": "eval_runs",
+      "line": 933
+    },
+    {
+      "model": "Evaluation",
+      "table": "evaluations",
+      "line": 963
+    },
+    {
+      "model": "EvaluationDimensionScore",
+      "table": "evaluation_dimension_scores",
+      "line": 991
+    },
+    {
+      "model": "EvaluationEvidence",
+      "table": "evaluation_evidence",
+      "line": 1008
+    },
+    {
+      "model": "EvaluationError",
+      "table": "evaluation_errors",
+      "line": 1020
+    },
+    {
+      "model": "Plan",
+      "table": "plans",
+      "line": 1036
+    },
+    {
+      "model": "PriceVersion",
+      "table": "price_versions",
+      "line": 1051
+    },
+    {
+      "model": "Subscription",
+      "table": "subscriptions",
+      "line": 1071
+    },
+    {
+      "model": "SubscriptionItem",
+      "table": "subscription_items",
+      "line": 1094
+    },
+    {
+      "model": "UsageMeter",
+      "table": "usage_meters",
+      "line": 1107
+    },
+    {
+      "model": "UsageRecord",
+      "table": "usage_records",
+      "line": 1119
+    },
+    {
+      "model": "UsageBudget",
+      "table": "usage_budgets",
+      "line": 1144
+    },
+    {
+      "model": "ApiKey",
+      "table": "api_keys",
+      "line": 1160
+    },
+    {
+      "model": "RetentionPolicy",
+      "table": "retention_policies",
+      "line": 1176
+    },
+    {
+      "model": "ExportJob",
+      "table": "export_jobs",
+      "line": 1191
+    },
+    {
+      "model": "DeletionRequest",
+      "table": "deletion_requests",
+      "line": 1207
+    },
+    {
+      "model": "FeatureFlag",
+      "table": "feature_flags",
+      "line": 1220
+    },
+    {
+      "model": "TenantFeatureFlag",
+      "table": "tenant_feature_flags",
+      "line": 1229
+    },
+    {
+      "model": "Product",
+      "table": "products",
+      "line": 1239
+    },
+    {
+      "model": "Entitlement",
+      "table": "entitlements",
+      "line": 1260
+    },
+    {
+      "model": "Agent",
+      "table": "agents",
+      "line": 1279
+    },
+    {
+      "model": "Workflow",
+      "table": "workflows",
+      "line": 1294
+    },
+    {
+      "model": "WorkflowRun",
+      "table": "workflow_runs",
+      "line": 1307
+    },
+    {
+      "model": "AgentRun",
+      "table": "agent_runs",
+      "line": 1335
+    },
+    {
+      "model": "AgentStep",
+      "table": "agent_steps",
+      "line": 1376
+    },
+    {
+      "model": "ToolCall",
+      "table": "tool_calls",
+      "line": 1401
+    },
+    {
+      "model": "AgentRunError",
+      "table": "agent_run_errors",
+      "line": 1421
+    },
+    {
+      "model": "AgentRetry",
+      "table": "agent_retries",
+      "line": 1438
+    },
+    {
+      "model": "Artifact",
+      "table": "artifacts",
+      "line": 1454
+    },
+    {
+      "model": "AuditLog",
+      "table": "audit_logs",
+      "line": 1481
+    },
+    {
+      "model": "Task",
+      "table": "tasks",
+      "line": 1498
+    },
+    {
+      "model": "Deliverable",
+      "table": "deliverables",
+      "line": 1540
+    },
+    {
+      "model": "RevisionRequest",
+      "table": "revision_requests",
+      "line": 1566
+    },
+    {
+      "model": "Notification",
+      "table": "notifications",
+      "line": 1592
+    },
+    {
+      "model": "Milestone",
+      "table": "milestones",
+      "line": 1615
+    },
+    {
+      "model": "EmailCode",
+      "table": "email_codes",
+      "line": 1641
+    },
+    {
+      "model": "AuthRateLimit",
+      "table": "auth_rate_limit",
+      "line": 1666
+    },
+    {
+      "model": "NotificationDelivery",
+      "table": "notification_deliveries",
+      "line": 1680
+    },
+    {
+      "model": "LLMInvocation",
+      "table": "llm_invocations",
+      "line": 1709
+    },
+    {
+      "model": "SmsCode",
+      "table": "sms_codes",
+      "line": 1723
+    }
+  ]
+}

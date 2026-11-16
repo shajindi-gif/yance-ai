@@ -14,6 +14,7 @@ import AppShell from "@/components/workspace/AppShell";
 import styles from "@/components/workspace/AdminDashboard.module.css";
 import type { AdminInvoicePage, AdminOverview, AdminResourcePage } from "@/lib/api";
 import api from "@/lib/api";
+import pageStyles from './page.module.css';
 
 const RESOURCES = [
   ["users", "Users"], ["organizations", "Organizations"], ["companies", "Companies"],
@@ -93,11 +94,11 @@ function InvoiceQueue() {
     <div className={styles.panelHeader}><div><h2>数电票开具待办</h2><p>流程：用户在账单页申请 → 你在电子税务局开票 → 在此上传发票文件并开具（自动通知用户）。</p></div><Badge tone={items.length ? "warning" : "success"}>{items.length ? `${items.length} 待处理` : "无待办"}</Badge></div>
     {error ? <InlineAlert tone="error">{error}</InlineAlert> : null}
     {notice ? <InlineAlert tone="info">{notice}</InlineAlert> : null}
-    {items.length ? <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 10 }}>
-      {items.map((inv) => <li key={inv.id} style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, padding: "10px 12px", border: "1px solid #e2e8f0", borderRadius: 10 }}>
+    {items.length ? <ul className={pageStyles.layout}>
+      {items.map((inv) => <li key={inv.id} className={pageStyles.layout2}>
         <strong>{inv.title}</strong>
         <span className={styles.muted}>{inv.tax_number} · ¥{inv.total_amount.toFixed(2)} · {inv.invoice_no} · {new Date(inv.created_at).toLocaleString("zh-CN")}</span>
-        <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+        <span className={pageStyles.label}>
           <input type="file" accept=".pdf,.ofd,.png,.jpg,.jpeg" aria-label={`选择 ${inv.title} 的发票文件`} onChange={(e) => { filesRef.current[inv.id] = e.target.files?.[0] || null; }} />
           <Button type="button" disabled={busy === inv.id} onClick={() => issue(inv.id)}>{busy === inv.id ? "处理中…" : "上传并开具"}</Button>
           <Button type="button" variant="secondary" disabled={busy === inv.id} onClick={() => reject(inv.id)}>驳回</Button>

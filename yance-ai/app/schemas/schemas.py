@@ -79,7 +79,8 @@ class UserCreate(BaseModel):
 class UserOut(ORMModel):
     id: UUID
     tenant_id: UUID
-    email: EmailStr
+    email: EmailStr | None
+    phone: str | None = None
     full_name: str
     role: UserRole
     is_active: bool
@@ -436,6 +437,9 @@ class ApplicationDocumentLinkCreate(BaseModel):
 
 
 class ApplicationCommentCreate(BaseModel):
+    client_request_id: UUID | None = None
+    proposed_summary: str | None = Field(default=None, min_length=2, max_length=5000)
+    artifact_id: UUID | None = None
     body: str = Field(min_length=1, max_length=4000)
 
 
@@ -464,6 +468,7 @@ class ApplicationArtifactReview(BaseModel):
 class OrderCreate(BaseModel):
     product_code: str
     resource_id: UUID | None = None
+    client_request_id: UUID | None = None
 
 
 class PaymentCreate(BaseModel):
@@ -521,6 +526,7 @@ class OrderOut(ORMModel):
     currency: str
     resource_type: str | None
     resource_id: UUID | None
+    expires_at: datetime | None = None
     status: str
     created_at: datetime
 
@@ -532,9 +538,17 @@ class AnalyticsEventCreate(BaseModel):
 
 
 class FeedbackCreate(BaseModel):
-    category: Literal["product", "data", "policy", "billing", "support"] = "product"
+    category: Literal["product", "data", "policy", "billing", "support", "sales"] = "product"
     message: str = Field(min_length=2, max_length=5000)
     route: str | None = Field(default=None, max_length=500)
+    client_request_id: UUID | None = None
+
+    @model_validator(mode="after")
+    def validate_message(self):
+        self.message = self.message.strip()
+        if len(self.message) < 2:
+            raise ValueError("反馈内容去除空白后至少需要两个字符")
+        return self
 
 
 class FeedbackStatusUpdate(BaseModel):

@@ -40,7 +40,8 @@ def test_sign_and_verify_are_symmetric(wechat_test_keys):
     assert wx._verify_with_key("tampered message", signature) is False
 
 
-def test_notify_signature_verification_matches_scheme(wechat_test_keys):
+def test_notify_signature_verification_matches_scheme(wechat_test_keys, monkeypatch):
+    monkeypatch.setattr(wx.time, "time", lambda: 1700000000)
     timestamp, nonce, body = "1700000000", "ABC123", '{"id":"evt"}'
     message = f"{timestamp}\n{nonce}\n{body}\n"
     signer = PKCS1_v1_5.new(wechat_test_keys)
@@ -87,3 +88,9 @@ def test_transaction_identity_must_match_merchant_and_app(wechat_test_keys):
     assert wx.trade_identity_matches({"mchid":"1900000001", "appid":"wxtestappid"})
     assert not wx.trade_identity_matches({"mchid":"foreign", "appid":"wxtestappid"})
     assert not wx.trade_identity_matches({"mchid":"1900000001", "appid":"foreign"})
+
+
+def test_notify_rejects_old_future_and_invalid_timestamps(wechat_test_keys, monkeypatch):
+    monkeypatch.setattr(wx.time, "time", lambda: 1700000000)
+    for timestamp in ("1699999699", "1700000301", "invalid", ""):
+        assert not wx.verify_notify_signature(timestamp,"nonce","{}","signature","PUB_KEY_ID_TEST")

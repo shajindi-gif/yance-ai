@@ -1,0 +1,7 @@
+backup_restored=true
+regular_files_compared=14541
+excluded=.next/cache; symlink targets not hashed
+backup_sha256=609268ca250cce7fb7d44094440367a62e508d1874f763e937d873d2e6a913b3
+backup=/opt/yance/backups/website-web-20261026-01/website-before.tar.gz
+restore=/opt/yance/releases/website-restore-web-20261026-01
+restored_http_checks=/,/pricing,/login,/api/v1/products,/api/v1/auth/config:200

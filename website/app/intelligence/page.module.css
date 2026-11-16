@@ -1,0 +1,19 @@
+.page { max-width:1100px; margin:auto; padding:120px clamp(20px,4vw,48px) 64px; color:var(--ink); }
+.page h1 { font-size:clamp(30px,4vw,48px); }
+.page section { margin-top:32px; background:var(--surface); padding:clamp(20px,4vw,40px); border:1px solid var(--line); border-radius:8px; scroll-margin-top:90px; }
+.page h2 { margin:6px 0 14px; font-size:clamp(22px,3vw,30px); }
+.page p,.page dd,.page li { line-height:1.8; overflow-wrap:anywhere; }
+.page small { color:var(--accent); }
+.page nav { display:flex; flex-wrap:wrap; gap:12px 20px; margin:18px 0; }
+.page a { color:var(--accent); text-decoration:underline; text-underline-offset:3px; }
+.page button,.page input,.page textarea { font:inherit; padding:10px 14px; border:1px solid var(--line); border-radius:6px; color:var(--ink); background:var(--surface); }
+.page button { cursor:pointer; }
+.page button[aria-pressed=true],.page form button { background:var(--accent); color:white; }
+.page button:disabled { opacity:.65; }
+.page label { display:grid; gap:6px; margin:14px 0; }
+.page textarea { min-height:120px; resize:vertical; }
+.page dl>div { padding:12px 0; border-bottom:1px solid var(--line); }
+.page dt { font-weight:600; }
+.page dd { white-space:pre-wrap; margin:4px 0; }
+.page ul { padding-left:20px; }
+.page :global(.rule-pair) { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); gap:16px; }

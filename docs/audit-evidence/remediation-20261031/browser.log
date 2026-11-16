@@ -1,0 +1,77 @@
+
+Running 19 tests using 1 worker
+
+(node:5625) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   1 [chromium] › e2e/browser-compatibility.spec.ts:6:7 › firefox: public pages and read-only workspace remain usable (3.9s)
+(node:5660) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   2 [chromium] › e2e/browser-compatibility.spec.ts:6:7 › webkit: public pages and read-only workspace remain usable (22.0s)
+  ✓   3 [chromium] › e2e/growth-journey.spec.ts:8:5 › industry assets, task paths and mobile layout (953ms)
+  ✓   4 [chromium] › e2e/growth-journey.spec.ts:19:5 › provider failure retry reuses an existing order, contract simulation only (356ms)
+  ✓   5 [chromium] › e2e/remediation.spec.ts:10:5 › nine audited page/viewport samples have no automated WCAG violations (9.0s)
+  ✓   6 [chromium] › e2e/remediation.spec.ts:23:5 › payment QR is rendered locally without an external image service (383ms)
+  ✓   7 [chromium] › e2e/remediation.spec.ts:41:5 › real isolated API: demo request is persisted privately and displayed with a server status (392ms)
+  ✓   8 [chromium] › e2e/remediation.spec.ts:57:5 › private entrances are excluded from indexing and base/embed protection is present (312ms)
+  ✓   9 [chromium] › e2e/sms-auth.spec.ts:8:5 › mobile registration through real local API, OTP replay rejected, company accessible (798ms)
+  ✓  10 [chromium] › e2e/sms-auth.spec.ts:39:5 › email account binds phone through authenticated local API (581ms)
+(node:5788) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  11 [chromium] › e2e/company-wide-closure.spec.ts:14:5 › real login returns to feedback; lost response retry creates one record and operator progress is visible (1.0s)
+  ✓  12 [chromium] › e2e/company-wide-closure.spec.ts:72:5 › unsafe post-login destinations return to the workspace (269ms)
+  ✓  13 [chromium] › e2e/frontend-redesign.spec.ts:11:5 › public design: real product image, readable mobile menu, focus containment and Escape (328ms)
+  ✓  14 [chromium] › e2e/frontend-redesign.spec.ts:35:5 › pricing error recovers into the real server catalogue without a purchase (192ms)
+  ✓  15 [chromium] › e2e/frontend-redesign.spec.ts:45:5 › real workspace: keyboard tabs, unsaved edit protection and mobile navigation (327ms)
+  ✓  16 [chromium] › e2e/frontend-redesign.spec.ts:77:5 › real workspace route sweep preserves existing core and billing entrances on mobile (1.4s)
+  ✓  17 [chromium] › e2e/frontend-redesign.spec.ts:93:5 › real isolated workflow: customer reviews a source-bound version, then downloads DOCX (565ms)
+  ✓  18 [chromium] › e2e/frontend-redesign.spec.ts:118:5 › login and registration fields expose their visible Chinese labels (153ms)
+  ✓  19 [chromium] › e2e/workspace-roles.spec.ts:5:5 › real isolated API: owner edits and rejects stale suggestion; viewer reads but cannot write (1.1s)
+
+
+  1) [chromium] › e2e/browser-compatibility.spec.ts:6:7 › firefox: public pages and read-only workspace remain usable 
+
+    Error: browserType.launch: Failed to launch the browser process.
+    Browser logs:
+
+    <launching> /Users/shajindi/Library/Caches/ms-playwright/firefox-1543/firefox/Nightly.app/Contents/MacOS/firefox -no-remote -headless -profile /var/folders/mk/24wg8v9n4gnfptzr7ktr07vr0000gp/T/playwright_firefoxdev_profile-rq6KoN -juggler-pipe -silent
+    <launched> pid=5626
+    [pid=5626][err] *** You are running in headless mode.
+    [pid=5626][err] Could not find profile folder.
+    [pid=5626] <process did exit: exitCode=1, signal=null>
+    [pid=5626] starting temporary directories cleanup
+    Call log:
+      - <launching> /Users/shajindi/Library/Caches/ms-playwright/firefox-1543/firefox/Nightly.app/Contents/MacOS/firefox -no-remote -headless -profile /var/folders/mk/24wg8v9n4gnfptzr7ktr07vr0000gp/T/playwright_firefoxdev_profile-rq6KoN -juggler-pipe -silent
+      - <launched> pid=5626
+      - [pid=5626][err] *** You are running in headless mode.
+      - [pid=5626][err] Could not find profile folder.
+      - [pid=5626] <process did exit: exitCode=1, signal=null>
+      - [pid=5626] starting temporary directories cleanup
+      - [pid=5626] <gracefully close start>
+      - [pid=5626] <kill>
+      - [pid=5626] <skipped force kill spawnedProcess.killed=false processClosed=true>
+      - [pid=5626] finished temporary directories cleanup
+      - [pid=5626] <gracefully close end>
+
+
+       7 |     test.skip(!existsSync(engine.executablePath()),'Browser engine is not installed');
+       8 |     expect(new URL(baseURL!).hostname).toMatch(/^(localhost|127\.0\.0\.1)$/);
+    >  9 |     const browser=await engine.launch();
+         |                                ^
+      10 |     try {
+      11 |       for (const width of [1440,768,390]) {
+      12 |         const context=await browser.newContext({baseURL,viewport:{width,height:900}});
+        at /Users/shajindi/yance-backup/yance/website/e2e/browser-compatibility.spec.ts:9:32
+
+    Error Context: test-results/browser-compatibility-fire-7100d-nly-workspace-remain-usable-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/browser-compatibility-fire-7100d-nly-workspace-remain-usable-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/browser-compatibility-fire-7100d-nly-workspace-remain-usable-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e/browser-compatibility.spec.ts:6:7 › firefox: public pages and read-only workspace remain usable 
+  18 passed (45.7s)

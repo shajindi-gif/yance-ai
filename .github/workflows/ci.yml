@@ -16,7 +16,7 @@ jobs:
   backend:
     name: Backend quality, migration, and tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     services:
       postgres:
         image: pgvector/pgvector:pg16
@@ -109,15 +109,25 @@ jobs:
         env:
           PGPASSWORD: ci_password
         run: |
-          pg_dump --host localhost --username yance --dbname yance_ci --format custom --file "$RUNNER_TEMP/yance-ci.dump"
-          createdb --host localhost --username yance yance_restore_ci
-          pg_restore --host localhost --username yance --dbname yance_restore_ci --exit-on-error "$RUNNER_TEMP/yance-ci.dump"
-          psql --host localhost --username yance --dbname yance_restore_ci --command 'SELECT version_num FROM alembic_version;'
+          # Match the service major version: the runner's newer pg_dump can emit
+          # settings that PostgreSQL 16 cannot restore (e.g. transaction_timeout).
+          test_pg_container=$(docker ps --filter ancestor=pgvector/pgvector:pg16 --format '{{.ID}}')
+          test -n "$test_pg_container"
+          docker exec "$test_pg_container" pg_dump --version
+          docker exec "$test_pg_container" pg_dump --username yance --dbname yance_ci --format custom > "$RUNNER_TEMP/yance-ci.dump"
+          docker exec "$test_pg_container" createdb --username yance yance_restore_ci
+          docker exec -i "$test_pg_container" pg_restore --username yance --dbname yance_restore_ci --exit-on-error < "$RUNNER_TEMP/yance-ci.dump"
+          docker exec "$test_pg_container" psql --username yance --dbname yance_restore_ci --command 'SELECT version_num FROM alembic_version;'
 
   frontend:
     name: Frontend audit, typecheck, and build
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      # An unavailable local catalogue is an honest SSR fallback during this
+      # build-only job. Never fetch the production API from an isolated check.
+      API_PROXY_TARGET: http://127.0.0.1:9
+      NEXT_PUBLIC_API_URL: /api/v1
     defaults:
       run:
         working-directory: website
@@ -138,8 +148,14 @@ jobs:
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
 
+      - name: Lint
+        run: npm run lint
+
       - name: Typecheck
         run: npm run typecheck
+
+      - name: Verify interaction guards and artifact comparison
+        run: npm run test:unit
 
       - name: Build production application
         run: npm run build
@@ -253,7 +269,7 @@ jobs:
         env:
           POSTGRES_USER: yance
           POSTGRES_PASSWORD: ci_password
-          POSTGRES_DB: yance_e2e
+          POSTGRES_DB: yance_e2e_test
         ports:
           - 5432:5432
         options: >-
@@ -263,8 +279,8 @@ jobs:
           --health-retries 10
     env:
       APP_ENV: test
-      DATABASE_URL: postgresql+psycopg://yance:ci_password@localhost:5432/yance_e2e
-      YANCE_TEST_DATABASE_ACK: yance_e2e
+      DATABASE_URL: postgresql+psycopg://yance:ci_password@localhost:5432/yance_e2e_test
+      YANCE_TEST_DATABASE_ACK: yance_e2e_test
       JWT_SECRET: ci-only-secret-at-least-32-characters
       API_KEY_PEPPER: ci-only-api-key-pepper-at-least-32-characters
       BOOTSTRAP_TOKEN: ci-only-bootstrap-token
@@ -274,6 +290,7 @@ jobs:
       NEXT_PUBLIC_API_URL: http://localhost:8011/api/v1
       PLAYWRIGHT_BASE_URL: http://localhost:3000
       PLAYWRIGHT_API_BASE_URL: http://localhost:8011/api/v1
+      API_PROXY_TARGET: http://localhost:8011
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -303,6 +320,16 @@ jobs:
           alembic upgrade head
           python scripts/seed_investor_demo.py
 
+      - name: Seed isolated evidence workspace fixture
+        working-directory: yance-ai
+        run: |
+          python tests/seed_v2_browser.py "$RUNNER_TEMP/yance-v2-browser-fixture.json"
+          echo "YANCE_V2_FIXTURE=$RUNNER_TEMP/yance-v2-browser-fixture.json" >> "$GITHUB_ENV"
+          python tests/seed_company_wide_browser.py "$RUNNER_TEMP/yance-roles-fixture.json"
+          echo "YANCE_ROLES_FIXTURE=$RUNNER_TEMP/yance-roles-fixture.json" >> "$GITHUB_ENV"
+          python tests/seed_checkout_browser.py "$RUNNER_TEMP/yance-checkout-fixture.json"
+          echo "YANCE_CHECKOUT_FIXTURE=$RUNNER_TEMP/yance-checkout-fixture.json" >> "$GITHUB_ENV"
+
       - name: Install Chromium runtime
         working-directory: website
         run: npx playwright install --with-deps chromium
@@ -310,7 +337,7 @@ jobs:
       - name: Start API
         working-directory: yance-ai
         run: |
-          nohup uvicorn app.main:app --host 127.0.0.1 --port 8011 > "$RUNNER_TEMP/yance-e2e-api.log" 2>&1 &
+          nohup env PYTHONPATH=.:tests python tests/run_browser_api.py --port 8011 > "$RUNNER_TEMP/yance-e2e-api.log" 2>&1 &
           for attempt in {1..30}; do
             if curl --fail --silent http://localhost:8011/health/ready > /dev/null; then
               exit 0

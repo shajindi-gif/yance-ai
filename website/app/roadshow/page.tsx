@@ -1,23 +1,18 @@
 import Link from 'next/link';
+import pageStyles from './page.module.css';
 
 export default function RoadshowPage() {
   return (
     <>
       {/* Page Banner */}
       <section
-        className="page-banner"
-        style={{
-          background: 'linear-gradient(135deg, #0d1b2a 0%, #1b2d44 60%, #0d1b2a 100%)',
-        }}
+        className={["page-banner", pageStyles.section].filter(Boolean).join(' ')}
+
       >
         <div className="container">
           <span
-            className="badge"
-            style={{
-              background: 'rgba(14,165,233,0.2)',
-              color: 'var(--teal)',
-              marginBottom: '16px',
-            }}
+            className={["badge", pageStyles.label].filter(Boolean).join(' ')}
+
           >
             路演与试点
           </span>
@@ -44,8 +39,8 @@ export default function RoadshowPage() {
               <div className="mt-8">
                 <Link
                   href="/login?register=1"
-                  className="btn btn-primary"
-                  style={{ background: '#f97316', borderColor: '#f97316', borderRadius: '12px' }}
+                  className={["btn btn-primary", pageStyles.link].filter(Boolean).join(' ')}
+
                 >
                   提交试点需求
                 </Link>
@@ -54,7 +49,7 @@ export default function RoadshowPage() {
             <div>
               <div className="pilot-card">
                 <h3>试点权益</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
+                <div className={pageStyles.layout}>
                   {[
                     { icon: '\u{26A1}', title: '范围确认', desc: '共同确认数据、流程、权限和验收边界' },
                     { icon: '\u{1F464}', title: '人工复核', desc: '为关键资格结论和材料设置复核责任人' },
@@ -63,20 +58,14 @@ export default function RoadshowPage() {
                   ].map((benefit) => (
                     <div
                       key={benefit.title}
-                      style={{
-                        display: 'flex',
-                        gap: '12px',
-                        padding: '12px',
-                        background: 'rgba(14,165,233,0.08)',
-                        borderRadius: '12px',
-                      }}
+                      className={pageStyles.layout2}
                     >
-                      <span style={{ fontSize: '1.5rem' }}>{benefit.icon}</span>
+                      <span className={pageStyles.label2}>{benefit.icon}</span>
                       <div>
-                        <h4 style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text)' }}>
+                        <h4 className={pageStyles.heading}>
                           {benefit.title}
                         </h4>
-                        <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                        <p className={pageStyles.description}>
                           {benefit.desc}
                         </p>
                       </div>
@@ -136,21 +125,21 @@ export default function RoadshowPage() {
             <h2 className="section-title">指标必须来自真实试点</h2>
           </div>
 
-          <div className="grid grid-4" style={{ gap: '20px' }}>
+          <div className={["grid grid-4", pageStyles.section2].filter(Boolean).join(' ')} >
             {[
               { value: '待测量', label: '覆盖企业数', desc: '数据库真实企业记录' },
               { value: '待评测', label: '匹配准确率', desc: '冻结评测集结果' },
               { value: '待测量', label: '服务响应时间', desc: '真实工作流时延' },
               { value: '待测量', label: '效率变化', desc: '与试点基线对比' },
             ].map((kpi) => (
-              <div key={kpi.label} className="stat-card" style={{ padding: '32px 20px' }}>
-                <div className="stat-value" style={{ color: 'var(--teal)' }}>
+              <div key={kpi.label} className={["stat-card", pageStyles.section3].filter(Boolean).join(' ')} >
+                <div className={["stat-value", pageStyles.section4].filter(Boolean).join(' ')} >
                   {kpi.value}
                 </div>
-                <div className="stat-label" style={{ fontWeight: 600, color: 'var(--text)' }}>
+                <div className={["stat-label", pageStyles.section5].filter(Boolean).join(' ')} >
                   {kpi.label}
                 </div>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                <p className={pageStyles.description2}>
                   {kpi.desc}
                 </p>
               </div>
@@ -182,7 +171,7 @@ export default function RoadshowPage() {
                 <div key={event.city} className="timeline-item">
                   <h3 className="timeline-item-title">{event.city}</h3>
                   <p className="timeline-item-desc">{event.desc}</p>
-                  <div style={{ marginTop: '8px' }}>
+                  <div className={pageStyles.section6}>
                     <span className={`badge ${event.badge}`}>{event.status}</span>
                   </div>
                 </div>
@@ -200,9 +189,9 @@ export default function RoadshowPage() {
             <h2 className="section-title">灵活的合作模式</h2>
           </div>
 
-          <div className="grid grid-3" style={{ gap: '24px' }}>
-            <div className="card" style={{ borderTop: '3px solid #126a9a' }}>
-              <div className="card-icon" style={{ background: '#f0f9ff', color: 'var(--teal)' }}>
+          <div className={["grid grid-3", pageStyles.section7].filter(Boolean).join(' ')} >
+            <div className={["card", pageStyles.section8].filter(Boolean).join(' ')} >
+              <div className={["card-icon", pageStyles.section9].filter(Boolean).join(' ')} >
                 &#x1F91D;
               </div>
               <h3 className="card-title">试点合作</h3>
@@ -210,8 +199,8 @@ export default function RoadshowPage() {
                 成为首批试点园区，享受优先部署和优惠价格，共同验证和优化产品。适合愿意深度参与产品共建的园区。
               </p>
             </div>
-            <div className="card" style={{ borderTop: '3px solid #16a34a' }}>
-              <div className="card-icon" style={{ background: '#f0fdf4', color: '#16a34a' }}>
+            <div className={["card", pageStyles.section10].filter(Boolean).join(' ')} >
+              <div className={["card-icon", pageStyles.section11].filter(Boolean).join(' ')} >
                 &#x1F3EB;
               </div>
               <h3 className="card-title">渠道合作</h3>
@@ -219,8 +208,8 @@ export default function RoadshowPage() {
                 面向园区服务商、咨询机构和行业协会，成为 Policy Agent 的渠道合作伙伴，共同推广智能政策服务。
               </p>
             </div>
-            <div className="card" style={{ borderTop: '3px solid #f97316' }}>
-              <div className="card-icon" style={{ background: '#fff7ed', color: '#f97316' }}>
+            <div className={["card", pageStyles.section8].filter(Boolean).join(' ')} >
+              <div className={["card-icon", pageStyles.section12].filter(Boolean).join(' ')} >
                 &#x1F4E1;
               </div>
               <h3 className="card-title">技术合作</h3>
@@ -234,10 +223,8 @@ export default function RoadshowPage() {
 
       {/* CTA */}
       <section
-        className="cta-section"
-        style={{
-          background: 'linear-gradient(135deg, #0d1b2a 0%, #1b2d44 50%, #0d1b2a 100%)',
-        }}
+        className={["cta-section", pageStyles.section13].filter(Boolean).join(' ')}
+
       >
         <div className="container">
           <h2 className="cta-title">加入 Policy Agent 园区智能服务生态</h2>
@@ -247,8 +234,8 @@ export default function RoadshowPage() {
           <div className="cta-actions">
             <Link
               href="/login?register=1"
-              className="btn btn-lg"
-              style={{ background: '#f97316', color: '#fff', borderColor: '#f97316', borderRadius: '12px' }}
+              className={["btn btn-lg", pageStyles.link2].filter(Boolean).join(' ')}
+
             >
               预约演示
             </Link>

@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
+import pageStyles from './page.module.css';
 
 export const metadata: Metadata = { title: '隐私政策 | 衍策引擎AI' };
 
 export default function PrivacyPage() {
   return (
     <>
-      <section className="page-banner" style={{ background: 'linear-gradient(135deg, #0d1b2a 0%, #1b2d44 60%, #0d1b2a 100%)' }}>
+      <section className={["page-banner", pageStyles.section].filter(Boolean).join(' ')} >
         <div className="container">
           <h1>隐私政策</h1>
           <p>上海衍策引擎人工智能科技有限公司重视并保护用户隐私。</p>
@@ -14,12 +15,12 @@ export default function PrivacyPage() {
       <section className="section">
         <div className="container container-narrow">
           <div className="legal-doc">
-            <p className="legal-date">最近更新日期：2026 年 9 月 19 日</p>
+            <p className="legal-date">最近更新日期：2026 年 10 月 30 日</p>
 
             <h2>1. 信息收集</h2>
             <p>为提供政策匹配与申报辅助服务，我们收集以下信息：</p>
             <ul>
-              <li><strong>注册信息</strong>：企业全称、行业、所在省市、联系人姓名、邮箱，以及您注册时勾选同意的协议版本与时间（用于合规追溯）。</li>
+              <li><strong>注册信息</strong>：企业全称、行业、所在省市、联系人姓名、邮箱或经验证的手机号，以及您注册时勾选同意的协议版本与时间（用于合规追溯）。</li>
               <li><strong>企业档案</strong>：统一社会信用代码、规模、研发情况、知识产权等（用于政策匹配）。</li>
               <li><strong>使用数据</strong>：登录日志、搜索关键词、报告生成记录、支付记录。</li>
               <li><strong>请求信息</strong>：IP 地址、请求路径、访问时间和 request_id（用于安全与故障排查）。</li>
@@ -48,6 +49,7 @@ export default function PrivacyPage() {
             <p>未经用户明确同意，我们不会向任何第三方出售、出租或共享用户个人信息，以下情形除外：</p>
             <ul>
               <li>为完成支付结算而与支付机构共享必要信息；</li>
+              <li>您选择短信验证时，手机号和本次验证码将发送至腾讯云短信服务，用于发送登录或绑定验证码，不用于营销。本系统只保存验证码的带密钥摘要及校验状态，不保存明文验证码；验证码5分钟后失效。</li>
               <li>法律法规、司法或行政机关依法要求；</li>
               <li>为保护用户、公众或本公司的人身与财产安全所必需。</li>
             </ul>
@@ -71,13 +73,13 @@ export default function PrivacyPage() {
 
             <h2>9. 数据保留期限</h2>
             <ul>
-              <li><strong>账户与企业数据</strong>：在您使用服务期间保存；账户注销申请核实通过后，我们将在 30 天内删除或匿名化处理您的个人信息（法律法规要求必须保留的交易、发票凭证除外）。</li>
-              <li><strong>访问与安全日志</strong>：默认保留不超过 12 个月，到期自动清理。</li>
+              <li><strong>账户与企业数据</strong>：在您使用服务期间保存；账户注销申请须经身份核验，并与您确认处理范围、备份及供应商传播限制和预计处理时间；需要保留的交易与发票记录单独说明。</li>
+              <li><strong>访问与安全日志</strong>：按实际部署策略管理。当前尚未启用统一自动清理任务，不代表到期已删除；如需了解或申请处理，请联系支持核对范围及执行记录。</li>
               <li><strong>支付与订单记录</strong>：按财税法规要求的期限保留。</li>
             </ul>
 
             <h2>10. 账户注销</h2>
-            <p>您可以随时申请注销账户及删除企业数据。流程：发送邮件至 yanceai@163.com，注明注册邮箱与企业全称并说明注销诉求；我们核验申请人身份（账户所有人或组织管理员）后，将与您确认数据处理方式（删除或先导出后删除），并在 30 天内完成处理。注销前请确保无未完成的订单或未下载的报告。</p>
+            <p>您可以随时申请注销账户及删除企业数据。流程：发送邮件至 yanceai@163.com，注明注册邮箱或手机号与企业全称并说明注销诉求；我们核验申请人身份（账户所有人或组织管理员）后，将与您确认数据处理方式（删除或先导出后删除），并确认预计处理时间和执行结果。注销前请确保无未完成的订单或未下载的报告。</p>
 
             <h2>11. 政策更新</h2>
             <p>我们可能不时更新本隐私政策。重大变更将通过站内通知或注册邮箱提前告知。</p>

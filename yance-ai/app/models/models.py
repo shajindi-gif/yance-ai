@@ -17,6 +17,8 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    column,
+    func,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -110,7 +112,8 @@ class User(Base, TimestampMixin, TenantOwnedMixin):
     __tablename__ = "users"
     __table_args__ = (Index("uq_users_tenant_email", "tenant_id", "email", unique=True),)
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    email: Mapped[str] = mapped_column(String(320), index=True)
+    email: Mapped[str | None] = mapped_column(String(320), index=True, nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(16), unique=True, nullable=True)
     full_name: Mapped[str] = mapped_column(String(160))
     password_hash: Mapped[str] = mapped_column(String(255))
     auth_version: Mapped[int] = mapped_column(default=0, server_default="0")
@@ -322,6 +325,10 @@ class Policy(Base, TimestampMixin):
     """Global Policy Knowledge Base — platform-level, shared by all tenants."""
 
     __tablename__ = "policies"
+    __table_args__ = (
+        Index("ix_policies_title_trgm", func.lower(column("title")).label("title_trgm"), postgresql_using="gin", postgresql_ops={"title_trgm": "gin_trgm_ops"}),
+        Index("ix_policies_quality_deliverable", "quality_deliverable", "quality_grade"),
+    )
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), index=True, nullable=True
@@ -364,6 +371,12 @@ class Policy(Base, TimestampMixin):
     technology: Mapped[str | None] = mapped_column(String(240))
     embedding: Mapped[list[float] | None] = mapped_column(Vector(1024))
     status: Mapped[str] = mapped_column(String(40), default="draft", index=True)
+    # Headline of the quality rubric (see app/services/policy_collection/quality.py).
+    # NULL means "not assessed yet" and must never be read as "not deliverable".
+    quality_score: Mapped[float | None] = mapped_column(Numeric(5, 2))
+    quality_grade: Mapped[str | None] = mapped_column(String(2))
+    quality_deliverable: Mapped[bool | None] = mapped_column(Boolean)
+    quality_assessed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class PolicyRule(Base, TimestampMixin, TenantOwnedMixin):
@@ -382,7 +395,10 @@ class PolicyVersion(Base, TimestampMixin):
     """Immutable, checksum-addressed policy source snapshot."""
 
     __tablename__ = "policy_versions"
-    __table_args__ = (UniqueConstraint("policy_id", "version", name="uq_policy_version"),)
+    __table_args__ = (
+        UniqueConstraint("policy_id", "version", name="uq_policy_version"),
+        Index("ix_policy_versions_title_trgm", func.lower(column("title")).label("title_trgm"), postgresql_using="gin", postgresql_ops={"title_trgm": "gin_trgm_ops"}),
+    )
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     policy_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("policies.id", ondelete="CASCADE"), index=True
@@ -413,6 +429,7 @@ class PolicyChunk(Base, TimestampMixin):
     __tablename__ = "policy_chunks"
     __table_args__ = (
         UniqueConstraint("policy_version_id", "chunk_index", name="uq_policy_chunk_index"),
+        Index("ix_policy_chunks_content_trgm", func.lower(column("content")).label("content_trgm"), postgresql_using="gin", postgresql_ops={"content_trgm": "gin_trgm_ops"}),
     )
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     policy_id: Mapped[uuid.UUID] = mapped_column(
@@ -731,6 +748,15 @@ class ApplicationArtifact(Base, TimestampMixin, TenantOwnedMixin):
 
 class ApplicationComment(Base, TenantOwnedMixin):
     __tablename__ = "application_comments"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id",
+            "application_id",
+            "client_request_id",
+            name="uq_application_comment_request",
+        ),
+    )
+    client_request_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     application_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("applications.id", ondelete="CASCADE"), index=True
@@ -738,6 +764,13 @@ class ApplicationComment(Base, TenantOwnedMixin):
     user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
     )
+    artifact_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("application_artifacts.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
+    proposed_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    resolution_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     body: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
@@ -754,6 +787,10 @@ class Order(Base, TimestampMixin, TenantOwnedMixin):
     currency: Mapped[str] = mapped_column(String(8), default="CNY")
     resource_type: Mapped[str | None] = mapped_column(String(40))
     resource_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    report_deliverable_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("deliverables.id", ondelete="RESTRICT", use_alter=True, name="fk_orders_report_deliverable")
+    )
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     status: Mapped[str] = mapped_column(String(40), default="pending")
 
 
@@ -775,6 +812,51 @@ class Payment(Base, TimestampMixin, TenantOwnedMixin):
     )  # 银行转账核实时间
     status: Mapped[str] = mapped_column(String(40), default="created")
     raw_response: Mapped[dict] = mapped_column(JSON, default=dict)
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class ReconciliationRun(Base, TimestampMixin):
+    __tablename__ = "reconciliation_runs"
+    __table_args__ = (UniqueConstraint("provider", "bill_date", name="uq_reconciliation_run"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    provider: Mapped[str] = mapped_column(String(40))
+    bill_date: Mapped[date] = mapped_column(Date)
+    status: Mapped[str] = mapped_column(String(40), default="waiting")
+    source_sha256: Mapped[str | None] = mapped_column(String(64))
+    issue_count: Mapped[int] = mapped_column(default=0)
+    error_code: Mapped[str | None] = mapped_column(String(80))
+    last_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ReconciliationIssue(Base, TimestampMixin):
+    __tablename__ = "reconciliation_issues"
+    __table_args__ = (UniqueConstraint("provider", "bill_date", "reference", "issue_type", name="uq_reconciliation_issue"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    provider: Mapped[str] = mapped_column(String(40))
+    bill_date: Mapped[date] = mapped_column(Date)
+    reference: Mapped[str] = mapped_column(String(128))
+    issue_type: Mapped[str] = mapped_column(String(80))
+    expected_amount: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    received_amount: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    status: Mapped[str] = mapped_column(String(40), default="open")
+
+
+class Refund(Base, TimestampMixin, TenantOwnedMixin):
+    __tablename__ = "refunds"
+    __table_args__ = (UniqueConstraint("order_id", name="uq_refunds_full_order"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    order_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("orders.id"), index=True)
+    payment_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("payments.id"))
+    idempotency_key: Mapped[str] = mapped_column(String(128))
+    provider: Mapped[str] = mapped_column(String(40))
+    provider_refund_no: Mapped[str] = mapped_column(String(64), unique=True)
+    provider_refund_id: Mapped[str | None] = mapped_column(String(128))
+    reason: Mapped[str] = mapped_column(String(500))
+    amount: Mapped[float] = mapped_column(Numeric(12, 2))
+    currency: Mapped[str] = mapped_column(String(8))
+    status: Mapped[str] = mapped_column(String(40), default="requested")
+    requested_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    error_code: Mapped[str | None] = mapped_column(String(120))
 
 
 class PaymentEvent(Base, TimestampMixin, TenantOwnedMixin):
@@ -846,6 +928,10 @@ class AnalyticsEvent(Base, TenantOwnedMixin):
 
 class Feedback(Base, TimestampMixin, TenantOwnedMixin):
     __tablename__ = "feedback"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "user_id", "client_request_id", name="uq_feedback_user_request"),
+    )
+    client_request_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), index=True
@@ -872,9 +958,7 @@ class EvalDataset(Base, TimestampMixin):
 
 class EvalDatasetVersion(Base):
     __tablename__ = "eval_dataset_versions"
-    __table_args__ = (
-        UniqueConstraint("dataset_id", "version", name="uq_eval_dataset_version"),
-    )
+    __table_args__ = (UniqueConstraint("dataset_id", "version", name="uq_eval_dataset_version"),)
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     dataset_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("eval_datasets.id", ondelete="CASCADE"), index=True
@@ -1348,6 +1432,7 @@ class AgentRun(Base, TimestampMixin, TenantOwnedMixin):
     queued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     next_attempt_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     lease_owner: Mapped[str | None] = mapped_column(String(160))
+    lease_token: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_heartbeat_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
@@ -1534,6 +1619,8 @@ class Deliverable(Base, TimestampMixin, TenantOwnedMixin):
     content_markdown: Mapped[str | None] = mapped_column(Text)
     file_url: Mapped[str | None] = mapped_column(String(700))
     pdf_url: Mapped[str | None] = mapped_column(String(700))
+    frozen_pdf: Mapped[bytes | None] = mapped_column(LargeBinary)
+    frozen_pdf_sha256: Mapped[str | None] = mapped_column(String(64))
     version: Mapped[int] = mapped_column(default=1)
     status: Mapped[str] = mapped_column(String(40), default="generated")
     quality_score: Mapped[int | None] = mapped_column()
@@ -1611,7 +1698,9 @@ class Milestone(Base, TimestampMixin, TenantOwnedMixin):
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
     )
     due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    status: Mapped[str] = mapped_column(String(40), default="todo", index=True)  # todo/doing/done/blocked
+    status: Mapped[str] = mapped_column(
+        String(40), default="todo", index=True
+    )  # todo/doing/done/blocked
     completion_note: Mapped[str | None] = mapped_column(Text)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
@@ -1653,3 +1742,62 @@ class AuthRateLimit(Base):
     key: Mapped[str] = mapped_column(String(160), primary_key=True)
     window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     count: Mapped[int] = mapped_column(Integer, default=1)
+
+
+class NotificationDelivery(Base, TenantOwnedMixin):
+    """One immutable notification/recipient intent; ambiguous sends require review."""
+
+    __tablename__ = "notification_deliveries"
+    __table_args__ = (
+        UniqueConstraint(
+            "notification_id", "recipient_user_id", name="uq_notification_delivery_recipient"
+        ),
+        Index("ix_notification_delivery_claim", "status", "next_attempt_at"),
+    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    notification_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("notifications.id", ondelete="CASCADE")
+    )
+    recipient_user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE")
+    )
+    recipient_email: Mapped[str] = mapped_column(String(320))
+    payload_json: Mapped[dict] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(String(30), default="pending")
+    attempt_count: Mapped[int] = mapped_column(Integer, default=0)
+    next_attempt_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    lease_token: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(80))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+
+
+class LLMInvocation(Base, TenantOwnedMixin):
+    __tablename__ = "llm_invocations"
+    __table_args__ = (Index("ix_llm_invocations_tenant_created", "tenant_id", "created_at"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True))
+    provider: Mapped[str] = mapped_column(String(40))
+    model: Mapped[str] = mapped_column(String(160))
+    reserved_output_tokens: Mapped[int]
+    charged_output_tokens: Mapped[int]
+    status: Mapped[str] = mapped_column(String(30))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class SmsCode(Base):
+    """Pre-tenant OTP ledger. No plaintext code or provider payload is persisted."""
+
+    __tablename__ = "sms_codes"
+    __table_args__ = (Index("ix_sms_phone_created", "phone", "created_at"),)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    phone: Mapped[str] = mapped_column(String(16))
+    purpose: Mapped[str] = mapped_column(String(80))
+    code_hash: Mapped[str] = mapped_column(String(64))
+    state: Mapped[str] = mapped_column(String(20), default="pending")
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)

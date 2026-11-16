@@ -28,6 +28,7 @@ const resourceLinks = [
   { href: '/policies', label: '政策知识库' },
   { href: '/pricing', label: '价格方案' },
   { href: '/downloads', label: '客户端与渠道' },
+  { href: '/feedback', label: '使用反馈' },
 ];
 
 const companyLinks = [
@@ -73,7 +74,7 @@ export default function Footer() {
               <span className="footer-brand-name">衍策引擎AI</span>
             </Link>
             <p className="footer-brand-desc">
-              面向中国新质生产力科技企业的 AI 产业研究与政策申报服务平台。为 AI、机器人、生物医药、集成电路、新能源等科技企业及产业园区提供智能化政策匹配、申报辅助和产业研究服务。
+              聚焦新质生产力与科技企业，面向各类有政策需求的企业的政策与资源证据工作台。从企业事实与政策原文出发，辅助资格核对、材料准备与客户自主复核。
             </p>
             <div className="footer-social">
               <a href="mailto:yanceai@163.com" aria-label="邮件联系" title="yanceai@163.com">
@@ -158,7 +159,7 @@ export default function Footer() {
             衍策引擎AI 提供产业研究、政策信息整理、材料生成和申报辅助服务，具体申报条件、申报结果和补贴金额以主管部门、园区、政策文件和审核结果为准。
           </p>
           <p>
-            本网站不涉及任何金融投资建议。衍策引擎AI 仅服务于科技企业产业研究与政策申报场景。
+            本网站不涉及任何金融投资建议。衍策引擎AI 面向各类企业的产业研究与政策申报辅助场景。
           </p>
         </div>
       </div>

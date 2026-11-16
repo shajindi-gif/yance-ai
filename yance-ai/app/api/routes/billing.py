@@ -79,6 +79,7 @@ def get_billing_overview(
             "features": plan.features_json,
         },
         "usage": snapshot["usage"],
+        "metering_policy": {"revision": 1, "manual_artifact_revisions_consume_generation": False},
         "budgets": [
             {
                 "id": str(item.id),

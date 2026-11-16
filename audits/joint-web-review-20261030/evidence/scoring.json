@@ -1,0 +1,81 @@
+{
+  "baseline": "ab19c4b",
+  "score": 61,
+  "dimensions": [
+    [
+      "原创品牌与素材可追溯",
+      8,
+      "未发现竞品品牌/客户名单直接复制；六张用户图缺商业授权台账",
+      "P1",
+      "homepage:31–49，provided-images-20261029.md"
+    ],
+    [
+      "现有定位清晰度",
+      7,
+      "政策工作台说得清；与本次法律AI背景不匹配，why now弱",
+      "P1",
+      "app/page.tsx:22–28；layout.tsx:11–15"
+    ],
+    [
+      "投资人可信度",
+      4,
+      "无已核验试点/团队履历/留存/收入证据，不能补虚构logo",
+      "P1",
+      "about/page.tsx:198–228；page.tsx:105"
+    ],
+    [
+      "叙事与产品演示",
+      6,
+      "有实际合成项目截图；首屏泛AI大脑占据视觉，缺明确任务演示",
+      "P2",
+      "page.tsx:30–34,65–67"
+    ],
+    [
+      "视觉系统一致性",
+      7,
+      "品牌蓝/暖白/深文字合理；全局token、局部变量和硬编码并存",
+      "P2",
+      "globals.css:20–41；Home.module.css:1–7；login/page.tsx:480–505"
+    ],
+    [
+      "交互与可访问性",
+      6,
+      "既有键盘测试有基础；本轮axe发现对比度与名称不一致",
+      "P1",
+      "SmartAgent.tsx:93–97；login/page.tsx:480；about/page.tsx:227–230"
+    ],
+    [
+      "转化与销售线索",
+      5,
+      "自助开始明确；联系以mailto为主，无可验收demo请求漏斗",
+      "P1",
+      "about/page.tsx:289–344；components/Footer.tsx:37"
+    ],
+    [
+      "工程与测试",
+      7,
+      "真实npm ci/build/TS/6单测通过；没有lint脚本，不证明无死代码",
+      "P1",
+      "package.json:5–13；tsconfig.json:strict"
+    ],
+    [
+      "安全隐私与商业交付",
+      5,
+      "安全边界披露克制；保留声明矛盾、PDF漂移与空订单仍开放",
+      "P1",
+      "privacy/page.tsx:75–76；tasks.py:307–349；commerce.py:72–108"
+    ],
+    [
+      "性能/SEO/兼容性",
+      6,
+      "存在元数据/sitemap/robots；LH本机性能66；INP和跨浏览器未证",
+      "P1/P2",
+      "layout.tsx:9–34；public/sitemap.xml；evidence/lighthouse.json"
+    ]
+  ],
+  "P0_confirmed": 0,
+  "P1_count": 10,
+  "P2_count": 4,
+  "decision": "No-Go for mature enterprise/legal-AI release",
+  "no_business_changes": true
+}

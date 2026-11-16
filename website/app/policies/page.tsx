@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import api, { API_BASE } from '@/lib/api';
+import pageStyles from './page.module.css';
 
 interface Policy {
   id?: string;
@@ -70,9 +71,9 @@ export default function PoliciesPage() {
 
   return (
     <>
-      <section className="page-banner" style={{ background: 'linear-gradient(135deg, #0d1b2a 0%, #1b2d44 60%, #0d1b2a 100%)' }}>
+      <section className={["page-banner", pageStyles.section].filter(Boolean).join(' ')} >
         <div className="container">
-          <span className="badge" style={{ background: 'rgba(14,165,233,0.2)', color: 'var(--teal)', marginBottom: '16px' }}>政策知识库</span>
+          <span className={["badge", pageStyles.label].filter(Boolean).join(' ')} >政策知识库</span>
           <h1>全国政策知识库</h1>
           <p>登录后查看数据库中带来源的政策记录，并获取与你企业匹配的政策机会。</p>
         </div>
@@ -81,7 +82,7 @@ export default function PoliciesPage() {
       <section className="section">
         <div className="container">
           {/* Filters */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '32px', flexWrap: 'wrap' }}>
+          <div className={pageStyles.layout}>
             {[
               { key: 'all', label: '全部' },
               { key: 'national', label: '国家级' },
@@ -92,12 +93,7 @@ export default function PoliciesPage() {
               <button
                 key={f.key}
                 onClick={() => setFilter(f.key)}
-                style={{
-                  padding: '8px 20px', borderRadius: '9999px', fontSize: '13px', fontWeight: 500, cursor: 'pointer',
-                  border: filter === f.key ? '2px solid #126a9a' : '1px solid #e2e8f0',
-                  background: filter === f.key ? '#f0f9ff' : '#fff',
-                  color: filter === f.key ? '#0369a1' : '#64748b',
-                }}
+                className={pageStyles.inlineAction} style={{ border: filter === f.key ? '2px solid #126a9a' : '1px solid #e2e8f0', background: filter === f.key ? '#f0f9ff' : 'var(--surface)', color: filter === f.key ? '#0369a1' : '#64748b' }}
               >
                 {f.label}
               </button>
@@ -105,36 +101,36 @@ export default function PoliciesPage() {
           </div>
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>加载政策库...</div>
+            <div className={pageStyles.section2}>加载政策库...</div>
           ) : filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px', color: '#64748b' }}>
+            <div className={pageStyles.section2}>
               暂无可展示的真实政策数据。登录后扫描企业机会，系统不会用静态示例冒充最新政策。
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className={pageStyles.layout2}>
               {filtered.map((p) => (
-                <div key={p.id ?? `${p.policy_title}-${p.jurisdiction}`} style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '24px', transition: 'box-shadow 0.2s' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, color: LEVEL_COLORS[p.level] || '#64748b', background: (LEVEL_COLORS[p.level] || '#64748b') + '15' }}>
+                <div key={p.id ?? `${p.policy_title}-${p.jurisdiction}`} className={pageStyles.section3}>
+                  <div className={pageStyles.layout3}>
+                    <div className={pageStyles.section4}>
+                      <div className={pageStyles.layout4}>
+                        <span className={pageStyles.inlineLabel} style={{ color: LEVEL_COLORS[p.level] || '#64748b', background: (LEVEL_COLORS[p.level] || '#64748b') + '15' }}>
                           {LEVEL_LABELS[p.level] || p.level}
                         </span>
-                        <span style={{ fontSize: '12px', color: '#94a3b8' }}>{p.jurisdiction}</span>
+                        <span className={pageStyles.label2}>{p.jurisdiction}</span>
                       </div>
-                      <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#0d1b2a', margin: 0, lineHeight: 1.5 }}>{p.policy_title}</h3>
+                      <h3 className={pageStyles.heading}>{p.policy_title}</h3>
                     </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: '16px' }}>
-                      <div style={{ fontSize: '18px', fontWeight: 700, color: '#f97316' }}>{p.support_amount}</div>
-                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>{p.support_type}</div>
+                    <div className={pageStyles.section5}>
+                      <div className={pageStyles.section6}>{p.support_amount}</div>
+                      <div className={pageStyles.section7}>{p.support_type}</div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: '12px', color: '#64748b' }}>
+                  <div className={pageStyles.layout5}>
+                    <div className={pageStyles.section8}>
                       {p.issuing_authority}
-                      {p.deadline && <span style={{ marginLeft: '16px', color: '#dc2626' }}>截止：{new Date(p.deadline).toLocaleDateString('zh-CN')}</span>}
+                      {p.deadline && <span className={pageStyles.label3}>截止：{new Date(p.deadline).toLocaleDateString('zh-CN')}</span>}
                     </div>
-                    <Link href="/login?register=1" style={{ fontSize: '13px', color: 'var(--teal)', textDecoration: 'none', fontWeight: 500 }}>
+                    <Link href="/login?register=1" className={pageStyles.link}>
                       注册查看匹配度 →
                     </Link>
                   </div>
@@ -144,10 +140,10 @@ export default function PoliciesPage() {
           )}
 
           {/* CTA */}
-          <div style={{ textAlign: 'center', marginTop: '48px', padding: '40px', background: 'linear-gradient(135deg, #f0f9ff, #eff6ff)', borderRadius: '16px' }}>
-            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#0d1b2a', marginBottom: '8px' }}>找到适合你企业的政策</h2>
-            <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '20px' }}>注册后基于企业画像执行初筛；资格与金额须以带来源的政策条款和人工复核为准。</p>
-            <Link href="/login?register=1" style={{ display: 'inline-block', padding: '12px 32px', background: '#f97316', color: '#fff', borderRadius: '10px', textDecoration: 'none', fontSize: '15px', fontWeight: 600 }}>免费政策匹配</Link>
+          <div className={pageStyles.section9}>
+            <h2 className={pageStyles.heading2}>找到适合你企业的政策</h2>
+            <p className={pageStyles.description}>注册后基于企业画像执行初筛；资格与金额须以带来源的政策条款和人工复核为准。</p>
+            <Link href="/login?register=1" className={pageStyles.link2}>免费政策匹配</Link>
           </div>
         </div>
       </section>

@@ -1,0 +1,148 @@
+.section {
+  background: linear-gradient(135deg, #0d1b2a 0%, #1b2d44 60%, #0d1b2a 100%);
+}
+
+.label {
+  background: rgba(18,106,154,0.16);
+  color: var(--teal);
+  margin-bottom: 16px;
+}
+
+.layout {
+  padding: 24px 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.section2 {
+  gap: 24px;
+}
+
+.section3 {
+  border-top: 3px solid var(--accent);
+}
+
+.section4 {
+  background: #f0f9ff;
+  color: var(--teal);
+}
+
+.section5 {
+  border-top: 3px solid #16a34a;
+}
+
+.section6 {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.section7 {
+  background: #fff7ed;
+  color: var(--accent);
+}
+
+.heading {
+  margin-bottom: 16px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.section8 {
+  background: var(--bg-alt);
+  font-size: 0.875rem;
+  line-height: 1.8;
+}
+
+.description {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.description2 {
+  margin-top: 12px;
+  color: var(--text-secondary);
+}
+
+.layout2 {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section9 {
+  padding: 10px 16px;
+}
+
+.label2 {
+  font-weight: 600;
+  font-size: 0.7rem;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.description3 {
+  color: var(--text);
+  font-size: 0.875rem;
+  margin-top: 2px;
+}
+
+.section10 {
+  gap: 32px;
+}
+
+.section11 {
+  padding: 32px;
+}
+
+.heading2 {
+  margin-bottom: 24px;
+}
+
+.layout3 {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section12 {
+  background: var(--bg-alt);
+  padding: 20px;
+  border-radius: 12px;
+  border-left: 3px solid var(--accent);
+}
+
+.description4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.description5 {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.description6 {
+  font-size: 0.75rem;
+  color: var(--teal);
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+.section13 {
+  background: linear-gradient(135deg, #0d1b2a 0%, #1b2d44 50%, #0d1b2a 100%);
+}
+
+.link {
+  background: var(--accent);
+  color: var(--surface);
+  border-color: var(--accent);
+  border-radius: 12px;
+}
