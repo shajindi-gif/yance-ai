@@ -10,8 +10,8 @@ if [ -f "$r/workers.override.json" ]; then
  "${dc[@]}" -f "$r/release.override.json" -f "$r/workers.override.json" stop --timeout 60 payment-expiry payment-reconcile
 fi
 "${dc[@]}" -f "$b/rollback.override.json" up -d --no-deps --no-build api agent-worker
-if [ -f /etc/systemd/system/yance-website.service.d/zzzzzz-payment-20261113.conf ]; then
- mv /etc/systemd/system/yance-website.service.d/zzzzzz-payment-20261113.conf "$b/failed-payment-dropin.conf"
+if [ -f /etc/systemd/system/yance-website.service.d/zzzzzzzz-payment-20261113.conf ]; then
+ mv /etc/systemd/system/yance-website.service.d/zzzzzzzz-payment-20261113.conf "$b/failed-payment-dropin.conf"
 fi
 ln -sfn "$(cat "$b/website-path.txt")" /opt/yance/website
 systemctl daemon-reload

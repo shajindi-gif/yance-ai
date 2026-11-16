@@ -13,7 +13,8 @@ if 'ENV PYTHONPATH=/app' not in lines:
 if not any('install_dependency.py' in line for line in lines):
  manifest=json.loads((r/'dependency-manifest.json').read_text());wheel=manifest['filename']
  assert wheel=='dnspython-2.9.2-py3-none-any.whl'
- lines[2:2]=['COPY dependency/'+wheel+' /tmp/'+wheel,'COPY dependency-manifest.json /tmp/dependency-manifest.json','COPY install_dependency.py /tmp/install_dependency.py','USER root','RUN apt-get update && apt-get install -y --no-install-recommends zlib1g && rm -rf /var/lib/apt/lists/*','RUN python /tmp/install_dependency.py /tmp/'+wheel+' /tmp/dependency-manifest.json','USER yance']
+ lines[2:2]=['COPY dependency/'+wheel+' /tmp/'+wheel,'COPY dependency-manifest.json /tmp/dependency-manifest.json','COPY install_dependency.py /tmp/install_dependency.py','USER root','RUN apt-get update && apt-get install -y --no-install-recommends apt libapt-pkg7.0 zlib1g && rm -rf /var/lib/apt/lists/*','RUN python /tmp/install_dependency.py /tmp/'+wheel+' /tmp/dependency-manifest.json','USER yance']
+lines=[line.replace('apt-get install -y --no-install-recommends zlib1g','apt-get install -y --no-install-recommends apt libapt-pkg7.0 zlib1g') for line in lines]
 p.write_text('\n'.join(lines)+'\n')
 for name in ['production.env','restore.env','candidate.env']:
  p=r/name;lines=p.read_text().splitlines();p.write_text('\n'.join('APP_SOURCE_REVISION='+revision if x.startswith('APP_SOURCE_REVISION=') else x for x in lines)+'\n')

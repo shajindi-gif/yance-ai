@@ -6,6 +6,8 @@ b=/opt/yance/backups/payment-20261113-01
 base=/opt/yance/releases/sms-20261029-01/yance-ai
 grep -q PREPARED_BACKUP_RESTORED_MIGRATION_REPLAYED_CANDIDATE_BUILT /home/ubuntu/yance-payment-prepare.log
 grep -q CANDIDATE_PG16_CONTRACTS_AND_WEB_PASSED "$r/approved.txt"
+test "$(docker image inspect -f '{{.Id}}' yance-backend:payment-20261113-01)" = "$(cat "$r/approved-image-id.txt")"
+test "$(docker inspect -f '{{.Image}}' yance-payment-candidate-api)" = "$(cat "$r/approved-image-id.txt")"
 test "$(readlink -f /opt/yance/website)" = "$(cat "$b/website-path.txt")"
 test "$(docker inspect -f '{{.Image}}' yance-prod-api-1)" = "$(cat "$b/api-image.txt")"
 dc=(docker compose -p yance-prod --env-file "$base/.env.prod" -f "$base/docker-compose.prod.yml" -f "$base/release.override.yml" -f /opt/yance/releases/web-20261031-01/compat.override.yml -f /opt/yance/releases/commercial-20261108-01/api.override.json -f /opt/yance/releases/commercial-20261108-01/quality.override.json)
@@ -48,7 +50,7 @@ else:raise SystemExit('API verification failed')
 PY
 old=$(cat "$b/website-path.txt")
 cp -an "$r/website/.next/standalone/.next/static/." "$old/.next/standalone/.next/static/"
-cat > /etc/systemd/system/yance-website.service.d/zzzzzz-payment-20261113.conf <<CONF
+cat > /etc/systemd/system/yance-website.service.d/zzzzzzzz-payment-20261113.conf <<CONF
 [Service]
 WorkingDirectory=$r/website
 ExecStart=
@@ -69,6 +71,8 @@ for _ in range(60):
  try:
   with urllib.request.urlopen('http://127.0.0.1:3000/api/runtime-version',timeout=5) as f:v=json.load(f)
   assert v['source_revision']==revision and v['database_revisions']==['20261113_0042']
+  with urllib.request.urlopen('http://127.0.0.1:3000/release.json',timeout=5) as f:web=json.load(f)
+  assert web['website_source']==revision
   break
  except Exception:time.sleep(1)
 else:raise SystemExit('Web/API verification failed')

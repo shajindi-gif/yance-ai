@@ -65,7 +65,7 @@ dockerfile='FROM '+base+'\nENV PYTHONPATH=/app\n'
 manifest=json.loads((r/'dependency-manifest.json').read_text())
 wheel=manifest['filename']
 assert wheel=='dnspython-2.9.2-py3-none-any.whl'
-dockerfile+='COPY dependency/'+wheel+' /tmp/'+wheel+'\nCOPY dependency-manifest.json /tmp/dependency-manifest.json\nCOPY install_dependency.py /tmp/install_dependency.py\nUSER root\nRUN apt-get update && apt-get install -y --no-install-recommends zlib1g && rm -rf /var/lib/apt/lists/*\nRUN python /tmp/install_dependency.py /tmp/'+wheel+' /tmp/dependency-manifest.json\nUSER yance\n'
+dockerfile+='COPY dependency/'+wheel+' /tmp/'+wheel+'\nCOPY dependency-manifest.json /tmp/dependency-manifest.json\nCOPY install_dependency.py /tmp/install_dependency.py\nUSER root\nRUN apt-get update && apt-get install -y --no-install-recommends apt libapt-pkg7.0 zlib1g && rm -rf /var/lib/apt/lists/*\nRUN python /tmp/install_dependency.py /tmp/'+wheel+' /tmp/dependency-manifest.json\nUSER yance\n'
 for path in paths:
  assert path.startswith('yance-ai/') and '..' not in path
  dockerfile+='COPY --chown=yance:yance '+path+' /app/'+path.removeprefix('yance-ai/')+'\n'

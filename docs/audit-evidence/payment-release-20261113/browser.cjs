@@ -33,7 +33,16 @@ const {chromium} = require(process.env.YANCE_PLAYWRIGHT_MODULE || '../../../../w
  if(await page.locator('.pricing-price').filter({hasText:'¥99'}).count()!==1)throw Error('SSR catalogue missing');
  const headers=(await page.request.get(base+'/login')).headers();
  if(!headers['strict-transport-security']?.includes('max-age=63072000'))throw Error('HSTS missing');
+ const release=await (await page.request.get(base+'/release.json?verification='+Date.now())).json();
+ if(release.website_source!=='4332071c804fc6e3f045746a5b71354e49ad4e57')throw Error('Unexpected website source');
+ let apiRuntime=null;
+ if(base.startsWith('https')){
+  apiRuntime=await (await page.request.get(base+'/api/runtime-version?verification='+Date.now())).json();
+  if(apiRuntime.source_revision!==(release.api_patch_source||release.website_source)||JSON.stringify(apiRuntime.database_revisions)!=='["20261113_0042"]')throw Error('Runtime identity mismatch');
+ }
  await context.close();await browser.close();
- fs.writeFileSync(path.join(output,'browser-'+(base.startsWith('https')?'production':'candidate')+'.json'),JSON.stringify({base,mode:'GET/HEAD only; no authentication or real purchase',results,ssrPrice:true,hsts:true,pageErrors:[]},null,2));
+ const releaseEvidence={...release,backend_commit:release.api_patch_source};
+ delete releaseEvidence.api_patch_source;
+ fs.writeFileSync(path.join(output,'browser-'+(base.startsWith('https')?'production':'candidate')+'.json'),JSON.stringify({base,mode:'GET/HEAD only; no authentication or real purchase',release:releaseEvidence,apiRuntime,results,ssrPrice:true,hsts:true,pageErrors:[]},null,2));
  console.log('PUBLIC_READ_ONLY_BROWSER_PASSED',results.length,'pages/viewports; SSR price; HSTS');
 })().catch(e=>{console.error(e);process.exit(1)});

@@ -1,0 +1,18 @@
+{
+  "mode": "read-only real provider bill query; no payment/refund creation",
+  "before": {
+    "request_content_type_charset": null,
+    "response_encoding": "gbk",
+    "signature_with_utf8": "failed"
+  },
+  "after": {
+    "request_content_type_charset": "utf-8",
+    "response_encoding": "utf-8",
+    "existing_public_key_signature_verified": true
+  },
+  "bill_date": "2026-11-12",
+  "alipay_business_code": "NO_BILL_DATA",
+  "wechat_business_code": "NO_STATEMENT_EXIST",
+  "public_key_changed": false,
+  "real_transaction_acceptance": false
+}
