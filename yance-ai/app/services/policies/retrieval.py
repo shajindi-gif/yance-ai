@@ -75,7 +75,7 @@ def hybrid_policy_candidates(
         key=lambda item: item[1],
         reverse=True,
     )[:100]
-    vector = list(
+    vector = [] if not query_vector else list(
         db.scalars(
             base.where(PolicyChunk.embedding.isnot(None))
             .order_by(PolicyChunk.embedding.cosine_distance(query_vector))
