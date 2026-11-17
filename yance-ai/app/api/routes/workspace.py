@@ -213,7 +213,8 @@ def sources_for(db, principal, company, question, limit):
         query=question,
         query_vector=[],
         region={"province": company.province, "city": company.city},
-        limit=limit,
+        limit=50,
+        evidence_ready=True,
     )
     sources = []
     for candidate in candidates:

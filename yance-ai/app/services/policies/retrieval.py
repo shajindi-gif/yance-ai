@@ -39,6 +39,7 @@ def hybrid_policy_candidates(
     query_vector: list[float],
     limit: int = 50,
     region: dict | None = None,
+    evidence_ready: bool = False,
 ) -> list[PolicyCandidate]:
     """Character/term lexical retrieval + vector retrieval + deterministic RRF."""
     latest = (
@@ -68,6 +69,25 @@ def hybrid_policy_candidates(
             or_(Policy.quality_deliverable.is_(None), Policy.quality_deliverable.is_(True)),
         )
     )
+    readiness = []
+    if evidence_ready:
+        # Evidence answers need verified metadata before ranking/limiting, unlike discovery.
+        readiness = [
+            *current_policy_clauses(),
+            Policy.effective_at.is_not(None),
+            Policy.expires_at.is_not(None),
+            Policy.deadline.is_not(None),
+            or_(Policy.quality_deliverable.is_(None), Policy.quality_deliverable.is_(True)),
+        ]
+        for key in ("province", "city", "district"):
+            column = getattr(Policy, key)
+            actual = (region or {}).get(key)
+            readiness.append(
+                or_(column.is_(None), column == "", column == actual)
+                if actual
+                else or_(column.is_(None), column == "")
+            )
+        base = base.where(*readiness)
     lexical_pool = list(db.scalars(base.order_by(PolicyChunk.created_at.desc()).limit(500)).all())
     query_tokens = _tokens(query)
     lexical = sorted(
@@ -75,12 +95,16 @@ def hybrid_policy_candidates(
         key=lambda item: item[1],
         reverse=True,
     )[:100]
-    vector = [] if not query_vector else list(
-        db.scalars(
-            base.where(PolicyChunk.embedding.isnot(None))
-            .order_by(PolicyChunk.embedding.cosine_distance(query_vector))
-            .limit(100)
-        ).all()
+    vector = (
+        []
+        if not query_vector
+        else list(
+            db.scalars(
+                base.where(PolicyChunk.embedding.isnot(None))
+                .order_by(PolicyChunk.embedding.cosine_distance(query_vector))
+                .limit(100)
+            ).all()
+        )
     )
 
     fused: dict[UUID, float] = {}
@@ -125,10 +149,10 @@ def hybrid_policy_candidates(
     policies = {
         item.id: item
         for item in db.scalars(
-            select(Policy).where(Policy.id.in_(fused), visible_policy_clause(tenant_id))
+            select(Policy).where(Policy.id.in_(fused), visible_policy_clause(tenant_id), *readiness)
         ).all()
     }
-    ranked = sorted(fused, key=fused.get, reverse=True)[:limit]
+    ranked = sorted((key for key in fused if key in policies), key=fused.get, reverse=True)[:limit]
     ceiling = max(fused.values()) or 1
     return [
         PolicyCandidate(

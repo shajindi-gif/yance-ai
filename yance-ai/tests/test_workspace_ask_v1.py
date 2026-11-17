@@ -296,6 +296,26 @@ def test_real_retrieval_filters_expiry_region_tenant_and_corrupt_snapshot(monkey
             yield json.dumps({"claims": [{"text": quote, "source": 1, "policy_quote": quote}]})
 
         monkeypatch.setattr(workspace.gateway, "complete_stream", stream)
+        # A large corpus must not let higher-ranked but undated global records
+        # consume all evidence slots before the valid private source is considered.
+        with SessionLocal() as db:
+            import hashlib
+
+            from app.models.models import PolicyChunk
+            text = "人工智能企业条件：此为日期未核实的合成样本。"
+            for _ in range(12):
+                distractor = Policy(title="人工智能企业条件", status="published", content=text)
+                db.add(distractor)
+                db.flush()
+                version = PolicyVersion(policy_id=distractor.id, version=1,
+                    title=distractor.title, content=text, status="published",
+                    content_sha256=hashlib.sha256(text.encode()).hexdigest())
+                db.add(version)
+                db.flush()
+                db.add(PolicyChunk(policy_id=distractor.id, policy_version_id=version.id,
+                    chunk_index=0, content=text, char_start=0, char_end=len(text),
+                    content_sha256=version.content_sha256))
+            db.commit()
         response = client.post("/api/v1/ask", headers=headers, json=question)
         assert "[1]" in response.text and str(policy_id) in response.text
         foreign_response = client.post(

@@ -49,7 +49,9 @@ def _collection_enabled(monkeypatch):
 
 
 def _clear(db) -> None:
-    db.execute(text("DELETE FROM policy_sources WHERE source_id = ANY(:ids)"), {"ids": list(SOURCE_IDS)})
+    db.execute(
+        text("DELETE FROM policy_sources WHERE source_id = ANY(:ids)"), {"ids": list(SOURCE_IDS)}
+    )
     db.commit()
 
 
@@ -76,10 +78,14 @@ def _no_sources(_catalog, _db, *, now=None):
 def test_global_pause_returns_without_any_request(db, catalog, state_path, monkeypatch):
     _clear(db)
     monkeypatch.setattr(
-        scheduler, "pause_state", lambda *_a, **_k: type("P", (), {"paused": True, "scope": "global"})()
+        scheduler,
+        "pause_state",
+        lambda *_a, **_k: type("P", (), {"paused": True, "scope": "global"})(),
     )
     monkeypatch.setattr(scheduler, "due_sources", _no_sources)
-    monkeypatch.setattr(scheduler, "execute_source_run", lambda *_a, **_k: pytest.fail("must not fetch"))
+    monkeypatch.setattr(
+        scheduler, "execute_source_run", lambda *_a, **_k: pytest.fail("must not fetch")
+    )
 
     result = scheduler.run_cycle(db, catalog, config=_config(state_path))
 
@@ -93,13 +99,19 @@ def test_low_disk_stops_the_cycle_before_downloading(db, catalog, state_path, mo
         scheduler,
         "storage_guard",
         lambda *_a, **_k: type(
-            "G", (), {"ok": False, "as_dict": lambda self: {"ok": False, "free_mb": 100, "reason": "low"}}
+            "G",
+            (),
+            {"ok": False, "as_dict": lambda self: {"ok": False, "free_mb": 100, "reason": "low"}},
         )(),
     )
     monkeypatch.setattr(
-        scheduler, "pause_state", lambda *_a, **_k: type("P", (), {"paused": False, "scope": "none"})()
+        scheduler,
+        "pause_state",
+        lambda *_a, **_k: type("P", (), {"paused": False, "scope": "none"})(),
     )
-    monkeypatch.setattr(scheduler, "execute_source_run", lambda *_a, **_k: pytest.fail("must not fetch"))
+    monkeypatch.setattr(
+        scheduler, "execute_source_run", lambda *_a, **_k: pytest.fail("must not fetch")
+    )
 
     result = scheduler.run_cycle(db, catalog, config=_config(state_path))
 
@@ -121,13 +133,19 @@ def test_source_limit_leaves_the_rest_due_for_the_next_cycle(db, catalog, state_
         return _report(source.source_id)
 
     monkeypatch.setattr(scheduler, "due_sources", fake_due)
-    monkeypatch.setattr(scheduler, "pause_state", lambda *_a, **_k: type("P", (), {"paused": False})())
     monkeypatch.setattr(
-        scheduler, "storage_guard", lambda *_a, **_k: type("G", (), {"ok": True, "as_dict": lambda self: {"ok": True}})()
+        scheduler, "pause_state", lambda *_a, **_k: type("P", (), {"paused": False})()
+    )
+    monkeypatch.setattr(
+        scheduler,
+        "storage_guard",
+        lambda *_a, **_k: type("G", (), {"ok": True, "as_dict": lambda self: {"ok": True}})(),
     )
     monkeypatch.setattr(scheduler, "execute_source_run", fake_execute)
 
-    result = scheduler.run_cycle(db, catalog, config=_config(state_path, max_sources_per_cycle=2), include_recheck=False)
+    result = scheduler.run_cycle(
+        db, catalog, config=_config(state_path, max_sources_per_cycle=2), include_recheck=False
+    )
 
     assert len(ran) == 2
     assert result.stop_reason == "max_sources"
@@ -144,13 +162,19 @@ def test_one_exploding_source_does_not_stop_the_cycle(db, catalog, state_path, m
         return _report(source.source_id)
 
     monkeypatch.setattr(scheduler, "due_sources", lambda *_a, **_k: list(due))
-    monkeypatch.setattr(scheduler, "pause_state", lambda *_a, **_k: type("P", (), {"paused": False})())
     monkeypatch.setattr(
-        scheduler, "storage_guard", lambda *_a, **_k: type("G", (), {"ok": True, "as_dict": lambda self: {"ok": True}})()
+        scheduler, "pause_state", lambda *_a, **_k: type("P", (), {"paused": False})()
+    )
+    monkeypatch.setattr(
+        scheduler,
+        "storage_guard",
+        lambda *_a, **_k: type("G", (), {"ok": True, "as_dict": lambda self: {"ok": True}})(),
     )
     monkeypatch.setattr(scheduler, "execute_source_run", fake_execute)
 
-    result = scheduler.run_cycle(db, catalog, config=_config(state_path, max_sources_per_cycle=5), include_recheck=False)
+    result = scheduler.run_cycle(
+        db, catalog, config=_config(state_path, max_sources_per_cycle=5), include_recheck=False
+    )
 
     statuses = [row["status"] for row in result.ran]
     assert "exception" in statuses
@@ -161,9 +185,13 @@ def test_one_exploding_source_does_not_stop_the_cycle(db, catalog, state_path, m
 def test_state_file_records_the_cycle_for_monitoring(db, catalog, state_path, monkeypatch):
     _clear(db)
     monkeypatch.setattr(scheduler, "due_sources", _no_sources)
-    monkeypatch.setattr(scheduler, "pause_state", lambda *_a, **_k: type("P", (), {"paused": False})())
     monkeypatch.setattr(
-        scheduler, "storage_guard", lambda *_a, **_k: type("G", (), {"ok": True, "as_dict": lambda self: {"ok": True}})()
+        scheduler, "pause_state", lambda *_a, **_k: type("P", (), {"paused": False})()
+    )
+    monkeypatch.setattr(
+        scheduler,
+        "storage_guard",
+        lambda *_a, **_k: type("G", (), {"ok": True, "as_dict": lambda self: {"ok": True}})(),
     )
 
     scheduler.run_cycle(db, catalog, config=_config(state_path), include_recheck=False)
@@ -222,10 +250,14 @@ def test_alerts_surface_persistent_failure_stale_and_gap(db, catalog, monkeypatc
     )
     db.commit()
     monkeypatch.setattr(
-        scheduler, "storage_guard", lambda *_a, **_k: type("G", (), {"ok": True, "as_dict": lambda self: {"ok": True}})()
+        scheduler,
+        "storage_guard",
+        lambda *_a, **_k: type("G", (), {"ok": True, "as_dict": lambda self: {"ok": True}})(),
     )
     monkeypatch.setattr(
-        scheduler, "pause_state", lambda *_a, **_k: type("P", (), {"paused": False, "scope": "none"})()
+        scheduler,
+        "pause_state",
+        lambda *_a, **_k: type("P", (), {"paused": False, "scope": "none"})(),
     )
 
     kinds = {(row["kind"], row.get("source_id")) for row in scheduler.alerts(db, catalog, now=now)}
@@ -239,10 +271,22 @@ def test_alerts_surface_persistent_failure_stale_and_gap(db, catalog, monkeypatc
 
 def test_serve_runs_bounded_cycles_and_honours_the_stop_event(db, catalog, state_path, monkeypatch):
     _clear(db)
+    # Loop lifecycle test must not launch a real historical collection batch.
+    calls = []
+
+    def offline_batch(*args, **kwargs):
+        calls.append(1)
+        return type("Batch", (), {"stop_reason": "completed", "sources": []})()
+
+    monkeypatch.setattr(scheduler, "run_batch", offline_batch)
     monkeypatch.setattr(scheduler, "due_sources", _no_sources)
-    monkeypatch.setattr(scheduler, "pause_state", lambda *_a, **_k: type("P", (), {"paused": False})())
     monkeypatch.setattr(
-        scheduler, "storage_guard", lambda *_a, **_k: type("G", (), {"ok": True, "as_dict": lambda self: {"ok": True}})()
+        scheduler, "pause_state", lambda *_a, **_k: type("P", (), {"paused": False})()
+    )
+    monkeypatch.setattr(
+        scheduler,
+        "storage_guard",
+        lambda *_a, **_k: type("G", (), {"ok": True, "as_dict": lambda self: {"ok": True}})(),
     )
 
     history = scheduler.serve(
@@ -253,14 +297,19 @@ def test_serve_runs_bounded_cycles_and_honours_the_stop_event(db, catalog, state
     )
 
     assert len(history) == 2
+    assert calls == [1, 1]
     assert all(row["stop_reason"] == "completed" for row in history)
 
 
-def test_master_switch_off_short_circuits_without_recording_90_skips(db, catalog, state_path, monkeypatch):
+def test_master_switch_off_short_circuits_without_recording_90_skips(
+    db, catalog, state_path, monkeypatch
+):
     from app.core.config import settings
 
     monkeypatch.setattr(settings, "policy_collection_enabled", False)
-    monkeypatch.setattr(scheduler, "execute_source_run", lambda *_a, **_k: pytest.fail("must not fetch"))
+    monkeypatch.setattr(
+        scheduler, "execute_source_run", lambda *_a, **_k: pytest.fail("must not fetch")
+    )
 
     result = scheduler.run_cycle(db, catalog, config=_config(state_path))
 
