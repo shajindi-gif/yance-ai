@@ -23,7 +23,7 @@ function SourceDialog({citation, close}: {citation: Citation; close: () => void}
   const span = findQuoteSpan(content, citation.policy_quote, citation.char_start);
   let url: string | undefined;
   try { const parsed = new URL(citation.source_url || ''); if (parsed.protocol === 'https:') url = parsed.href; } catch { /* untrusted sources never become executable links */ }
-  return <dialog ref={dialog} className={styles.dialog} aria-labelledby="ask-source-title" onClose={close}>
+  return <dialog ref={dialog} className={styles.dialog} aria-labelledby="ask-source-title" onClose={() => { if (!dialog.current?.open) close(); }}>
     <button type="button" className={styles.secondary} onClick={close} autoFocus>关闭原文</button>
     <h2 id="ask-source-title">{citation.title}</h2>
     <p>固定版本原文 · {citation.version_id}</p>
