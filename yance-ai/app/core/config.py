@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "yance.ai API"
-    app_env: Literal["development", "test", "staging", "production"] = "development"
+    app_env: Literal["development", "test", "eval", "staging", "production"] = "development"
     app_version: str = "0.1.0"
     debug: bool = False
     api_v1_prefix: str = "/api/v1"
@@ -133,6 +133,8 @@ class Settings(BaseSettings):
     clamd_timeout_seconds: float = 15.0
 
     llm_default_provider: str = "mock"
+    llm_task_routes: str = "{}"
+    workspace_ask_enabled: bool = False
     qwen_api_key: str = ""
     qwen_base_url: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     deepseek_api_key: str = ""
