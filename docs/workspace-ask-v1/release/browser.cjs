@@ -6,7 +6,7 @@ const {chromium} = require(process.env.YANCE_PLAYWRIGHT_MODULE || '../../../../w
  if(!['http://127.0.0.1:3039','https://yance.ai'].includes(base))throw Error('Unexpected verification target');
  const output=process.env.YANCE_BROWSER_OUTPUT;
  fs.mkdirSync(output,{recursive:true});
- const browser=await chromium.launch();const results=[];
+ const browser=await chromium.launch({timeout: 30000, ...(process.env.YANCE_BROWSER_EXECUTABLE ? {executablePath:process.env.YANCE_BROWSER_EXECUTABLE} : {channel:"chrome"})});const results=[];console.log("browser",browser.version());
  for(const width of [390,1440]){
   const context=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce'});
   await context.route('**/*',route=>{
@@ -15,13 +15,15 @@ const {chromium} = require(process.env.YANCE_PLAYWRIGHT_MODULE || '../../../../w
    return allowed&&['GET','HEAD'].includes(r.method())?route.continue():route.abort();
   });
   const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  for(const route of ['/','/pricing','/login','/discover','/checkout','/success']){
+  for(const route of ['/','/pricing','/login','/discover','/checkout','/success','/parks']){
    const response=await page.goto(base+route,{waitUntil:'domcontentloaded',timeout:90000});
    if(response.status()!==200)throw Error(route+' status '+response.status());
    await page.locator('main h1').first().waitFor();
    if(!await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth))throw Error(route+' overflow '+width);
+   if(route==='/parks' && (await page.getByText('让你的园区服务更智能',{exact:true}).count() || await page.getByText('注册后可创建企业工作区；可用额度与付费能力以账户中的真实配置为准。',{exact:true}).count())) throw Error('Legacy park promotion remains');
    const file=`${base.startsWith('https')?'production':'candidate'}-${width}-${route==='/'?'home':route.slice(1)}.png`;
    await page.screenshot({path:path.join(output,file),fullPage:true});
+   console.log("checked",width,route);
    results.push({width,route,status:response.status(),overflow:false,screenshot:file});
   }
   if(errors.length)throw Error(JSON.stringify(errors));
@@ -34,7 +36,7 @@ const {chromium} = require(process.env.YANCE_PLAYWRIGHT_MODULE || '../../../../w
  const headers=(await page.request.get(base+'/login')).headers();
  if(!headers['strict-transport-security']?.includes('max-age=63072000'))throw Error('HSTS missing');
  const release=await (await page.request.get(base+'/release.json?verification='+Date.now())).json();
- if(release.website_source!=='71de2286417d9c09b70d8f0fe59c6fd54ab2e32f')throw Error('Unexpected website source');
+ if(release.website_source!=='0746e06c9bc4e570577e0350129b038002a80eae')throw Error('Unexpected website source');
  let apiRuntime=null;
  if(true){
   apiRuntime=await (await page.request.get(base+'/api/runtime-version?verification='+Date.now())).json();

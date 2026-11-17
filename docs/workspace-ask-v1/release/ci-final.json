@@ -1,0 +1,16 @@
+{
+  "ci_commit": "148efb873951db5ba2bcb82afdb09fa57b2bc4b2",
+  "application_commit": "0746e06c9bc4e570577e0350129b038002a80eae",
+  "application_trees_equal": true,
+  "ci_url": "https://github.com/shajindi-gif/yance-ai/actions/runs/44108818370",
+  "all_seven_jobs": "success",
+  "codeql": "success",
+  "backend_passed": 480,
+  "backend_skipped": 6,
+  "coverage_percent": 78.39,
+  "golden_passed": 53,
+  "synthetic_eval_cases": 61,
+  "browser_passed": 52,
+  "browser_skipped": 2,
+  "real_business_accuracy": "not_verified"
+}

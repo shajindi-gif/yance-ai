@@ -23,7 +23,16 @@ for name in ['production.env','restore.env']:
  p=r/name;env=dict(line.split('=',1) for line in p.read_text().splitlines());env['APP_SOURCE_REVISION']=rev;p.write_text('\n'.join(k+'='+v for k,v in env.items())+'\n')
 p=r/'website/public/release.json';x=json.loads(p.read_text());x.update(website_source=rev,api_source=rev);p.write_text(json.dumps(x));p.chmod(0o644)
 PY
+cp /home/ubuntu/yance-workspace-workspace.py "$r/yance-ai/app/api/routes/workspace.py"
+cp /home/ubuntu/yance-workspace-retrieval.py "$r/yance-ai/app/services/policies/retrieval.py"
+chmod 644 "$r/yance-ai/app/api/routes/workspace.py" "$r/yance-ai/app/services/policies/retrieval.py"
+docker build -t yance-backend:workspace-20261117-01 "$r" > "$r/backend-build-final.log" 2>&1
+docker save yance-backend:workspace-20261117-01 -o "$r/image-final.tar"
+docker run --rm -v "$r/image-final.tar:/scan/image.tar:ro" -v /opt/yance/releases/payment-20261113-01/trivy-cache:/root/.cache/trivy aquasec/trivy:0.70.0 image --input /scan/image.tar --timeout 10m --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format json > "$r/scan-final.json" 2> "$r/scan-final.stderr"
+rm "$r/image-final.tar"
+docker image inspect -f '{{.Id}}' yance-backend:workspace-20261117-01 > "$r/approved-image.txt"
 systemctl stop yance-workspace-candidate-web
+chown -R ubuntu:ubuntu "$r/website"
 sudo -u ubuntu bash -c 'set -e; cd "$1"; npm run lint; npm run typecheck; npm run test:unit; API_PROXY_TARGET=http://127.0.0.1:8000 NEXT_PUBLIC_API_URL=/api/v1 NEXT_TELEMETRY_DISABLED=1 npm run build' _ "$r/website" > "$r/frontend-build-final.log" 2>&1
 python3 "$r/copy_static.py" "$(cat /opt/yance/backups/workspace-20261117-01/website-path.txt)/.next/standalone/.next/static" "$r/website/.next/standalone/.next/static"
 docker rm -f yance-workspace-candidate-api > /dev/null
