@@ -50,7 +50,9 @@ with SessionLocal() as db:
         "application_id": str(scenario.application_id),
         "synthetic": True,
     }
-path = Path("/tmp/yance-workspace-browser.json")
+path = Path(os.environ.get("YANCE_ASK_OUTPUT", "/tmp/yance-workspace-browser.json"))
+if path.resolve().is_relative_to(Path(__file__).resolve().parents[2]):
+    raise RuntimeError("Synthetic credentials must stay outside repository")
 path.write_text(json.dumps(fixture))
 path.chmod(0o600)
 with TestClient(app) as client:
