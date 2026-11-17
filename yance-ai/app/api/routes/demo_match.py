@@ -40,7 +40,7 @@ _llm = LLMRouter()
 AVAILABLE_MODELS = {
     "qwen": {"name": "通义千问 Qwen", "model_id": "qwen-plus"},
     "deepseek": {"name": "DeepSeek V3", "model_id": "deepseek-chat"},
-    "openai": {"name": "OpenAI GPT-4o", "model_id": "gpt-4o-mini"},
+    "openai": {"name": "OpenAI GPT-4o-mini", "model_id": "gpt-4o-mini"},
 }
 
 

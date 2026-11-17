@@ -137,6 +137,7 @@ def test_policy_api_budget_denial_is_429_not_a_fallback_conclusion(monkeypatch):
                 output_tokens=20,
             )
 
+    monkeypatch.setattr(settings, "llm_task_routes", '{"extract_criteria":{"primary":{"provider":"deepseek","model":"synthetic"},"fallback":{"provider":"deepseek","model":"synthetic"}},"judge_eligibility":{"primary":{"provider":"deepseek","model":"synthetic"},"fallback":{"provider":"deepseek","model":"synthetic"}}}')
     monkeypatch.setitem(evaluator._llm.providers, "deepseek", Provider())
     monkeypatch.setattr(settings, "llm_daily_call_limit", 1)
     with TestClient(app) as client:
