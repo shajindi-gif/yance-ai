@@ -46,6 +46,12 @@ def _collection_enabled(monkeypatch):
     from app.core.config import settings
 
     monkeypatch.setattr(settings, "policy_collection_enabled", True)
+    # Guard tests exercise incremental control flow, never the live history queue.
+    monkeypatch.setattr(
+        scheduler,
+        "run_batch",
+        lambda *args, **kwargs: type("Batch", (), {"stop_reason": "completed", "sources": []})(),
+    )
 
 
 def _clear(db) -> None:
