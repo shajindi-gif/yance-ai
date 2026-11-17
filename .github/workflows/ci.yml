@@ -33,6 +33,7 @@ jobs:
           --health-retries 10
     env:
       APP_ENV: test
+      LLM_DEFAULT_PROVIDER: mock
       DATABASE_URL: postgresql+psycopg://yance:ci_password@localhost:5432/yance_ci
       YANCE_TEST_DATABASE_ACK: yance_ci
       JWT_SECRET: ci-only-secret-at-least-32-characters
@@ -279,6 +280,7 @@ jobs:
           --health-retries 10
     env:
       APP_ENV: test
+      LLM_DEFAULT_PROVIDER: mock
       DATABASE_URL: postgresql+psycopg://yance:ci_password@localhost:5432/yance_e2e_test
       YANCE_TEST_DATABASE_ACK: yance_e2e_test
       JWT_SECRET: ci-only-secret-at-least-32-characters
