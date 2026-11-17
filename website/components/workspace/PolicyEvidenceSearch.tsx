@@ -2,6 +2,7 @@
 
 import { useRef, useState, type FormEvent } from 'react';
 import styles from './PolicyEvidenceSearch.module.css';
+import askStyles from './AskWorkspace.module.css';
 import api, { type EvidenceHit } from '@/lib/api';
 
 const dateLabel = (value: string | null) => value ? value.slice(0, 10) : '待核对';
@@ -9,6 +10,11 @@ const sourceLink = (value: string | null) => {
   try { const url = new URL(value || ''); return url.protocol === 'https:' ? url.href : undefined; }
   catch { return undefined; }
 };
+
+/** The same immutable source rendering is used by search and Ask citations. */
+export function EvidencePassage({content, start, end}: {content: string; start: number; end: number}) {
+  return <p className={askStyles.passage}>{start >= 0 ? <>{content.slice(0, start)}<mark>{content.slice(start, end)}</mark>{content.slice(end)}</> : content}</p>;
+}
 
 export default function PolicyEvidenceSearch() {
   const [query, setQuery] = useState('');
@@ -79,11 +85,7 @@ export default function PolicyEvidenceSearch() {
       </button>{' '}
       {sourceLink(hit.source_url) && <a href={sourceLink(hit.source_url)} target="_blank" rel="noopener noreferrer">打开发布来源</a>}
       {source?.id === hit.version_id && <details open><summary>对应版本完整原文</summary>
-        <p style={{whiteSpace:'pre-wrap'}}>
-          {source.content.slice(0, hit.char_start)}
-          <mark>{source.content.slice(hit.char_start, hit.char_end)}</mark>
-          {source.content.slice(hit.char_end)}
-        </p></details>}
+        <EvidencePassage content={source.content} start={hit.char_start} end={hit.char_end} /></details>}
     </article>)}
   </section>;
 }

@@ -354,3 +354,7 @@
 @media(max-width:900px) { .sidebar:not(.sidebarOpen) { visibility:hidden; pointer-events:none; } }
 
 /* Navigation recedes while the current document stays prominent. */
+
+.contextNav { display:flex; flex-wrap:wrap; gap:16px; margin-block-end:24px; padding-block-end:12px; border-bottom:1px solid var(--line); font-size:13px; }
+.contextNav a { color:var(--muted); }
+.contextNav a[aria-current] { color:var(--teal-dark); font-weight:600; }

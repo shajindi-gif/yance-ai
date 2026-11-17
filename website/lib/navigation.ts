@@ -42,135 +42,23 @@ export const WORKSPACE_ROUTES = [
   "/admin",
 ] as const;
 
-/** Funding OS information architecture, grouped for the sidebar. */
-export const WORKSPACE_NAVIGATION_GROUPS: { title: string; items: WorkspaceNavItem[] }[] = [
-  {
-    title: "政策与项目",
-    items: [
-      {
-        href: "/dashboard",
-        label: "工作台",
-        description: "项目进度与下一步",
-        icon: "home",
-        match: (pathname) => pathname === "/dashboard",
-      },
-      {
-        href: "/discover",
-        label: "政策检索",
-        description: "政策来源与申报窗口",
-        icon: "discover",
-        match: (pathname) => pathname === "/discover",
-      },
-      {
-        href: "/opportunities",
-        label: "我的机会",
-        description: "匹配与资格状态",
-        icon: "opportunities",
-        match: (pathname) => pathname === "/opportunities" || pathname.startsWith("/opportunities/"),
-      },
-      {
-        href: "/applications",
-        label: "申报项目",
-        description: "材料与执行进度",
-        icon: "applications",
-        match: (pathname) => pathname === "/applications" || pathname.startsWith("/applications/"),
-      },
-      {
-        href: "/projects",
-        label: "项目总览",
-        description: "全生命周期与里程碑",
-        icon: "projects",
-        match: (pathname) => pathname === "/projects",
-      },
-    ],
-  },
-  {
-    title: "企业与知识",
-    items: [
-      {
-        href: "/companies",
-        label: "企业资料",
-        description: "画像与证据",
-        icon: "companies",
-        match: (pathname) => pathname === "/companies" || pathname.startsWith("/companies/"),
-      },
-      {
-        href: "/documents",
-        label: "资料库",
-        description: "上传与摄取状态",
-        icon: "documents",
-        match: (pathname) => pathname === "/documents" || pathname.startsWith("/documents/"),
-      },
-      {
-        href: "/consultant",
-        label: "AI 顾问",
-        description: "围绕企业事实与原文",
-        icon: "consultant",
-        match: (pathname) => pathname === "/consultant",
-      },
-      {
-        href: "/notifications",
-        label: "通知",
-        description: "截止日与管道动态",
-        icon: "notifications",
-        match: (pathname) => pathname === "/notifications",
-      },
-    ],
-  },
-  {
-    title: "执行与交付",
-    items: [
-      {
-        href: "/reports",
-        label: "报告",
-        description: "已授权的分析文件",
-        icon: "reports",
-        match: (pathname) => pathname === "/reports",
-      },
-      {
-        href: "/tasks",
-        label: "执行任务",
-        description: "运行进度与交付",
-        icon: "tasks",
-        match: (pathname) => pathname === "/tasks" || pathname.startsWith("/tasks/"),
-      },
-      {
-        href: "/agents",
-        label: "Agent 运行",
-        description: "执行轨迹与质量状态",
-        icon: "agents",
-        match: (pathname) => pathname === "/agents" || pathname.startsWith("/agents/"),
-      },
-    ],
-  },
-];
-
-export const WORKSPACE_NAVIGATION: WorkspaceNavItem[] =
-  WORKSPACE_NAVIGATION_GROUPS.flatMap((group) => group.items);
-
-export const WORKSPACE_BOTTOM_NAVIGATION: WorkspaceNavItem[] = [
-  {
-    href: "/billing",
-    label: "用量与账单",
-    description: "套餐、配额与交易",
-    icon: "billing",
-    match: (pathname) => pathname === "/billing" || pathname === "/orders",
-  },
-  {
-    href: "/team",
-    label: "团队",
-    description: "成员与角色",
-    icon: "team",
-    match: (pathname) => pathname === "/team",
-  },
-  {
-    href: "/settings",
-    label: "设置",
-    description: "API 与数据治理",
-    icon: "settings",
-    match: (pathname) => pathname === "/settings",
-  },
-];
+const belongsTo = (routes: string[]) => (pathname: string) => routes.some(route => pathname === route || pathname.startsWith(`${route}/`));
+export const WORKSPACE_NAVIGATION_GROUPS: {title: string; items: WorkspaceNavItem[]}[] = [{title: '企业工作区', items: [
+  {href: '/dashboard', label: '问衍策', description: '提问与查看政策依据', icon: 'home', match: belongsTo(['/dashboard', '/consultant'])},
+  {href: '/opportunities', label: '政策机会', description: '查找政策、核对条件', icon: 'opportunities', match: belongsTo(['/opportunities', '/discover', '/notifications'])},
+  {href: '/applications', label: '申报项目', description: '补证、复核与执行记录', icon: 'applications', match: belongsTo(['/applications', '/projects', '/tasks', '/agents'])},
+  {href: '/companies', label: '企业与资料', description: '企业事实、材料与报告', icon: 'companies', match: belongsTo(['/companies', '/documents', '/reports'])},
+  {href: '/billing', label: '账户', description: '账单、订单与团队设置', icon: 'billing', match: belongsTo(['/billing', '/orders', '/team', '/settings'])},
+]}];
+export const WORKSPACE_NAVIGATION = WORKSPACE_NAVIGATION_GROUPS.flatMap(group => group.items);
+export const WORKSPACE_BOTTOM_NAVIGATION: WorkspaceNavItem[] = [];
+export const WORKSPACE_SECONDARY: Record<string, {href: string; label: string}[]> = {
+  '/dashboard': [{href: '/dashboard', label: '问衍策'}, {href: '/consultant', label: '企业证据记录'}],
+  '/opportunities': [{href: '/opportunities', label: '企业机会'}, {href: '/discover', label: '政策原文检索'}, {href: '/notifications', label: '通知'}],
+  '/applications': [{href: '/applications', label: '申报项目'}, {href: '/projects', label: '项目总览'}, {href: '/tasks', label: '执行任务'}, {href: '/agents', label: '执行记录'}],
+  '/companies': [{href: '/companies', label: '企业资料'}, {href: '/documents', label: '资料库'}, {href: '/reports', label: '报告'}],
+  '/billing': [{href: '/billing', label: '用量与账单'}, {href: '/orders', label: '订单与发票'}, {href: '/team', label: '团队'}, {href: '/settings', label: '设置'}],
+};
 
 export const ADMIN_NAVIGATION: WorkspaceNavItem = {
   href: "/admin",

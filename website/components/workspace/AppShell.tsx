@@ -11,6 +11,7 @@ import {
   ADMIN_NAVIGATION,
   WORKSPACE_BOTTOM_NAVIGATION,
   WORKSPACE_NAVIGATION,
+  WORKSPACE_SECONDARY,
   WORKSPACE_NAVIGATION_GROUPS,
   type WorkspaceNavItem,
 } from "@/lib/navigation";
@@ -242,7 +243,6 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
               {group.items.map(renderNavItem)}
             </div>
           ))}
-          <p className={styles.navLabel}>Account</p>
           {WORKSPACE_BOTTOM_NAVIGATION.map(renderNavItem)}
           {isPlatformAdmin ? renderNavItem(ADMIN_NAVIGATION) : null}
         </nav>
@@ -326,6 +326,9 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
           </div>
         </header>
         <main id="main-content" className={styles.content}>
+          {activeItem && WORKSPACE_SECONDARY[activeItem.href] && <nav className={styles.contextNav} aria-label="当前工作区页面">
+            {WORKSPACE_SECONDARY[activeItem.href].map(item => <Link key={item.href} href={item.href} aria-current={pathname === item.href ? 'page' : undefined}>{item.label}</Link>)}
+          </nav>}
           {children}
         </main>
       </div>

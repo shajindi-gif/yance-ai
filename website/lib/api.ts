@@ -1,9 +1,24 @@
+import { consumeAskStream, type AskEvent, type Citation } from './ask-stream';
 import { apiErrorMessage } from './api-errors';
 
 // Yance.ai API Client
 // Connects the Next.js frontend to the FastAPI backend
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
+
+export interface WorkspaceHome {
+  tenant: {id: string; name: string}; user_id: string;
+  companies: {id: string; name: string}[]; company: {id: string; name: string} | null;
+  ask_enabled: boolean; can_ask: boolean;
+  cards: {eligible_count: number; highest_amount_wan: number | null; deadline_count: number; nearest_deadline: string | null; missing_evidence_count: number};
+  projects: {id: string; title: string; status: string}[];
+  conversations: {id: string; title: string; status: string}[];
+  next_action: {title: string; href: string};
+}
+export interface SavedConversation {
+  id: string; company_id: string; status: string;
+  messages: {role: string; content: string; citations: Citation[]}[];
+}
 
 export interface AuthConfig {
   email_login_enabled: boolean;
@@ -1301,6 +1316,26 @@ class ApiClient {
   }
 
   // Tenant
+  async getWorkspaceHome(companyId?: string, signal?: AbortSignal): Promise<WorkspaceHome> {
+    return this.request(`/workspace/home${companyId ? `?company_id=${encodeURIComponent(companyId)}` : ''}`, {signal});
+  }
+
+  async getConversation(id: string): Promise<SavedConversation> {
+    return this.request(`/workspace/conversations/${encodeURIComponent(id)}`);
+  }
+
+  async askWorkspace(payload: {company_id: string; question: string; mode: 'fast' | 'deep'; request_id: string}, receive: (event: AskEvent) => void, signal: AbortSignal): Promise<void> {
+    const response = await fetch(`${API_BASE}/ask`, {method: 'POST', signal,
+      headers: {'Content-Type': 'application/json', ...(this.token ? {Authorization: `Bearer ${this.token}`} : {})}, body: JSON.stringify(payload)});
+    if (response.status === 401) this.clearToken();
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({detail: '问答暂不可用'}));
+      throw new Error(apiErrorMessage(data.detail, `HTTP ${response.status}`));
+    }
+    if (!response.body) throw new Error('浏览器不支持流式回答');
+    await consumeAskStream(response.body, receive);
+  }
+
   async getTenant(): Promise<Tenant> {
     return this.request<Tenant>('/tenant');
   }
