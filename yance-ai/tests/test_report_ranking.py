@@ -73,12 +73,36 @@ def test_activity_without_rules_skipped():
         tech_component=5,
         finance_component=5,
         semantic_component=9,
-        active_hard_rules=0,
+        active_hard_rules=2,
         deadline=None,
         expires_at=None,
     )
     assert ranked.skip is True
     assert ranked.skip_reason == "activity_or_plan_noise"
+
+
+def test_recruitment_skipped_even_with_rules():
+    ranked = compute_rank_features(
+        title="国家知识产权局知识产权发展研究中心2026年第二批项目博士后招聘公告",
+        policy_type="公告",
+        company_province="上海市",
+        company_city=None,
+        company_district=None,
+        policy_province=None,
+        policy_city=None,
+        policy_district=None,
+        policy_level="national",
+        industry_component=12,
+        scale_component=5,
+        qualification_component=15,
+        tech_component=10,
+        finance_component=5,
+        semantic_component=8,
+        active_hard_rules=2,
+        deadline=None,
+        expires_at=None,
+    )
+    assert ranked.skip is True
 
 
 def test_out_of_region_hard_skip():

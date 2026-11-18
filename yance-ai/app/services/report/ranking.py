@@ -21,11 +21,15 @@ _NOISE_TITLE_TOKENS = (
     "建设名单",
     "方案（模板）",
     "职员招聘",
+    "招聘公告",
+    "博士后招聘",
+    "百日招聘",
     "财务决算报表",
     "决算报表",
     "公示名单",
     "入选名单",
     "拟认定名单",
+    "实验动物许可",
 )
 
 # Soft promotional / planning noise: demote hard; skip when no rules.
@@ -43,10 +47,16 @@ _ACTIVITY_OR_PLAN_TOKENS = (
     "五年规划",
     "十五五",
     "十四五",
-    "指导意见",
-    "若干意见",
+    "答记者问",
+    "新闻发布会",
 )
 
+# Soft demotion only (do not hard-skip when rules exist).
+_OPINION_TOKENS = (
+    "指导意见",
+    "若干意见",
+    "的意见",
+)
 _ACTIONABLE_TOKENS = (
     "申报",
     "申请",
@@ -62,6 +72,8 @@ _ACTIONABLE_TOKENS = (
     "组织申报",
     "开始申报",
     "兑现",
+    "征集",
+    "项目的通知",
 )
 
 
@@ -105,15 +117,16 @@ def actionability_score(title: str | None, policy_type: str | None = None) -> fl
     blob = _title_blob(title, policy_type)
     score = 0.0
     if any(token in blob for token in _ACTIONABLE_TOKENS):
-        score += 12.0
-    if any(token in blob for token in ("通知", "公告")) and score >= 12:
+        score += 14.0
+    if any(token in blob for token in ("通知", "公告")) and score >= 14:
         score += 2.0
+    if any(token in blob for token in _OPINION_TOKENS) and score < 14:
+        score -= 10.0
     if is_activity_or_plan_title(title, policy_type):
         score -= 18.0
     if is_hard_noise_title(title, policy_type):
         score -= 25.0
     return score
-
 
 def region_fit_score(
     *,
@@ -135,21 +148,20 @@ def region_fit_score(
         return 0.0, True
 
     if company_province and policy_province and company_province == policy_province:
-        score = 16.0
+        score = 18.0
         if company_city and policy_city and company_city == policy_city:
-            score = 18.0
+            score = 20.0
         if company_district and policy_district and company_district == policy_district:
-            score = 20.0
+            score = 22.0
         elif company_city and policy_district and company_city == policy_district:
-            score = 20.0
+            score = 22.0
         return score, False
 
     if level == "national" or (not policy_province and not level):
         # National is applicable but must not outrank same-province items.
         if company_province:
-            return 10.0, False
+            return 8.0, False
         return 14.0, False
-
     if not policy_province:
         return 8.0, False
     return 0.0, False
@@ -256,38 +268,26 @@ def compute_rank_features(
 
     hard_noise = is_hard_noise_title(title, policy_type)
     activity = is_activity_or_plan_title(title, policy_type)
-    if hard_noise and active_hard_rules <= 0:
+    # Roster / recruitment / Q&A / promo activities are not actionable subsidy briefs.
+    if hard_noise or activity:
         return RankFeatures(
             region_fit=region,
             industry_fit=industry_component,
             actionability=actionability_score(title, policy_type),
             window_fit=0,
-            evidence_strength=evidence_strength_score(0),
+            evidence_strength=evidence_strength_score(active_hard_rules),
             enterprise_fit=0,
-            noise_penalty=-30,
+            noise_penalty=-40,
             relevance_base=0,
-            usefulness=-40,
+            usefulness=-50,
             final_score=0,
             skip=True,
-            skip_reason="hard_noise",
-            ranking_note="噪声标题（名册/招聘等）：已移出",
+            skip_reason="hard_noise" if hard_noise else "activity_or_plan_noise",
+            ranking_note="噪声/宣传活动类：已移出主列表",
         )
-    if activity and active_hard_rules <= 0 and industry_component < 12:
-        return RankFeatures(
-            region_fit=region,
-            industry_fit=industry_component,
-            actionability=actionability_score(title, policy_type),
-            window_fit=0,
-            evidence_strength=evidence_strength_score(0),
-            enterprise_fit=0,
-            noise_penalty=-22,
-            relevance_base=0,
-            usefulness=-35,
-            final_score=0,
-            skip=True,
-            skip_reason="activity_or_plan_noise",
-            ranking_note="宣传/规划类弱相关：已移出主列表",
-        )
+    # Title mentions the company's province → local signal even if metadata province null.
+    if company_province and company_province[:2] in (title or ""):
+        region = max(region, 17.0)
 
     action = actionability_score(title, policy_type)
     window = window_fit_score(deadline=deadline, expires_at=expires_at, now=now)
@@ -317,7 +317,7 @@ def compute_rank_features(
     )
     usefulness = action + window + evidence + enterprise + noise_penalty
     if region >= 16 and active_hard_rules > 0:
-        usefulness += 8.0
+        usefulness += 10.0
 
     final = max(0.0, min(100.0, relevance + usefulness))
     note = None
@@ -327,7 +327,6 @@ def compute_rank_features(
         note = "规划/活动类：已降权，优先核对申报类政策"
     elif region >= 16:
         note = "同城/同省可行动机会优先"
-
     return RankFeatures(
         region_fit=region,
         industry_fit=industry_component,
