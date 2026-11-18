@@ -71,6 +71,13 @@ RULE_TEMPLATES: tuple[dict[str, Any], ...] = (
         "keywords": ("智能制造", "先进制造业", "制造业企业", "技术改造"),
     },
     {
+        "name": "软件/信息技术产业要求",
+        "fact_key": "industry",
+        "operator": "contains",
+        "expected_json": {"value": "软件"},
+        "keywords": ("软件企业", "软件和信息技术", "信息技术服务", "工业软件"),
+    },
+    {
         "name": "中小企业适用",
         "fact_key": "company_scale",
         "operator": "in",
@@ -132,6 +139,9 @@ def extract_rule_candidates(
             continue
         if template["fact_key"] == "province" and not geo_only and not include_shanghai_geo:
             continue
+        # Industry keyword hits are too noisy for hard gates (AND-fail unrelated briefs).
+        if template["fact_key"] == "industry":
+            continue
         for keyword in template["keywords"]:
             index = content.find(keyword)
             if index < 0:
@@ -150,6 +160,9 @@ def extract_rule_candidates(
                     continue
             key = f"{template['fact_key']}:{quote}"
             if key in seen_keys:
+                break
+            # One industry hard-gate per policy — keyword spam must not AND-fail eligibility.
+            if template["fact_key"] == "industry" and any(c.fact_key == "industry" for c in found):
                 break
             seen_keys.add(key)
             found.append(

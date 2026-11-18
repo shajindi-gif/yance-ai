@@ -273,6 +273,9 @@ async def match_policies_for_company(
         if out_of_region:
             # Wrong-province noise must not occupy a local enterprise brief.
             continue
+        if not company_province and policy.province and (policy.level or "") != "national":
+            # Nationwide/cross-region profiles only keep national or unscoped policies.
+            continue
         title_blob = f"{policy.title or ''} {policy.policy_type or ''}"
         # Geographic-mark / roster noise is rarely actionable for SME subsidy briefs.
         irrelevant_noise = any(
@@ -284,6 +287,8 @@ async def match_policies_for_company(
                 "典型案例",
                 "建设名单",
                 "方案（模板）",
+                "职员招聘",
+                "财务决算报表",
             )
         )
         if irrelevant_noise and not active_rule_count:
@@ -415,7 +420,8 @@ async def match_policies_for_company(
         for opp in opportunities
         if int((opp.evidence_json or {}).get("active_hard_rules") or 0) <= 0
     ]
-    max_unruled = max(2, int(len(ruled) * 0.12)) if ruled else min(5, len(unruled))
+    # Keep no-rule share under 15% of the brief when any ruled opportunities exist.
+    max_unruled = min(len(unruled), max(0, (len(ruled) * 14) // 86)) if ruled else min(5, len(unruled))
     selected = ruled + unruled[:max_unruled]
     selected.sort(key=lambda o: o.score, reverse=True)
     for opp in selected:
