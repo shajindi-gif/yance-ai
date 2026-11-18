@@ -271,12 +271,29 @@ async def match_policies_for_company(
             and (policy.level or "") != "national"
         )
         if out_of_region:
-            # Wrong-province noise must not occupy a Shanghai enterprise brief.
+            # Wrong-province noise must not occupy a local enterprise brief.
+            continue
+        title_blob = f"{policy.title or ''} {policy.policy_type or ''}"
+        # Geographic-mark / roster noise is rarely actionable for SME subsidy briefs.
+        irrelevant_noise = any(
+            token in title_blob
+            for token in (
+                "地理标志专用标志",
+                "地理标志产品公告",
+                "核准使用地理标志",
+                "典型案例",
+                "建设名单",
+                "方案（模板）",
+            )
+        )
+        if irrelevant_noise and not active_rule_count:
             continue
         if active_rule_count:
             usefulness += 14
         else:
             usefulness -= 22  # demote no-rule noise from the top of the brief
+        if industry_score == 0 and not active_rule_count:
+            usefulness -= 10
         if policy.deadline is not None:
             usefulness += 4
         if region_score >= 15 and active_rule_count:

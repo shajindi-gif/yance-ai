@@ -25,6 +25,15 @@ RULE_TEMPLATES: tuple[dict[str, Any], ...] = (
         "operator": "eq",
         "expected_json": {"value": "上海市"},
         "keywords": ("注册地在上海市", "本市注册", "上海市内", "上海市"),
+        "geo_only": "上海市",
+    },
+    {
+        "name": "适用地域为广东省",
+        "fact_key": "province",
+        "operator": "eq",
+        "expected_json": {"value": "广东省"},
+        "keywords": ("注册地在广东省", "广东省内", "在广东省", "广东省"),
+        "geo_only": "广东省",
     },
     {
         "name": "高新技术企业要求",
@@ -53,6 +62,13 @@ RULE_TEMPLATES: tuple[dict[str, Any], ...] = (
         "operator": "contains",
         "expected_json": {"value": "人工智能"},
         "keywords": ("人工智能", "智能经济", "智能产业"),
+    },
+    {
+        "name": "智能制造/制造业要求",
+        "fact_key": "industry",
+        "operator": "contains",
+        "expected_json": {"value": "制造"},
+        "keywords": ("智能制造", "先进制造业", "制造业企业", "技术改造"),
     },
     {
         "name": "中小企业适用",
@@ -101,6 +117,7 @@ def extract_rule_candidates(
     chunk_texts: list[str],
     *,
     include_shanghai_geo: bool = True,
+    policy_province: str | None = None,
 ) -> list[RuleCandidate]:
     """Extract hard-gate rule candidates whose quotes resolve in content and chunks."""
 
@@ -109,7 +126,11 @@ def extract_rule_candidates(
     found: list[RuleCandidate] = []
     seen_keys: set[str] = set()
     for template in RULE_TEMPLATES:
-        if not include_shanghai_geo and template["fact_key"] == "province":
+        geo_only = template.get("geo_only")
+        if geo_only and policy_province != geo_only:
+            # Never attach another province's geo hard-gate (avoids false NOT_ELIGIBLE).
+            continue
+        if template["fact_key"] == "province" and not geo_only and not include_shanghai_geo:
             continue
         for keyword in template["keywords"]:
             index = content.find(keyword)
@@ -168,7 +189,19 @@ def list_slice_policies(
     *,
     province: str | None = "上海市",
     limit: int = 80,
-    require_topic_keywords: tuple[str, ...] = ("人工智能", "专精特新", "高新技术", "高企", "研发", "科技型中小"),
+    require_topic_keywords: tuple[str, ...] = (
+        "人工智能",
+        "专精特新",
+        "高新技术",
+        "高企",
+        "研发",
+        "科技型中小",
+        "智能制造",
+        "技术改造",
+        "制造业",
+        "工业",
+        "软件",
+    ),
 ) -> list[Policy]:
     """Published policies for a province slice, or national topic slice when province is None."""
 
@@ -215,7 +248,10 @@ def build_candidates_for_policy(
     if include_shanghai_geo is None:
         include_shanghai_geo = (policy.province == "上海市") or (policy.city == "上海市")
     candidates = extract_rule_candidates(
-        version.content, chunk_texts, include_shanghai_geo=include_shanghai_geo
+        version.content,
+        chunk_texts,
+        include_shanghai_geo=include_shanghai_geo,
+        policy_province=policy.province or policy.city,
     )
     safe: list[RuleCandidate] = []
     for candidate in candidates:
