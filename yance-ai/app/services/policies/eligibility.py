@@ -16,7 +16,10 @@ from app.models.models import (
     PolicyVersion,
     RequiredMaterial,
 )
-from app.services.policies.applicability import policy_context_issues
+from app.services.policies.applicability import (
+    policy_context_advisory_issues,
+    policy_context_blocking_issues,
+)
 from app.services.policies.ingestion import latest_policy_version
 from app.services.policies.visibility import visible_policy_clause
 
@@ -149,29 +152,30 @@ def evaluate_opportunity(
     )
     criteria: list[dict[str, Any]] = []
     policy = db.scalar(select(Policy).where(Policy.id == opportunity.policy_id, visible_policy_clause(opportunity.tenant_id)))
-    missing: list[str] = policy_context_issues(policy, version, snapshot)
+    blocking: list[str] = policy_context_blocking_issues(policy, version, snapshot)
+    advisory: list[str] = policy_context_advisory_issues(policy, version)
     hard_failed = False
     evidence_rows: list[tuple[EligibilityRule, PolicyChunk, int, int]] = []
 
     if not version:
-        missing.append("政策尚无不可变来源版本")
+        blocking.append("政策尚无不可变来源版本")
     if version and not rules:
-        missing.append("政策尚无已审核的结构化资格规则")
+        blocking.append("政策尚无已审核的结构化资格规则")
     if rules and not any(rule.is_hard_gate for rule in rules):
-        missing.append("政策仅包含参考条件，缺少已核验硬门槛")
+        blocking.append("政策仅包含参考条件，缺少已核验硬门槛")
     for rule in rules:
         actual = snapshot.get(rule.fact_key)
         source = _exact_source(db, version, rule)
         missing_fact = actual in (None, "", []) and rule.operator != "exists"
         if rule.operator not in ALLOWED_OPERATORS:
             state = "UNSUPPORTED"
-            missing.append(f"规则“{rule.name}”使用了不支持的运算符")
+            blocking.append(f"规则“{rule.name}”使用了不支持的运算符")
         elif source is None:
             state = "UNVERIFIED_SOURCE"
-            missing.append(f"规则“{rule.name}”缺少可逐字核验的政策原文")
+            blocking.append(f"规则“{rule.name}”缺少可逐字核验的政策原文")
         elif missing_fact:
             state = "MISSING"
-            missing.append(f"企业画像缺少：{rule.fact_key}")
+            blocking.append(f"企业画像缺少：{rule.fact_key}")
             # Keep the verified requirement quote so NEED_MORE cards still show
             # what the policy asks for — reduces empty-citation briefs without
             # inventing facts.
@@ -198,25 +202,32 @@ def evaluate_opportunity(
 
     if hard_failed:
         status, summary = "NOT_ELIGIBLE", "至少一项已核验硬门槛不满足。"
-    elif missing:
+    elif blocking:
         status, summary = "NEED_MORE_INFORMATION", "缺少企业事实、规则或可核验政策原文。"
     elif rules:
-        status, summary = (
-            "POTENTIALLY_ELIGIBLE",
-            "已通过结构化规则检查，仍需人工复核后方可确认符合。",
-        )
+        if advisory:
+            status, summary = (
+                "POTENTIALLY_ELIGIBLE",
+                "已通过结构化规则检查；日期或窗口字段未完全收录，仍须客户对照原文复核后方可行动。",
+            )
+        else:
+            status, summary = (
+                "POTENTIALLY_ELIGIBLE",
+                "已通过结构化规则检查，仍需人工复核后方可确认符合。",
+            )
     else:
         status, summary = "NEED_MORE_INFORMATION", "尚未形成可验证资格结论。"
 
+    gaps = list(dict.fromkeys([*blocking, *advisory]))
     passed_count = sum(item["status"] == "PASS" for item in criteria)
-    confidence = passed_count / len(criteria) if criteria and not missing else 0
+    confidence = passed_count / len(criteria) if criteria and not blocking else 0
     result.policy_version_id = version.id if version else None
     result.profile_version_id = opportunity.profile_version_id
     result.status = status
     result.confidence = confidence
     result.summary = summary
     result.criteria_json = criteria
-    result.missing_information_json = list(dict.fromkeys(missing))
+    result.missing_information_json = gaps
     result.engine_version = ENGINE_VERSION
     result.review_status = "not_reviewed"
     result.verified_at = datetime.now(UTC) if version and evidence_rows else None

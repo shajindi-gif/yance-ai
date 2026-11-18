@@ -52,7 +52,14 @@ RULE_TEMPLATES: tuple[dict[str, Any], ...] = (
         "fact_key": "industry",
         "operator": "contains",
         "expected_json": {"value": "人工智能"},
-        "keywords": ("人工智能",),
+        "keywords": ("人工智能", "智能经济", "智能产业"),
+    },
+    {
+        "name": "中小企业适用",
+        "fact_key": "company_scale",
+        "operator": "in",
+        "expected_json": {"value": ["小型", "微型", "中型"]},
+        "keywords": ("中小企业", "小型微型企业", "民营中小企业"),
     },
 )
 

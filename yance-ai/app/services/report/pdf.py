@@ -60,6 +60,15 @@ REPORT_CSS = """
   .footer { margin-top: 40px; padding: 16px; background: #f8fafc; border-radius: 8px; font-size: 9px; color: #64748b; }
   .footer strong { color: #334155; }
   .page-break { page-break-before: always; }
+  .opp-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin: 12px 0; background: #fff; page-break-inside: avoid; }
+  .opp-card.positive { border-left: 4px solid #0ea5e9; background: #f8fbff; }
+  .opp-card.need-more { border-left: 4px solid #ca8a04; background: #fffdf5; }
+  .opp-card.rejected { border-left: 4px solid #dc2626; background: #fff8f8; }
+  .opp-card .card-title { font-size: 13px; font-weight: 700; color: #0d1b2a; margin: 0 0 6px; }
+  .opp-card .meta-line { font-size: 10px; color: #64748b; margin-bottom: 8px; }
+  .opp-card blockquote { margin: 8px 0; padding: 8px 12px; background: #f1f5f9; border-left: 3px solid #94a3b8; font-size: 10px; color: #334155; }
+  .opp-card .next { margin-top: 8px; font-size: 10px; color: #0f172a; }
+  .weak-note { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 4px; background: #f1f5f9; color: #64748b; font-size: 9px; }
 """
 
 
@@ -203,13 +212,38 @@ def generate_match_report_pdf(
           </div>
         </div>"""
 
-    # ── 05 企业政策资格矩阵（优先 ReportCard 结构化条件）──
+    # ── 05 企业政策资格矩阵（优先 ReportCard；正例优先，弱匹配标注）──
     if cards:
+        _rank = {
+            "ELIGIBLE": 0,
+            "POTENTIALLY_ELIGIBLE": 1,
+            "NEED_MORE_INFORMATION": 2,
+            "NOT_ELIGIBLE": 3,
+        }
+        ordered_cards = sorted(
+            cards,
+            key=lambda c: (
+                _rank.get(c.eligibility_status, 9),
+                0 if c.citations else 1,
+                -(c.match_score or 0),
+            ),
+        )
         matrix_blocks = []
-        for card in cards[:10]:
+        for card in ordered_cards[:12]:
             tag_cls, tag_label = _ELIGIBILITY_TAG.get(
                 card.eligibility_status, ("tag-gray", card.eligibility_status)
             )
+            if card.eligibility_status in {"ELIGIBLE", "POTENTIALLY_ELIGIBLE"}:
+                card_cls = "positive"
+            elif card.eligibility_status == "NOT_ELIGIBLE":
+                card_cls = "rejected"
+            else:
+                card_cls = "need-more"
+            weak = ""
+            if not card.citations and card.eligibility_status == "NEED_MORE_INFORMATION":
+                weak = '<span class="weak-note">弱匹配 / 暂无逐字引用</span>'
+            elif card.eligibility_status == "NEED_MORE_INFORMATION" and card.citations:
+                weak = '<span class="weak-note">证据不足但已附原文要求</span>'
             if card.criteria:
                 rows = "".join(
                     f"<tr><td style=\"font-weight:600\">{escape_html(c.name)}</td>"
@@ -219,20 +253,42 @@ def generate_match_report_pdf(
                     f"{' · 硬门槛' if c.is_hard_gate else ''}</td></tr>"
                     for c in card.criteria
                 )
-            else:
-                rows = (
-                    "<tr><td colspan=\"4\">本机会尚无结构化规则条目；"
-                    f"资格状态为 <span class=\"tag {tag_cls}\">{escape_html(tag_label)}</span>。"
-                    "不得据此宣称已符合。</td></tr>"
+                criteria_html = (
+                    "<table><thead><tr><th>条件</th><th>企业事实</th><th>规则期望</th><th>状态</th></tr></thead>"
+                    f"<tbody>{rows}</tbody></table>"
                 )
+            else:
+                criteria_html = (
+                    "<p style=\"font-size:10px;color:#64748b\">本机会尚无结构化规则条目；"
+                    f"资格状态为 <span class=\"tag {tag_cls}\">{escape_html(tag_label)}</span>。"
+                    "不得据此宣称已符合。</p>"
+                )
+            quotes_html = "".join(
+                f"<blockquote>「{escape_html(q.quote)}」"
+                f"<br>条款：{escape_html(q.article or '未标明')} · "
+                f"来源：{escape_html(q.source_url or '待核实')}</blockquote>"
+                for q in card.citations[:3]
+            ) or "<p style=\"font-size:10px;color:#64748b\">暂无逐字核验引用。</p>"
+            gaps_line = (
+                "<ul>" + "".join(f"<li>{escape_html(g)}</li>" for g in card.gaps[:6]) + "</ul>"
+                if card.gaps
+                else "<p style=\"font-size:10px;color:#64748b\">无结构化缺口字段。</p>"
+            )
+            deadline_bit = f"截止日字段：{escape_html(card.deadline)}" if card.deadline else "截止日字段未收录"
             matrix_blocks.append(
-                f"<h2>{escape_html(card.policy_title[:40])}</h2>"
-                f"<p>policy_id：{escape_html(card.policy_id)} · "
-                f"<span class=\"tag {tag_cls}\">{escape_html(tag_label)}</span> · "
-                f"{escape_html(card.eligibility_summary)}</p>"
-                f"<table><thead><tr><th>条件</th><th>企业事实</th><th>规则期望</th><th>状态</th></tr></thead>"
-                f"<tbody>{rows}</tbody></table>"
-                f"<p><strong>下一步：</strong>{escape_html(card.next_step)}</p>"
+                f"<div class=\"opp-card {card_cls}\">"
+                f"<div class=\"card-title\">{escape_html(card.policy_title[:48])}</div>"
+                f"<div class=\"meta-line\">"
+                f"<span class=\"tag {tag_cls}\">{escape_html(tag_label)}</span>{weak}"
+                f" · 匹配分 {escape_html(round((card.match_score or 0) * 100))}%"
+                f" · {escape_html(deadline_bit)}"
+                f" · {escape_html(card.issuing_authority or '发布机关待核实')}</div>"
+                f"<p style=\"font-size:11px;margin:6px 0\">{escape_html(card.eligibility_summary)}</p>"
+                f"{criteria_html}"
+                f"<div style=\"font-size:10px;font-weight:600;margin-top:8px\">原文依据</div>{quotes_html}"
+                f"<div style=\"font-size:10px;font-weight:600;margin-top:8px\">缺口</div>{gaps_line}"
+                f"<div class=\"next\"><strong>下一步：</strong>{escape_html(card.next_step)}</div>"
+                f"</div>"
             )
         matrix_html = "".join(matrix_blocks)
     else:

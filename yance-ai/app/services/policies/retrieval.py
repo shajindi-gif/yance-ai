@@ -146,14 +146,21 @@ def hybrid_policy_candidates(
 
     if not fused:
         return []
+    # Keyword/trigram channel can vote for out-of-region rows; enforce the same
+    # applicability gate used by lexical/vector so Shanghai briefs stay local.
     policies = {
         item.id: item
         for item in db.scalars(
-            select(Policy).where(Policy.id.in_(fused), visible_policy_clause(tenant_id), *readiness)
+            select(Policy).where(
+                Policy.id.in_(list(fused.keys())),
+                visible_policy_clause(tenant_id),
+                *applicable_region_clauses(region or {}),
+                *readiness,
+            )
         ).all()
     }
     ranked = sorted((key for key in fused if key in policies), key=fused.get, reverse=True)[:limit]
-    ceiling = max(fused.values()) or 1
+    ceiling = max((fused[key] for key in ranked), default=1) or 1
     return [
         PolicyCandidate(
             policy=policies[policy_id],
