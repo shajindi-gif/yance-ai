@@ -32,7 +32,7 @@ export default function ApplicationsPage() {
 
   useEffect(() => {
     if (!api.isAuthenticated()) {
-      router.push("/login");
+      router.push("/login?next=%2Fapplications");
       return;
     }
     let active = true;

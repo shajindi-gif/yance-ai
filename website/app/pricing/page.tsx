@@ -25,6 +25,7 @@ export default async function PricingPage() {
         <div className="container">
           <span className={["badge", pageStyles.label].filter(Boolean).join(' ')} >按次付费</span>
           <h1>按次购买，需要时再买</h1>
+          <p>价格是主流程之后的购买步骤。先免费查找政策，报告按现有目录按次购买。</p>
           <p>先免费查找政策机会，需要整理判断依据与企业报告时再按份购买。</p>
         </div>
       </section>

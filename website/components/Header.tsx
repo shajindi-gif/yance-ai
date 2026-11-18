@@ -9,9 +9,6 @@ import { useNavigationDrawer } from '@/lib/use-navigation-drawer';
 const NAV_LINKS = [
   { href: '/discover', label: '查找政策' },
   { href: '/solutions', label: '解决方案' },
-  { href: '/parks', label: '园区服务' },
-  { href: '/applications', label: '申报项目' },
-  { href: '/intelligence', label: '企业工具' },
   { href: '/pricing', label: '价格' },
   { href: '/about', label: '关于我们' },
 ];

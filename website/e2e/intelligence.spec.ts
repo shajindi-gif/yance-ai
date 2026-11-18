@@ -7,8 +7,7 @@ test.beforeEach(async ({page,baseURL})=>{
 });
 
 test('transaction review keeps draft text in this page and totals the current list',async({page})=>{
-  await page.goto('/');
-  await page.getByRole('link',{name:'企业工具',exact:true}).click();
+  await page.goto('/intelligence');
   await page.getByLabel('采购文件原文').fill('须提供资质。验收后结算。');
   await expect(page.locator('dd').filter({hasText:'须提供资质'})).toBeVisible();
   await page.getByRole('button',{name:'合同条款'}).click();

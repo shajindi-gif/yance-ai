@@ -5,11 +5,11 @@ import Image from 'next/image';
    Footer Data — New Product Matrix
    ------------------------------------------- */
 const productLinks = [
-  { href: '/login?register=1', label: '政策匹配' },
-  { href: '/applications', label: '申报工作台' },
+  { href: '/discover', label: '查找政策' },
+  { href: '/applications', label: '登录后的项目工作台' },
+  { href: '/intelligence', label: '政策与核对工具' },
   { href: '/policy-knowledge-base', label: '政策库介绍' },
   { href: '/companies', label: '企业画像' },
-  { href: '/parks', label: '园区入驻' },
   { href: '/brief-maker', label: '报告生成' },
 ];
 
