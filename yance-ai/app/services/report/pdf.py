@@ -167,14 +167,25 @@ def generate_match_report_pdf(
       </div>
     </div>"""
 
-    # ── 03 Top 政策推荐 ──
+    # ── 03 Top 政策推荐（跳过已强降权的宣传/规划填料，避免客户首屏噪声）──
     top_rows = []
-    for i, opp in enumerate(opportunities[:10], 1):
+    top_opps = []
+    for opp in opportunities:
+        ev = opp.evidence_json or {}
+        features = ev.get("rank_features") or {}
+        note = ev.get("ranking_note") or ""
+        if float(features.get("noise_penalty") or 0) <= -28 or "规划/活动类" in note:
+            continue
+        if float(opp.score or 0) < 0.25:
+            continue
+        top_opps.append(opp)
+        if len(top_opps) >= 10:
+            break
+    for i, opp in enumerate(top_opps, 1):
         p = policy_map.get(opp.policy_id)
         if not p:
             continue
         pct = round(opp.score * 100)
-        ev = opp.evidence_json or {}
         grade = "★★★★★" if pct >= 80 else ("★★★★" if pct >= 70 else ("★★★" if pct >= 50 else "★★"))
         top_rows.append(f"""<tr>
           <td>{i}</td>

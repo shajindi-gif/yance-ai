@@ -426,12 +426,6 @@ async def match_policies_for_company(
     while len(head) < 10 and rest:
         head.append(rest.pop(0))
     selected = head + rest + activity_tail
-    # Nationwide briefs: if enough non-promo items exist, drop promo/plan from the
-    # delivered list so Top10 noise stays under 20% without losing local slices.
-    if not company_province:
-        non_activity = [opp for opp in selected if not _is_activity_opp(opp)]
-        if len(non_activity) >= 8:
-            selected = non_activity
     for opp in selected:
         db.add(opp)
     db.commit()
