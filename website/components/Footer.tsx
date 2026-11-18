@@ -14,12 +14,14 @@ const productLinks = [
 ];
 
 const solutionLinks = [
-  { href: '/company-match', label: 'AI 企业' },
-  { href: '/company-match', label: '机器人与智能制造' },
-  { href: '/company-match', label: '生物医药' },
-  { href: '/company-match', label: '集成电路' },
-  { href: '/company-match', label: '新能源新材料' },
-  { href: '/parks', label: '园区与产业服务机构' },
+  { href: '/solutions/ai-software', label: 'AI 与软件' },
+  { href: '/solutions/semiconductor', label: '集成电路' },
+  { href: '/solutions/manufacturing-robotics', label: '智能制造与机器人' },
+  { href: '/solutions/biomed', label: '生物医药' },
+  { href: '/solutions/energy-materials', label: '新能源与新材料' },
+  { href: '/solutions/investors', label: '投资机构' },
+  { href: '/solutions/parks', label: '园区与孵化器' },
+  { href: '/solutions', label: '全部方案' },
 ];
 
 const resourceLinks = [

@@ -1,0 +1,17 @@
+.page { max-width: 1120px; margin: 0 auto; padding: 120px 28px 80px; }
+.kicker { color: var(--teal-dark); font-size: 12px; letter-spacing: 0.06em; }
+.page h1 { margin: 12px 0 16px; font-size: clamp(34px, 4vw, 52px); line-height: 1.35; font-weight: 560; letter-spacing: -0.04em; max-width: 16em; }
+.page header p:last-child, .note { max-width: 680px; color: var(--muted); line-height: 1.85; }
+.page section { margin-top: 40px; }
+.page h2 { font-size: 14px; letter-spacing: 0.08em; color: var(--muted); font-weight: 560; margin-bottom: 14px; }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.grid a { display: block; min-height: 180px; padding: 20px; border: 1px solid var(--line); border-radius: 8px; background: white; text-decoration: none; color: inherit; }
+.grid a:hover { border-color: var(--teal); }
+.grid h3 { font-size: 18px; font-weight: 560; margin-bottom: 10px; }
+.grid p { color: var(--muted); font-size: 14px; line-height: 1.75; }
+.note { margin-top: 36px; }
+.page > a { display: inline-block; margin-top: 12px; color: var(--teal-dark); }
+@media (max-width: 800px) {
+  .page { padding: 104px 20px 56px; }
+  .grid { grid-template-columns: 1fr; }
+}

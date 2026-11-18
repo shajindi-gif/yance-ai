@@ -50,6 +50,8 @@ export default function DiscoverPage() {
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [levelFilter, setLevelFilter] = useState("");
+  const [cityFilter, setCityFilter] = useState("");
+  const [fundingFilter, setFundingFilter] = useState("");
   const [scanning, setScanning] = useState(false);
   const [scanMessage, setScanMessage] = useState("");
 
@@ -68,17 +70,28 @@ export default function DiscoverPage() {
 
   useEffect(() => {
     if (!api.isAuthenticated()) {
-      window.location.href = "/login";
+      window.location.href = `/login?next=${encodeURIComponent("/discover")}`;
       return;
     }
     void load();
   }, [load]);
+
+  const cityOptions = useMemo(
+    () => [...new Set(policies.map((policy) => policy.city).filter((city): city is string => Boolean(city)))].sort((a, b) => a.localeCompare(b, "zh-CN")),
+    [policies],
+  );
+  const fundingOptions = useMemo(() => {
+    const present = new Set(policies.map((policy) => policy.funding_type).filter(Boolean));
+    return Object.entries(FUNDING_TYPE_LABELS).filter(([key]) => present.has(key));
+  }, [policies]);
 
   const visible = useMemo(() => {
     const text = query.trim().toLowerCase();
     return policies
       .filter((policy) => policy.status === "published")
       .filter((policy) => (levelFilter ? policy.level === levelFilter : true))
+      .filter((policy) => (cityFilter ? policy.city === cityFilter : true))
+      .filter((policy) => (fundingFilter ? policy.funding_type === fundingFilter : true))
       .filter((policy) =>
         text
           ? [policy.title, policy.issuing_authority, policy.industry, policy.support_type, policy.city]
@@ -90,7 +103,7 @@ export default function DiscoverPage() {
         const deadlineOf = (p: Policy) => (p.deadline ? new Date(p.deadline).getTime() : Infinity);
         return deadlineOf(a) - deadlineOf(b);
       });
-  }, [policies, query, levelFilter]);
+  }, [policies, query, levelFilter, cityFilter, fundingFilter]);
 
   const runScan = async () => {
     const company = companies[0];
@@ -113,8 +126,8 @@ export default function DiscoverPage() {
     <AppShell>
       <PageHeader
         eyebrow="Discover"
-        title="发现资金"
-        description="政策、补贴、基金、人才项目与赛事奖励的统一目录。所有内容来自已收录的官方文件，资格结论以你的企业画像扫描为准。"
+        title="政策检索"
+        description="在已收录并发布的政策目录中查找。城市、层级和支持类型只过滤当前列表，不改变资格扫描规则。资格结论以企业画像扫描为准。"
         actions={
           companies.length ? (
             <Button onClick={runScan} disabled={scanning}>
@@ -133,7 +146,7 @@ export default function DiscoverPage() {
       <div className={flow.toolbar}>
         <input
           aria-label="搜索资金目录"
-          placeholder="搜索政策名称、发文机关、行业…"
+          placeholder="搜索政策名称、发文机关、行业或城市"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           className={pageStyles.section}
@@ -149,13 +162,25 @@ export default function DiscoverPage() {
             <option key={key} value={key}>{label}</option>
           ))}
         </select>
+        {cityOptions.length > 0 ? (
+          <select aria-label="按城市筛选" value={cityFilter} onChange={(event) => setCityFilter(event.target.value)} className={pageStyles.section2}>
+            <option value="">全部城市</option>
+            {cityOptions.map((city) => <option key={city} value={city}>{city}</option>)}
+          </select>
+        ) : null}
+        {fundingOptions.length > 0 ? (
+          <select aria-label="按支持类型筛选" value={fundingFilter} onChange={(event) => setFundingFilter(event.target.value)} className={pageStyles.section2}>
+            <option value="">全部支持类型</option>
+            {fundingOptions.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+          </select>
+        ) : null}
       </div>
 
       {visible.length === 0 ? (
         <EmptyState
           icon="—"
-          title={query || levelFilter ? "没有匹配的资金条目" : "资金目录暂无已发布条目"}
-          description={query || levelFilter ? "换个关键词或清除筛选试试。" : "运营团队正在收录官方政策文件，已发布条目会显示在这里。"}
+          title={query || levelFilter || cityFilter || fundingFilter ? "没有匹配的政策条目" : "政策目录暂无已发布条目"}
+          description={query || levelFilter || cityFilter || fundingFilter ? "换个关键词或清除筛选试试。筛选只影响当前列表。" : "已发布条目会显示在这里。"}
         />
       ) : (
         <div className={content.stack}>

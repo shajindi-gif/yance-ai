@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import styles from './Home.module.css';
 
-export const metadata = {title: '企业政策与资源证据工作台｜衍策引擎 AI', description: '查找企业政策机会，核对条件与原文，整理证明和材料，由企业团队复核。', openGraph: {images: [{url: '/og-brand.png', width: 1200, height: 630, alt: '衍策引擎AI'}], title: '找到政策机会，看清条件依据｜衍策引擎 AI', description: '连接企业事实、政策条款与申报材料。', url: '/'}};
+export const metadata = {title: '中国科技企业政策智能工作台｜衍策引擎 AI', description: '帮助科技企业在已收录政策中发现机会、核对适用条件与原文依据，并整理下一步材料。不承诺认定或获批。', openGraph: {images: [{url: '/og-brand.png', width: 1200, height: 630, alt: '衍策引擎AI'}], title: '让每一家创新企业，找到属于自己的政策机会｜衍策引擎 AI', description: '企业画像、政策检索与可引用依据，由企业团队复核。', url: '/'}};
 
 const JOURNEY = [
   ['01', '确认企业资料', '经营情况、研发投入、知识产权。由你提供，并保留确认与版本。', '/companies'],
@@ -21,12 +21,12 @@ const FAQ = [
 export default function HomePage() {
   return <div className={styles.home}>
     <section className={styles.hero}>
-      <div className={styles.heroTop}><span className={styles.eyebrow}>衍策引擎 AI / 企业政策与资源证据工作台</span><span className={styles.issue}>聚焦新质生产力与科技企业 · 服务各类企业</span></div>
+      <div className={styles.heroTop}><span className={styles.eyebrow}>Yance AI / 衍策引擎 · 中国科技企业政策智能工作台</span><span className={styles.issue}>新质生产力与科技企业 · 也服务其他有政策需求的企业</span></div>
       <div className={styles.heroGrid}>
         <div>
-          <h1>找到适合企业的政策，<br /><em>看清每项条件的依据。</em></h1>
-          <p className={styles.lead}>从一条政策到一份申报材料，把企业事实、原文条款和待补证明放在同一个工作台。为新质生产力、科技及各类有政策需求的企业提供支持。</p>
-          <div className={styles.actions}><Link href="/discover" className="btn btn-primary">查找政策 <span aria-hidden="true">↗</span></Link><Link href="/dashboard" className={styles.textLink}>进入工作台 <span aria-hidden="true">→</span></Link></div>
+          <h1>让每一家创新企业，找到属于自己的政策机会。<br /><em>看清每项条件的依据。</em></h1>
+          <p className={styles.lead}>在已收录的国家、地方与园区相关政策中，结合企业画像核对条件、来源和待补证明。收录范围以检索结果为准，核对结果不代表政府认定或获批。</p>
+          <div className={styles.actions}><Link href="/login?register=1&next=%2Fcompanies" className="btn btn-primary">立即匹配企业政策</Link><Link href="/discover" className={styles.textLink}>查找政策</Link><a href="mailto:yanceai@163.com?subject=%E9%A2%84%E7%BA%A6%E4%BC%81%E4%B8%9A%E6%BC%94%E7%A4%BA" className={styles.textLink}>预约企业演示</a></div>
           <p className={styles.note}>企业提供资料 · 条件逐项核对 · 客户自主复核</p>
         </div>
         <figure className={styles.heroScene}>
@@ -36,6 +36,29 @@ export default function HomePage() {
         </figure>
       </div>
       <div className={styles.sectors}><span>重点领域，开放服务</span><p>人工智能 / 智能制造 / 生物医药 / 集成电路 / 新能源新材料<br />也服务传统制造、商贸与专业服务等企业，按实际条件寻找机会。</p></div>
+    </section>
+
+    <section className={styles.section} id="coverage" aria-labelledby="coverage-heading">
+      <div className={styles.sectionHead}><div><span className={styles.eyebrow}>政策目录范围</span><h2 id="coverage-heading">按来源层级组织，<br />不展示未统计的数量。</h2></div><p>政策条数、城市个数和匹配成功率须由数据库计算。当前公开页不写这些数字。</p></div>
+      <div className={styles.coverage}>{[
+        ['国家与地方', '目录按国家级、省级、市级、区级字段筛选。具体收录以已发布条目为准。'],
+        ['城市与园区', '可用城市等字段过滤已加载条目。这不表示高新区或经开区名录已经完整覆盖。'],
+        ['支持类型', '资助、税收、人才、贴息等只在政策记录带有类型字段时展示。'],
+        ['产业方向', '行业方案帮助组织问题。行业名称不是资格结论。'],
+      ].map(([title, description]) => <article key={title}><h3>{title}</h3><p>{description}</p></article>)}</div>
+      <p className={styles.note}><Link href="/policy-knowledge-base" className={styles.textLink}>查看政策知识库的数据说明 →</Link></p>
+    </section>
+
+    <section className={styles.section} id="capabilities" aria-labelledby="capability-heading">
+      <div className={styles.sectionHead}><div><span className={styles.eyebrow}>产品能力</span><h2 id="capability-heading">已上线的核对能力，<br />和尚未交付的分析。</h2></div><p>状态说明对应现在可以打开的页面。未来需求没有单独的结果页。</p></div>
+      <div className={styles.capGrid}>{[
+        ['已上线', '政策检索与提问', '在目录中查找已发布政策，或在问衍策中查看带来源的回答。', '/discover'],
+        ['已上线', '企业画像', '保存企业事实和确认版本，作为匹配输入。确认不等于鉴证。', '/companies'],
+        ['已上线', '资格与依据', '逐条区分满足、不满足、证据不足和待复核，并保留原文引用。', '/opportunities'],
+        ['已上线', '缺失条件与项目', '整理补证、材料版本和项目状态，由客户团队复核。', '/applications'],
+        ['不能自动认定', '高企与专精特新', '可以按相关条款核对事实。企业标签不等于已经认定。', '/solutions/high-tech'],
+        ['未来需求', '组合与城市评分', '投资组合批量扫描和城市政策环境评分尚未作为产品交付。', '/solutions/investors'],
+      ].map(([status, title, description, href]) => <article key={title}><span className={status === '已上线' ? styles.statusLive : status === '未来需求' ? styles.statusLater : styles.statusLimit}>{status}</span><h3><Link href={href}>{title}</Link></h3><p>{description}</p></article>)}</div>
     </section>
 
     <section className={styles.section} id="product">
@@ -55,13 +78,13 @@ export default function HomePage() {
     <section className={styles.section} id="industry-scenes" aria-labelledby="industry-heading">
       <div className={styles.sectionHead}><div><span className={styles.eyebrow}>聚焦创新产业，也关注每家企业的实际需求</span><h2 id="industry-heading">看见你的产业，<br />从企业事实寻找机会。</h2></div><p>从技术方向到经营场景，按地域、批次和具体条件核对政策。行业标签不等于申报资格。</p></div>
       <div className={styles.industryGrid}>{[
-        ['ai', '人工智能', '人工智能与产业数字化主题示意', '从业务与技术方向出发，核对政策支持范围。',768,468],
-        ['robotics', '机器人与智能制造', '机器人在货架前作业的行业场景', '梳理技术、研发与应用场景，核对所需证明。',700,430],
-        ['drone', '低空科技与无人系统', '无人机主题图片', '核对适用地域、项目阶段和具体申报条件。',1440,1800],
-        ['computing', '算力与数字基础设施', '数据中心机柜通道的行业场景', '按项目类型与建设运营事实，查找相关政策。',547,365],
-        ['energy', '新能源与绿色转型', '太阳能发电阵列的行业场景', '对照项目阶段、技术和能效等条款整理证据。',1002,751],
-        ['biomed', '生物医药与研发', '实验室样本操作的行业场景', '梳理研发与成果事实，区分已确认信息和待补材料。',760,506],
-      ].map(([name,title,alt,description,width,height])=><article key={name}><div className={styles.industryVisual}><Image src={`/industries/provided-20261029/${name}.webp`} alt={String(alt)} width={Number(width)} height={Number(height)} sizes="(max-width: 700px) 100vw, 33vw" style={{objectPosition:name==='drone'?'50% 78%':'50% 50%'}} /></div><div className={styles.industryCopy}><h3>{title}</h3><p>{description}</p><Link href="/companies" className={styles.textLink}>从企业事实开始 →</Link></div></article>)}</div>
+        ['ai', '人工智能', '人工智能与产业数字化主题示意', '从业务与技术方向出发，核对政策支持范围。',768,468,'/solutions/ai-software'],
+        ['robotics', '机器人与智能制造', '机器人在货架前作业的行业场景', '梳理技术、研发与应用场景，核对所需证明。',700,430,'/solutions/manufacturing-robotics'],
+        ['drone', '低空科技与无人系统', '无人机主题图片', '核对适用地域、项目阶段和具体申报条件。',1440,1800,'/solutions/low-altitude'],
+        ['computing', '算力与数字基础设施', '数据中心机柜通道的行业场景', '按项目类型与建设运营事实，查找相关政策。',547,365,'/solutions/ai-software'],
+        ['energy', '新能源与绿色转型', '太阳能发电阵列的行业场景', '对照项目阶段、技术和能效等条款整理证据。',1002,751,'/solutions/energy-materials'],
+        ['biomed', '生物医药与研发', '实验室样本操作的行业场景', '梳理研发与成果事实，区分已确认信息和待补材料。',760,506,'/solutions/biomed'],
+      ].map(([name,title,alt,description,width,height,href])=><article key={name}><div className={styles.industryVisual}><Image src={`/industries/provided-20261029/${name}.webp`} alt={String(alt)} width={Number(width)} height={Number(height)} sizes="(max-width: 700px) 100vw, 33vw" style={{objectPosition:name==='drone'?'50% 78%':'50% 50%'}} /></div><div className={styles.industryCopy}><h3>{title}</h3><p>{description}</p><Link href={String(href)} className={styles.textLink}>查看行业方案 →</Link></div></article>)}</div>
       <p className={styles.note}>图片由用户提供，仅作行业主题展示，不代表衍策自有设施、合作客户或获批案例。具体可用政策以来源覆盖与实际条件为准，也面向制造、商贸、专业服务等各类企业开放。</p>
     </section>
 
@@ -109,9 +132,14 @@ export default function HomePage() {
       <div className={styles.feedbackPanel}><div><span className={styles.eyebrow}>用户使用与反馈</span><h2 id="feedback-heading">你的实际体验，<br />帮助我们把产品做得更好。</h2><p>暂未展示获授权的客户评价。欢迎反馈政策来源问题、使用障碍与改进建议；案例内容仅在取得单独授权后公开。</p></div><div><p>建议说明你使用的功能、遇到的问题和希望的改进。请勿提交密钥、完整客户资料或未经授权的文件。</p><Link href="/feedback" className="btn btn-primary">分享使用反馈 ↗</Link><p className={styles.note}>登录后提交 · 不自动公开 · 不影响申报判断</p></div></div>
     </section>
 
+    <section className={styles.section} id="regions" aria-labelledby="region-heading">
+      <div className={styles.sectionHead}><div><span className={styles.eyebrow}>地域探索</span><h2 id="region-heading">从重点科创城市进入检索，<br />而不是一张覆盖率地图。</h2></div><p>下列城市是探索入口。登录后在已收录目录中按城市字段筛选，不代表该市政策已经收齐。</p></div>
+      <div className={styles.regionGrid}>{['北京','上海','深圳','杭州','广州','苏州','合肥','成都','武汉','西安','南京','重庆'].map((city) => <Link key={city} href="/discover">{city}</Link>)}</div>
+    </section>
+
     <section className={styles.trustSection}><span className={styles.eyebrow}>04 / 清楚的来源与边界</span><h2>可信，始于知道<br />哪些已经确认。</h2><div><p>政策原文由服务器采集，企业事实由客户提供。来源有效性、申报窗口和缺失证据需要逐项核对。</p><p>复核由客户本人或授权团队完成。客户确认不代表政府认定或获批；园区及其他资源的可用性、费用与对接条件应另行核实。</p><Link href="/security" className={styles.textLink}>了解安全与使用边界 →</Link></div></section>
 
     <section className={styles.section}><div className={styles.sectionHead}><div><span className={styles.eyebrow}>常见问题</span><h2>开始前，你可能想了解。</h2></div></div><div className={styles.faq}>{FAQ.map(([question,answer]) => <details key={question}><summary>{question}<span aria-hidden="true">＋</span></summary><p>{answer}</p></details>)}</div></section>
-    <section className={styles.closing}><span className={styles.eyebrow}>YANCE / 下一步</span><h2>从你的企业，<br />开始寻找合适的机会。</h2><div className={styles.actions}><Link href="/login?register=1" className="btn btn-primary">创建企业工作区 ↗</Link><Link href="/pricing" className={styles.textLink}>查看价格 →</Link></div></section>
+    <section className={styles.closing}><span className={styles.eyebrow}>YANCE / 下一步</span><h2>从你的企业，<br />开始寻找合适的机会。</h2><div className={styles.actions}><Link href="/login?register=1&next=%2Fcompanies" className="btn btn-primary">创建企业工作区</Link><Link href="/pricing" className={styles.textLink}>查看价格</Link><Link href="/solutions" className={styles.textLink}>按行业查看</Link></div></section>
   </div>;
 }

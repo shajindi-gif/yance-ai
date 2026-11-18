@@ -8,17 +8,17 @@ import SiteChrome from "@/components/SiteChrome";
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://yance.ai'),
-  title: "衍策引擎AI — 企业政策与资源证据工作台",
+  title: "衍策引擎AI — 中国科技企业政策智能工作台",
   description:
-    "重点服务新质生产力与科技企业，也面向各类有政策需求的企业。根据地域、行业与经营情况，查找可能适用的政策，核对申报条件，整理所需材料，生成可追溯的初筛报告。",
+    "重点服务新质生产力与科技企业，也面向各类有政策需求的企业。在已收录政策中查找机会，核对申报条件与原文依据，整理所需材料。不承诺认定或获批。",
   keywords:
     "新质生产力, 政策申报, 产业研究, AI 企业, 高新技术企业, 专精特新, 政策匹配, 补贴申报, 园区入驻, 科技企业服务, 衍策引擎AI",
   icons: {
     icon: '/favicon.png',
   },
   openGraph: {
-    title: "衍策引擎AI — 企业政策与资源证据工作台",
-    description: "聚焦新质生产力与科技企业，也帮助各类有政策需求的企业查找机会、核对条件与准备材料。",
+    title: "衍策引擎AI — 中国科技企业政策智能工作台",
+    description: "在已收录政策中查找机会，核对条件与原文依据，整理材料。不承诺认定或获批。",
     url: "https://yance.ai",
     siteName: "衍策引擎AI",
     locale: "zh_CN",
