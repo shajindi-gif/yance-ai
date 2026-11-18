@@ -24,6 +24,7 @@ _NOISE_TITLE_TOKENS = (
     "招聘公告",
     "博士后招聘",
     "百日招聘",
+    "人才服务专项行动",
     "财务决算报表",
     "决算报表",
     "公示名单",
@@ -268,8 +269,8 @@ def compute_rank_features(
 
     hard_noise = is_hard_noise_title(title, policy_type)
     activity = is_activity_or_plan_title(title, policy_type)
-    # Roster / recruitment / Q&A / promo activities are not actionable subsidy briefs.
-    if hard_noise or activity:
+    # Always drop roster/recruitment/Q&A. Promo/plan: drop when no rules; else keep but demote hard.
+    if hard_noise or (activity and active_hard_rules <= 0):
         return RankFeatures(
             region_fit=region,
             industry_fit=industry_component,
@@ -301,9 +302,12 @@ def compute_rank_features(
     if hard_noise:
         noise_penalty -= 18.0
     if activity:
-        noise_penalty -= 12.0
+        # Keep in pool when rules exist, but keep out of Top.
+        noise_penalty -= 28.0
     if industry_component == 0 and active_hard_rules <= 0:
         noise_penalty -= 8.0
+    if "再生资源" in (title or ""):
+        noise_penalty -= 14.0
 
     # Relevance keeps legacy interpretable components but region is local-first.
     relevance = (

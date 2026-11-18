@@ -73,7 +73,7 @@ def test_activity_without_rules_skipped():
         tech_component=5,
         finance_component=5,
         semantic_component=9,
-        active_hard_rules=2,
+        active_hard_rules=0,
         deadline=None,
         expires_at=None,
     )
