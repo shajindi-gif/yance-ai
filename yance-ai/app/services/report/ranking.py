@@ -25,9 +25,6 @@ _NOISE_TITLE_TOKENS = (
     "博士后招聘",
     "百日招聘",
     "人才服务专项行动",
-    "百场万企",
-    "对接活动",
-    "宣传月",
     "财务决算报表",
     "决算报表",
     "公示名单",
@@ -305,8 +302,8 @@ def compute_rank_features(
     if hard_noise:
         noise_penalty -= 18.0
     if activity:
-        # Keep in pool when rules exist, but keep out of Top.
-        noise_penalty -= 28.0
+        # Keep in pool when rules exist, but keep out of Top (customer Top gate).
+        noise_penalty -= 40.0
     if industry_component == 0 and active_hard_rules <= 0:
         noise_penalty -= 8.0
     if "再生资源" in (title or ""):

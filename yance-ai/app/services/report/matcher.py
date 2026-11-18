@@ -389,10 +389,6 @@ async def match_policies_for_company(
     ]
     # Keep no-rule share under 15% of the brief when any ruled opportunities exist.
     max_unruled = min(len(unruled), max(0, (len(ruled) * 14) // 86)) if ruled else min(5, len(unruled))
-    # Nationwide profiles have fewer local ruled hits — allow a slightly larger unruled
-    # floor so sellable positives can still clear ≥8 without fabricating rules.
-    if not (region.get("province") or company.province) and ruled:
-        max_unruled = max(max_unruled, min(4, len(unruled)))
     selected = ruled + unruled[:max_unruled]
     selected.sort(
         key=lambda o: sort_key_for_opportunity(o.evidence_json or {}, float(o.score or 0))
