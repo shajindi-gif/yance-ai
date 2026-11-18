@@ -22,8 +22,8 @@ export default function PricingCatalogue({initialProducts, initialError}: {initi
   const available = products.filter(product => product.code === 'FREE_POLICY_MATCH' || (product.purchase_available === true && product.code === 'POLICY_REPORT' && product.entitlement_type === 'report'));
   const consultation = products.filter(product => !available.includes(product));
   return <>
-    {error && <div role="alert" className={pageStyles.section2}><p>{error}</p><button type="button" className="btn btn-outline" disabled={loading} onClick={() => {setLoading(true);setRetry(value => value+1);}}>重新加载产品目录</button></div>}
-    {!error && available.length === 0 && <p role="status">当前暂无可购买的服务。请稍后再试或联系咨询。</p>}
+    {error && <div role="alert" className={pageStyles.section2}><p>{error}</p><button type="button" className="btn btn-outline" disabled={loading} onClick={() => {setError('');setLoading(true);setRetry(value => value+1);}}>重新加载产品目录</button></div>}
+    {!error && available.length === 0 && !loading && <p role="status">当前暂无可购买的服务。请稍后再试或联系咨询。</p>}
     <div className="grid grid-4 pricing-catalogue">
       {available.map(product => {
         const presentation = productPresentation(product);

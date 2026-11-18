@@ -119,6 +119,9 @@ test('real isolated workflow: customer reviews a source-bound version, then down
 test('login and registration fields expose their visible Chinese labels',async ({page}) => {
   await page.goto('/login');
   await expect(page.getByLabel('邮箱',{exact:true})).toBeVisible();
+  // Auth config may default to email-code login; password fields appear after switching.
+  const passwordLogin = page.getByRole('button',{name:'使用邮箱密码登录',exact:true});
+  if (await passwordLogin.isVisible()) await passwordLogin.click();
   await expect(page.getByLabel('密码',{exact:true})).toHaveAttribute('autocomplete','current-password');
   await page.getByRole('button',{name:'免费注册',exact:true}).click();
   await expect(page.getByLabel('企业全称',{exact:false})).toBeVisible();
