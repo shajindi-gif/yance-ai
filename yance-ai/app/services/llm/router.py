@@ -27,6 +27,8 @@ class LLMRouter:
 
     async def complete(self, request: LLMRequest, provider: str | None = None) -> LLMResponse:
         selected = provider or settings.llm_default_provider
+        if settings.app_env not in {"test", "eval", "development"} and selected not in {"qwen", "deepseek"}:
+            raise ValueError("Provider is not allowed in this environment")
         if selected not in self.providers:
             raise ValueError(f"Unknown LLM provider: {selected}")
         if selected == "mock":

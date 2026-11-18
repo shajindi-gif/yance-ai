@@ -23,6 +23,7 @@ from app.api.routes import (
     telemetry,
     tenants,
     workflow,
+    workspace,
 )
 
 api_router = APIRouter()
@@ -49,3 +50,6 @@ api_router.include_router(demo_match.router)
 api_router.include_router(tasks.router)
 api_router.include_router(policy_engine.router)
 api_router.include_router(funding_os.router)
+
+
+api_router.include_router(workspace.router)

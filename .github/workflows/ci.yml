@@ -33,6 +33,7 @@ jobs:
           --health-retries 10
     env:
       APP_ENV: test
+      LLM_DEFAULT_PROVIDER: mock
       DATABASE_URL: postgresql+psycopg://yance:ci_password@localhost:5432/yance_ci
       YANCE_TEST_DATABASE_ACK: yance_ci
       JWT_SECRET: ci-only-secret-at-least-32-characters
@@ -279,6 +280,7 @@ jobs:
           --health-retries 10
     env:
       APP_ENV: test
+      LLM_DEFAULT_PROVIDER: mock
       DATABASE_URL: postgresql+psycopg://yance:ci_password@localhost:5432/yance_e2e_test
       YANCE_TEST_DATABASE_ACK: yance_e2e_test
       JWT_SECRET: ci-only-secret-at-least-32-characters
@@ -329,6 +331,9 @@ jobs:
           echo "YANCE_ROLES_FIXTURE=$RUNNER_TEMP/yance-roles-fixture.json" >> "$GITHUB_ENV"
           python tests/seed_checkout_browser.py "$RUNNER_TEMP/yance-checkout-fixture.json"
           echo "YANCE_CHECKOUT_FIXTURE=$RUNNER_TEMP/yance-checkout-fixture.json" >> "$GITHUB_ENV"
+          WORKSPACE_ASK_ENABLED=true YANCE_ASK_OUTPUT="$RUNNER_TEMP/yance-ask-fixture.json" python scripts/seed_workspace_acceptance.py
+          echo "YANCE_ASK_FIXTURE=$RUNNER_TEMP/yance-ask-fixture.json" >> "$GITHUB_ENV"
+          echo "WORKSPACE_ASK_ENABLED=true" >> "$GITHUB_ENV"
 
       - name: Install Chromium runtime
         working-directory: website
@@ -337,7 +342,7 @@ jobs:
       - name: Start API
         working-directory: yance-ai
         run: |
-          nohup env PYTHONPATH=.:tests python tests/run_browser_api.py --port 8011 > "$RUNNER_TEMP/yance-e2e-api.log" 2>&1 &
+          nohup env PYTHONPATH=.:tests python -m uvicorn tests.workspace_browser_app:app --host 127.0.0.1 --port 8011 --proxy-headers --forwarded-allow-ips=127.0.0.1 > "$RUNNER_TEMP/yance-e2e-api.log" 2>&1 &
           for attempt in {1..30}; do
             if curl --fail --silent http://localhost:8011/health/ready > /dev/null; then
               exit 0

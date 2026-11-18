@@ -89,17 +89,6 @@
   color: var(--text-muted);
 }
 
-.section16 {
-  background: linear-gradient(135deg, #0d1b2a 0%, #1b2d44 50%, #0d1b2a 100%);
-}
-
-.link {
-  background: var(--accent);
-  color: var(--surface);
-  border-color: var(--accent);
-  border-radius: 12px;
-}
-
 .inlineSection {
   padding: 12px 16px;
   color: var(--surface);

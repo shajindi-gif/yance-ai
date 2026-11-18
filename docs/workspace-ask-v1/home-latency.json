@@ -1,0 +1,10 @@
+{
+  "fixture": "seed_investor_demo, one synthetic scenario tenant",
+  "samples": 100,
+  "warmup": 5,
+  "transport": "FastAPI TestClient loopback in-process + PG18 127.0.0.1",
+  "p50_ms": 5.72077049582731,
+  "p95_ms": 5.960833019344136,
+  "max_ms": 6.184292025864124,
+  "production_claim": false
+}

@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import pageStyles from './page.module.css';
 
 export const metadata = {
@@ -248,30 +247,6 @@ export default function ParksPage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section
-        className={["cta-section", pageStyles.section16].filter(Boolean).join(' ')}
-
-      >
-        <div className="container">
-          <h2 className="cta-title">让你的园区服务更智能</h2>
-          <p className="cta-subtitle">
-            注册后可创建企业工作区；可用额度与付费能力以账户中的真实配置为准。
-          </p>
-          <div className="cta-actions">
-            <Link
-              href="/login?register=1"
-              className={["btn btn-lg", pageStyles.link].filter(Boolean).join(' ')}
-
-            >
-              免费注册
-            </Link>
-            <Link href="/pricing" className="btn btn-outline-white btn-lg">
-              查看价格
-            </Link>
-          </div>
-        </div>
-      </section>
     </>
   );
 }

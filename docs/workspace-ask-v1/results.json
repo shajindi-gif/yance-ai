@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-17",
+  "code_commit": "195c2c6",
+  "backend_passed": 486,
+  "targeted_passed": 16,
+  "frontend_unit_passed": 10,
+  "browser_passed": 54,
+  "browser_failed": 0,
+  "browser_skipped": 0,
+  "migration_replay_and_check": "passed",
+  "openapi_check": "passed",
+  "mock_only": true,
+  "production_changed": false,
+  "real_model_quality": "not_verified"
+}
