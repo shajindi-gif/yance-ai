@@ -70,3 +70,6 @@ test('district evidence survives saving and refreshing a company profile', async
   await page.reload();
   await expect(page.getByLabel('区县', { exact: true })).toHaveValue('浦东新区');
 });
+
+// Independent synthetic source per suite; production rate limits remain unchanged.
+test.use({extraHTTPHeaders: {'X-Forwarded-For': '127.0.0.61'}});

@@ -12,14 +12,15 @@ from app.core.db import get_db
 from app.models.models import Policy, UserRole
 from app.services.analytics.events import record_event
 from app.services.billing.usage import QuotaExceeded, consume_usage_once
+from app.services.llm.budget import llm_budget_scope
+from app.services.llm.gateway import LLMGateway, TaskType
 from app.services.llm.registry import embed_texts
-from app.services.llm.router import LLMRouter
 from app.services.policies.applicability import current_policy_clauses
 from app.services.policies.visibility import visible_policy_clause
 
 router = APIRouter(tags=["reports"])
 
-_llm = LLMRouter()
+_llm = LLMGateway()
 
 
 class ReportResponse(BaseModel):
@@ -40,7 +41,9 @@ async def generate_report(
 ):
     """生成 AI 政策分析报告：语义搜索 + LLM 综合分析"""
     if settings.app_env == "production":
-        raise HTTPException(status_code=503, detail="自由生成报告尚未通过逐条引用核验，请使用政策扫描与人工复核流程")
+        raise HTTPException(
+            status_code=503, detail="自由生成报告尚未通过逐条引用核验，请使用政策扫描与人工复核流程"
+        )
     report_key = f"report:{idempotency_key or uuid.uuid4()}"
     try:
         _, created = consume_usage_once(
@@ -100,10 +103,9 @@ async def generate_report(
     )
 
     # 3. 调用 LLM
-    from app.services.llm.base import LLMRequest
-
-    response = await _llm.complete(
-        LLMRequest(
+    with llm_budget_scope(principal.tenant_id, principal.user.id):
+        response = await _llm.complete(
+            TaskType.chat_answer,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {
@@ -111,11 +113,7 @@ async def generate_report(
                     "content": f"用户查询：{query}\n\n匹配到以下政策：\n\n{policy_texts}",
                 },
             ],
-            model="qwen-plus",
-            temperature=0.3,
-            max_tokens=2048,
         )
-    )
 
     record_event(
         db,

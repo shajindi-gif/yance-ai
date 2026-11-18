@@ -64,3 +64,15 @@ def test_openxml_export_escapes_user_content_and_drops_control_characters():
     assert "<script>" not in xml
     assert "&lt;script&gt;" in xml
     assert "\x00" not in xml
+
+
+def test_export_preserves_customer_review_statement():
+    content = _content()
+    statement = "由客户本人或其授权团队成员复核；衍策不提供人工业务审核。"
+    content["disclaimer"] = statement
+    for kind, member in [("docx", "word/document.xml"), ("xlsx", "xl/worksheets/sheet1.xml")]:
+        data, _, _ = render_artifact(content, kind)
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            assert statement in archive.read(member).decode()
+    data, _, _ = render_artifact(content, "json")
+    assert json.loads(data)["disclaimer"] == statement

@@ -1,0 +1,34 @@
+{"release": "commercial-20261108-01", "website_source": "68b3d5b", "api_base_image": "yance-backend:web-20261106-05", "api_patch_source": "68b3d5b", "database_revision_at_release": "20261106_0038", "runtime_version_url": "/api/runtime-version", "dependency_patches": {"pypdf": "6.21.4", "brotli": "1.2.1", "dnspython": "2.9.0"}}
+{"application_version":"web-20261106-05+68b3d5b","source_revision":"68b3d5b","database_revisions":["20261106_0038"]}
+API_RUNTIME_CONFIG_PRESERVED
+AGENT-WORKER_RUNTIME_CONFIG_PRESERVED
+{'pypdf': '6.21.4', 'brotli': '1.2.1', 'dnspython': '2.9.0'}
+2bb965ab40bd6457c3e14fff0384b804f6ad0ae0c9ecc08f902254dd9d59c153  /app/app/services/agents/policy_scan.py
+active
+active
+BEGIN
+  version_num  
+---------------
+ 20261106_0038
+(1 row)
+
+ status  | count 
+---------+-------
+ created |     4
+(1 row)
+
+  status   | count 
+-----------+-------
+ running   |     2
+ completed |    22
+(2 rows)
+
+    last_collection_finish     
+-------------------------------
+ 2026-11-08 04:15:22.579234+00
+(1 row)
+
+COMMIT
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vda2        69G   38G   29G  57% /
+LIVE_RUNTIME_CONFIG_SCHEMA_AUTH_COLLECTION_VERIFIED

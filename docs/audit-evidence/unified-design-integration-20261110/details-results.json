@@ -1,0 +1,107 @@
+[
+  {
+    "name": "company",
+    "width": 390,
+    "allowed": 200,
+    "denied": 404,
+    "overflow": false
+  },
+  {
+    "name": "company",
+    "width": 768,
+    "allowed": 200,
+    "denied": 404,
+    "overflow": false
+  },
+  {
+    "name": "company",
+    "width": 1440,
+    "allowed": 200,
+    "denied": 404,
+    "overflow": false
+  },
+  {
+    "name": "opportunity",
+    "width": 390,
+    "allowed": 200,
+    "denied": 404,
+    "overflow": false
+  },
+  {
+    "name": "opportunity",
+    "width": 768,
+    "allowed": 200,
+    "denied": 404,
+    "overflow": false
+  },
+  {
+    "name": "opportunity",
+    "width": 1440,
+    "allowed": 200,
+    "denied": 404,
+    "overflow": false
+  },
+  {
+    "name": "task",
+    "width": 390,
+    "allowed": 200,
+    "denied": 404,
+    "overflow": false
+  },
+  {
+    "name": "task",
+    "width": 768,
+    "allowed": 200,
+    "denied": 404,
+    "overflow": false
+  },
+  {
+    "name": "task",
+    "width": 1440,
+    "allowed": 200,
+    "denied": 404,
+    "overflow": false
+  },
+  {
+    "name": "agent",
+    "width": 390,
+    "allowed": 200,
+    "denied": 404,
+    "overflow": false
+  },
+  {
+    "name": "agent",
+    "width": 768,
+    "allowed": 200,
+    "denied": 404,
+    "overflow": false
+  },
+  {
+    "name": "agent",
+    "width": 1440,
+    "allowed": 200,
+    "denied": 404,
+    "overflow": false
+  },
+  {
+    "name": "eval",
+    "width": 390,
+    "allowed": 200,
+    "denied": 403,
+    "overflow": false
+  },
+  {
+    "name": "eval",
+    "width": 768,
+    "allowed": 200,
+    "denied": 403,
+    "overflow": false
+  },
+  {
+    "name": "eval",
+    "width": 1440,
+    "allowed": 200,
+    "denied": 403,
+    "overflow": false
+  }
+]

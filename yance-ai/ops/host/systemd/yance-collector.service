@@ -1,0 +1,64 @@
+[Unit]
+# Host-native collector: a plain host process. It deliberately does NOT declare
+# After=/Wants= on docker.service — the database happens to run in a container today,
+# but the collector must not depend on the container runtime to start or stay up.
+# If the database is briefly down, the unit keeps retrying (Restart=on-failure, RestartSec=20)
+# and each cycle is bounded, so nothing piles up.
+Description=yance.ai policy collector (host-native, continuous)
+Documentation=file:///opt/yance/collector-20261106-r3/docs/policy-collection-host-native-2026-11-06.md
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+ConditionPathExists=/etc/yance/collector.env
+ConditionPathExists=/opt/yance/collector-20261106-r3/app/workers/policy_collector.py
+
+[Service]
+Type=simple
+User=yancecoll
+Group=yancecoll
+WorkingDirectory=/opt/yance/collector-20261106-r3
+EnvironmentFile=/etc/yance/collector.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+
+# SIGTERM is handled between documents, so the cursor is never left half-written.
+# Give it room: a cycle may be finishing one page of a slow government site.
+KillSignal=SIGTERM
+TimeoutStopSec=150
+SendSIGKILL=yes
+
+ExecStartPre=/bin/sh -c 'test -x /opt/yance/collector-20261106-r3/.venv/bin/python'
+ExecStart=/opt/yance/collector-20261106-r3/.venv/bin/python -m app.workers.policy_collector
+# on-failure, not always: when collection is disabled the worker exits 0 on purpose
+# and must stay down instead of being resurrected every 20s.
+Restart=on-failure
+RestartSec=20
+
+# Bounded resources: the API and Postgres share this 2-core / 3.7 GB host.
+CPUQuota=100%
+MemoryHigh=768M
+MemoryMax=1200M
+TasksMax=256
+IOWeight=50
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=6
+
+# Hardening: the collector reads code, writes only its own evidence/state dirs.
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=read-only
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+ReadWritePaths=/var/lib/yance
+
+# Logs go to files (rotated by /etc/logrotate.d/yance-collector) *and* to journal.
+StandardOutput=append:/var/log/yance/collector.log
+StandardError=append:/var/log/yance/collector.err.log
+SyslogIdentifier=yance-collector
+
+[Install]
+WantedBy=multi-user.target

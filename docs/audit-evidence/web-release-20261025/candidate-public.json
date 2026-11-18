@@ -1,0 +1,50 @@
+{
+  "at": "2026-10-25T09:35:24.584Z",
+  "base": "http://127.0.0.1:3019",
+  "release": "web-20261025-01",
+  "checks": [
+    {
+      "path": "/",
+      "visible_ms": 5472
+    },
+    {
+      "path": "/company-match",
+      "visible_ms": 3955
+    },
+    {
+      "path": "/brief-maker",
+      "visible_ms": 1637
+    },
+    {
+      "path": "/pricing",
+      "visible_ms": 5984
+    },
+    {
+      "path": "/login",
+      "visible_ms": 3210
+    },
+    {
+      "path": "/security",
+      "visible_ms": 14211
+    },
+    {
+      "path": "/policy-knowledge-base",
+      "visible_ms": 2640
+    },
+    {
+      "path": "/parks",
+      "visible_ms": 4079
+    },
+    {
+      "path": "/about",
+      "visible_ms": 2504
+    }
+  ],
+  "mobile": true,
+  "failures": [],
+  "errors": [],
+  "blockedMethods": [],
+  "productionBusinessWrites": false,
+  "backendWorkspaceRevision": null,
+  "sample": "one Chromium visit per public page; no throttling; not SLA"
+}

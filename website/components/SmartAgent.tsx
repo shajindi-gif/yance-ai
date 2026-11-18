@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 
 /* --- Types --- */
@@ -26,6 +27,7 @@ function now(): string {
 
 /* --- Component --- */
 export default function SmartAgent() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -90,7 +92,7 @@ export default function SmartAgent() {
     <>
       {/* Floating Trigger */}
       {!open && (
-        <button className="yc-chat-trigger" onClick={() => setOpen(true)} aria-label="打开智能助手">
+        <button className="yc-chat-trigger" onClick={() => { if (authed) { if (window.location.pathname === "/dashboard") document.getElementById("ask-question")?.focus(); else router.push("/dashboard#ask-question"); } else setOpen(true); }} aria-label="打开 AI 助手">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>

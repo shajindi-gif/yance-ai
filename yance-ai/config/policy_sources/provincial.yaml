@@ -1,0 +1,822 @@
+catalog_version: "2026.11.06-provincial.1"
+generated_at: "2026-11-06T13:40:00+08:00"
+notes: |
+  31 个省级行政区来源。entry_url 取自 2026-11-06 本机真实抓取各站首页后提取的栏目链接。
+  直辖市（北京/上海/天津/重庆）在此登记，并标记 shared_jurisdiction=true：
+  省级与城市级共用同一官方来源，城市级不再重复登记、不重复计数。
+  标记 unreachable 的三省（海南、西藏、甘肃）为本机网络与站点访问控制所致，
+  待生产服务器侧复核，当前 enabled=false，不计入“已采到原文”。
+
+sources:
+  - source_id: prov_beijing_kw
+    name: 北京市科学技术委员会-政策文件
+    authority: 北京市科学技术委员会、中关村管委会
+    level: provincial
+    province: 北京市
+    city: 北京市
+    shared_jurisdiction: true
+    channel: policy_document
+    entry_url: https://kw.beijing.gov.cn/zwgk/zcwj/
+    allowed_domains: [kw.beijing.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 直辖市，省级与城市级共用来源。；2026-11-06 干跑：列表 20 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_beijing_kw_tzgg
+    name: 北京市科学技术委员会-通知公告
+    authority: 北京市科学技术委员会、中关村管委会
+    level: provincial
+    province: 北京市
+    city: 北京市
+    shared_jurisdiction: true
+    channel: application
+    entry_url: https://kw.beijing.gov.cn/zwgk/tzgg/
+    allowed_domains: [kw.beijing.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 20 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_tianjin_kxjs
+    name: 天津市科学技术局-通知公告
+    authority: 天津市科学技术局
+    level: provincial
+    province: 天津市
+    city: 天津市
+    shared_jurisdiction: true
+    channel: application
+    entry_url: https://kxjs.tj.gov.cn/ZWGK4143/TZGG2079/
+    allowed_domains: [kxjs.tj.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 首次探测 TLS 失败，改以 kxjs 子域与 http/https 重试后 200。；2026-11-06 干跑：列表 22 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_tianjin_kxjs_zcfg
+    name: 天津市科学技术局-政策法规
+    authority: 天津市科学技术局
+    level: provincial
+    province: 天津市
+    city: 天津市
+    shared_jurisdiction: true
+    channel: policy_document
+    entry_url: https://kxjs.tj.gov.cn/ZWGK4143/ZCFG148_1/
+    allowed_domains: [kxjs.tj.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 55 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_tianjin_kxjs_xmsb
+    name: 天津市科学技术局-项目申报
+    authority: 天津市科学技术局
+    level: provincial
+    province: 天津市
+    city: 天津市
+    shared_jurisdiction: true
+    channel: application
+    entry_url: https://kxjs.tj.gov.cn/BSFW9672/XMGL4742/XMSB4597/
+    allowed_domains: [kxjs.tj.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 22 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_shanghai_stcsm
+    name: 上海市科学技术委员会-通知告示
+    authority: 上海市科学技术委员会
+    level: provincial
+    province: 上海市
+    city: 上海市
+    shared_jurisdiction: true
+    channel: application
+    entry_url: https://stcsm.sh.gov.cn/zwgk/tzgg/
+    allowed_domains: [stcsm.sh.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 19 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_shanghai_stcsm_xmsb
+    name: 上海市科学技术委员会-科研计划项目申报
+    authority: 上海市科学技术委员会
+    level: provincial
+    province: 上海市
+    city: 上海市
+    shared_jurisdiction: true
+    channel: application
+    entry_url: https://stcsm.sh.gov.cn/zwgk/kyjhxm/xmsb/
+    allowed_domains: [stcsm.sh.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 20 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_chongqing_kjj
+    name: 重庆市科学技术局-通知公告
+    authority: 重庆市科学技术局
+    level: provincial
+    province: 重庆市
+    city: 重庆市
+    shared_jurisdiction: true
+    channel: application
+    entry_url: https://kjj.cq.gov.cn/zwxx_176/tzgg/
+    allowed_domains: [kjj.cq.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 16 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_chongqing_kjj_zcwj
+    name: 重庆市科学技术局-政策文件
+    authority: 重庆市科学技术局
+    level: provincial
+    province: 重庆市
+    city: 重庆市
+    shared_jurisdiction: true
+    channel: policy_document
+    entry_url: https://kjj.cq.gov.cn/zwgk_176/zwxxgkml/zcwj/
+    allowed_domains: [kjj.cq.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 16 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_hebei_kjt
+    name: 河北省科学技术厅-通知公告
+    authority: 河北省科学技术厅
+    level: provincial
+    province: 河北省
+    channel: application
+    entry_url: https://kjt.hebei.gov.cn/hebkjt/xwzx15/tzgg35/index.html
+    allowed_domains: [kjt.hebei.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 20 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_hebei_kjt_zc
+    name: 河北省科学技术厅-政策
+    authority: 河北省科学技术厅
+    level: provincial
+    province: 河北省
+    channel: policy_document
+    entry_url: https://kjt.hebei.gov.cn/hebkjt/xxgk2020/228104/228105/index.html
+    allowed_domains: [kjt.hebei.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 23 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_shanxi_kjt
+    name: 山西省科学技术厅-政策法规
+    authority: 山西省科学技术厅
+    level: provincial
+    province: 山西省
+    channel: policy_document
+    entry_url: https://kjt.shanxi.gov.cn/zcfg/
+    allowed_domains: [kjt.shanxi.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 25 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_shanxi_kjt_sbzt
+    name: 山西省科学技术厅-申报专题
+    authority: 山西省科学技术厅
+    level: provincial
+    province: 山西省
+    channel: application
+    entry_url: https://kjt.shanxi.gov.cn/bsdt/sbzt/
+    allowed_domains: [kjt.shanxi.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: needs_site_adapter
+    last_verified_at: "2026-11-06T16:20:46+08:00"
+    notes: 2026-11-06 复核：入口为申报专题门户，无静态政策列表，需站点适配器后重定位栏目。；2026-11-06 干跑列表页解析出 0 条：静态 HTML 无条目锚点或选择器未命中，需核查适配器
+
+  - source_id: prov_neimenggu_kjt
+    name: 内蒙古自治区科学技术厅-通知公告
+    authority: 内蒙古自治区科学技术厅
+    level: provincial
+    province: 内蒙古自治区
+    channel: application
+    entry_url: https://kjt.nmg.gov.cn/kjdt/tzgg/
+    allowed_domains: [kjt.nmg.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 14 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_neimenggu_kjt_hq
+    name: 内蒙古自治区科学技术厅-科技惠企政策
+    authority: 内蒙古自治区科学技术厅
+    level: provincial
+    province: 内蒙古自治区
+    channel: portal
+    entry_url: https://kjt.nmg.gov.cn/ztzl/kjhqzc/index.html
+    allowed_domains: [kjt.nmg.gov.cn]
+    adapter: portal
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 15 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_liaoning_kjt
+    name: 辽宁省科学技术厅-通知通告
+    authority: 辽宁省科学技术厅
+    level: provincial
+    province: 辽宁省
+    channel: application
+    entry_url: https://kjt.ln.gov.cn/kjt/tztg/gztz/index.shtml
+    allowed_domains: [kjt.ln.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 50 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_liaoning_kjt_zc
+    name: 辽宁省科学技术厅-科技政策
+    authority: 辽宁省科学技术厅
+    level: provincial
+    province: 辽宁省
+    channel: policy_document
+    entry_url: https://kjt.ln.gov.cn/kjt/kjzc/index.shtml
+    allowed_domains: [kjt.ln.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 50 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_jilin_kjt
+    name: 吉林省科学技术厅-通知公告
+    authority: 吉林省科学技术厅
+    level: provincial
+    province: 吉林省
+    channel: application
+    entry_url: https://kjt.jl.gov.cn/xwzx/tzgg/
+    allowed_domains: [kjt.jl.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 15 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_jilin_kjt_zcfg
+    name: 吉林省科学技术厅-政策法规
+    authority: 吉林省科学技术厅
+    level: provincial
+    province: 吉林省
+    channel: policy_document
+    entry_url: https://kjt.jl.gov.cn/zfxxgk/zcfg/
+    allowed_domains: [kjt.jl.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:30:59+08:00"
+    notes: 2026-11-06 干跑：列表 15 条，取 1 篇，解析成功 1 篇（未入库）；此前偶发列表超时，为临时网络问题
+
+  - source_id: prov_heilongjiang_kjt
+    name: 黑龙江省科学技术厅-通知公告
+    authority: 黑龙江省科学技术厅
+    level: provincial
+    province: 黑龙江省
+    channel: application
+    entry_url: https://kjt.hlj.gov.cn/kjt/c113904/redirect_firstChannel.shtml
+    allowed_domains: [kjt.hlj.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 该栏目为 redirect 跳转页，需试运行确认跳转后列表可解析，否则降级为 unreachable。；2026-11-06 干跑：列表 16 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_jiangsu_kxjst
+    name: 江苏省科学技术厅-通知公告
+    authority: 江苏省科学技术厅
+    level: provincial
+    province: 江苏省
+    channel: application
+    entry_url: https://kxjst.jiangsu.gov.cn/col/col82540/index.html
+    allowed_domains: [kxjst.jiangsu.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: list_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 原 kjt.jiangsu.gov.cn 不可达，实际域名为 kxjst.jiangsu.gov.cn。；2026-11-06 干跑：列表 100 条可解析，正文过短或需附件解析，待补
+
+  - source_id: prov_jiangsu_kxjst_gfxwj
+    name: 江苏省科学技术厅-规范性文件
+    authority: 江苏省科学技术厅
+    level: provincial
+    province: 江苏省
+    channel: policy_document
+    entry_url: https://kxjst.jiangsu.gov.cn/col/col82571/index.html
+    allowed_domains: [kxjst.jiangsu.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 49 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_zhejiang_kjt
+    name: 浙江省科学技术厅-通知通告
+    authority: 浙江省科学技术厅
+    level: provincial
+    province: 浙江省
+    channel: application
+    entry_url: https://kjt.zj.gov.cn/col/col1229225203/index.html
+    allowed_domains: [kjt.zj.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 15 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_zhejiang_kjt_zcfg
+    name: 浙江省科学技术厅-政策法规
+    authority: 浙江省科学技术厅
+    level: provincial
+    province: 浙江省
+    channel: policy_document
+    entry_url: https://kjt.zj.gov.cn/col/col1228971337/index.html
+    allowed_domains: [kjt.zj.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: needs_site_adapter
+    last_verified_at: "2026-11-06T16:20:46+08:00"
+    notes: 2026-11-06 复核：入口为 JS 跳转壳，跳转后 JPAAS 官方 JSON 端点返回空列表，需核对栏目 ID 并接站点适配器后再启用。；2026-11-06 干跑列表页解析出 0 条：静态 HTML 无条目锚点或选择器未命中，需核查适配器
+
+  - source_id: prov_anhui_kjt
+    name: 安徽省科学技术厅-通知公告
+    authority: 安徽省科学技术厅
+    level: provincial
+    province: 安徽省
+    channel: application
+    entry_url: https://kjt.ah.gov.cn/kjzx/tzgg/index.html
+    allowed_domains: [kjt.ah.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 19 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_fujian_kjt
+    name: 福建省科学技术厅-通知公告
+    authority: 福建省科学技术厅
+    level: provincial
+    province: 福建省
+    channel: application
+    entry_url: https://kjt.fujian.gov.cn/xxgk/tzgg/
+    allowed_domains: [kjt.fujian.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 105 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_fujian_kjt_zcwj
+    name: 福建省科学技术厅-政策文件
+    authority: 福建省科学技术厅
+    level: provincial
+    province: 福建省
+    channel: policy_document
+    entry_url: https://kjt.fujian.gov.cn/xxgk/zcwj/
+    allowed_domains: [kjt.fujian.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 97 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_jiangxi_kjt
+    name: 江西省科学技术厅-通知公告
+    authority: 江西省科学技术厅
+    level: provincial
+    province: 江西省
+    channel: application
+    entry_url: http://kjt.jiangxi.gov.cn/jxskxjst/col/col27029/index.html
+    allowed_domains: [kjt.jiangxi.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: list_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: HTTPS 在本机 TLS 失败，使用站点自身 http 入口；生产侧应复核 https 可用性。；2026-11-06 干跑：列表 1 条可解析，正文过短或需附件解析，待补
+
+  - source_id: prov_shandong_kjt
+    name: 山东省科学技术厅-通知公告
+    authority: 山东省科学技术厅
+    level: provincial
+    province: 山东省
+    channel: application
+    entry_url: http://kjt.shandong.gov.cn/col/col13360/index.html
+    allowed_domains: [kjt.shandong.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: HTTPS 在本机 TLS 失败，使用站点自身 http 入口；生产侧应复核。；2026-11-06 干跑：列表 75 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_shandong_kjt_zcfb
+    name: 山东省科学技术厅-政策发布
+    authority: 山东省科学技术厅
+    level: provincial
+    province: 山东省
+    channel: policy_document
+    entry_url: http://kjt.shandong.gov.cn/col/col103585/index.html
+    allowed_domains: [kjt.shandong.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 77 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_henan_kjt
+    name: 河南省科学技术厅-科技政策
+    authority: 河南省科学技术厅
+    level: provincial
+    province: 河南省
+    channel: policy_document
+    entry_url: https://kjt.henan.gov.cn/kjzc/
+    allowed_domains: [kjt.henan.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 首页仅暴露科技政策聚合入口，通知公告栏目需站点内进一步定位后补充。；2026-11-06 干跑：列表 36 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_hubei_kjt
+    name: 湖北省科学技术厅-通知公告
+    authority: 湖北省科学技术厅
+    level: provincial
+    province: 湖北省
+    channel: application
+    entry_url: https://kjt.hubei.gov.cn/kjdt/tzgg/
+    allowed_domains: [kjt.hubei.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 20 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_hubei_kjt_gfxwj
+    name: 湖北省科学技术厅-规范性文件
+    authority: 湖北省科学技术厅
+    level: provincial
+    province: 湖北省
+    channel: policy_document
+    entry_url: https://kjt.hubei.gov.cn/zfxxgk_GK2020/zc2020/gfxwjj/
+    allowed_domains: [kjt.hubei.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 5 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_hunan_kjt
+    name: 湖南省科学技术厅-通知公告
+    authority: 湖南省科学技术厅
+    level: provincial
+    province: 湖南省
+    channel: application
+    entry_url: http://kjt.hunan.gov.cn/kjt/xxgk/tzgg/index.html
+    allowed_domains: [kjt.hunan.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: HTTPS 在本机 TLS 失败，使用站点自身 http 入口；生产侧应复核。；2026-11-06 干跑：列表 56 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_hunan_kjt_xmsb
+    name: 湖南省科学技术厅-项目申报
+    authority: 湖南省科学技术厅
+    level: provincial
+    province: 湖南省
+    channel: application
+    entry_url: http://kjt.hunan.gov.cn/kjt/xmxx/xmsb/index.html
+    allowed_domains: [kjt.hunan.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 61 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_guangdong_gdstc
+    name: 广东省科学技术厅-通知公告
+    authority: 广东省科学技术厅
+    level: provincial
+    province: 广东省
+    channel: application
+    entry_url: https://gdstc.gd.gov.cn/zwgk_n/tzgg/index.html
+    allowed_domains: [gdstc.gd.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 22 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_guangdong_gdstc_gfwj
+    name: 广东省科学技术厅-部门规范性文件
+    authority: 广东省科学技术厅
+    level: provincial
+    province: 广东省
+    channel: policy_document
+    entry_url: https://gdstc.gd.gov.cn/zwgk_n/zcfg/gfwj/index.html
+    allowed_domains: [gdstc.gd.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 22 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_guangxi_kjt
+    name: 广西壮族自治区科学技术厅-通知公告
+    authority: 广西壮族自治区科学技术厅
+    level: provincial
+    province: 广西壮族自治区
+    channel: application
+    entry_url: http://kjt.gxzf.gov.cn/dtxx_59340/tzgg/
+    allowed_domains: [kjt.gxzf.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: HTTPS 在本机 TLS 失败，使用站点自身 http 入口；生产侧应复核。；2026-11-06 干跑：列表 29 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_hainan_kjt
+    name: 海南省科学技术厅（待接入）
+    authority: 海南省科学技术厅
+    level: provincial
+    province: 海南省
+    channel: application
+    entry_url: https://kjt.hainan.gov.cn/
+    allowed_domains: [kjt.hainan.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: false
+    verification_state: unreachable
+    last_verified_at: "2026-11-06T13:32:00+08:00"
+    notes: 本机 DNS/TLS 失败，未取得任何栏目证据；待生产服务器复核后再登记具体栏目。
+
+  - source_id: prov_sichuan_kjt
+    name: 四川省科学技术厅-通知
+    authority: 四川省科学技术厅
+    level: provincial
+    province: 四川省
+    channel: application
+    entry_url: https://kjt.sc.gov.cn/kjt/gstz/newschild.shtml
+    allowed_domains: [kjt.sc.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 15 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_sichuan_kjt_zcfg
+    name: 四川省科学技术厅-政策法规
+    authority: 四川省科学技术厅
+    level: provincial
+    province: 四川省
+    channel: policy_document
+    entry_url: https://kjt.sc.gov.cn/kjt/zcfg/newszwxxgkzcfg.shtml
+    allowed_domains: [kjt.sc.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 13 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_guizhou_kjt
+    name: 贵州省科学技术厅-通知公告
+    authority: 贵州省科学技术厅
+    level: provincial
+    province: 贵州省
+    channel: application
+    entry_url: http://kjt.guizhou.gov.cn/xwzx/tzgg_73876/
+    allowed_domains: [kjt.guizhou.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 15 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_guizhou_kjt_zcwj
+    name: 贵州省科学技术厅-政策文件
+    authority: 贵州省科学技术厅
+    level: provincial
+    province: 贵州省
+    channel: policy_document
+    entry_url: http://kjt.guizhou.gov.cn/zwgk/xxgkml/zcwj/gzdfzc/
+    allowed_domains: [kjt.guizhou.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 复核：原入口为 JS 跳转壳，真实列表入口为政策法规子栏目。；2026-11-06 干跑：列表 15 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_yunnan_kjt
+    name: 云南省科学技术厅-通知公告
+    authority: 云南省科学技术厅
+    level: provincial
+    province: 云南省
+    channel: application
+    entry_url: https://kjt.yn.gov.cn/xwdt/tzgg/
+    allowed_domains: [kjt.yn.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 25 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_yunnan_kjt_zcwj
+    name: 云南省科学技术厅-政策文件
+    authority: 云南省科学技术厅
+    level: provincial
+    province: 云南省
+    channel: policy_document
+    entry_url: https://kjt.yn.gov.cn/zfxxgkpt/zcwj/
+    allowed_domains: [kjt.yn.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 17 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_xizang_kjt
+    name: 西藏自治区科学技术厅（待接入）
+    authority: 西藏自治区科学技术厅
+    level: provincial
+    province: 西藏自治区
+    channel: application
+    entry_url: https://kjt.xizang.gov.cn/
+    allowed_domains: [kjt.xizang.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: false
+    verification_state: unreachable
+    last_verified_at: "2026-11-06T13:32:00+08:00"
+    notes: 本机 DNS/TLS 失败，未取得栏目证据；待生产服务器复核。
+
+  - source_id: prov_shaanxi_kjt
+    name: 陕西省科学技术厅-通知公告
+    authority: 陕西省科学技术厅
+    level: provincial
+    province: 陕西省
+    channel: application
+    entry_url: https://kjt.shaanxi.gov.cn/kjdt/tzgg/
+    allowed_domains: [kjt.shaanxi.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 15 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_gansu_kjt
+    name: 甘肃省科学技术厅（待适配）
+    authority: 甘肃省科学技术厅
+    level: provincial
+    province: 甘肃省
+    channel: application
+    entry_url: https://kjt.gansu.gov.cn/
+    allowed_domains: [kjt.gansu.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: false
+    verification_state: unreachable
+    last_verified_at: "2026-11-06T13:39:00+08:00"
+    notes: 多次请求均返回 HTTP 412（站点访问控制/WAF），需按站点规则适配请求头或改走开放接口，禁止绕过访问控制。
+
+  - source_id: prov_qinghai_kjt
+    name: 青海省科学技术厅-政策法规
+    authority: 青海省科学技术厅
+    level: provincial
+    province: 青海省
+    channel: policy_document
+    entry_url: https://kjt.qinghai.gov.cn/content/category/pid/20
+    allowed_domains: [kjt.qinghai.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 11 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_ningxia_kjt
+    name: 宁夏回族自治区科学技术厅-通知公告
+    authority: 宁夏回族自治区科学技术厅
+    level: provincial
+    province: 宁夏回族自治区
+    channel: application
+    entry_url: https://kjt.nx.gov.cn/kjdt/tzgg/
+    allowed_domains: [kjt.nx.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 23 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_ningxia_kjt_hqzc
+    name: 宁夏回族自治区科学技术厅-惠企政策包
+    authority: 宁夏回族自治区科学技术厅
+    level: provincial
+    province: 宁夏回族自治区
+    channel: portal
+    entry_url: https://kjt.nx.gov.cn/ztzl/hqzcb/index.html
+    allowed_domains: [kjt.nx.gov.cn]
+    adapter: portal
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 3 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_xinjiang_kjt
+    name: 新疆维吾尔自治区科学技术厅-通知通告
+    authority: 新疆维吾尔自治区科学技术厅
+    level: provincial
+    province: 新疆维吾尔自治区
+    channel: application
+    entry_url: https://kjt.xinjiang.gov.cn/kjt/c100264/common_list.shtml
+    allowed_domains: [kjt.xinjiang.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 6
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 14 条，取 1 篇，解析成功 1 篇（未入库）
+
+  - source_id: prov_xinjiang_kjt_zcwj
+    name: 新疆维吾尔自治区科学技术厅-政策文件
+    authority: 新疆维吾尔自治区科学技术厅
+    level: provincial
+    province: 新疆维吾尔自治区
+    channel: policy_document
+    entry_url: https://kjt.xinjiang.gov.cn/kjt/c100271/zfxxgk_gknr.shtml
+    allowed_domains: [kjt.xinjiang.gov.cn]
+    adapter: generic_list
+    check_interval_hours: 24
+    enabled: true
+    verification_state: document_verified
+    last_verified_at: "2026-11-06T16:19:47+08:00"
+    notes: 2026-11-06 干跑：列表 21 条，取 1 篇，解析成功 1 篇（未入库）

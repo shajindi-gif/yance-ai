@@ -1,0 +1,6 @@
+Restored old website on server loopback 3002:
+/release.json 200 (web-20261020-01)
+/pricing 200
+/api/v1/products 200
+/api/v1/auth/config 200
+Original website remained active throughout.

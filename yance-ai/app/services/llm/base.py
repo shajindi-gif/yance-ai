@@ -10,6 +10,7 @@ class LLMRequest:
     temperature: float = 0.2
     max_tokens: int | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
+    response_format: dict[str, Any] | None = None
 
 
 @dataclass

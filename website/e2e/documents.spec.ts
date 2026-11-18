@@ -49,3 +49,6 @@ test('authenticated documents workspace renders the verified ingestion controls'
     page.locator('[data-nextjs-dialog], .vite-error-overlay, #webpack-dev-server-client-overlay'),
   ).toHaveCount(0);
 });
+
+// Independent synthetic source per suite; production rate limits remain unchanged.
+test.use({extraHTTPHeaders: {'X-Forwarded-For': '127.0.0.62'}});

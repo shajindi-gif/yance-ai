@@ -17,6 +17,10 @@ class AgentCancelled(RuntimeError):
     pass
 
 
+class AgentLeaseLost(AgentCancelled):
+    """The attempt lost ownership; it must not report failure or commit results."""
+
+
 class PolicyScanWorkflowInput(BaseModel):
     tenant_id: UUID
     user_id: UUID

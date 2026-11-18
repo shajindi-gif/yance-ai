@@ -10,9 +10,17 @@ from app.services.llm.registry import embed_texts
 MAX_CHUNK_CHARS = 900
 ARTICLE_PATTERN = re.compile(r"^(第[一二三四五六七八九十百千万0-9]+条|[一二三四五六七八九十]+、)")
 
+# PostgreSQL text columns cannot store NUL, and a single 0x00 aborts the whole
+# transaction.  Binary payloads that reached us as a "document" (a PDF served from a
+# .jsp download endpoint, read as UTF-8 with replacement characters) carry plenty of
+# them, so they are stripped before anything is written.  Other C0 controls are
+# dropped too: they are never meaningful in policy text and break psql/pg_dump output.
+_CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+
 
 def clean_policy_text(value: str | None) -> str:
     text = (value or "").replace("\r\n", "\n").replace("\r", "\n")
+    text = _CONTROL_CHARS.sub("", text)
     lines = [re.sub(r"[ \t]+", " ", line).strip() for line in text.splitlines()]
     return "\n".join(line for line in lines if line).strip()
 

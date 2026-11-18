@@ -19,6 +19,7 @@ RUN /usr/local/bin/python -m pip uninstall --yes pip
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 \
     libffi8 libgdk-pixbuf-2.0-0 shared-mime-info \
+    zlib1g \
     fonts-noto-cjk tesseract-ocr tesseract-ocr-chi-sim tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
 

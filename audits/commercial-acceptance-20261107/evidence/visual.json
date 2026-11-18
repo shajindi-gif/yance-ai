@@ -1,0 +1,50 @@
+[
+  {
+    "width": 1440,
+    "route": "/",
+    "elapsed_ms": 892,
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "route": "/pricing",
+    "elapsed_ms": 275,
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "route": "/login",
+    "elapsed_ms": 177,
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "route": "/feedback",
+    "elapsed_ms": 149,
+    "overflow": false
+  },
+  {
+    "width": 390,
+    "route": "/",
+    "elapsed_ms": 501,
+    "overflow": false
+  },
+  {
+    "width": 390,
+    "route": "/pricing",
+    "elapsed_ms": 189,
+    "overflow": false
+  },
+  {
+    "width": 390,
+    "route": "/login",
+    "elapsed_ms": 141,
+    "overflow": false
+  },
+  {
+    "width": 390,
+    "route": "/feedback",
+    "elapsed_ms": 124,
+    "overflow": false
+  }
+]

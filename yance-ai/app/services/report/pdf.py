@@ -9,7 +9,15 @@ from io import BytesIO
 from weasyprint import HTML
 
 from app.models.models import Company, Opportunity, Policy
+from app.services.report.schema import PolicyOpportunityReportDocument
 from app.services.safe_rendering import deny_external_url_fetcher, escape_html
+
+_ELIGIBILITY_TAG = {
+    "ELIGIBLE": ("tag-green", "符合（待客户复核）"),
+    "POTENTIALLY_ELIGIBLE": ("tag-blue", "可能符合（待客户复核）"),
+    "NOT_ELIGIBLE": ("tag-red", "不符合"),
+    "NEED_MORE_INFORMATION": ("tag-yellow", "证据不足"),
+}
 
 # ── CSS 样式 ─────────────────────────────────────────────────
 REPORT_CSS = """
@@ -52,6 +60,15 @@ REPORT_CSS = """
   .footer { margin-top: 40px; padding: 16px; background: #f8fafc; border-radius: 8px; font-size: 9px; color: #64748b; }
   .footer strong { color: #334155; }
   .page-break { page-break-before: always; }
+  .opp-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin: 12px 0; background: #fff; page-break-inside: avoid; }
+  .opp-card.positive { border-left: 4px solid #0ea5e9; background: #f8fbff; }
+  .opp-card.need-more { border-left: 4px solid #ca8a04; background: #fffdf5; }
+  .opp-card.rejected { border-left: 4px solid #dc2626; background: #fff8f8; }
+  .opp-card .card-title { font-size: 13px; font-weight: 700; color: #0d1b2a; margin: 0 0 6px; }
+  .opp-card .meta-line { font-size: 10px; color: #64748b; margin-bottom: 8px; }
+  .opp-card blockquote { margin: 8px 0; padding: 8px 12px; background: #f1f5f9; border-left: 3px solid #94a3b8; font-size: 10px; color: #334155; }
+  .opp-card .next { margin-top: 8px; font-size: 10px; color: #0f172a; }
+  .weak-note { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 4px; background: #f1f5f9; color: #64748b; font-size: 9px; }
 """
 
 
@@ -78,11 +95,18 @@ def generate_match_report_pdf(
     policies: list[Policy],
     *,
     decision_evidence: dict | None = None,
+    report_document: PolicyOpportunityReportDocument | None = None,
 ) -> bytes:
-    """生成 10 章节企业政策机会分析报告 PDF。"""
+    """生成 10 章节企业政策机会分析报告 PDF。
+
+    When ``report_document`` is provided, eligibility matrix / gaps / materials /
+    next steps render from frozen ReportCards (structured DB facts), not static
+    templates or matcher heuristics.
+    """
     policy_map = {p.id: p for p in policies}
     now = datetime.now(UTC)
     meta = company.metadata_json or {}
+    cards = list(report_document.opportunities) if report_document is not None else []
 
     # ── 统计数据 ──
     scores = [round(o.score * 100) for o in opportunities]
@@ -188,46 +212,104 @@ def generate_match_report_pdf(
           </div>
         </div>"""
 
-    # ── 05 企业政策资格矩阵 ──
-    matrix_conditions = [
-        ("地区", company.province or "—", "注册地/经营地要求"),
-        ("行业", company.industry or "—", "重点支持产业目录"),
-        ("企业规模", meta.get("scale", "—"), "中小微/大型企业"),
-        ("成立时间", meta.get("founded_year", "—"), "成立年限要求"),
-        ("注册资本", meta.get("registered_capital", "—"), "最低注册资本"),
-        ("研发费用占比", f"{meta.get('rd_expense_ratio', '—')}%", "研发费用占比要求"),
-        ("研发人员", meta.get("rd_ratio", "—"), "研发人员占比要求"),
-        ("知识产权", meta.get("ip_count", "—"), "专利/软著数量要求"),
-        ("企业资质", "、".join(meta.get("qualifications", [])) or "—", "高企/专精特新等"),
-        ("融资阶段", meta.get("funding_stage", "—"), "融资阶段限制"),
-        ("营业收入", meta.get("annual_revenue", "—"), "营收门槛"),
-    ]
-    matrix_rows = "".join(
-        f'<tr><td style="font-weight:600">{escape_html(c[0])}</td>'
-        f"<td>{escape_html(c[1])}</td><td>{escape_html(c[2])}</td>"
-        '<td><span class="tag tag-gray">待系统判断</span></td></tr>'
-        for c in matrix_conditions
-    )
-    matrix_html = f"""<table>
-      <thead><tr><th>条件维度</th><th>企业现状</th><th>政策要求</th><th>匹配状态</th></tr></thead>
-      <tbody>{matrix_rows}</tbody>
-    </table>"""
-
-    # ── 06 企业当前差距 ──
-    all_missing = set()
-    for opp in opportunities:
-        ev = opp.evidence_json or {}
-        for m in ev.get("missing_materials", []):
-            all_missing.add(m)
-    gaps_html = (
-        "<ul>"
-        + "".join(f"<li>{escape_html(m)}</li>" for m in sorted(all_missing, key=str))
-        + "</ul>"
-    )
-    if not all_missing:
-        gaps_html = (
-            "<p>基于当前企业画像，暂未发现明显差距。建议完善企业画像以获取更精准的分析。</p>"
+    # ── 05 企业政策资格矩阵（优先 ReportCard；正例优先，弱匹配标注）──
+    if cards:
+        _rank = {
+            "ELIGIBLE": 0,
+            "POTENTIALLY_ELIGIBLE": 1,
+            "NEED_MORE_INFORMATION": 2,
+            "NOT_ELIGIBLE": 3,
+        }
+        ordered_cards = sorted(
+            cards,
+            key=lambda c: (
+                _rank.get(c.eligibility_status, 9),
+                0 if c.citations else 1,
+                -(c.match_score or 0),
+            ),
         )
+        matrix_blocks = []
+        for card in ordered_cards[:12]:
+            tag_cls, tag_label = _ELIGIBILITY_TAG.get(
+                card.eligibility_status, ("tag-gray", card.eligibility_status)
+            )
+            if card.eligibility_status in {"ELIGIBLE", "POTENTIALLY_ELIGIBLE"}:
+                card_cls = "positive"
+            elif card.eligibility_status == "NOT_ELIGIBLE":
+                card_cls = "rejected"
+            else:
+                card_cls = "need-more"
+            weak = ""
+            if not card.citations and card.eligibility_status == "NEED_MORE_INFORMATION":
+                weak = '<span class="weak-note">弱匹配 / 暂无逐字引用</span>'
+            elif card.eligibility_status == "NEED_MORE_INFORMATION" and card.citations:
+                weak = '<span class="weak-note">证据不足但已附原文要求</span>'
+            if card.criteria:
+                rows = "".join(
+                    f"<tr><td style=\"font-weight:600\">{escape_html(c.name)}</td>"
+                    f"<td>{escape_html(c.actual if c.actual is not None else '—')}</td>"
+                    f"<td>{escape_html(c.expected if c.expected is not None else '—')}</td>"
+                    f"<td><span class=\"tag tag-gray\">{escape_html(c.status)}</span>"
+                    f"{' · 硬门槛' if c.is_hard_gate else ''}</td></tr>"
+                    for c in card.criteria
+                )
+                criteria_html = (
+                    "<table><thead><tr><th>条件</th><th>企业事实</th><th>规则期望</th><th>状态</th></tr></thead>"
+                    f"<tbody>{rows}</tbody></table>"
+                )
+            else:
+                criteria_html = (
+                    "<p style=\"font-size:10px;color:#64748b\">本机会尚无结构化规则条目；"
+                    f"资格状态为 <span class=\"tag {tag_cls}\">{escape_html(tag_label)}</span>。"
+                    "不得据此宣称已符合。</p>"
+                )
+            quotes_html = "".join(
+                f"<blockquote>「{escape_html(q.quote)}」"
+                f"<br>条款：{escape_html(q.article or '未标明')} · "
+                f"来源：{escape_html(q.source_url or '待核实')}</blockquote>"
+                for q in card.citations[:3]
+            ) or "<p style=\"font-size:10px;color:#64748b\">暂无逐字核验引用。</p>"
+            gaps_line = (
+                "<ul>" + "".join(f"<li>{escape_html(g)}</li>" for g in card.gaps[:6]) + "</ul>"
+                if card.gaps
+                else "<p style=\"font-size:10px;color:#64748b\">无结构化缺口字段。</p>"
+            )
+            deadline_bit = f"截止日字段：{escape_html(card.deadline)}" if card.deadline else "截止日字段未收录"
+            matrix_blocks.append(
+                f"<div class=\"opp-card {card_cls}\">"
+                f"<div class=\"card-title\">{escape_html(card.policy_title[:48])}</div>"
+                f"<div class=\"meta-line\">"
+                f"<span class=\"tag {tag_cls}\">{escape_html(tag_label)}</span>{weak}"
+                f" · 匹配分 {escape_html(round((card.match_score or 0) * 100))}%"
+                f" · {escape_html(deadline_bit)}"
+                f" · {escape_html(card.issuing_authority or '发布机关待核实')}</div>"
+                f"<p style=\"font-size:11px;margin:6px 0\">{escape_html(card.eligibility_summary)}</p>"
+                f"{criteria_html}"
+                f"<div style=\"font-size:10px;font-weight:600;margin-top:8px\">原文依据</div>{quotes_html}"
+                f"<div style=\"font-size:10px;font-weight:600;margin-top:8px\">缺口</div>{gaps_line}"
+                f"<div class=\"next\"><strong>下一步：</strong>{escape_html(card.next_step)}</div>"
+                f"</div>"
+            )
+        matrix_html = "".join(matrix_blocks)
+    else:
+        matrix_html = (
+            "<p>本快照未写入结构化资格卡片，故不渲染条件矩阵占位行；"
+            "请以逐条资格证据章节为准。</p>"
+        )
+
+    # ── 06 企业当前差距（优先 EligibilityResult.missing_information）──
+    if cards:
+        gap_items = []
+        for card in cards:
+            for gap in card.gaps:
+                gap_items.append(f"{card.policy_title[:24]}：{gap}")
+        gaps_html = (
+            "<ul>" + "".join(f"<li>{escape_html(item)}</li>" for item in gap_items) + "</ul>"
+            if gap_items
+            else "<p>结构化缺口字段为空。这不表示条件已全部满足，仅表示引擎未列出待补信息。</p>"
+        )
+    else:
+        gaps_html = "<p>本快照无 ReportCard，不根据启发式材料清单推断差距。</p>"
 
     # ── 07 政策行动路线图 ──
     p0, p1, p2, p3 = [], [], [], []
@@ -291,15 +373,26 @@ def generate_match_report_pdf(
       <tbody>{"".join(calendar_rows)}</tbody>
     </table>"""
 
-    # ── 09 材料准备建议 ──
-    materials_html = """
-    <h2>企业资料</h2><ul><li>营业执照副本</li><li>企业基本信用信息</li><li>公司章程</li></ul>
-    <h2>财务资料</h2><ul><li>近三年审计报告</li><li>研发费用专项审计</li><li>近三年纳税申报表</li></ul>
-    <h2>人员材料</h2><ul><li>研发人员名单及社保</li><li>核心技术人员简历</li><li>学历证书</li></ul>
-    <h2>研发材料</h2><ul><li>研发项目立项报告</li><li>研发费用归集台账</li><li>产学研合作协议</li></ul>
-    <h2>知识产权</h2><ul><li>专利证书</li><li>软件著作权证书</li><li>商标注册证</li></ul>
-    <h2>证明文件</h2><ul><li>高新技术企业认定证书（如有）</li><li>专精特新认定文件（如有）</li><li>获奖证书、检测报告</li></ul>
-    """
+    # ── 09 材料准备建议（只列结构化缺口，不用通用静态清单充数）──
+    if cards:
+        material_rows = []
+        for card in cards:
+            if not card.gaps:
+                continue
+            material_rows.append(
+                f"<h2>{escape_html(card.policy_title[:40])}</h2><ul>"
+                + "".join(f"<li>{escape_html(gap)}</li>" for gap in card.gaps)
+                + f"</ul><p>{escape_html(card.next_step)}</p>"
+            )
+        materials_html = (
+            "".join(material_rows)
+            if material_rows
+            else "<p>无结构化待补材料条目。请客户按原文申报通知自行核对材料清单。</p>"
+        )
+    else:
+        materials_html = (
+            "<p>未绑定 ReportCard 时不展示通用材料模板，避免把静态清单当成企业缺口。</p>"
+        )
 
     # ── 10 风险说明 ──
     risk_html = """
@@ -357,14 +450,17 @@ def generate_match_report_pdf(
   <div class="company">{escape_html(company.name)}</div>
   <div class="meta">
     报告编号：YR-{now.strftime("%Y%m%d")}-{company.id.hex[:8].upper()}<br>
-    生成时间（UTC）：{now.strftime("%Y-%m-%d %H:%M")}<br>
-    来源版本：见逐条资格证据<br>
+    生成时间（UTC）：{(report_document.generated_at if report_document else now).strftime("%Y-%m-%d %H:%M")}<br>
+    企业ID：{escape_html(company.id)}<br>
+    画像版本：{escape_html(report_document.profile_version_id if report_document else (opportunities[0].profile_version_id if opportunities else "未绑定"))}<br>
+    扫描ID：{escape_html(report_document.scan_id if report_document else (opportunities[0].scan_id if opportunities else "未绑定"))}<br>
+    schema：{escape_html(report_document.schema_version if report_document else "legacy-unstructured")}<br>
     匹配政策数：{total} 项
   </div>
   <div class="disclaimer">
-    <strong>免责声明：</strong>本报告由衍策引擎AI基于公开政策数据和企业画像自动生成，仅供参考。
+    <strong>免责声明：</strong>
+    {escape_html(report_document.disclaimer if report_document else "本报告基于企业提供资料与已入库政策快照生成，仅供客户自行复核。核对结果不代表政府认定或获批；匹配分不是获批概率。")}
     具体申报条件、结果和金额以主管部门审核为准。Yance 不承诺申报成功率或补贴金额。
-    匹配分仅为检索排序，不是获批概率。本文为待人工复核的初筛报告。
   </div>
 </div>
 

@@ -1,0 +1,23 @@
+{
+  "application_source": "0746e06c9bc4e570577e0350129b038002a80eae",
+  "database_revision": "20261117_0043",
+  "switched_at": "2026-11-17T23:06:44.921749+08:00",
+  "verified_at": "2026-11-18T16:04:55.298433+08:00",
+  "services": {
+    "api": "healthy",
+    "agent-worker": "healthy",
+    "payment-expiry": "healthy",
+    "payment-reconcile": "healthy",
+    "website": "active",
+    "collector": "active"
+  },
+  "ask_enabled": false,
+  "default_model_provider": "qwen",
+  "email_login_enabled": true,
+  "sms_login_enabled": true,
+  "public_browser_samples": 14,
+  "page_errors": [],
+  "old_park_promotion_removed": true,
+  "candidate_processes": "stopped; backups and images retained",
+  "real_transactions_performed": false
+}

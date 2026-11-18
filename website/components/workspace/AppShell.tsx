@@ -6,10 +6,12 @@ import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
+import { useNavigationDrawer } from "@/lib/use-navigation-drawer";
 import {
   ADMIN_NAVIGATION,
   WORKSPACE_BOTTOM_NAVIGATION,
   WORKSPACE_NAVIGATION,
+  WORKSPACE_SECONDARY,
   WORKSPACE_NAVIGATION_GROUPS,
   type WorkspaceNavItem,
 } from "@/lib/navigation";
@@ -132,6 +134,7 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { panel, mobile } = useNavigationDrawer(mobileOpen, () => setMobileOpen(false), 900);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
   const [unread, setUnread] = useState(0);
   const [canRevokeAllDevices, setCanRevokeAllDevices] = useState(false);
@@ -141,13 +144,6 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
-
-  useEffect(() => {
-    document.body.style.overflow = mobileOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [mobileOpen]);
 
   useEffect(() => {
     let active = true;
@@ -212,17 +208,18 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
 
   return (
     <div className={styles.shell}>
-      <aside className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ""}`}>
+      <aside ref={panel} id="workspace-navigation" inert={mobile && !mobileOpen} className={`${styles.sidebar} ${mobileOpen ? styles.sidebarOpen : ""}`}>
         <div className={styles.brandRow}>
           <Link href="/dashboard" className={styles.brand} aria-label="返回工作台">
             <Image src="/logo.png" alt="" width={34} height={34} priority />
             <span>
               <strong>衍策引擎</strong>
-              <small>Yance Funding OS</small>
+              <small>政策与资源证据工作台</small>
             </span>
           </Link>
           <button
             type="button"
+            data-drawer-close
             className={styles.mobileClose}
             onClick={() => setMobileOpen(false)}
             aria-label="关闭工作区导航"
@@ -246,14 +243,13 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
               {group.items.map(renderNavItem)}
             </div>
           ))}
-          <p className={styles.navLabel}>Account</p>
           {WORKSPACE_BOTTOM_NAVIGATION.map(renderNavItem)}
           {isPlatformAdmin ? renderNavItem(ADMIN_NAVIGATION) : null}
         </nav>
 
         <div className={styles.sidebarFooter}>
           <div className={styles.phaseNote}>
-            <span>Funding OS</span>
+            <span>证据工作台</span>
             <p>资格结论、证据与管道均读取服务端记录，不展示推测数据。</p>
           </div>
           <Link href="/" className={styles.secondaryAction}>
@@ -284,13 +280,14 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
             onClick={() => setMobileOpen(true)}
             aria-label="打开工作区导航"
             aria-expanded={mobileOpen}
+            aria-controls="workspace-navigation"
           >
             <span />
             <span />
             <span />
           </button>
           <div>
-            <span className={styles.topbarEyebrow}>Funding OS</span>
+            <span className={styles.topbarEyebrow}>证据工作台</span>
             <strong>{activeItem?.label || "工作区"}</strong>
           </div>
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
@@ -325,10 +322,13 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
                 </span>
               ) : null}
             </Link>
-            <span className={styles.environmentBadge}>服务端数据</span>
+            <span className={styles.environmentBadge}>企业工作区</span>
           </div>
         </header>
         <main id="main-content" className={styles.content}>
+          {activeItem && WORKSPACE_SECONDARY[activeItem.href] && <nav className={styles.contextNav} aria-label="当前工作区页面">
+            {WORKSPACE_SECONDARY[activeItem.href].map(item => <Link key={item.href} href={item.href} aria-current={pathname === item.href ? 'page' : undefined}>{item.label}</Link>)}
+          </nav>}
           {children}
         </main>
       </div>

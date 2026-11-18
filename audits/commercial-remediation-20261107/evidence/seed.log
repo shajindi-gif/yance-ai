@@ -1,0 +1,52 @@
+/Users/shajindi/yance-backup/yance/yance-ai/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+{"method": "POST", "path": "/api/v1/auth/register", "status_code": 201, "duration_ms": 143.97, "event": "request_completed", "request_id": "505f57b3-0e86-4fd2-9d27-7ace8f8dcab5", "level": "info", "timestamp": "2026-11-07T15:55:54.588256Z"}
+HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 201 Created"
+{"method": "GET", "path": "/api/v1/companies", "status_code": 200, "duration_ms": 24.36, "event": "request_completed", "request_id": "7a902ba5-569c-4be2-b8ac-c21862db6665", "level": "info", "timestamp": "2026-11-07T15:55:54.613459Z"}
+HTTP Request: GET http://testserver/api/v1/companies "HTTP/1.1 200 OK"
+{"method": "PUT", "path": "/api/v1/companies/6d2c11d3-ddec-4250-8f20-f4b879184d78/profile", "status_code": 200, "duration_ms": 8.33, "event": "request_completed", "request_id": "061beb90-c966-42f5-b818-255a688192ff", "level": "info", "timestamp": "2026-11-07T15:55:54.622692Z"}
+HTTP Request: PUT http://testserver/api/v1/companies/6d2c11d3-ddec-4250-8f20-f4b879184d78/profile "HTTP/1.1 200 OK"
+{"method": "POST", "path": "/api/v1/companies/6d2c11d3-ddec-4250-8f20-f4b879184d78/profile/publish", "status_code": 201, "duration_ms": 19.79, "event": "request_completed", "request_id": "68fcbe14-d844-42db-95ee-8b8f890bbed4", "level": "info", "timestamp": "2026-11-07T15:55:54.643258Z"}
+HTTP Request: POST http://testserver/api/v1/companies/6d2c11d3-ddec-4250-8f20-f4b879184d78/profile/publish "HTTP/1.1 201 Created"
+{"method": "POST", "path": "/api/v1/applications", "status_code": 201, "duration_ms": 49.38, "event": "request_completed", "request_id": "bbaf0b90-09b3-4057-ad60-bcfb4479b563", "level": "info", "timestamp": "2026-11-07T15:55:54.731408Z"}
+HTTP Request: POST http://testserver/api/v1/applications "HTTP/1.1 201 Created"
+Synthetic browser fixture ready
+{"method": "POST", "path": "/api/v1/auth/register", "status_code": 201, "duration_ms": 42.88, "event": "request_completed", "request_id": "ee4c02bf-f6cf-4b98-8dca-2965f8ffba0c", "level": "info", "timestamp": "2026-11-07T15:55:54.778783Z"}
+HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 201 Created"
+{"method": "GET", "path": "/api/v1/companies", "status_code": 200, "duration_ms": 3.16, "event": "request_completed", "request_id": "12e2255e-022c-4b3a-9d4e-4552dc025149", "level": "info", "timestamp": "2026-11-07T15:55:54.782657Z"}
+HTTP Request: GET http://testserver/api/v1/companies "HTTP/1.1 200 OK"
+{"method": "PUT", "path": "/api/v1/companies/886e6a62-7f3f-4323-8447-720b8d29a607/profile", "status_code": 200, "duration_ms": 5.32, "event": "request_completed", "request_id": "91e07ff6-571b-4e9d-8b82-7868cf7e0cb5", "level": "info", "timestamp": "2026-11-07T15:55:54.788764Z"}
+HTTP Request: PUT http://testserver/api/v1/companies/886e6a62-7f3f-4323-8447-720b8d29a607/profile "HTTP/1.1 200 OK"
+{"method": "POST", "path": "/api/v1/companies/886e6a62-7f3f-4323-8447-720b8d29a607/profile/publish", "status_code": 201, "duration_ms": 11.05, "event": "request_completed", "request_id": "2cab7cee-90d5-48ce-99b6-8b9abb3e974a", "level": "info", "timestamp": "2026-11-07T15:55:54.800552Z"}
+HTTP Request: POST http://testserver/api/v1/companies/886e6a62-7f3f-4323-8447-720b8d29a607/profile/publish "HTTP/1.1 201 Created"
+{"method": "POST", "path": "/api/v1/applications", "status_code": 201, "duration_ms": 10.58, "event": "request_completed", "request_id": "d00688dd-49d5-4e5d-8523-db80ecdd8acb", "level": "info", "timestamp": "2026-11-07T15:55:54.823574Z"}
+HTTP Request: POST http://testserver/api/v1/applications "HTTP/1.1 201 Created"
+{"method": "POST", "path": "/api/v1/applications/1384fffa-cce8-4623-9c39-30b87410b1f8/agent-actions", "status_code": 200, "duration_ms": 54.59, "event": "request_completed", "request_id": "1d2c83ae-5d82-4a2d-bc85-c47df71dbf72", "level": "info", "timestamp": "2026-11-07T15:55:54.878877Z"}
+HTTP Request: POST http://testserver/api/v1/applications/1384fffa-cce8-4623-9c39-30b87410b1f8/agent-actions "HTTP/1.1 200 OK"
+{"method": "POST", "path": "/api/v1/applications/1384fffa-cce8-4623-9c39-30b87410b1f8/comments", "status_code": 201, "duration_ms": 9.31, "event": "request_completed", "request_id": "5b8dc80c-d962-4c7a-aa09-b57da070234f", "level": "info", "timestamp": "2026-11-07T15:55:54.889000Z"}
+HTTP Request: POST http://testserver/api/v1/applications/1384fffa-cce8-4623-9c39-30b87410b1f8/comments "HTTP/1.1 201 Created"
+Synthetic review/export fixture ready
+/Users/shajindi/yance-backup/yance/yance-ai/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+{"method": "POST", "path": "/api/v1/auth/register", "status_code": 201, "duration_ms": 94.86, "event": "request_completed", "request_id": "0ee3b4f5-c564-476d-9f6b-31f1a30e8462", "level": "info", "timestamp": "2026-11-07T15:55:56.333329Z"}
+HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 201 Created"
+{"method": "GET", "path": "/api/v1/auth/me", "status_code": 200, "duration_ms": 4.75, "event": "request_completed", "request_id": "2a797642-f22a-47d9-b88b-d0be7034b561", "level": "info", "timestamp": "2026-11-07T15:55:56.338960Z"}
+HTTP Request: GET http://testserver/api/v1/auth/me "HTTP/1.1 200 OK"
+{"method": "GET", "path": "/api/v1/companies", "status_code": 200, "duration_ms": 63.1, "event": "request_completed", "request_id": "80b547a6-1f4c-46b7-941c-2e1959a42bb1", "level": "info", "timestamp": "2026-11-07T15:55:56.402863Z"}
+HTTP Request: GET http://testserver/api/v1/companies "HTTP/1.1 200 OK"
+Step 1 - Fetching and parsing HTML - HTML string
+Step 2 - Fetching and parsing CSS - CSS string
+Step 3 - Applying CSS
+Step 4 - Creating formatting structure
+Step 5 - Creating layout - Page 1
+Step 5 - Creating layout - Page 2
+Step 5 - Creating layout - Page 3
+Step 5 - Creating layout - Page 4
+Step 5 - Creating layout - Page 5
+Step 5 - Creating layout - Page 6
+Step 5 - Creating layout - Page 7
+Step 6 - Creating PDF
+Step 7 - Adding PDF metadata
+{"method": "POST", "path": "/api/v1/orders", "status_code": 201, "duration_ms": 50.7, "event": "request_completed", "request_id": "ab9e7a6d-4456-418c-8f4c-f1f60e9ca5e9", "level": "info", "timestamp": "2026-11-07T15:55:56.840356Z"}
+HTTP Request: POST http://testserver/api/v1/orders "HTTP/1.1 201 Created"
+Private synthetic checkout fixture ready

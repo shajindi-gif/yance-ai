@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import pageStyles from './page.module.css';
 
 export const metadata = {
   title: '支付已取消 | 衍策引擎AI',
@@ -7,16 +8,16 @@ export const metadata = {
 
 export default function PaymentCancelPage() {
   return (
-    <main style={{ minHeight: '100vh', background: '#f8fafc', padding: '140px 24px 48px' }}>
-      <section style={{ maxWidth: 560, margin: '0 auto', padding: 32, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16 }}>
-        <p style={{ color: '#b45309', fontWeight: 700 }}>支付已取消</p>
-        <h1 style={{ color: '#0d1b2a', fontSize: 24, margin: '8px 0 12px' }}>订单仍保留，可随时重新支付</h1>
-        <p style={{ color: '#64748b', lineHeight: 1.7 }}>
-          你已退出支付流程，未产生扣款。订单会保留在工作区中，你可以稍后在订单页重新发起支付，或联系我们协助完成。
+    <main className={pageStyles.section}>
+      <section className={pageStyles.section2}>
+        <p className={pageStyles.description}>支付已取消</p>
+        <h1 className={pageStyles.heading}>返回订单，核对付款状态</h1>
+        <p className={pageStyles.description2}>
+          请在订单页核对支付渠道返回的状态与金额。仍待支付时可继续付款；如已扣款但状态未更新，请先刷新结果或联系我们协助核对。
         </p>
-        <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+        <div className={pageStyles.layout}>
           <Link href="/orders" className="yc-btn-primary">返回订单</Link>
-          <a href="mailto:yanceai@163.com" style={{ padding: '10px 16px', color: '#126a9a' }}>
+          <a href="mailto:yanceai@163.com" className={pageStyles.link}>
             联系我们
           </a>
         </div>

@@ -1,0 +1,15 @@
+{
+  "image_identity": {
+    "docker_index_id": "sha256:2ffb065c794ab6333ca0fe425f36b04ae5a11df25c8ac3683c3d0b9e5e6b7b78",
+    "scanned_config_id": "sha256:1f46925ecb8bd71594d81a540d698c65321d94713a1e77068e14745674f01071",
+    "layers_matched": 77,
+    "source_files_matched": 33
+  },
+  "scan": "Trivy 0.70.0, OS and libraries; HIGH/CRITICAL; fixed vulnerabilities gate",
+  "finding_count": 0,
+  "runtime_system_packages": [
+    "apt\t3.0.4",
+    "libapt-pkg7.0:amd64\t3.0.4",
+    "zlib1g:amd64\t1:1.3.dfsg+really1.3.1-1+deb13u1"
+  ]
+}

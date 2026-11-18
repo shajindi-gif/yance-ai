@@ -18,8 +18,10 @@ import json
 import re
 from datetime import UTC, datetime
 
-from app.services.llm.base import LLMRequest
-from app.services.llm.router import LLMRouter
+from pydantic import BaseModel, ConfigDict
+
+from app.services.llm.budget import LLMLimitExceeded
+from app.services.llm.gateway import LLMGateway, TaskType
 from app.services.policies.eligibility import exact_quote_span
 from app.services.policy_engine.deterministic import (
     _is_blocking,
@@ -40,7 +42,37 @@ from app.services.policy_engine.schemas import (
     RiskItem,
 )
 
-_llm = LLMRouter()
+_llm = LLMGateway()
+
+
+class ExtractedCriterion(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    criterion: str
+    policy_quote: str
+
+
+class ExtractedCriteria(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    criteria: list[ExtractedCriterion]
+
+
+class JudgedCriterion(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    criterion: str
+    enterprise_fact: str
+    policy_requirement: str
+    policy_quote: str
+    result: str
+    reason: str
+    missing_information: str
+    confidence: float
+
+
+class JudgedCriteria(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    criteria: list[JudgedCriterion]
+    summary: str
+
 
 ENGINE_VERSION = "policy-engine-v2.3-evidence-gate"
 PROMPT_VERSION = "PE-PROMPT-v2.1"
@@ -114,18 +146,17 @@ async def extract_criteria(policy_content: str, provider: str = "deepseek") -> l
     try:
         response = await asyncio.wait_for(
             _llm.complete(
-                LLMRequest(
-                    messages=[{"role": "user", "content": prompt}],
-                    model="deepseek-chat" if provider == "deepseek" else "qwen-plus",
-                    temperature=0,
-                    max_tokens=3000,
-                ),
-                provider=provider,
+                TaskType.extract_criteria,
+                messages=[{"role": "user", "content": prompt}],
+                schema=ExtractedCriteria,
+                policy_version_text=window,
             ),
             timeout=60,
         )
         parsed = _loads_json(response.content)
         return parsed.get("criteria", [])
+    except LLMLimitExceeded:
+        raise
     except Exception:
         # Fallback: 关键词句子提取（保守，只提取不判定）
         sentences = re.split(r"[。；！？\n]", policy_content)
@@ -183,10 +214,10 @@ async def evaluate_criteria(
 - 禁止猜测画像中不存在的数据；禁止使用你自己的政策知识补充要求，只能依据上面列出的条件判定
 - 需要计算时给出计算过程（在 reason 中写明分子/分母）
 
-每个条件必须给出：enterprise_fact（企业事实）、result（PASS/FAIL/INSUFFICIENT）、reason（判定理由，含计算）、INSUFFICIENT 时说明 missing_information
+每个条件必须逐字复制输入条件的 policy_quote，并给出：enterprise_fact（企业事实）、result（PASS/FAIL/INSUFFICIENT）、reason（判定理由，含计算）、INSUFFICIENT 时说明 missing_information
 
 输出 JSON：
-{{"criteria": [{{"criterion": "", "enterprise_fact": "", "policy_requirement": "", "result": "PASS|FAIL|INSUFFICIENT", "reason": "", "missing_information": "", "confidence": 0.8}}], "summary": ""}}"""
+{{"criteria": [{{"criterion": "", "enterprise_fact": "", "policy_requirement": "", "policy_quote": "", "result": "PASS|FAIL|INSUFFICIENT", "reason": "", "missing_information": "", "confidence": 0.8}}], "summary": ""}}"""
 
     telemetry = {
         "llm_call_count": 0,
@@ -198,17 +229,17 @@ async def evaluate_criteria(
     try:
         response = await asyncio.wait_for(
             _llm.complete(
-                LLMRequest(
-                    messages=[{"role": "user", "content": prompt}],
-                    model="deepseek-chat" if provider == "deepseek" else "qwen-plus",
-                    temperature=0,
-                    max_tokens=4000,
-                ),
-                provider=provider,
+                TaskType.judge_eligibility,
+                messages=[{"role": "user", "content": prompt}],
+                schema=JudgedCriteria,
+                policy_version_text="\n".join(str(c.get("policy_quote", "")) for c in criteria),
             ),
             timeout=90,
         )
         telemetry["llm_call_count"] = 1
+        telemetry["provider"] = response.provider
+        telemetry["model"] = response.model
+        telemetry["fallback_used"] = response.raw.get("fallback_used", False)
         u = _usage_of(response)
         if u["input_tokens"] != "NOT_AVAILABLE":
             telemetry["tokens_available"] = True
@@ -240,6 +271,8 @@ async def evaluate_criteria(
             overall_result=OverallResult.INSUFFICIENT_INFO,
             summary=parsed.get("summary", ""),
         ), telemetry
+    except LLMLimitExceeded:
+        raise
     except Exception as e:
         # D6: fallback 保守化 —— 永不输出 PASS
         results = []
@@ -284,10 +317,14 @@ def validate_evidence(
         # Both the actual requirement and its quote must be literal source spans.
         # Normalize only thousands separators, not comparators or region names.
         fields = [criterion.policy_requirement, criterion.evidence_quote]
-        if any(not field or exact_quote_span(full_norm, _norm_field(field)) is None for field in fields):
+        if any(
+            not field or exact_quote_span(full_norm, _norm_field(field)) is None for field in fields
+        ):
             hallucinations.append(f"条件 [{criterion.criterion[:30]}] 缺少逐字支持要求的原文引用")
             criterion.result = CriterionResult.INSUFFICIENT
-            criterion.reason = (criterion.reason or "") + "｜[Evidence Gate] 引用未获原文逐字支持，需人工复核"
+            criterion.reason = (
+                criterion.reason or ""
+            ) + "｜[Evidence Gate] 引用未获原文逐字支持，需人工复核"
             criterion.missing_information = "请补充支持该条件的政策原文条款并人工复核"
             criterion.confidence = min(criterion.confidence, 0.3)
         checked_fields = [criterion.policy_requirement or "", criterion.evidence_quote or ""]
@@ -349,7 +386,13 @@ def generate_recommendations(
             )
         )
     if result.overall_result == OverallResult.REQUIRES_REVIEW:
-        next_actions.append(NextBestAction(action="人工复核", description="逐条核验条件完整性、企业事实来源与当期申报要求。", cta="复核证据"))
+        next_actions.append(
+            NextBestAction(
+                action="人工复核",
+                description="逐条核验条件完整性、企业事实来源与当期申报要求。",
+                cta="复核证据",
+            )
+        )
     if result.overall_result == OverallResult.ELIGIBLE:
         next_actions.append(
             NextBestAction(
@@ -530,7 +573,8 @@ async def evaluate_policy(
         model_metadata={
             "engine_version": ENGINE_VERSION,
             "prompt_version": PROMPT_VERSION,
-            "provider": provider,
+            "provider": telemetry.get("provider", "not_called"),
+            "requested_provider_legacy": provider,
             "latency_ms": latency,
             "policy_level": policy_level,
             "hallucinations_blocked": len(hallucinations),

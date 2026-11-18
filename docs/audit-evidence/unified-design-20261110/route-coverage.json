@@ -1,0 +1,368 @@
+[
+  {
+    "file": "page.tsx",
+    "path": "/",
+    "http": 200,
+    "title": "找到适合企业的政策，看清每项条件的依据。",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "terms/page.tsx",
+    "path": "/terms",
+    "http": 200,
+    "title": "服务条款",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "team/page.tsx",
+    "path": "/team",
+    "http": 200,
+    "title": "团队",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "tasks/page.tsx",
+    "path": "/tasks",
+    "http": 200,
+    "title": "任务与申报",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "tasks/[taskId]/page.tsx",
+    "path": "/tasks/[taskId]",
+    "status": "待验证",
+    "reason": "缺少该类型详情的隔离实体或角色"
+  },
+  {
+    "file": "success/page.tsx",
+    "path": "/success",
+    "http": 200,
+    "title": "核对订单结果",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "settings/page.tsx",
+    "path": "/settings",
+    "http": 200,
+    "title": "企业设置",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "security/page.tsx",
+    "path": "/security",
+    "http": 200,
+    "title": "安全现状与责任边界",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "roadshow/page.tsx",
+    "path": "/roadshow",
+    "http": 200,
+    "title": "园区试点方案",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "reports/page.tsx",
+    "path": "/reports",
+    "http": 200,
+    "title": "报告",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "projects/page.tsx",
+    "path": "/projects",
+    "http": 200,
+    "title": "项目管道",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "privacy/page.tsx",
+    "path": "/privacy",
+    "http": 200,
+    "title": "隐私政策",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "pricing/page.tsx",
+    "path": "/pricing",
+    "http": 200,
+    "title": "按次购买，需要时再买",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "policy-knowledge-base/page.tsx",
+    "path": "/policy-knowledge-base",
+    "http": 200,
+    "title": "政策知识库",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "policies/page.tsx",
+    "path": "/policies",
+    "http": 200,
+    "title": "全国政策知识库",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "parks/page.tsx",
+    "path": "/parks",
+    "http": 200,
+    "title": "重新定义园区企业服务",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "orders/page.tsx",
+    "path": "/orders",
+    "http": 200,
+    "title": "订单与账单",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "opportunities/page.tsx",
+    "path": "/opportunities",
+    "http": 200,
+    "title": "政策机会",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "opportunities/[opportunityId]/page.tsx",
+    "path": "/opportunities/[opportunityId]",
+    "status": "待验证",
+    "reason": "缺少该类型详情的隔离实体或角色"
+  },
+  {
+    "file": "onboarding/page.tsx",
+    "path": "/onboarding",
+    "http": 200,
+    "title": "完善企业画像",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "notifications/page.tsx",
+    "path": "/notifications",
+    "http": 200,
+    "title": "通知",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "login/page.tsx",
+    "path": "/login",
+    "http": 200,
+    "title": "衍策引擎AI",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "intelligence/page.tsx",
+    "path": "/intelligence",
+    "http": 200,
+    "title": "企业情报中心",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "feedback/page.tsx",
+    "path": "/feedback",
+    "http": 200,
+    "title": "分享使用反馈",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "downloads/page.tsx",
+    "path": "/downloads",
+    "http": 200,
+    "title": "客户端路线图",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "documents/page.tsx",
+    "path": "/documents",
+    "http": 200,
+    "title": "企业资料",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "discover/page.tsx",
+    "path": "/discover",
+    "http": 200,
+    "title": "发现资金",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "demo/page.tsx",
+    "path": "/demo",
+    "http": 200,
+    "title": "在 3–5 分钟内，看 AI 完成一次企业政策与申报工作。",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "dashboard/page.tsx",
+    "path": "/dashboard",
+    "http": 200,
+    "title": "指挥中心",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "consultant/page.tsx",
+    "path": "/consultant",
+    "http": 200,
+    "title": "资金顾问",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "company-match/page.tsx",
+    "path": "/company-match",
+    "http": 200,
+    "title": "从企业事实，找到有依据的政策机会。",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "companies/page.tsx",
+    "path": "/companies",
+    "http": 200,
+    "title": "企业",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "companies/[companyId]/page.tsx",
+    "path": "/companies/[companyId]",
+    "status": "待验证",
+    "reason": "缺少该类型详情的隔离实体或角色"
+  },
+  {
+    "file": "chrome-extension/page.tsx",
+    "path": "/chrome-extension",
+    "http": 200,
+    "title": "衍策引擎AI 政策助手",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "checkout/page.tsx",
+    "path": "/checkout",
+    "http": 200,
+    "title": "确认订单",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "cancel/page.tsx",
+    "path": "/cancel",
+    "http": 200,
+    "title": "订单仍保留，可随时重新支付",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "brief-maker/page.tsx",
+    "path": "/brief-maker",
+    "http": 200,
+    "title": "把依据带入材料，把修改留在版本里。",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "billing/page.tsx",
+    "path": "/billing",
+    "http": 200,
+    "title": "用量与账单",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "applications/page.tsx",
+    "path": "/applications",
+    "http": 200,
+    "title": "申报项目",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "applications/[applicationId]/page.tsx",
+    "path": "/applications/b9bb3f49-546b-447d-963b-e60132bb9ac2",
+    "http": 200,
+    "title": "合成证据工作台浏览器验收",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "agents/page.tsx",
+    "path": "/agents",
+    "http": 200,
+    "title": "Agent 运行",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "agents/[runId]/page.tsx",
+    "path": "/agents/[runId]",
+    "status": "待验证",
+    "reason": "缺少该类型详情的隔离实体或角色"
+  },
+  {
+    "file": "admin/page.tsx",
+    "path": "/admin",
+    "http": 200,
+    "title": "无法访问管理后台",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "admin/investor-metrics/page.tsx",
+    "path": "/admin/investor-metrics",
+    "http": 200,
+    "title": "无法访问融资指标",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "admin/evals/page.tsx",
+    "path": "/admin/evals",
+    "http": 200,
+    "title": "Agent 质量评测",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  },
+  {
+    "file": "admin/evals/[runId]/page.tsx",
+    "path": "/admin/evals/[runId]",
+    "status": "待验证",
+    "reason": "缺少该类型详情的隔离实体或角色"
+  },
+  {
+    "file": "about/page.tsx",
+    "path": "/about",
+    "http": 200,
+    "title": "关于我们",
+    "overflow": false,
+    "status": "共享设计已迁移，页面渲染已检查；完整业务待逐页验收"
+  }
+]

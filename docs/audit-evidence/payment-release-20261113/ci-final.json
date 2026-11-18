@@ -1,0 +1,53 @@
+{
+  "head": "4332071c804fc6e3f045746a5b71354e49ad4e57",
+  "url": "https://github.com/shajindi-gif/yance-ai/actions/runs/43589593659",
+  "status": "completed",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "name": "Backend quality, migration, and tests",
+      "status": "completed",
+      "conclusion": "success",
+      "result_lines": [
+        "2026-11-14T11:21:58.2377198Z No new upgrade operations detected.",
+        "2026-11-14T11:38:27.7871376Z Required test coverage of 50% reached. Total coverage: 81.45%",
+        "2026-11-14T11:38:27.7872071Z 469 passed, 6 skipped, 2 warnings in 987.67s (0:16:27)",
+        "2026-11-14T11:38:48.3056284Z 53 passed, 422 deselected, 2 warnings in 16.43s"
+      ]
+    },
+    {
+      "name": "Secret scan",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Browser product journeys",
+      "status": "completed",
+      "conclusion": "success",
+      "result_lines": [
+        "2026-11-14T11:24:08.4653908Z   2 skipped",
+        "2026-11-14T11:24:08.4654176Z   49 passed (1.6m)"
+      ]
+    },
+    {
+      "name": "Python dependency audit",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Frontend audit, typecheck, and build",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Container builds (frontend, website)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Container builds (backend, yance-ai)",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ]
+}

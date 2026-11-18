@@ -13,10 +13,16 @@
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from app.models.models import Company, CompanyProfileVersion, Opportunity, Policy
+from app.models.models import (
+    Company,
+    CompanyProfileVersion,
+    EligibilityRule,
+    Opportunity,
+    Policy,
+)
 from app.services.llm.registry import embed_texts
 from app.services.policies.applicability import applicable_region_clauses, current_policy_clauses
 from app.services.policies.ingestion import latest_policy_version
@@ -105,6 +111,8 @@ async def match_policies_for_company(
                 Policy.embedding.isnot(None),
                 *current_policy_clauses(),
                 *applicable_region_clauses(region),
+                # 与 hybrid 通道一致的质量闸门：排除 withheld 政策。
+                or_(Policy.quality_deliverable.is_(None), Policy.quality_deliverable.is_(True)),
             )
             .order_by(Policy.embedding.cosine_distance(company_vector))
             .limit(50)
@@ -240,6 +248,63 @@ async def match_policies_for_company(
         semantic_score = round(semantic_sim * 10, 1)
         score_breakdown["semantic"] = semantic_score
 
+        # ── 结构化规则与窗口可用性加成（有帮助排序，不编造资格）──
+        usefulness = 0
+        active_rule_count = 0
+        if source_version is not None:
+            active_rule_count = len(
+                list(
+                    db.scalars(
+                        select(EligibilityRule.id).where(
+                            EligibilityRule.policy_version_id == source_version.id,
+                            EligibilityRule.status == "active",
+                            EligibilityRule.is_hard_gate.is_(True),
+                        )
+                    ).all()
+                )
+            )
+        company_province = region.get("province") or company.province
+        out_of_region = bool(
+            company_province
+            and policy.province
+            and policy.province != company_province
+            and (policy.level or "") != "national"
+        )
+        if out_of_region:
+            # Wrong-province noise must not occupy a local enterprise brief.
+            continue
+        if not company_province and policy.province and (policy.level or "") != "national":
+            # Nationwide/cross-region profiles only keep national or unscoped policies.
+            continue
+        title_blob = f"{policy.title or ''} {policy.policy_type or ''}"
+        # Geographic-mark / roster noise is rarely actionable for SME subsidy briefs.
+        irrelevant_noise = any(
+            token in title_blob
+            for token in (
+                "地理标志专用标志",
+                "地理标志产品公告",
+                "核准使用地理标志",
+                "典型案例",
+                "建设名单",
+                "方案（模板）",
+                "职员招聘",
+                "财务决算报表",
+            )
+        )
+        if irrelevant_noise and not active_rule_count:
+            continue
+        if active_rule_count:
+            usefulness += 14
+        else:
+            usefulness -= 22  # demote no-rule noise from the top of the brief
+        if industry_score == 0 and not active_rule_count:
+            usefulness -= 10
+        if policy.deadline is not None:
+            usefulness += 4
+        if region_score >= 15 and active_rule_count:
+            usefulness += 6
+        score_breakdown["usefulness"] = usefulness
+
         # ── 总分 ──
         final_score = sum(score_breakdown.values())
         final_score = max(0, min(100, final_score))
@@ -253,6 +318,12 @@ async def match_policies_for_company(
             "support_type": policy.support_type or "",
             "deadline": policy.deadline.isoformat() if policy.deadline else None,
             "level": policy.level or "",
+            "active_hard_rules": active_rule_count,
+            "ranking_note": (
+                None
+                if active_rule_count
+                else "弱匹配：尚无已审核硬门槛规则，已降权并仅作信息参考"
+            ),
             "gap_analysis_status": "not_verified_against_documents",
             "retrieval": {
                 "mode": retrieval_mode,
@@ -337,9 +408,23 @@ async def match_policies_for_company(
             )
         opportunities.append(opp)
 
-    # 5. 按总分排序，存入数据库
+    # 5. 有规则优先；无规则最多占主列表 12%，避免 NEED_MORE 空壳占满
     opportunities.sort(key=lambda o: o.score, reverse=True)
-    for opp in opportunities:
+    ruled = [
+        opp
+        for opp in opportunities
+        if int((opp.evidence_json or {}).get("active_hard_rules") or 0) > 0
+    ]
+    unruled = [
+        opp
+        for opp in opportunities
+        if int((opp.evidence_json or {}).get("active_hard_rules") or 0) <= 0
+    ]
+    # Keep no-rule share under 15% of the brief when any ruled opportunities exist.
+    max_unruled = min(len(unruled), max(0, (len(ruled) * 14) // 86)) if ruled else min(5, len(unruled))
+    selected = ruled + unruled[:max_unruled]
+    selected.sort(key=lambda o: o.score, reverse=True)
+    for opp in selected:
         db.add(opp)
     db.commit()
-    return opportunities
+    return selected

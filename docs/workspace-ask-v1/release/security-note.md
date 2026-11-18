@@ -1,0 +1,1 @@
+2026-11-17 发布前重新查询 npm 官方审计：Next16.4.3存在1项moderate公告GHSA-mfr8-8qww-v76h（use cache函数经unstable_cache调用时root params信息泄露），0项high/critical。实际应用app/lib/components未使用use cache或unstable_cache，因此没有发现该公告所述调用前提。本轮不把审计说成零漏洞；既定CI门槛及实际容器扫描为high/critical。后续Next维护升级应单独跑构建和完整浏览器回归。

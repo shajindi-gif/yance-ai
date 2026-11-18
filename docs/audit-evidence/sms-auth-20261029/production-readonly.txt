@@ -1,0 +1,7 @@
+2026-10-29 Asia/Shanghai
+Pending credential directory mode: 700
+Pending credential file mode: 600
+Running API image: yance-backend:growth-20261029-01
+Public auth/config: email_login_enabled=true; no sms_login_enabled capability advertised
+No production application source replaced, no service restarted, no production database migration or account write.
+Only independent user-authorized two SMS preflight attempts executed; success/delivery unconfirmed, second error InsufficientBalanceInSmsPackage.

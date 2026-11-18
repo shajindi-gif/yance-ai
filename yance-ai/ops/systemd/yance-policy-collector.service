@@ -1,0 +1,63 @@
+[Unit]
+# NOT the production path on 43.128.1.64.
+#
+# Production runs the collector as the compose service in
+# docker-compose.collector.yml.  This unit is kept for a bare-metal host that runs the
+# application directly out of a checkout with its own virtualenv; using both at once
+# would give two writers on the same cursor table.
+#
+# The previous revision of this file pointed at /opt/yance-ai, which does not exist on
+# the production host (the checkout is /opt/yance/yance-ai), and pulled ordering from
+# postgresql.service — but the database there is a container, so ordering has to come
+# from docker, not from the distro package.
+Description=yance.ai continuous policy collector (bare-metal variant)
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+# The production host has no `yance` system user; override with a drop-in if this unit
+# is ever used for real.  The containerised path does not need a host account at all.
+User=yance
+Group=yance
+WorkingDirectory=/opt/yance/collector-20261106-r3
+EnvironmentFile=/opt/yance/collector-20261106-r3/.env.collector
+# The master switch is set in .env.collector, not here: one place to look when the
+# collector "does nothing".
+ExecStart=/opt/yance/collector-20261106-r3/.venv/bin/python -m app.workers.policy_collector
+# SIGTERM between documents: give the current page time to finish and commit.
+KillSignal=SIGTERM
+TimeoutStopSec=120
+Restart=on-failure
+RestartSec=30
+
+# ---- resource ceiling -------------------------------------------------------
+# A crawl must never starve login/payment/reports.  Adjust only after measuring.
+# MemoryHigh was 640M with a 768M hard cap; the parser was reaching the cap on large
+# PDFs and getting throttled hard, so the band is widened instead of the cgroup being
+# driven to the wall.
+CPUQuota=100%
+MemoryHigh=768M
+MemoryMax=900M
+TasksMax=256
+IOWeight=50
+Nice=10
+
+# ---- hardening --------------------------------------------------------------
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/var/lib/yance/policy_raw
+# Raw evidence is the durable asset: it lives outside the app checkout so a
+# deploy that rewrites the checkout cannot delete it.
+Environment=POLICY_COLLECTION_RAW_DIR=/var/lib/yance/policy_raw
+Environment=POLICY_COLLECTION_ATTACHMENT_DIR=/var/lib/yance/policy_raw/attachments
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=yance-collector
+
+[Install]
+WantedBy=multi-user.target

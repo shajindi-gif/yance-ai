@@ -1,0 +1,28 @@
+/Users/shajindi/yance-backup/yance/yance-ai/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+{"method": "POST", "path": "/api/v1/auth/register", "status_code": 201, "duration_ms": 147.55, "event": "request_completed", "request_id": "0200895e-a8ac-430c-8d31-229a1ab0a026", "level": "info", "timestamp": "2026-11-07T15:58:44.496981Z"}
+HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 201 Created"
+{"method": "GET", "path": "/api/v1/companies", "status_code": 200, "duration_ms": 25.17, "event": "request_completed", "request_id": "35ee6b58-83c8-48f0-b3d0-8a9b08c8462e", "level": "info", "timestamp": "2026-11-07T15:58:44.523329Z"}
+HTTP Request: GET http://testserver/api/v1/companies "HTTP/1.1 200 OK"
+{"method": "PUT", "path": "/api/v1/companies/70cded72-04aa-46a4-a87c-0e918747605f/profile", "status_code": 200, "duration_ms": 8.74, "event": "request_completed", "request_id": "5c8ec488-bb60-4233-8366-3a3e967d6097", "level": "info", "timestamp": "2026-11-07T15:58:44.533006Z"}
+HTTP Request: PUT http://testserver/api/v1/companies/70cded72-04aa-46a4-a87c-0e918747605f/profile "HTTP/1.1 200 OK"
+{"method": "POST", "path": "/api/v1/companies/70cded72-04aa-46a4-a87c-0e918747605f/profile/publish", "status_code": 201, "duration_ms": 19.82, "event": "request_completed", "request_id": "88891351-ed15-4613-81ea-a1ad134ef912", "level": "info", "timestamp": "2026-11-07T15:58:44.553543Z"}
+HTTP Request: POST http://testserver/api/v1/companies/70cded72-04aa-46a4-a87c-0e918747605f/profile/publish "HTTP/1.1 201 Created"
+{"method": "POST", "path": "/api/v1/applications", "status_code": 201, "duration_ms": 50.66, "event": "request_completed", "request_id": "6274dfac-0944-48ec-a27d-7d25387d6fc8", "level": "info", "timestamp": "2026-11-07T15:58:44.646263Z"}
+HTTP Request: POST http://testserver/api/v1/applications "HTTP/1.1 201 Created"
+Synthetic browser fixture ready
+{"method": "POST", "path": "/api/v1/auth/register", "status_code": 201, "duration_ms": 40.79, "event": "request_completed", "request_id": "ce65b04b-4a32-4a4c-b8a0-923a876c1926", "level": "info", "timestamp": "2026-11-07T15:58:44.691432Z"}
+HTTP Request: POST http://testserver/api/v1/auth/register "HTTP/1.1 201 Created"
+{"method": "GET", "path": "/api/v1/companies", "status_code": 200, "duration_ms": 3.17, "event": "request_completed", "request_id": "a590bcf7-412e-47f3-9eae-f0d8a7c9564f", "level": "info", "timestamp": "2026-11-07T15:58:44.695304Z"}
+HTTP Request: GET http://testserver/api/v1/companies "HTTP/1.1 200 OK"
+{"method": "PUT", "path": "/api/v1/companies/37a30019-d7ee-43da-b442-db3b9b3c31f6/profile", "status_code": 200, "duration_ms": 5.15, "event": "request_completed", "request_id": "f9e96a9b-1b90-4a2e-a280-d96a56b9bb4d", "level": "info", "timestamp": "2026-11-07T15:58:44.701219Z"}
+HTTP Request: PUT http://testserver/api/v1/companies/37a30019-d7ee-43da-b442-db3b9b3c31f6/profile "HTTP/1.1 200 OK"
+{"method": "POST", "path": "/api/v1/companies/37a30019-d7ee-43da-b442-db3b9b3c31f6/profile/publish", "status_code": 201, "duration_ms": 12.66, "event": "request_completed", "request_id": "157a82ab-8810-49e0-98a4-efd52e305a7d", "level": "info", "timestamp": "2026-11-07T15:58:44.714616Z"}
+HTTP Request: POST http://testserver/api/v1/companies/37a30019-d7ee-43da-b442-db3b9b3c31f6/profile/publish "HTTP/1.1 201 Created"
+{"method": "POST", "path": "/api/v1/applications", "status_code": 201, "duration_ms": 10.31, "event": "request_completed", "request_id": "75cfcdd4-228d-4d81-8bc5-679a1a29c679", "level": "info", "timestamp": "2026-11-07T15:58:44.737801Z"}
+HTTP Request: POST http://testserver/api/v1/applications "HTTP/1.1 201 Created"
+{"method": "POST", "path": "/api/v1/applications/0293287c-ec35-49f8-83ed-9e3904863d40/agent-actions", "status_code": 200, "duration_ms": 57.07, "event": "request_completed", "request_id": "5293eb75-ec9f-47c8-b589-cc5bff3190a8", "level": "info", "timestamp": "2026-11-07T15:58:44.795600Z"}
+HTTP Request: POST http://testserver/api/v1/applications/0293287c-ec35-49f8-83ed-9e3904863d40/agent-actions "HTTP/1.1 200 OK"
+{"method": "POST", "path": "/api/v1/applications/0293287c-ec35-49f8-83ed-9e3904863d40/comments", "status_code": 201, "duration_ms": 10.22, "event": "request_completed", "request_id": "4a79650b-c565-4a3d-b282-076fe50fc705", "level": "info", "timestamp": "2026-11-07T15:58:44.806678Z"}
+HTTP Request: POST http://testserver/api/v1/applications/0293287c-ec35-49f8-83ed-9e3904863d40/comments "HTTP/1.1 201 Created"
+Synthetic review/export fixture ready

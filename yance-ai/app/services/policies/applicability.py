@@ -2,6 +2,10 @@
 
 A missing date is unknown, never an inferred perpetual validity. Historical
 versions are retained: their legacy expiry_date may have meant a deadline.
+
+Missing date fields are advisory gaps for the customer brief; only concrete
+window conflicts (not yet effective / expired / deadline passed) block a
+positive eligibility decision.
 """
 from datetime import UTC, datetime
 from typing import Any
@@ -32,14 +36,19 @@ def applicable_region_clauses(region: dict[str, Any]) -> tuple:
     )
 
 
-def policy_context_issues(
-    policy: Policy | None, version: PolicyVersion | None, snapshot: dict[str, Any],
-    *, now: datetime | None = None,
+def policy_context_blocking_issues(
+    policy: Policy | None,
+    version: PolicyVersion | None,
+    snapshot: dict[str, Any],
+    *,
+    now: datetime | None = None,
 ) -> list[str]:
+    """Issues that must keep the opportunity out of positive eligibility."""
+
     now = now or datetime.now(UTC)
     if not policy:
         return ["政策记录不存在或不可访问"]
-    issues = []
+    issues: list[str] = []
     if policy.status != "published" or (version and version.status != "published"):
         issues.append("政策未发布或已撤回，需人工复核")
     if not version:
@@ -54,10 +63,6 @@ def policy_context_issues(
     ):
         if value and ((_utc(value) > now) if future else (_utc(value) < now)):
             issues.append(description)
-    if not policy.effective_at or not policy.expires_at:
-        issues.append("政策生效或失效日期未核实，需人工复核")
-    if not policy.deadline:
-        issues.append("当前申报批次与截止日未核实，需人工复核")
     for key in ("province", "city", "district"):
         required = getattr(policy, key)
         actual = snapshot.get(key)
@@ -68,3 +73,40 @@ def policy_context_issues(
     if version and (version.tenant_id not in (None, policy.tenant_id) or version.policy_id != policy.id):
         issues.append("政策版本范围不一致")
     return list(dict.fromkeys(issues))
+
+
+def policy_context_advisory_issues(
+    policy: Policy | None,
+    version: PolicyVersion | None,
+) -> list[str]:
+    """Honest gaps that appear on the brief but do not alone block positive status."""
+
+    if not policy:
+        return []
+    issues: list[str] = []
+    if not policy.effective_at:
+        issues.append("政策生效日期未收录，请客户对照原文核实是否已生效")
+    if not policy.expires_at:
+        issues.append("政策失效日期未收录，请客户对照原文核实有效期")
+    if not policy.deadline:
+        issues.append("当前申报批次截止日未收录，请客户对照当期通知核实窗口")
+    if version is None:
+        issues.append("缺少不可变来源版本（咨询提示）")
+    return list(dict.fromkeys(issues))
+
+
+def policy_context_issues(
+    policy: Policy | None,
+    version: PolicyVersion | None,
+    snapshot: dict[str, Any],
+    *,
+    now: datetime | None = None,
+) -> list[str]:
+    """Backward-compatible combined list (blocking first, then advisory)."""
+
+    return list(
+        dict.fromkeys(
+            policy_context_blocking_issues(policy, version, snapshot, now=now)
+            + policy_context_advisory_issues(policy, version)
+        )
+    )

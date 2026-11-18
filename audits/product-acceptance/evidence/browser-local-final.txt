@@ -1,0 +1,20 @@
+
+Running 11 tests using 1 worker
+
+(node:55044) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › e2e/company-wide-closure.spec.ts:14:5 › real login returns to feedback; lost response retry creates one record and operator progress is visible (2.2s)
+  ✓   2 [chromium] › e2e/company-wide-closure.spec.ts:72:5 › unsafe post-login destinations return to the workspace (387ms)
+  ✓   3 [chromium] › e2e/frontend-redesign.spec.ts:11:5 › public design: real product image, readable mobile menu, focus containment and Escape (367ms)
+  ✓   4 [chromium] › e2e/frontend-redesign.spec.ts:35:5 › pricing error recovers into the real server catalogue without a purchase (186ms)
+  ✓   5 [chromium] › e2e/frontend-redesign.spec.ts:45:5 › real workspace: keyboard tabs, unsaved edit protection and mobile navigation (397ms)
+  ✓   6 [chromium] › e2e/frontend-redesign.spec.ts:77:5 › real workspace route sweep preserves existing core and billing entrances on mobile (1.8s)
+  ✓   7 [chromium] › e2e/frontend-redesign.spec.ts:93:5 › real isolated workflow: customer reviews a source-bound version, then downloads DOCX (628ms)
+  ✓   8 [chromium] › e2e/frontend-redesign.spec.ts:118:5 › login and registration fields expose their visible Chinese labels (159ms)
+  ✓   9 [chromium] › e2e/workspace-roles.spec.ts:5:5 › real isolated API: owner edits and rejects stale suggestion; viewer reads but cannot write (1.2s)
+(node:55076) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  10 [chromium] › e2e/sms-auth.spec.ts:8:5 › mobile registration through real local API, OTP replay rejected, company accessible (951ms)
+  ✓  11 [chromium] › e2e/sms-auth.spec.ts:39:5 › email account binds phone through authenticated local API (621ms)
+
+  11 passed (10.2s)

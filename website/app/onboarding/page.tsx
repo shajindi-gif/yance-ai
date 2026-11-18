@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
+import { safeReturnPath } from '@/lib/return-path';
+import pageStyles from './page.module.css';
 
 const STEPS = [
   { id: 1, title: '企业名称', desc: '您的企业全称' },
@@ -23,6 +25,8 @@ const POLICY_NEEDS = ['高新技术企业认定', '专精特新认定', '科技�
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const [returnPath, setReturnPath] = useState('/dashboard');
+  useEffect(() => { setReturnPath(safeReturnPath(new URLSearchParams(window.location.search).get('next'))); }, []);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -90,7 +94,7 @@ export default function OnboardingPage() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const payload: any = {
+      const payload = {
         name: data.name || '未命名企业',
         industry: data.industry || undefined,
         province: data.province || undefined,
@@ -114,7 +118,7 @@ export default function OnboardingPage() {
         setCompanyId(company.id);
       }
 
-      router.push('/dashboard?onboarded=1');
+      router.push(returnPath === '/dashboard' ? '/dashboard?onboarded=1' : returnPath);
     } catch (err) {
       console.error('Onboarding failed:', err);
       setError(err instanceof Error ? err.message : '保存失败，请重试或跳过稍后完善');
@@ -129,70 +133,70 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0d1b2a 0%, #1b2d45 50%, #142842 100%)', padding: '40px 20px' }}>
-      <div style={{ maxWidth: '640px', margin: '0 auto' }}>
+    <div className={pageStyles.section}>
+      <div className={pageStyles.section2}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <img src="/logo.png" alt="衍策引擎AI" style={{ width: '48px', height: '48px', marginBottom: '12px' }} />
-          <h1 style={{ fontSize: '22px', color: '#fff', fontWeight: 700, margin: '0 0 8px' }}>完善企业画像</h1>
-          <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>填写更多信息，获取更精准的政策匹配</p>
+        <div className={pageStyles.section3}>
+          <img src="/logo.png" alt="衍策引擎AI" className={pageStyles.section4} />
+          <h1 className={pageStyles.heading}>完善企业画像</h1>
+          <p className={pageStyles.description}>填写更多信息，获取更精准的政策匹配</p>
         </div>
 
         {/* Progress */}
-        <div style={{ display: 'flex', gap: '4px', marginBottom: '32px' }}>
+        <div className={pageStyles.layout}>
           {STEPS.map(s => (
-            <div key={s.id} style={{ flex: 1, height: '4px', borderRadius: '2px', background: s.id <= step ? '#126a9a' : 'rgba(255,255,255,0.15)', transition: 'all 0.3s' }} />
+            <div key={s.id} className={pageStyles.inlineSection} style={{ background: s.id <= step ? 'var(--accent)' : 'rgba(255,255,255,0.15)' }} />
           ))}
         </div>
 
         {/* Step info */}
-        <div style={{ marginBottom: '24px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--teal)', fontWeight: 600 }}>步骤 {step}/8</span>
-          <h2 style={{ fontSize: '20px', color: '#fff', fontWeight: 700, margin: '8px 0 4px' }}>{STEPS[step - 1].title}</h2>
-          <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>{STEPS[step - 1].desc}</p>
+        <div className={pageStyles.section5}>
+          <span className={pageStyles.label}>步骤 {step}/8</span>
+          <h2 className={pageStyles.heading2}>{STEPS[step - 1].title}</h2>
+          <p className={pageStyles.description}>{STEPS[step - 1].desc}</p>
         </div>
 
         {/* Form card */}
-        <div style={{ background: 'rgba(255,255,255,0.98)', borderRadius: '16px', padding: '32px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+        <div className={pageStyles.section6}>
           {/* Step 1: Company name */}
           {step === 1 && (
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>企业名称 *</label>
+              <label className={pageStyles.layout2}>企业名称 *</label>
               <input
                 type="text" value={data.name} onChange={e => updateField('name', e.target.value)}
                 placeholder="如：上海星辰智能科技有限公司"
-                style={{ width: '100%', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: '10px', fontSize: '15px', outline: 'none' }}
+                className={pageStyles.section7}
               />
             </div>
           )}
 
           {/* Step 2: Location */}
           {step === 2 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className={pageStyles.layout3}>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>省份</label>
+                <label className={pageStyles.layout2}>省份</label>
                 <input type="text" value={data.province} onChange={e => updateField('province', e.target.value)}
-                  placeholder="如：上海市" style={{ width: '100%', padding: '11px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', outline: 'none' }} />
+                  placeholder="如：上海市" className={pageStyles.section8} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>城市</label>
+                <label className={pageStyles.layout2}>城市</label>
                 <input type="text" value={data.city} onChange={e => updateField('city', e.target.value)}
-                  placeholder="如：上海市" style={{ width: '100%', padding: '11px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', outline: 'none' }} />
+                  placeholder="如：上海市" className={pageStyles.section8} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>区县（可选）</label>
+                <label className={pageStyles.layout2}>区县（可选）</label>
                 <input type="text" value={data.district} onChange={e => updateField('district', e.target.value)}
-                  placeholder="如：徐汇区" style={{ width: '100%', padding: '11px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', outline: 'none' }} />
+                  placeholder="如：徐汇区" className={pageStyles.section8} />
               </div>
             </div>
           )}
 
           {/* Step 3: Industry */}
           {step === 3 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <div className={pageStyles.layout4}>
               {INDUSTRIES.map(ind => (
                 <button key={ind} onClick={() => updateField('industry', ind)}
-                  style={{ padding: '10px 16px', borderRadius: '8px', border: data.industry === ind ? '2px solid #126a9a' : '1px solid #e2e8f0', background: data.industry === ind ? '#f0f9ff' : '#fff', color: data.industry === ind ? '#0369a1' : '#374151', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
+                  className={pageStyles.inlineAction} style={{ border: data.industry === ind ? '2px solid #126a9a' : '1px solid #e2e8f0', background: data.industry === ind ? '#f0f9ff' : 'var(--surface)', color: data.industry === ind ? '#0369a1' : 'var(--ink)' }}>
                   {ind}
                 </button>
               ))}
@@ -201,10 +205,10 @@ export default function OnboardingPage() {
 
           {/* Step 4: Scale */}
           {step === 4 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className={pageStyles.layout5}>
               {SCALES.map(s => (
                 <button key={s} onClick={() => updateField('scale', s)}
-                  style={{ padding: '14px 16px', borderRadius: '10px', border: data.scale === s ? '2px solid #126a9a' : '1px solid #e2e8f0', background: data.scale === s ? '#f0f9ff' : '#fff', color: data.scale === s ? '#0369a1' : '#374151', fontSize: '14px', fontWeight: 500, cursor: 'pointer', textAlign: 'left' }}>
+                  className={pageStyles.inlineAction2} style={{ border: data.scale === s ? '2px solid #126a9a' : '1px solid #e2e8f0', background: data.scale === s ? '#f0f9ff' : 'var(--surface)', color: data.scale === s ? '#0369a1' : 'var(--ink)' }}>
                   {s}
                 </button>
               ))}
@@ -213,10 +217,10 @@ export default function OnboardingPage() {
 
           {/* Step 5: Age */}
           {step === 5 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <div className={pageStyles.layout4}>
               {AGES.map(a => (
                 <button key={a} onClick={() => updateField('founded_year', a)}
-                  style={{ padding: '10px 16px', borderRadius: '8px', border: data.founded_year === a ? '2px solid #126a9a' : '1px solid #e2e8f0', background: data.founded_year === a ? '#f0f9ff' : '#fff', color: data.founded_year === a ? '#0369a1' : '#374151', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
+                  className={pageStyles.inlineAction} style={{ border: data.founded_year === a ? '2px solid #126a9a' : '1px solid #e2e8f0', background: data.founded_year === a ? '#f0f9ff' : 'var(--surface)', color: data.founded_year === a ? '#0369a1' : 'var(--ink)' }}>
                   {a}
                 </button>
               ))}
@@ -226,11 +230,11 @@ export default function OnboardingPage() {
           {/* Step 6: Qualifications */}
           {step === 6 && (
             <div>
-              <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '12px' }}>选择所有已获得的资质（可多选）：</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              <p className={pageStyles.description2}>选择所有已获得的资质（可多选）：</p>
+              <div className={pageStyles.layout4}>
                 {QUALIFICATIONS.map(q => (
                   <button key={q} onClick={() => toggleArray('qualifications', q)}
-                    style={{ padding: '10px 16px', borderRadius: '8px', border: data.qualifications.includes(q) ? '2px solid #126a9a' : '1px solid #e2e8f0', background: data.qualifications.includes(q) ? '#f0f9ff' : '#fff', color: data.qualifications.includes(q) ? '#0369a1' : '#374151', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
+                    className={pageStyles.inlineAction} style={{ border: data.qualifications.includes(q) ? '2px solid #126a9a' : '1px solid #e2e8f0', background: data.qualifications.includes(q) ? '#f0f9ff' : 'var(--surface)', color: data.qualifications.includes(q) ? '#0369a1' : 'var(--ink)' }}>
                     {q}
                   </button>
                 ))}
@@ -240,21 +244,21 @@ export default function OnboardingPage() {
 
           {/* Step 7: R&D */}
           {step === 7 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className={pageStyles.layout3}>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>知识产权数量（专利+软著）</label>
+                <label className={pageStyles.layout2}>知识产权数量（专利+软著）</label>
                 <input type="text" value={data.ip_count} onChange={e => updateField('ip_count', e.target.value)}
-                  placeholder="如：15" style={{ width: '100%', padding: '11px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', outline: 'none' }} />
+                  placeholder="如：15" className={pageStyles.section8} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>研发费用占营收比例 (%)</label>
+                <label className={pageStyles.layout2}>研发费用占营收比例 (%)</label>
                 <input type="text" value={data.rd_expense_ratio} onChange={e => updateField('rd_expense_ratio', e.target.value)}
-                  placeholder="如：8" style={{ width: '100%', padding: '11px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', outline: 'none' }} />
+                  placeholder="如：8" className={pageStyles.section8} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>研发人员占比 (%)</label>
+                <label className={pageStyles.layout2}>研发人员占比 (%)</label>
                 <input type="text" value={data.rd_ratio} onChange={e => updateField('rd_ratio', e.target.value)}
-                  placeholder="如：30" style={{ width: '100%', padding: '11px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', outline: 'none' }} />
+                  placeholder="如：30" className={pageStyles.section8} />
               </div>
             </div>
           )}
@@ -262,11 +266,11 @@ export default function OnboardingPage() {
           {/* Step 8: Policy needs */}
           {step === 8 && (
             <div>
-              <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '12px' }}>选择您最关注的政策方向（可多选）：</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              <p className={pageStyles.description2}>选择您最关注的政策方向（可多选）：</p>
+              <div className={pageStyles.layout4}>
                 {POLICY_NEEDS.map(n => (
                   <button key={n} onClick={() => toggleArray('policy_needs', n)}
-                    style={{ padding: '10px 16px', borderRadius: '8px', border: data.policy_needs.includes(n) ? '2px solid #f97316' : '1px solid #e2e8f0', background: data.policy_needs.includes(n) ? '#fff7ed' : '#fff', color: data.policy_needs.includes(n) ? '#c2410c' : '#374151', fontSize: '13px', fontWeight: 500, cursor: 'pointer' }}>
+                    className={pageStyles.inlineAction} style={{ border: data.policy_needs.includes(n) ? '2px solid #f97316' : '1px solid #e2e8f0', background: data.policy_needs.includes(n) ? 'var(--accent-soft)' : 'var(--surface)', color: data.policy_needs.includes(n) ? 'var(--teal-dark)' : 'var(--ink)' }}>
                     {n}
                   </button>
                 ))}
@@ -275,32 +279,32 @@ export default function OnboardingPage() {
           )}
 
           {/* Navigation */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '32px' }}>
+          <div className={pageStyles.layout6}>
             {step > 1 ? (
-              <button onClick={handleBack} style={{ padding: '11px 24px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: '14px', cursor: 'pointer' }}>上一步</button>
+              <button onClick={handleBack} className={pageStyles.action}>上一步</button>
             ) : <div />}
             {step < 8 ? (
               <button onClick={handleNext} disabled={!canNext()}
-                style={{ padding: '11px 24px', borderRadius: '8px', border: 'none', background: canNext() ? '#126a9a' : '#94a3b8', color: '#fff', fontSize: '14px', fontWeight: 500, cursor: canNext() ? 'pointer' : 'not-allowed' }}>
+                className={pageStyles.inlineAction3} style={{ background: canNext() ? 'var(--accent)' : '#94a3b8', cursor: canNext() ? 'pointer' : 'not-allowed' }}>
                 下一步
               </button>
             ) : (
               <button onClick={handleSubmit} disabled={loading}
-                style={{ padding: '11px 32px', borderRadius: '8px', border: 'none', background: loading ? '#94a3b8' : '#f97316', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer' }}>
+                className={pageStyles.inlineAction4} style={{ background: loading ? '#94a3b8' : 'var(--accent)', cursor: loading ? 'not-allowed' : 'pointer' }}>
                 {loading ? '保存中...' : '开始政策匹配 →'}
               </button>
             )}
           </div>
           {error ? (
-            <div role="alert" style={{ marginTop: '16px', padding: '10px 14px', borderRadius: '8px', background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', fontSize: '13px', lineHeight: 1.5 }}>
+            <div role="alert" className={pageStyles.section9}>
               {error}
             </div>
           ) : null}
         </div>
 
         {/* Skip */}
-        <div style={{ textAlign: 'center', marginTop: '16px' }}>
-          <button onClick={() => router.push('/dashboard')} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '12px', cursor: 'pointer' }}>
+        <div className={pageStyles.section10}>
+          <button onClick={() => router.push(returnPath)} className={pageStyles.action2}>
             跳过，稍后完善
           </button>
         </div>

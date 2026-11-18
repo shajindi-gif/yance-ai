@@ -18,14 +18,17 @@ from app.api.routes import (
     policies,
     policy_engine,
     reports,
+    sms_auth,
     tasks,
     telemetry,
     tenants,
     workflow,
+    workspace,
 )
 
 api_router = APIRouter()
 api_router.include_router(auth.router)
+api_router.include_router(sms_auth.router)
 api_router.include_router(billing.router)
 api_router.include_router(admin.router)
 api_router.include_router(admin_evals.router)
@@ -47,3 +50,6 @@ api_router.include_router(demo_match.router)
 api_router.include_router(tasks.router)
 api_router.include_router(policy_engine.router)
 api_router.include_router(funding_os.router)
+
+
+api_router.include_router(workspace.router)

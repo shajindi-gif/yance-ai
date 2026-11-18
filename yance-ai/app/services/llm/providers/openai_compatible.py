@@ -1,3 +1,5 @@
+import json
+
 import httpx
 
 from app.services.llm.base import LLMProvider, LLMRequest, LLMResponse
@@ -20,6 +22,8 @@ class OpenAICompatibleProvider(LLMProvider):
             "messages": request.messages,
             "temperature": request.temperature,
         }
+        if request.response_format:
+            payload["response_format"] = request.response_format
         if request.max_tokens:
             payload["max_tokens"] = request.max_tokens
         async with httpx.AsyncClient(timeout=90) as client:
@@ -54,3 +58,43 @@ class OpenAICompatibleProvider(LLMProvider):
             response.raise_for_status()
             data = response.json()
         return [item["embedding"] for item in data["data"]]
+
+    async def stream(self, request: LLMRequest):
+        """Yield content deltas and final usage; never log provider payloads."""
+        if not self.api_key:
+            raise RuntimeError(f"{self.name} API key is not configured")
+        payload = {
+            "model": request.model,
+            "messages": request.messages,
+            "temperature": request.temperature,
+            "max_tokens": request.max_tokens,
+            "stream": True,
+            "stream_options": {"include_usage": True},
+        }
+        if request.response_format:
+            payload["response_format"] = request.response_format
+        async with httpx.AsyncClient(timeout=httpx.Timeout(60, connect=10)) as client:
+            async with client.stream(
+                "POST",
+                f"{self.base_url}/chat/completions",
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                json=payload,
+            ) as response:
+                response.raise_for_status()
+                size = 0
+                async for line in response.aiter_lines():
+                    if not line.startswith("data:"):
+                        continue
+                    raw = line[5:].strip()
+                    if raw == "[DONE]":
+                        return
+                    size += len(raw)
+                    if size > 2_000_000:
+                        raise RuntimeError("Provider stream exceeded response limit")
+                    data = json.loads(raw)
+                    for choice in data.get("choices", []):
+                        delta = choice.get("delta", {}).get("content")
+                        if delta:
+                            yield {"token": delta}
+                    if data.get("usage"):
+                        yield {"usage": data["usage"]}

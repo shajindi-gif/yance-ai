@@ -1,0 +1,125 @@
+[
+  {
+    "id": "positive_with_exact_span",
+    "expect_release_gate_passed": true,
+    "max_ungrounded_sentence_ratio": 0.0,
+    "max_fabricated_quote_ratio": 0.0,
+    "policy_texts": {
+      "11111111-1111-1111-1111-111111111111": "支持人工智能企业研发费用投入，申报需提供知识产权与研发费用材料。"
+    },
+    "content_json": {
+      "schema_version": "report-card-v1",
+      "company_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "profile_version_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "scan_id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      "generated_at": "2026-11-18T00:00:00Z",
+      "total_matches": 1,
+      "opportunities": [
+        {
+          "opportunity_id": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+          "policy_id": "11111111-1111-1111-1111-111111111111",
+          "policy_version_id": null,
+          "profile_version_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+          "policy_title": "上海市人工智能企业研发支持政策",
+          "eligibility_status": "POTENTIALLY_ELIGIBLE",
+          "eligibility_summary": "已通过结构化规则检查，仍需人工复核后方可确认符合。",
+          "criteria": [],
+          "gaps": [],
+          "citations": [
+            {
+              "quote": "支持人工智能企业研发费用投入",
+              "article": "申报条件",
+              "source_url": "https://policy.example.invalid/source",
+              "verified": true
+            }
+          ],
+          "next_step": "结构化规则未否决，但仍须客户复核固定版本后再行动。下一步：核对申报窗口与材料。缺口：当前无结构化缺口字段。截止日字段未收录或待核实。",
+          "match_score": 0.91,
+          "support_amount": null,
+          "deadline": null,
+          "issuing_authority": "测试政策发布机关"
+        }
+      ],
+      "disclaimer": "本报告基于企业提供资料与已入库政策快照生成，仅供客户自行复核。"
+    }
+  },
+  {
+    "id": "fabricated_quote_must_fail",
+    "expect_release_gate_passed": false,
+    "max_ungrounded_sentence_ratio": 0.0,
+    "max_fabricated_quote_ratio": 0.0,
+    "policy_texts": {
+      "22222222-2222-2222-2222-222222222222": "支持人工智能企业研发费用投入。"
+    },
+    "content_json": {
+      "schema_version": "report-card-v1",
+      "company_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "profile_version_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "scan_id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      "generated_at": "2026-11-18T00:00:00Z",
+      "total_matches": 1,
+      "opportunities": [
+        {
+          "opportunity_id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+          "policy_id": "22222222-2222-2222-2222-222222222222",
+          "policy_version_id": null,
+          "profile_version_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+          "policy_title": "合成政策",
+          "eligibility_status": "POTENTIALLY_ELIGIBLE",
+          "eligibility_summary": "结构化规则通过。",
+          "criteria": [],
+          "gaps": [],
+          "citations": [
+            {
+              "quote": "最高补贴五百万元且无需审核",
+              "article": "虚构条款",
+              "source_url": "https://policy.example.invalid/fake",
+              "verified": true
+            }
+          ],
+          "next_step": "客户复核后核对窗口",
+          "match_score": 0.5,
+          "support_amount": null,
+          "deadline": null,
+          "issuing_authority": null
+        }
+      ],
+      "disclaimer": "本报告基于企业提供资料与已入库政策快照生成，仅供客户自行复核。"
+    }
+  },
+  {
+    "id": "need_more_without_citation_ok",
+    "expect_release_gate_passed": true,
+    "max_ungrounded_sentence_ratio": 0.0,
+    "max_fabricated_quote_ratio": 0.0,
+    "policy_texts": {},
+    "content_json": {
+      "schema_version": "report-card-v1",
+      "company_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "profile_version_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "scan_id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      "generated_at": "2026-11-18T00:00:00Z",
+      "total_matches": 1,
+      "opportunities": [
+        {
+          "opportunity_id": "ffffffff-ffff-ffff-ffff-ffffffffffff",
+          "policy_id": "33333333-3333-3333-3333-333333333333",
+          "policy_version_id": null,
+          "profile_version_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+          "policy_title": "证据不足样例政策",
+          "eligibility_status": "NEED_MORE_INFORMATION",
+          "eligibility_summary": "缺少企业事实、规则或可核验政策原文。",
+          "criteria": [],
+          "gaps": ["企业画像缺少：rd_expense_ratio"],
+          "citations": [],
+          "next_step": "证据不足。请先补齐并核对：企业画像缺少：rd_expense_ratio；补齐后再复核资格，勿当作已符合。截止日字段未收录或待核实。",
+          "match_score": 0.2,
+          "support_amount": null,
+          "deadline": null,
+          "issuing_authority": null
+        }
+      ],
+      "disclaimer": "本报告基于企业提供资料与已入库政策快照生成，仅供客户自行复核。"
+    }
+  }
+]

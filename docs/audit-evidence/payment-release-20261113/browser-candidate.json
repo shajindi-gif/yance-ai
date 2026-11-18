@@ -1,0 +1,102 @@
+{
+  "base": "http://127.0.0.1:3039",
+  "mode": "GET/HEAD only; no authentication or real purchase",
+  "release": {
+    "release": "sms-20261029-01",
+    "scope": "website-and-backend",
+    "compatibility": "legacy-workspace-supported",
+    "backendUpgradeIncluded": true,
+    "website_source": "4332071c804fc6e3f045746a5b71354e49ad4e57",
+    "backend_commit": "4332071c804fc6e3f045746a5b71354e49ad4e57"
+  },
+  "apiRuntime": null,
+  "results": [
+    {
+      "width": 390,
+      "route": "/",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "candidate-390-home.png"
+    },
+    {
+      "width": 390,
+      "route": "/pricing",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "candidate-390-pricing.png"
+    },
+    {
+      "width": 390,
+      "route": "/login",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "candidate-390-login.png"
+    },
+    {
+      "width": 390,
+      "route": "/discover",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "candidate-390-discover.png"
+    },
+    {
+      "width": 390,
+      "route": "/checkout",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "candidate-390-checkout.png"
+    },
+    {
+      "width": 390,
+      "route": "/success",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "candidate-390-success.png"
+    },
+    {
+      "width": 1440,
+      "route": "/",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "candidate-1440-home.png"
+    },
+    {
+      "width": 1440,
+      "route": "/pricing",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "candidate-1440-pricing.png"
+    },
+    {
+      "width": 1440,
+      "route": "/login",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "candidate-1440-login.png"
+    },
+    {
+      "width": 1440,
+      "route": "/discover",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "candidate-1440-discover.png"
+    },
+    {
+      "width": 1440,
+      "route": "/checkout",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "candidate-1440-checkout.png"
+    },
+    {
+      "width": 1440,
+      "route": "/success",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "candidate-1440-success.png"
+    }
+  ],
+  "ssrPrice": true,
+  "hsts": true,
+  "pageErrors": []
+}
