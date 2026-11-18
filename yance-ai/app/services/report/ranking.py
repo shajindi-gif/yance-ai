@@ -324,6 +324,10 @@ def compute_rank_features(
         usefulness += 10.0
 
     final = max(0.0, min(100.0, relevance + usefulness))
+    # Activity/plan with rules may stay in the brief for sellable positives, but
+    # must not occupy customer Top slots.
+    if activity:
+        final = min(final, 22.0)
     note = None
     if active_hard_rules <= 0:
         note = "弱匹配：尚无已审核硬门槛规则，已降权并仅作信息参考"

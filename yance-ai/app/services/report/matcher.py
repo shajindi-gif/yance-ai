@@ -406,6 +406,26 @@ async def match_policies_for_company(
         min_local=3,
         province_getter=_opp_province,
     )
+
+    def _is_activity_opp(opp: Opportunity) -> bool:
+        features = ((opp.evidence_json or {}).get("rank_features") or {})
+        note = (opp.evidence_json or {}).get("ranking_note") or ""
+        return bool(features.get("noise_penalty", 0) <= -28) or "规划/活动类" in note
+
+    # Push remaining activity/plan titles out of the first 10 when alternatives exist.
+    head: list[Opportunity] = []
+    activity_tail: list[Opportunity] = []
+    rest: list[Opportunity] = []
+    for opp in selected:
+        if _is_activity_opp(opp):
+            activity_tail.append(opp)
+        elif len(head) < 10:
+            head.append(opp)
+        else:
+            rest.append(opp)
+    while len(head) < 10 and rest:
+        head.append(rest.pop(0))
+    selected = head + rest + activity_tail
     for opp in selected:
         db.add(opp)
     db.commit()
