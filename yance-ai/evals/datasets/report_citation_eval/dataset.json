@@ -1,0 +1,22 @@
+{
+  "key": "report_citation_fidelity_synthetic",
+  "name": "POLICY_REPORT citation fidelity / ungrounded-sentence gate",
+  "eval_type": "report_citation_eval",
+  "description": "Synthetic company×policy ReportCards. Release gate requires unsupported_claim_ratio=0, ungrounded_sentence_ratio=0, fabricated_quote_ratio=0. NEED_MORE without citations remains allowed.",
+  "version": "2026.11.18",
+  "target_key": "report_card_citation_fidelity",
+  "target_version": "v1",
+  "scorer_version": "deterministic-v1",
+  "review_status": "unreviewed",
+  "reviewed_by": null,
+  "reviewed_at": null,
+  "data_classification": "synthetic",
+  "contains_customer_data": false,
+  "is_demo": false,
+  "thresholds": {
+    "ungrounded_sentence_ratio": 0.0,
+    "fabricated_quote_ratio": 0.0,
+    "unsupported_claim_ratio": 0.0,
+    "overall": 1.0
+  }
+}

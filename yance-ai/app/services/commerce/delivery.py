@@ -22,5 +22,15 @@ def require_order_report(db: Session, order: Order) -> Deliverable | None:
             'code': 'order_delivery_not_ready',
             'message': '该订单尚未绑定可交付的固定报告，暂不能继续付款。订单记录保留，请联系支持核对；请勿重新付款。',
         })
+    try:
+        from app.services.report.quality import ReportQualityError, assert_sellable_report_in_db
+
+        assert_sellable_report_in_db(db, report.content_json)
+    except ReportQualityError as exc:
+        raise HTTPException(409, detail={
+            'code': 'order_delivery_quality_gate_failed',
+            'message': '该订单绑定的报告未通过结构化机会卡片与引用门禁，暂不能继续付款。订单保留，请勿重新付款。',
+            'reason': str(exc),
+        }) from exc
     report_bytes(report)
     return report

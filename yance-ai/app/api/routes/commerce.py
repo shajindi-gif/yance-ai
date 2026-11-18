@@ -147,6 +147,16 @@ def create_order(
                 "code": "report_not_ready",
                 "message": "请先完成政策扫描并生成有匹配记录的报告，再购买该固定版本。尚未创建订单。",
             })
+        try:
+            from app.services.report.quality import ReportQualityError, assert_sellable_report_in_db
+
+            assert_sellable_report_in_db(db, report.content_json)
+        except ReportQualityError as exc:
+            raise HTTPException(409, detail={
+                "code": "report_quality_gate_failed",
+                "message": "当前报告未通过结构化机会卡片与引用门禁，暂不可购买。请重新扫描或联系支持核对后再下单。",
+                "reason": str(exc),
+            }) from exc
         report_bytes(report)
         owned = db.scalar(select(Entitlement.id).join(Order, Order.id == Entitlement.order_id).where(
             Entitlement.tenant_id == principal.tenant_id, Entitlement.status == "active",

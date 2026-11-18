@@ -44,6 +44,11 @@ from app.services.policies.eligibility import evaluate_opportunity
 from app.services.policies.visibility import visible_policy_clause
 from app.services.report.matcher import match_policies_for_company
 from app.services.report.pdf import generate_match_report_pdf
+from app.services.report.schema import (
+    build_opportunity_card,
+    build_report_document,
+    report_document_to_content_json,
+)
 
 if TYPE_CHECKING:
     from app.services.agents.harness import AgentHarness
@@ -330,32 +335,70 @@ def _create_report_artifact(
         {"company_id": str(company.id), "opportunity_count": len(opportunities)},
     )
     tool_started = perf_counter()
-    evidence_rows = db.scalars(
-        select(Evidence).where(
-            Evidence.tenant_id == run.tenant_id,
-            Evidence.opportunity_id.in_([item.id for item in opportunities]),
-            Evidence.verified.is_(True),
-        )
-    ).all()
-    decision_evidence = {}
-    for evidence in evidence_rows:
-        decision_evidence.setdefault(evidence.opportunity_id, {"quotes": []})["quotes"].append(
-            {
-                "quote": evidence.quote,
-                "article": evidence.article,
-                "source_url": evidence.source_url,
-                "start": evidence.quote_start,
-                "end": evidence.quote_end,
-            }
-        )
-    pdf_bytes = generate_match_report_pdf(
-        company, opportunities, policies, decision_evidence=decision_evidence
+    opportunity_ids = [item.id for item in opportunities]
+    evidence_rows = (
+        db.scalars(
+            select(Evidence).where(
+                Evidence.tenant_id == run.tenant_id,
+                Evidence.opportunity_id.in_(opportunity_ids),
+                Evidence.verified.is_(True),
+            )
+        ).all()
+        if opportunity_ids
+        else []
     )
-    summary = {
-        "total_matches": len(opportunities),
-        "policy_ids": [str(item.id) for item in policies],
-        "byte_length": len(pdf_bytes),
-    }
+    eligibility_rows = (
+        db.scalars(
+            select(EligibilityResult).where(
+                EligibilityResult.tenant_id == run.tenant_id,
+                EligibilityResult.opportunity_id.in_(opportunity_ids),
+            )
+        ).all()
+        if opportunity_ids
+        else []
+    )
+    eligibility_by_opportunity = {row.opportunity_id: row for row in eligibility_rows}
+    decision_evidence: dict = {}
+    citations_by_opportunity: dict = {}
+    for evidence in evidence_rows:
+        quote = {
+            "quote": evidence.quote,
+            "article": evidence.article,
+            "source_url": evidence.source_url,
+            "start": evidence.quote_start,
+            "end": evidence.quote_end,
+            "verified": True,
+        }
+        decision_evidence.setdefault(evidence.opportunity_id, {"quotes": []})["quotes"].append(quote)
+        citations_by_opportunity.setdefault(evidence.opportunity_id, []).append(quote)
+
+    policy_map = {item.id: item for item in policies}
+    cards = [
+        build_opportunity_card(
+            opportunity=item,
+            eligibility=eligibility_by_opportunity.get(item.id),
+            citations=citations_by_opportunity.get(item.id, []),
+            policy=policy_map.get(item.policy_id) if item.policy_id else None,
+        )
+        for item in opportunities
+    ]
+    report_document = build_report_document(
+        company_id=company.id,
+        profile_version_id=(
+            opportunities[0].profile_version_id if opportunities else None
+        ),
+        scan_id=opportunities[0].scan_id if opportunities else None,
+        cards=cards,
+    )
+    pdf_bytes = generate_match_report_pdf(
+        company,
+        opportunities,
+        policies,
+        decision_evidence=decision_evidence,
+        report_document=report_document,
+    )
+    summary = report_document_to_content_json(report_document)
+    summary["byte_length"] = len(pdf_bytes)
     deliverable = Deliverable(
         tenant_id=run.tenant_id,
         task_id=task.id,

@@ -172,6 +172,10 @@ def evaluate_opportunity(
         elif missing_fact:
             state = "MISSING"
             missing.append(f"企业画像缺少：{rule.fact_key}")
+            # Keep the verified requirement quote so NEED_MORE cards still show
+            # what the policy asks for — reduces empty-citation briefs without
+            # inventing facts.
+            evidence_rows.append((rule, *source))
         else:
             passed = _evaluate(actual, rule.operator, _expected(rule))
             state = "PASS" if passed else "FAIL"

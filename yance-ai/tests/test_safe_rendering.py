@@ -89,7 +89,9 @@ def test_report_handles_aware_deadline_and_does_not_invent_eligibility(monkeypat
     assert report_pdf.generate_match_report_pdf(company, [opportunity], [policy]).startswith(b"%PDF")
     assert "✓ 资质满足" not in CapturingHTML.last_string
     assert "✓ 地区匹配" not in CapturingHTML.last_string
-    assert "不是获批概率" in CapturingHTML.last_string
+    assert "待系统判断" not in CapturingHTML.last_string
+    assert "营业执照副本" not in CapturingHTML.last_string
+    assert "获批概率" in CapturingHTML.last_string
     assert "暂无逐字核验的条款证据" in CapturingHTML.last_string
     policy.deadline = None
     report_pdf.generate_match_report_pdf(company, [opportunity], [policy])
