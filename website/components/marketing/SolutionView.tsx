@@ -22,6 +22,7 @@ export function SolutionView({ item }: { item: Solution }) {
           <Link href="/login?register=1&next=%2Fcompanies" className="btn btn-primary">立即匹配企业政策</Link>
           <Link href="/discover" className={styles.textLink}>查找已收录政策</Link>
           <a className={styles.textLink} href="mailto:yanceai@163.com?subject=预约企业演示">预约企业演示</a>
+          <Link href="/security" className={styles.textLink}>安全与使用边界</Link>
         </div>
         <p className={styles.limit}>{item.limit}</p>
       </header>

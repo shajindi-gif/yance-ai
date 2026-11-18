@@ -16,6 +16,12 @@ export default function SolutionsPage() {
         <p className={styles.kicker}>解决方案</p>
         <h1>按你的产业与角色，进入同一套核对流程。</h1>
         <p>每个方案都回到企业资料、政策检索、资格依据和申报项目。这里不承诺补贴、认定或成功率。</p>
+        <div className={styles.buyers}>
+          <Link href="/solutions/ai-software">科技企业</Link>
+          <Link href="/solutions/parks">园区与孵化器</Link>
+          <Link href="/solutions/investors">投资机构</Link>
+          <Link href="/security">安全与使用边界</Link>
+        </div>
       </header>
       {groups.map((group) => (
         <section key={group} aria-labelledby={group}>

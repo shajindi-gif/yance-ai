@@ -29,10 +29,10 @@ export default function PricingCatalogue({initialProducts, initialError}: {initi
         const presentation = productPresentation(product);
         const featured = product.code === 'POLICY_REPORT';
         const price = product.promotional_price ?? product.price;
-        return <article aria-label={presentation.name} key={product.code} className={`pricing-card${featured ? ' pricing-card-featured' : ''}`} style={featured ? {borderColor:'var(--teal)',borderWidth:'1px'} : {}}>
-          {featured && <div className={pageStyles.section4}>按需首购</div>}
+        return <article aria-label={presentation.name} key={product.code} className={`pricing-card${featured ? ' pricing-card-featured' : ''}`}>
+          <p className={pageStyles.status}>{product.code === 'FREE_POLICY_MATCH' ? '现在可体验' : '现在可购买'}</p>
           <h2 className="pricing-name">{presentation.name}</h2>
-          <p className="pricing-desc">{product.code === 'FREE_POLICY_MATCH' ? '确认企业资料，开始政策机会初筛' : '按份购买 · 对应所选企业的固定报告'}</p>
+          <p className="pricing-desc">{product.code === 'FREE_POLICY_MATCH' ? '注册后建立企业档案，在账户额度内做政策初筛。' : '需要可下载简报时，为所选企业按份结算。'}</p>
           <div className="pricing-price">{price === 0 ? <span className={pageStyles.label2}>免费</span> : <>¥{price}<span className="pricing-price-unit">{presentation.unit}</span></>}</div>
           <div className="pricing-divider" />
           <ul className="pricing-features">{presentation.features.map(feature => <li key={feature}>{feature}</li>)}</ul>
@@ -42,7 +42,11 @@ export default function PricingCatalogue({initialProducts, initialError}: {initi
       })}
     </div>
     {consultation.length > 0 && <details className="pricing-faq"><summary>更多服务 · 预约咨询</summary>
-      {consultation.map(product => <p key={product.code}>{productPresentation(product).name} · <a href="mailto:yanceai@163.com">沟通交付需求</a></p>)}
+      {consultation.map(product => {
+        const presentation = productPresentation(product);
+        const price = product.promotional_price ?? product.price;
+        return <p key={product.code}>{presentation.name} · 目录价 ¥{price}{presentation.unit} · {product.purchase_unavailable_reason || '独立交付验收后才会开放购买。'} · <a href="mailto:yanceai@163.com?subject=预约企业演示">沟通交付需求</a></p>;
+      })}
     </details>}
   </>;
 }

@@ -1,5 +1,5 @@
 .home { --home-muted: var(--muted); background: var(--paper); }
-.hero,.section,.workflowSection,.trustSection,.closing { max-width: 1280px; margin: auto; padding: 88px 48px; }
+.hero,.section,.workflowSection,.trustSection,.closing { max-width: 1280px; margin: auto; padding: 64px 48px; }
 .hero { padding-top: 132px; padding-bottom: 0; }
 .heroTop { display:flex; justify-content:space-between; gap:20px; padding-bottom:32px; border-bottom:1px solid var(--line); }
 .eyebrow,.issue { font-size:12px; font-weight:550; letter-spacing:.06em; color:var(--home-muted); }
