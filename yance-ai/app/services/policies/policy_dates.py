@@ -94,6 +94,10 @@ def extract_dates_from_text(content: str) -> ExtractedDates:
             evidence["deadline"] = snippet or hint
             break
 
+    # Refuse impossible windows rather than write them into sellable metadata.
+    if effective and expires and expires < effective:
+        evidence.pop("expires_at", None)
+        expires = None
     return ExtractedDates(
         effective_at=effective,
         expires_at=expires,
@@ -139,5 +143,11 @@ def merge_dates_for_policy(
     if getattr(policy, "deadline", None) is None and "deadline" not in updates and extracted.deadline:
         updates["deadline"] = extracted.deadline
         evidence["deadline"] = (extracted.evidence or {}).get("deadline", "text")
+
+    effective = updates.get("effective_at") or getattr(policy, "effective_at", None)
+    expires = updates.get("expires_at") or getattr(policy, "expires_at", None)
+    if effective and expires and expires < effective:
+        updates.pop("expires_at", None)
+        evidence.pop("expires_at", None)
 
     return {"updates": updates, "evidence": evidence}
