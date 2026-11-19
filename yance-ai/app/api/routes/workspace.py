@@ -210,9 +210,14 @@ class GroundedAnswer(BaseModel):
 # Date and review gaps may be shown as labeled readings. Expiry, region
 # contradiction, withdrawal and a broken version stay out of the model context.
 _SOFT_CONTEXT = {
+    # legacy wording kept for older fixtures
     "政策生效或失效日期未核实，需人工复核",
     "当前申报批次与截止日未核实，需人工复核",
     "政策适用地域尚未核实",
+    # live applicability.py wording
+    "政策生效日期未收录，请客户对照原文核实是否已生效",
+    "政策失效日期未收录，请客户对照原文核实有效期",
+    "当前申报批次截止日未收录，请客户对照当期通知核实窗口",
 }
 _UNPUBLISHED = "政策未发布或已撤回，需人工复核"
 _READING_PREFIX = "以下摘自已采集政策原文，日期或复核尚未完成，不是资格认定。\n"
@@ -225,6 +230,10 @@ def _reading_issues(policy, version, region) -> list[str]:
     return issues
 
 
+def _hard_issues(issues: list[str]) -> list[str]:
+    return [item for item in issues if item not in _SOFT_CONTEXT]
+
+
 def _checked_passage(version, chunk) -> bool:
     if version is None or chunk is None:
         return False
@@ -233,8 +242,18 @@ def _checked_passage(version, chunk) -> bool:
     return hashlib.sha256(version.content.encode()).hexdigest() == version.content_sha256
 
 
+def _source_grade(policy, issues: list[str]) -> tuple[str, str]:
+    if not issues:
+        return "verified", "published"
+    if policy.status == "collected":
+        return "reading", "unreviewed"
+    return "reading", "dates_unverified"
+
+
 def sources_for(db, principal, company, question, limit):
     region = {"province": company.province, "city": company.city}
+    # Dated-unverified readings are allowed; evidence_ready=True empties the
+    # corpus while effective/expiry backfill is incomplete.
     candidates = hybrid_policy_candidates(
         db,
         tenant_id=principal.tenant_id,
@@ -242,7 +261,7 @@ def sources_for(db, principal, company, question, limit):
         query_vector=[],
         region=region,
         limit=50,
-        evidence_ready=True,
+        evidence_ready=False,
     )
     sources = []
     for candidate in candidates:
@@ -255,10 +274,12 @@ def sources_for(db, principal, company, question, limit):
         )
         if not version or version.tenant_id not in (None, principal.tenant_id):
             continue
-        if _reading_issues(policy, version, region):
+        issues = _reading_issues(policy, version, region)
+        if _hard_issues(issues):
             continue
         if policy.quality_deliverable is False:
             continue
+        grade, review_state = _source_grade(policy, issues)
         chunks = db.scalars(
             select(PolicyChunk)
             .where(
@@ -286,8 +307,8 @@ def sources_for(db, principal, company, question, limit):
                     "version": version.version,
                     "char_start": chunk.char_start,
                     "expires_at": policy.expires_at.isoformat() if policy.expires_at else None,
-                    "evidence_grade": "verified",
-                    "review_state": "published",
+                    "evidence_grade": grade,
+                    "review_state": review_state,
                 }
             )
     seen = {item["policy_id"] for item in sources}
@@ -325,10 +346,11 @@ def sources_for(db, principal, company, question, limit):
         ):
             continue
         issues = _reading_issues(policy, version, region)
-        if any(issue not in _SOFT_CONTEXT for issue in issues):
+        if _hard_issues(issues):
             continue
         if policy.status == "published" and not issues:
             continue
+        grade, review_state = _source_grade(policy, issues)
         seen.add(hit.policy_id)
         sources.append(
             {
@@ -341,8 +363,8 @@ def sources_for(db, principal, company, question, limit):
                 "version": version.version,
                 "char_start": chunk.char_start,
                 "expires_at": policy.expires_at.isoformat() if policy.expires_at else None,
-                "evidence_grade": "reading",
-                "review_state": "unreviewed" if policy.status == "collected" else "dates_unverified",
+                "evidence_grade": grade,
+                "review_state": review_state,
             }
         )
     return sources
