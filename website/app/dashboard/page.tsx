@@ -12,6 +12,7 @@ import api, {type WorkspaceHome} from '@/lib/api';
 import styles from '@/components/workspace/AskWorkspace.module.css';
 
 const states: Record<string, string> = {completed:'已完成', running:'进行中', failed:'未完成', cancelled:'已停止', draft:'准备中', budget_exceeded:'预算已达上限', interrupted:'执行已中断'};
+
 export default function DashboardPage() {
   const router = useRouter(); const [home, setHome] = useState<WorkspaceHome | null>(null);
   const [companyId, setCompanyId] = useState(''); const [error, setError] = useState('');
@@ -24,11 +25,31 @@ export default function DashboardPage() {
       .catch(failure => { if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : '工作台读取失败'); });
     return () => controller.abort();
   }, [router, companyId, revision]);
+  const profileHref = home?.company ? `/companies/${home.company.id}` : '/companies';
   return <AppShell workspaceName={home?.tenant.name}>
-    <PageHeader title="从一个问题开始" description={home?.company ? `${home.company.name} · 查条件、看原文、补证明` : '把政策原文、企业事实和下一步工作放在一起。'} />
+    <PageHeader
+      title="选企业 · 问一句 · 看机会"
+      description={home?.company
+        ? `${home.company.name} · 30 秒内完成提问或补画像`
+        : '先选企业，再提问、补画像或查看按实效排序的机会。'}
+    />
     {error && <InlineAlert>{error} <button type="button" onClick={refresh}>重新加载</button></InlineAlert>}
     {!home && !error && <LoadingState label="正在读取企业与项目" />}
     {home && <>
+      <div className={styles.paths} aria-label="主路径">
+        <a className={styles.pathCard} href="#ask-title">
+          <strong>问衍策</strong>
+          <span>{home.ask_enabled ? '围绕条款与材料提问，带原文引用' : '问答待开放；预设问题可先填入'}</span>
+        </a>
+        <Link className={styles.pathCard} href={profileHref}>
+          <strong>补画像</strong>
+          <span>{home.company ? '分步保存并一键发布版本' : '创建企业档案后进入画像'}</span>
+        </Link>
+        <Link className={styles.pathCard} href="/opportunities">
+          <strong>看机会</strong>
+          <span>按实效排序 · 同城 / 窗口 / 可申报优先</span>
+        </Link>
+      </div>
       <AskBox key={home.company?.id || 'empty'} home={home} refresh={refresh} conversationId={conversation} selectCompany={id => { setCompanyId(id); setConversation(undefined); }} />
       <div className={styles.cards}>
         <Link className={styles.card} href="/opportunities">已记录符合<strong>{home.cards.eligible_count}</strong><small>仅计当前画像及有效政策版本的明确符合记录；不代表政府认定。</small><small>{home.cards.highest_amount_wan === null ? '资助上限待核实' : `条款最高上限 ${home.cards.highest_amount_wan.toLocaleString('zh-CN')} 万元，非预计到账`}</small></Link>

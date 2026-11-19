@@ -213,8 +213,8 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
           <Link href="/dashboard" className={styles.brand} aria-label="返回工作台">
             <Image src="/logo.png" alt="" width={34} height={34} priority />
             <span>
-              <strong>衍策引擎</strong>
-              <small>政策与资源证据工作台</small>
+              <strong>衍策</strong>
+              <small>证据工作台</small>
             </span>
           </Link>
           <button
@@ -249,8 +249,8 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
 
         <div className={styles.sidebarFooter}>
           <div className={styles.phaseNote}>
-            <span>证据工作台</span>
-            <p>资格结论、证据与管道均读取服务端记录，不展示推测数据。</p>
+            <span>可审计</span>
+            <p>资格与证据均来自服务端记录；无证据时拒答，不编造。</p>
           </div>
           <Link href="/" className={styles.secondaryAction}>
             返回产品官网
@@ -287,8 +287,8 @@ export default function AppShell({ children, workspaceName }: AppShellProps) {
             <span />
           </button>
           <div>
-            <span className={styles.topbarEyebrow}>证据工作台</span>
-            <strong>{activeItem?.label || "工作区"}</strong>
+            <span className={styles.topbarEyebrow}>{workspaceName || "工作区"}</span>
+            <strong>{activeItem?.label || "问衍策"}</strong>
           </div>
           <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
             <Link

@@ -1,6 +1,8 @@
 export interface Citation {
   index: number; policy_id: string; version_id: string; title: string;
   source_url?: string | null; policy_quote: string; char_start: number;
+  evidence_grade?: 'verified' | 'reading';
+  review_state?: 'published' | 'unreviewed' | 'dates_unverified';
 }
 export type AskEvent =
   | { event: 'retrieval'; data: { sources: Citation[] } }

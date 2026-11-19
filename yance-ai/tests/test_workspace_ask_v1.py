@@ -327,7 +327,7 @@ def test_real_retrieval_filters_expiry_region_tenant_and_corrupt_snapshot(monkey
             policy.expires_at = datetime.now(UTC) - timedelta(days=1)
             db.commit()
         expired = client.post("/api/v1/ask", headers=headers, json=question)
-        assert str(policy_id) not in expired.text and "证据不足" in expired.text
+        assert str(policy_id) not in expired.text and "不是资格认定" in expired.text
         with SessionLocal() as db:
             policy = db.get(Policy, policy_id)
             policy.expires_at = datetime.now(UTC) + timedelta(days=90)
@@ -341,6 +341,112 @@ def test_real_retrieval_filters_expiry_region_tenant_and_corrupt_snapshot(monkey
             version.content_sha256 = "0" * 64
             db.commit()
         assert str(policy_id) not in client.post("/api/v1/ask", headers=headers, json=question).text
+
+
+def test_collected_policy_is_read_by_ask_without_an_eligibility_claim(monkeypatch):
+    import hashlib
+
+    from app.models.models import Policy, PolicyChunk, PolicyVersion
+
+    monkeypatch.setattr(settings, "workspace_ask_enabled", True)
+
+    def _explode(*_args, **_kwargs):
+        raise AssertionError("collected readings must not call an embedding provider")
+
+    monkeypatch.setattr("app.services.llm.registry.embed_texts", _explode)
+    marker = f"采集算力券条款{uuid.uuid4().hex[:8]}"
+    body = f"{marker}：上年度研发投入不低于三百万元，且须保留审计报告备查。"
+    with TestClient(app) as client:
+        headers, _, aid, _, _, _ = _project(client)
+        company = client.get(f"/api/v1/applications/{aid}", headers=headers).json()["company_id"]
+        with SessionLocal() as db:
+            policy = Policy(
+                title=f"{marker}申报通知",
+                status="collected",
+                level="municipal",
+                province="上海市",
+                city="上海市",
+                jurisdiction="上海市",
+                content=body,
+                source_url="https://test.invalid/collected-policy.html",
+            )
+            db.add(policy)
+            db.flush()
+            version = PolicyVersion(
+                policy_id=policy.id,
+                version=1,
+                title=policy.title,
+                content=body,
+                status="collected",
+                source_url=policy.source_url,
+                content_sha256=hashlib.sha256(body.encode()).hexdigest(),
+            )
+            db.add(version)
+            db.flush()
+            db.add(
+                PolicyChunk(
+                    policy_id=policy.id,
+                    policy_version_id=version.id,
+                    chunk_index=0,
+                    content=body,
+                    char_start=0,
+                    char_end=len(body),
+                    content_sha256=hashlib.sha256(body.encode()).hexdigest(),
+                )
+            )
+            other = Policy(
+                title=f"{marker}外地通知",
+                status="collected",
+                level="municipal",
+                province="浙江省",
+                city="杭州市",
+                jurisdiction="浙江省杭州市",
+                content=body,
+                source_url="https://test.invalid/collected-other.html",
+            )
+            db.add(other)
+            db.flush()
+            other_version = PolicyVersion(
+                policy_id=other.id,
+                version=1,
+                title=other.title,
+                content=body,
+                status="collected",
+                content_sha256=hashlib.sha256(body.encode()).hexdigest(),
+            )
+            db.add(other_version)
+            db.flush()
+            db.add(
+                PolicyChunk(
+                    policy_id=other.id,
+                    policy_version_id=other_version.id,
+                    chunk_index=0,
+                    content=body,
+                    char_start=0,
+                    char_end=len(body),
+                    content_sha256=other_version.content_sha256,
+                )
+            )
+            collected_id = str(policy.id)
+            other_id = str(other.id)
+            db.commit()
+
+        async def stream(*args, **kwargs):
+            sources = json.loads(args[1][1]["content"])["sources"]
+            quote = sources[0]["policy_quote"]
+            yield json.dumps({"claims": [{"text": quote, "source": 1, "policy_quote": quote}]})
+
+        monkeypatch.setattr(workspace.gateway, "complete_stream", stream)
+        response = client.post(
+            "/api/v1/ask",
+            headers=headers,
+            json={"company_id": company, "question": marker},
+        )
+        assert response.status_code == 200, response.text
+        assert collected_id in response.text
+        assert other_id not in response.text
+        assert "不是资格认定" in response.text
+        assert "符合资格" not in response.text
 
 
 def test_stream_fallback_before_first_delta_but_never_after_partial(monkeypatch):

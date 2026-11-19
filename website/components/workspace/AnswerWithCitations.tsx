@@ -27,9 +27,14 @@ function SourceDialog({citation, close}: {citation: Citation; close: () => void}
     <button type="button" className={styles.secondary} onClick={close} autoFocus>关闭原文</button>
     <h2 id="ask-source-title">{citation.title}</h2>
     <p>固定版本原文 · {citation.version_id}</p>
+    <p>{citation.review_state === 'unreviewed'
+      ? '采集资料 · 尚未复核。摘录不是资格认定。'
+      : citation.review_state === 'dates_unverified'
+        ? '已收录原文 · 日期未核实。摘录不是资格认定。'
+        : '原文存在不等于企业符合资格。'}</p>
     {url && <p><a href={url} target="_blank" rel="noopener noreferrer">打开发布来源</a></p>}
     {error ? <p role="alert">{error}</p> : !content ? <p role="status">正在读取原文…</p> : <>
-      <p>引文位置以保存的政策版本为准；原文存在不等于企业符合资格。</p>
+      <p>引文位置以保存的政策版本为准。</p>
       {!span ? <p role="alert">引文无法在当前版本逐字定位，请返回项目核对。</p> : null}
       <EvidencePassage content={content} start={span?.start ?? -1} end={span?.end ?? 0} />
     </>}
