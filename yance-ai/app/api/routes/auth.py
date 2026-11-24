@@ -45,6 +45,9 @@ from app.services.email_code import (
 from app.services.notifications.email import is_email_configured
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+# Hash of a random throwaway secret, computed once; used to equalise login timing.
+_DUMMY_PASSWORD_HASH = hash_password(secrets.token_urlsafe(32))
 logger = structlog.get_logger()
 
 
@@ -236,7 +239,7 @@ def login(
     x_tenant_slug: str | None = Header(default=None, alias="X-Tenant-Slug"),
 ) -> Token:
     client_ip = _client_ip(request)
-    if login_is_limited(db, client_ip):
+    if login_is_limited(db, client_ip, form.username):
         raise HTTPException(
             status_code=429, detail="登录失败次数过多，请 15 分钟后再试"
         )
@@ -262,14 +265,18 @@ def login(
         ),
         None,
     )
+    if not users:
+        # ACC-07: spend the same password-hash work as for a real account so
+        # response time does not reveal whether the e-mail is registered.
+        verify_password(form.password, _DUMMY_PASSWORD_HASH)
     if not user:
-        login_failure(db, client_ip)
+        login_failure(db, client_ip, form.username)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    login_success(db, client_ip)
+    login_success(db, user.email)
     record_event(
         db,
         tenant_id=user.tenant_id,
