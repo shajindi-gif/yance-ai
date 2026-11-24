@@ -21,9 +21,26 @@
 - `npx eslint` 变更文件：无报错。
 - 视觉验证（CJK 换行、溢出、移动端宽度）**未完成**：本机 `next dev` 仅能加载 WASM 绑定，并出现 `EMFILE: too many open files` 导致路由无法响应。临时预览路由已删除。上线前需在可用环境中打开 `/opportunities` 人工核对一次分享图。
 
-## 未包含
+## 生产部署
 
-- 未部署到生产，未改动 API 版本与 systemd 配置。
+- 网站 release：`website-20261124-share01`（基于线上 `website-20261119-ask01`，仅覆盖 4 个分享图文件，未同步其他有差异的文件）。
+- 服务器构建：`npm run build` 成功，产物含 `生成分享图`。
+- 激活：新增 systemd drop-in `zzzzzzzzzzzzz-website-20261124-share01.conf`，`/opt/yance/website` 指向新 release，`yance-website` 重启 active。
+- 本机验证（服务器 127.0.0.1:3000）：`/`、`/dashboard`、`/opportunities`、`/reports` 均为 200；服务日志无报错。
+- API 与采集器未改动。
+
+## 回滚
+
+```bash
+sudo rm -f /etc/systemd/system/yance-website.service.d/zzzzzzzzzzzzz-website-20261124-share01.conf
+sudo ln -sfn /opt/yance/releases/website-20261119-ask01/website /opt/yance/website
+sudo systemctl daemon-reload && sudo systemctl restart yance-website
+```
+
+## 未验证 / 未包含
+
+- 分享图视觉效果（CJK 换行、溢出、移动端）未在浏览器中核对；上线后需人工检查 `/opportunities` 页面的分享图。
+- 公网入口未从外部网络验证。
 - `/reports` 页的分享入口未做（后续项）。
 - 采集器相关脏文件未纳入本次提交。
 
