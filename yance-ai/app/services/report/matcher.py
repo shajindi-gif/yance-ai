@@ -147,6 +147,9 @@ async def match_policies_for_company(
     for policy, semantic_sim in results:
         source_version = latest_policy_version(db, policy.id)
         score_breakdown = {}
+        # ACC-13: a dimension with no evidence either way scores 0 and is listed
+        # here; the report shows it as "未评估" instead of awarding default points.
+        not_evaluated: list[str] = []
 
         # ── 地区匹配 (20分) ──
         region_score = 0
@@ -162,7 +165,7 @@ async def match_policies_for_company(
         elif policy.level == "national":
             region_score = 20
         elif not policy.province and not policy.level:
-            region_score = 10  # 无地区限制
+            not_evaluated.append("region")  # 政策未写地区要求，无法判断适用性
         score_breakdown["region"] = region_score
 
         # ── 行业匹配 (15分) ──
@@ -181,14 +184,15 @@ async def match_policies_for_company(
         score_breakdown["industry"] = industry_score
 
         # ── 企业规模 (10分) ──
-        scale_score = 5  # 默认（政策无规模要求）
-        if company_scale and policy.policy_type:
+        scale_score = 0
+        mentions_scale = any(kw in (policy.content or "") for kw in ["小型", "微型", "大型", "中小"])
+        if company_scale and policy.policy_type and mentions_scale:
             if "中小" in (policy.content or "") and company_scale in ["小型", "微型"]:
                 scale_score = 10
             elif "大型" in (policy.content or "") and company_scale == "大型":
                 scale_score = 10
-            elif not any(kw in (policy.content or "") for kw in ["小型", "微型", "大型", "中小"]):
-                scale_score = 8  # 政策未限定规模
+        else:
+            not_evaluated.append("scale")  # 企业规模未知或政策未提规模
         score_breakdown["scale"] = scale_score
 
         # ── 企业资质 (20分) ──
@@ -214,6 +218,9 @@ async def match_policies_for_company(
 
         # ── 技术方向 (15分) ──
         tech_score = 0
+        tech_keys = [key for key in INDUSTRY_KEYWORDS if key in company_tech_keywords]
+        if not tech_keys:
+            not_evaluated.append("tech")  # 企业没有可比对的技术方向
         for key, words in INDUSTRY_KEYWORDS.items():
             if key in company_tech_keywords:
                 matches = sum(1 for w in words if w.lower() in content_lower)
@@ -221,19 +228,21 @@ async def match_policies_for_company(
                     tech_score = max(tech_score, 15)
                 elif matches >= 1:
                     tech_score = max(tech_score, 10)
-        if tech_score == 0:
-            tech_score = 5  # 默认
         score_breakdown["tech"] = tech_score
 
         # ── 财务相关 (10分) ──
-        finance_score = 5  # 默认
-        if "研发费用" in content_lower or "研发支出" in content_lower:
+        finance_score = 0
+        mentions_rd = "研发费用" in content_lower or "研发支出" in content_lower
+        mentions_revenue = "营业收入" in content_lower
+        if mentions_rd:
             if company_rd_expense and company_rd_expense > 3:
                 finance_score = 10
             elif company_rd_expense:
                 finance_score = 7
-        if "营业收入" in content_lower and company_revenue:
+        if mentions_revenue and company_revenue:
             finance_score = min(finance_score + 3, 10)
+        if not (mentions_rd and company_rd_expense) and not (mentions_revenue and company_revenue):
+            not_evaluated.append("finance")  # 政策未提财务门槛或企业缺少财务数据
         score_breakdown["finance"] = finance_score
 
         # ── 语义相似度 (10分) ──
@@ -246,6 +255,7 @@ async def match_policies_for_company(
         # ── 生成 evidence ──
         evidence = {
             "score_breakdown": score_breakdown,
+            "not_evaluated_dimensions": not_evaluated,
             "total_score": final_score,
             "jurisdiction_match": region_score >= 15,
             "industry_match": industry_score >= 10,

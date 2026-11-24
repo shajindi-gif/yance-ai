@@ -174,12 +174,17 @@ def generate_match_report_pdf(
             continue
         ev = opp.evidence_json or {}
         bd = ev.get("score_breakdown", {})
+        skipped = set(ev.get("not_evaluated_dimensions") or [])
+
+        def _part(key, cap, bd=bd, skipped=skipped):
+            return "未评估" if key in skipped else f"{escape_html(bd.get(key, 0))}/{cap}"
+
         why_html += f"""
         <div class="priority-box priority-p1">
           <div class="priority-label">{escape_html(p.title[:35])}</div>
           <div style="font-size:10px;color:#475569">
-            评分构成：地区 {escape_html(bd.get("region", 0))}/20 · 行业 {escape_html(bd.get("industry", 0))}/15 · 规模 {escape_html(bd.get("scale", 0))}/10 ·
-            资质 {escape_html(bd.get("qualification", 0))}/20 · 技术 {escape_html(bd.get("tech", 0))}/15 · 财务 {escape_html(bd.get("finance", 0))}/10 · 语义 {escape_html(bd.get("semantic", 0))}/10
+            评分构成：地区 {_part("region", 20)} · 行业 {_part("industry", 15)} · 规模 {_part("scale", 10)} ·
+            资质 {_part("qualification", 20)} · 技术 {_part("tech", 15)} · 财务 {_part("finance", 10)} · 语义 {_part("semantic", 10)}
           </div>
           <div style="font-size:10px;margin-top:4px">
             <span class="tag tag-gray">地区与行业分数仅用于排序</span>

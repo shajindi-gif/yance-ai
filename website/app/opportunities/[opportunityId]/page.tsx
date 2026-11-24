@@ -106,6 +106,7 @@ export default function OpportunityDetailPage() {
   const sourceUrl = safeSourceUrl(snapshot.source_url);
   const missingMaterials = opportunity.evidence_json.missing_materials || [];
   const scoreBreakdown = opportunity.evidence_json.score_breakdown || {};
+  const notEvaluated = new Set(opportunity.evidence_json.not_evaluated_dimensions || []);
   const result = opportunity.eligibility_result;
   const evidence = opportunity.evidence || [];
   const requirements = opportunity.required_materials || [];
@@ -167,7 +168,7 @@ export default function OpportunityDetailPage() {
           ) : (
             <dl className={flow.definitionList}>
               {Object.entries(scoreBreakdown).map(([key, value]) => (
-                <div key={key}><dt>{key}</dt><dd>{value} 分</dd></div>
+                <div key={key}><dt>{key}</dt><dd>{notEvaluated.has(key) ? '未评估' : `${value} 分`}</dd></div>
               ))}
             </dl>
           )}

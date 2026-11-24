@@ -467,6 +467,7 @@ export interface Opportunity {
   status: string;
   evidence_json: {
     score_breakdown?: Record<string, number>;
+    not_evaluated_dimensions?: string[];
     missing_materials?: string[];
     gap_analysis_status?: string;
     [key: string]: unknown;
