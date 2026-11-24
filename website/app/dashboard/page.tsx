@@ -40,6 +40,8 @@ export default function DashboardPage() {
   const router = useRouter();
   const [data, setData] = useState<DashboardState | null>(null);
   const [loading, setLoading] = useState(true);
+  // Read the clock once per mount (lazy initialiser) so rendering stays pure.
+  const [now] = useState(() => Date.now());
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -118,7 +120,6 @@ export default function DashboardPage() {
   const pendingDocuments = data.documents.filter(
     (document) => document.ingestion_status !== "completed",
   );
-  const now = Date.now();
   const nextThirtyDays = now + 30 * 24 * 60 * 60 * 1000;
   const upcomingDeadlines = data.opportunities.filter((opportunity) => {
     const deadline = opportunity.policy_snapshot_json.deadline;

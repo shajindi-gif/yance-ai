@@ -144,7 +144,7 @@ export default function PricingPage() {
           <div className="card" style={{ padding: '32px' }}>
             <p style={{ fontSize: '0.95rem', lineHeight: 1.7, color: '#334155', marginBottom: '16px' }}>
               衍策引擎AI 使用 AI 自动化传统政策咨询中大量重复的信息搜索、规则判断、条件比对和材料整理工作。
-              我们出售的是<strong>效率、结构化和即时交付</strong>，而非虚假的"内部渠道"或"特殊关系"。
+              我们出售的是<strong>效率、结构化和即时交付</strong>，而非虚假的“内部渠道”或“特殊关系”。
             </p>
             <ul style={{ paddingLeft: '24px', color: '#64748b', fontSize: '0.9rem', lineHeight: 1.8 }}>
               <li>所有政策匹配结果均来源于公开政策数据库，可追溯</li>

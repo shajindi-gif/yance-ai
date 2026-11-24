@@ -50,6 +50,8 @@ export default function DiscoverPage() {
   const [levelFilter, setLevelFilter] = useState("");
   const [scanning, setScanning] = useState(false);
   const [scanMessage, setScanMessage] = useState("");
+  // Read the clock once per mount (lazy initialiser) so rendering stays pure.
+  const [now] = useState(() => Date.now());
 
   const load = useCallback(async () => {
     setError("");
@@ -158,7 +160,7 @@ export default function DiscoverPage() {
           {visible.map((policy) => {
             const amount = fundingLabel(policy);
             const deadline = policy.deadline ? new Date(policy.deadline) : null;
-            const daysLeft = deadline ? Math.ceil((deadline.getTime() - Date.now()) / 86400000) : null;
+            const daysLeft = deadline ? Math.ceil((deadline.getTime() - now) / 86400000) : null;
             return (
               <article key={policy.id} className={content.card}>
                 <div className={content.rowBetween} style={{ gap: 12, flexWrap: "wrap" }}>

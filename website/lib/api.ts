@@ -1658,8 +1658,8 @@ class ApiClient {
   async matchReport(companyId: string, provider: string = 'qwen'): Promise<{
     company_name: string;
     total_matches: number;
-    preview: any[];
-    full: any[];
+    preview: Record<string, unknown>[];
+    full: Record<string, unknown>[];
     ai_summary: string;
     provider_used: string;
   }> {
