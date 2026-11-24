@@ -4,6 +4,10 @@ on:
   pull_request:
   push:
     branches: [main]
+  # ACC-11: newly published advisories must fail CI even when no one pushes.
+  # Scheduled runs execute only the dependency-audit jobs below.
+  schedule:
+    - cron: "23 1 * * *"
 
 permissions:
   contents: read
@@ -15,6 +19,7 @@ concurrency:
 jobs:
   backend:
     name: Backend quality, migration, and tests
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
@@ -173,6 +178,7 @@ jobs:
 
   secret-scan:
     name: Secret scan
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -194,6 +200,7 @@ jobs:
 
   containers:
     name: Container builds
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     needs: [backend, frontend]
@@ -245,6 +252,7 @@ jobs:
 
   browser-e2e:
     name: Browser product journeys
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     services:
