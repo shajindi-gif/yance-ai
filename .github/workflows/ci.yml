@@ -78,6 +78,11 @@ jobs:
           alembic downgrade -1
           alembic upgrade head
 
+      - name: Verify full rollback to base and forward migration
+        run: |
+          alembic downgrade base
+          alembic upgrade head
+
       - name: Check model and migration alignment
         run: alembic check
 

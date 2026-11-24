@@ -77,8 +77,8 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_invoices_invoice_no"), table_name="invoices")
     op.drop_column("invoices", "pdf_path")
     op.drop_column("invoices", "invoice_type")
-    op.drop_column("invoices", "total_amount")
-    op.drop_column("invoices", "tax_amount")
+    # total_amount and tax_amount were already dropped (IF EXISTS) above; dropping
+    # them again aborted every downgrade below this revision (ACC-15).
     op.drop_column("invoices", "amount")
     op.drop_column("invoices", "items_json")
     op.drop_column("invoices", "seller_tax_number")
