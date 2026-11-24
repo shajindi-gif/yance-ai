@@ -12,6 +12,7 @@ from app.api.router import api_router
 from app.api.routes.health import router as health_router
 from app.core.config import settings
 from app.core.logging import configure_logging
+from app.services.oss import OSSNotConfigured
 
 configure_logging()
 logger = structlog.get_logger()
@@ -63,6 +64,12 @@ async def request_logging(request: Request, call_next):
     )
     structlog.contextvars.clear_contextvars()
     return response
+
+
+@app.exception_handler(OSSNotConfigured)
+async def object_storage_unavailable(_request: Request, _exc: OSSNotConfigured) -> JSONResponse:
+    # ACC-16: a missing deployment dependency is a temporary 503, not a server bug.
+    return JSONResponse(status_code=503, content={"detail": "Document storage is not configured"})
 
 
 app.include_router(health_router)

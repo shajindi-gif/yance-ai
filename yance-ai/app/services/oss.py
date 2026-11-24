@@ -5,6 +5,10 @@ import oss2
 from app.core.config import settings
 
 
+class OSSNotConfigured(RuntimeError):
+    """Object storage settings are missing; HTTP routes map this to 503 (ACC-16)."""
+
+
 class OSSStorage:
     def __init__(self) -> None:
         if not all(
@@ -15,7 +19,7 @@ class OSSStorage:
                 settings.oss_access_key_secret,
             ]
         ):
-            raise RuntimeError("OSS is not configured")
+            raise OSSNotConfigured("OSS is not configured")
         auth = oss2.Auth(settings.oss_access_key_id, settings.oss_access_key_secret)
         self.public_bucket = oss2.Bucket(auth, settings.oss_endpoint, settings.oss_bucket)
         internal_endpoint = settings.oss_internal_endpoint or settings.oss_endpoint
