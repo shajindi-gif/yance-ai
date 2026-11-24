@@ -173,6 +173,14 @@ class Settings(BaseSettings):
                 raise ValueError("Production document ingestion requires CLAMD_HOST")
             if not self.document_ocr_enabled:
                 raise ValueError("Production document ingestion requires DOCUMENT_OCR_ENABLED=true")
+            # The API runs in a container behind a separate proxy hop, so the
+            # peer is never loopback. With the loopback default every request
+            # appears to come from the proxy and per-IP limits become global.
+            proxies = {item.strip() for item in self.forwarded_allow_ips.split(",") if item.strip()}
+            if not proxies or proxies <= {"127.0.0.1", "::1", "localhost"}:
+                raise ValueError(
+                    "Production FORWARDED_ALLOW_IPS must list the reverse proxy's address or subnet"
+                )
         return self
 
 

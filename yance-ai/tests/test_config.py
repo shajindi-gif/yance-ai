@@ -74,6 +74,7 @@ def test_production_document_ingestion_accepts_fail_closed_ocr_configuration():
         malware_scan_mode="required",
         clamd_host="clamav",
         document_ocr_enabled=True,
+        forwarded_allow_ips="172.18.0.0/16",
     )
     assert config.document_ocr_provider == "tesseract"
     assert config.document_url_import_enabled is True
@@ -83,3 +84,21 @@ def test_production_document_ingestion_accepts_fail_closed_ocr_configuration():
 def test_production_rejects_weak_or_placeholder_jwt(secret):
     with pytest.raises(ValidationError, match="Production secrets must be replaced"):
         Settings(app_env="production", jwt_secret=secret, demo_features_enabled=False)
+
+
+@pytest.mark.parametrize("value", ["127.0.0.1", "", "127.0.0.1, ::1"])
+def test_production_rejects_loopback_only_forwarded_allow_ips(value):
+    """ACC-04: loopback-only trust makes every client share the proxy's rate-limit identity."""
+    with pytest.raises(ValidationError, match="reverse proxy"):
+        Settings(
+            _env_file=None,
+            app_env="production",
+            jwt_secret="production-jwt-secret-with-at-least-32-characters",
+            bootstrap_token="production-bootstrap-token",
+            tenant_provisioning_token="production-provisioning-token",
+            api_key_pepper="production-api-key-pepper-at-least-32-characters",
+            malware_scan_mode="required",
+            clamd_host="clamav",
+            document_ocr_enabled=True,
+            forwarded_allow_ips=value,
+        )
