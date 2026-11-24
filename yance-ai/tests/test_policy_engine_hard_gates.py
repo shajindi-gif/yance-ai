@@ -44,3 +44,34 @@ def test_evidence_gate_rejects_numeric_substring_as_source():
 
     assert hallucinations
     assert checked.criteria[0].result == CriterionResult.INSUFFICIENT
+
+
+def test_evidence_gate_relabels_unverified_quote_source():
+    """ACC-19: a quote the gate could not find in the policy must not stay labelled 政策原文."""
+    judgment = EligibilityJudgment(
+        criteria=[
+            CriterionEvaluation(
+                criterion="研发费用比例",
+                enterprise_fact="45%",
+                policy_requirement="研发费用占比不低于40%",
+                evidence_quote="研发费用占比不低于40%",
+                evidence_source="政策原文",
+                result=CriterionResult.PASS,
+            ),
+            CriterionEvaluation(
+                criterion="注册地",
+                enterprise_fact="上海",
+                policy_requirement="注册地在上海市",
+                evidence_quote="注册地在上海市",
+                evidence_source="政策原文",
+                result=CriterionResult.PASS,
+            ),
+        ],
+        overall_result=OverallResult.ELIGIBLE,
+    )
+
+    checked, _ = validate_evidence(judgment, "申报企业注册地在上海市，研发费用占比不低于140%。")
+
+    unverified, verified = checked.criteria
+    assert unverified.evidence_source == "模型提议，未核验"
+    assert verified.evidence_source == "政策原文"

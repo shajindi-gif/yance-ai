@@ -263,6 +263,10 @@ async def evaluate_criteria(
 
 
 # ── Step 3: Evidence Gate（V2.1 精准化）────────────────────────
+# ACC-19: a quote the gate could not match literally is the model's proposal,
+# not policy text; keep the label honest wherever the criterion is shown.
+UNVERIFIED_EVIDENCE_SOURCE = "模型提议，未核验"
+
 def validate_evidence(
     result: EligibilityJudgment, policy_content: str
 ) -> tuple[EligibilityJudgment, list[str]]:
@@ -290,6 +294,7 @@ def validate_evidence(
             criterion.reason = (criterion.reason or "") + "｜[Evidence Gate] 引用未获原文逐字支持，需人工复核"
             criterion.missing_information = "请补充支持该条件的政策原文条款并人工复核"
             criterion.confidence = min(criterion.confidence, 0.3)
+            criterion.evidence_source = UNVERIFIED_EVIDENCE_SOURCE
         checked_fields = [criterion.policy_requirement or "", criterion.evidence_quote or ""]
         for field in checked_fields:
             fn = _norm_field(field)
@@ -304,6 +309,7 @@ def validate_evidence(
                     criterion.reason or ""
                 ) + "｜[Evidence Gate] 政策要求含未经原文支持的数值，降级为信息不足"
                 criterion.confidence = min(criterion.confidence, 0.3)
+                criterion.evidence_source = UNVERIFIED_EVIDENCE_SOURCE
     return result, hallucinations
 
 
