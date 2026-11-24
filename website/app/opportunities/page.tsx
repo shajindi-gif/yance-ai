@@ -12,6 +12,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import AppShell from "@/components/workspace/AppShell";
 import flow from "@/components/workspace/CoreWorkflow.module.css";
+import ReportShareCard from "@/components/workspace/ReportShareCard";
 import content from "@/components/workspace/WorkspaceContent.module.css";
 import api, { type Company, type Opportunity, type PolicyScan } from "@/lib/api";
 
@@ -148,6 +149,15 @@ export default function OpportunitiesPage() {
               </div>
             )}
           </div>
+
+          {opportunities.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <ReportShareCard
+                opportunities={opportunities}
+                companyName={companies.find((company) => company.id === companyId)?.name ?? null}
+              />
+            </div>
+          )}
 
           {opportunities.length === 0 ? (
             <EmptyState
