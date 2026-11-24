@@ -93,6 +93,15 @@ def _provenance_url(value: str) -> str:
     return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, "", ""))
 
 
+# ACC-18: NAT64 prefixes can translate to any IPv4 address, including private
+# ranges and cloud metadata, behind a NAT64 gateway. The well-known /96 prefix
+# counts as "global" to ipaddress, so both prefixes are rejected explicitly.
+_NAT64_NETWORKS = (
+    ipaddress.ip_network("64:ff9b::/96"),
+    ipaddress.ip_network("64:ff9b:1::/48"),
+)
+
+
 def _validated_addresses(host: str, resolver: Resolver) -> list[str]:
     addresses = resolver(host)
     if not addresses:
@@ -102,7 +111,7 @@ def _validated_addresses(host: str, resolver: Resolver) -> list[str]:
             parsed = ipaddress.ip_address(address)
         except ValueError as exc:
             raise DocumentIngestionError("url_dns_failed", "Web address resolved incorrectly") from exc
-        if not parsed.is_global:
+        if not parsed.is_global or any(parsed in network for network in _NAT64_NETWORKS):
             raise DocumentIngestionError(
                 "url_private_address", "Private or non-public web addresses are not allowed"
             )

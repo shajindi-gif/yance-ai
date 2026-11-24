@@ -144,3 +144,20 @@ def test_total_fetch_deadline_is_enforced_before_connection(monkeypatch):
     assert error.value.code == "url_timeout"
     assert error.value.retryable is True
     assert connected == []
+
+
+@pytest.mark.parametrize(
+    "address",
+    ["64:ff9b::a9fe:a9fe", "64:ff9b::7f00:1", "64:ff9b:1::a00:1", "64:ff9b:1:ffff::1"],
+)
+def test_nat64_translated_addresses_are_rejected(address):
+    """ACC-18: NAT64 prefixes are 'global' to ipaddress but can reach internal IPv4 via a gateway."""
+    connected = []
+    fetcher = SafeURLFetcher(
+        resolver=lambda _host: [address],
+        connection_factory=lambda *args: connected.append(args),
+    )
+    with pytest.raises(DocumentIngestionError) as error:
+        fetcher.fetch("https://example.com/company")
+    assert error.value.code == "url_private_address"
+    assert connected == []
