@@ -10,7 +10,7 @@ API-first 多租户后端。代码已包含持久任务、政策版本与引用�
 - 私有 OSS 的预签名直传和对象存在性确认
 - orders/payments/invoices 商业系统骨架
 - Qwen、DeepSeek、OpenAI、Claude Provider 抽象和默认 mock
-- 可替换 `VectorStore` 接口，第一版实现 pgvector，未来可接 Qdrant
+- pgvector 向量检索（HNSW 索引），检索直接在 `app/services/policies/retrieval.py` 中查询；切换到 Qdrant 等独立向量库时需新增适配层
 - 产品分析事件、结构化请求日志、Agent Run 数据模型
 - Golden Cases 与确定性评测入口
 - 本地/生产 Docker Compose、Nginx、GitHub CI/CD 样例

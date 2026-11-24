@@ -21,7 +21,7 @@ FastAPI 通过 Nginx 提供 API；本地 Compose 使用自带 pgvector，生产 
 
 ## AI 系统
 
-`LLMProvider` 屏蔽 Qwen/DeepSeek/OpenAI/Claude 差异；`VectorStore` 屏蔽 pgvector/Qdrant 差异；`agent_runs` 记录模型、token、延迟和错误。默认 mock，未配置密钥时不会意外调用付费模型。
+`LLMProvider` 屏蔽 Qwen/DeepSeek/OpenAI/Claude 差异；向量检索直接使用 pgvector（`app/services/policies/retrieval.py`，未单独抽象 `VectorStore`）；`agent_runs` 记录模型、token、延迟和错误。默认 mock，未配置密钥时不会意外调用付费模型。
 
 ## 商业系统
 
