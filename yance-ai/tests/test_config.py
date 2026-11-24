@@ -102,3 +102,30 @@ def test_production_rejects_loopback_only_forwarded_allow_ips(value):
             document_ocr_enabled=True,
             forwarded_allow_ips=value,
         )
+
+
+def test_production_environment_without_secrets_refuses_to_load(tmp_path):
+    """ACC-12: a process that only says APP_ENV=production must not start on defaults."""
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    backend_root = Path(__file__).resolve().parents[1]
+    # Run from an empty directory so a developer's local .env cannot supply secrets.
+    env = {
+        "APP_ENV": "production",
+        "PYTHONPATH": str(backend_root),
+        "PATH": os.environ.get("PATH", ""),
+        "HOME": str(tmp_path),
+    }
+    result = subprocess.run(
+        [sys.executable, "-c", "import app.core.config"],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode != 0
+    assert "Production secrets must be replaced" in result.stderr
