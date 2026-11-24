@@ -1,5 +1,6 @@
 import asyncio
 import uuid
+from contextvars import ContextVar
 from datetime import UTC, datetime, timedelta
 from time import perf_counter
 
@@ -35,6 +36,16 @@ from app.services.agents.definitions import (
 from app.services.agents.policy_scan import execute_policy_scan
 
 logger = structlog.get_logger()
+
+
+# ACC-08 fencing: the worker currently executing a claimed run. None means the
+# caller did not come through claim_next (direct execute in tests/tools), in
+# which case no lease ownership is asserted.
+current_lease_owner: ContextVar[str | None] = ContextVar("current_lease_owner", default=None)
+
+
+class LeaseLost(Exception):
+    """This worker's lease was reclaimed by another worker; stop without writing."""
 
 
 class AgentHarness:
@@ -150,7 +161,11 @@ class AgentHarness:
         run_id = self.claim_next(db, worker_id)
         if not run_id:
             return None
-        await self.execute(db, run_id)
+        token = current_lease_owner.set(worker_id[:160])
+        try:
+            await self.execute(db, run_id)
+        finally:
+            current_lease_owner.reset(token)
         return run_id
 
     async def execute(self, db: Session, run_id: uuid.UUID) -> None:
@@ -167,6 +182,10 @@ class AgentHarness:
             await asyncio.wait_for(execute_policy_scan(db, run, self), timeout=settings.agent_run_timeout_seconds)
         except AgentCancelled:
             db.rollback()
+        except LeaseLost:
+            # Another worker owns the run now; it records progress and failures.
+            db.rollback()
+            logger.warning("agent_lease_lost", lease_owner=current_lease_owner.get())
         except Exception as exc:
             db.rollback()
             self._record_failure(db, run_id, exc)
@@ -389,6 +408,9 @@ class AgentHarness:
         run = db.scalar(select(AgentRun).where(AgentRun.id == run_id).with_for_update().execution_options(populate_existing=True))
         if not run or run.status == "cancelled":
             raise AgentCancelled("agent_cancelled")
+        expected_owner = current_lease_owner.get()
+        if expected_owner is not None and run.lease_owner != expected_owner:
+            raise LeaseLost(f"lease now held by {run.lease_owner!r}")
         authorized = db.scalar(select(User.id).join(Membership, Membership.user_id == User.id).join(Tenant, Tenant.id == User.tenant_id).where(
             User.id == run.user_id, User.tenant_id == run.tenant_id, User.is_active.is_(True),
             Tenant.is_active.is_(True), Membership.tenant_id == run.tenant_id,
