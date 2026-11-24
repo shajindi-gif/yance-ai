@@ -59,6 +59,12 @@ PG16必须使用实际生产大版本的pgvector镜像重复全部步骤；本�
 9. **值班负责人**持续观察readiness、5xx、p95、DB连接/锁、任务租约/重试/取消、队列积压、供应商错误、拒绝结算事件、重复权益、发票失败、引用门槛降级比例。先核实监控实际能告警；本机health p95不能作为模型任务SLA。
 10. **交易/政策负责人**按原交易号对账晚到/重复/拒绝事件，人工复核政策未知时效与来源冲突；验收完成后保留包、备份、日志、批准、SHA与观察记录。生产成功也不得据此宣传真实准确率或获批概率。
 
+## 向量索引迁移（20261124_0028，ACC-10）
+
+- 迁移用 `CREATE INDEX CONCURRENTLY` 为 `policy_chunks.embedding` 和 `policies.embedding` 建 HNSW 索引，不阻塞写入，但耗时与数据量成正比。上线前先在预发布库上按生产数据量计时，安排在低峰期执行。
+- 并发建索引失败会留下 `INVALID` 索引：用 `select indexrelid::regclass from pg_index where not indisvalid;` 检查，`DROP INDEX CONCURRENTLY` 后重跑迁移。
+- HNSW 是近似检索，并且先取近邻、再套用租户、地区、有效期等过滤，过滤严格时返回结果可能少于请求数量。生产 pgvector ≥ 0.8 时建议设置 `hnsw.iterative_scan = relaxed_order`；否则可适当调大 `hnsw.ef_search`（默认 40）。
+
 ## 回退条件和恢复方式
 
 立即停止放量：任一跨租户泄漏、重复权益、关键无依据结论、已退款订单复活、认证撤销失效、校验和不一致、未知迁移状态或不可恢复任务重复副作用。先阻断相关入口/暂停worker，保全账本和证据，不删除失败订单/政策/任务。

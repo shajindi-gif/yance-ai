@@ -58,7 +58,7 @@ Policy scanning invokes distinct search, eligibility, evidence and report respon
 
 ## RAG and structured policy architecture
 
-Policy ingestion creates checksum-addressed immutable versions and exact character-span chunks. Retrieval combines PostgreSQL full-text ranking, pgvector similarity, metadata filters and reciprocal-rank fusion. The structured policy layer stores rules, required materials and benefits; eligibility is therefore not delegated entirely to generative text.
+Policy ingestion creates checksum-addressed immutable versions and exact character-span chunks. Retrieval combines a SQL-side character-bigram/term lexical match over the whole visible corpus, HNSW-indexed pgvector cosine similarity, metadata filters and reciprocal-rank fusion (PostgreSQL full-text search is not used: its default parser does not segment Chinese). The structured policy layer stores rules, required materials and benefits; eligibility is therefore not delegated entirely to generative text.
 
 Evidence includes conclusion linkage, source title/URL, issuer, region, article, quote boundaries, confidence and verification state. Opportunities pin both policy and company-profile versions, so decisions can be reproduced after either source changes. A separately learned reranker is not claimed.
 
@@ -81,7 +81,7 @@ Evidence includes conclusion linkage, source title/URL, issuer, region, article,
 
 ## Security posture
 
-Implemented controls include password hashing, short-lived scoped JWTs, RBAC, tenant ownership checks, hashed API keys, process-local rate limits, upload quarantine/type/size/signature/archive checks, server-side hashes, fail-closed production malware-scanning configuration, redirect-safe validated-IP-pinned URL ingestion, bounded local OCR, replay-safe payment settlement, safe renderers, production secret validation, request correlation, no sensitive body logging, security response headers, audit records and CI dependency/secret/SAST/container scanning.
+Implemented controls include password hashing, short-lived scoped JWTs, RBAC, tenant ownership checks, hashed API keys, database-backed rate limits shared across workers (per account and per source IP for login), upload quarantine/type/size/signature/archive checks, server-side hashes, fail-closed production malware-scanning configuration, redirect-safe validated-IP-pinned URL ingestion, bounded local OCR, replay-safe payment settlement, safe renderers, production secret validation, request correlation, no sensitive body logging, security response headers, audit records and CI dependency/secret/SAST/container scanning.
 
 Known boundaries are disclosed in [`docs/production-readiness/RISK_ACCEPTANCE.md`](docs/production-readiness/RISK_ACCEPTANCE.md). There is no certification, external penetration-test, SSO/SAML, customer-managed key or PostgreSQL RLS claim.
 

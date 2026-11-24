@@ -322,6 +322,15 @@ class Policy(Base, TimestampMixin):
     """Global Policy Knowledge Base — platform-level, shared by all tenants."""
 
     __tablename__ = "policies"
+    __table_args__ = (
+        Index(
+            "ix_policies_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_with={"m": 16, "ef_construction": 64},
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
+    )
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), index=True, nullable=True
@@ -413,6 +422,13 @@ class PolicyChunk(Base, TimestampMixin):
     __tablename__ = "policy_chunks"
     __table_args__ = (
         UniqueConstraint("policy_version_id", "chunk_index", name="uq_policy_chunk_index"),
+        Index(
+            "ix_policy_chunks_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_with={"m": 16, "ef_construction": 64},
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
     )
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     policy_id: Mapped[uuid.UUID] = mapped_column(

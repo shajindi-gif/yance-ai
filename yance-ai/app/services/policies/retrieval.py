@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass
 from uuid import UUID
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.models import Policy, PolicyChunk, PolicyVersion
@@ -29,6 +29,34 @@ def _lexical_score(query_tokens: set[str], content: str) -> float:
         return 0
     matches = len(query_tokens & _tokens(content))
     return matches / len(query_tokens)
+
+
+LEXICAL_POOL_SIZE = 500
+MAX_QUERY_TOKENS = 64
+
+
+def _lexical_candidates(db: Session, base, query_tokens: set[str]) -> list[PolicyChunk]:
+    """Pre-select lexical candidates in SQL across the whole visible corpus (ACC-10).
+
+    Previously the newest 500 chunks were taken regardless of relevance, so older
+    policies vanished from the lexical channel once the corpus grew. Each chunk is
+    now ranked by how many query tokens occur in its whitespace-stripped,
+    lower-cased text — a superset of the exact token matches that
+    ``_lexical_score`` re-scores afterwards. No trigram index is used: queries are
+    mostly two-character Chinese tokens, which pg_trgm cannot accelerate.
+    """
+    tokens = sorted(query_tokens)[:MAX_QUERY_TOKENS]
+    if not tokens:
+        return []
+    normalized = func.regexp_replace(func.lower(PolicyChunk.content), r"\s+", "", "g")
+    hits = sum(case((func.strpos(normalized, token) > 0, 1), else_=0) for token in tokens)
+    return list(
+        db.scalars(
+            base.where(hits > 0)
+            .order_by(hits.desc(), PolicyChunk.created_at.desc())
+            .limit(LEXICAL_POOL_SIZE)
+        ).all()
+    )
 
 
 def hybrid_policy_candidates(
@@ -63,8 +91,8 @@ def hybrid_policy_candidates(
             or_(PolicyChunk.tenant_id.is_(None), PolicyChunk.tenant_id == tenant_id),
         )
     )
-    lexical_pool = list(db.scalars(base.order_by(PolicyChunk.created_at.desc()).limit(500)).all())
     query_tokens = _tokens(query)
+    lexical_pool = _lexical_candidates(db, base, query_tokens)
     lexical = sorted(
         ((chunk, _lexical_score(query_tokens, chunk.content)) for chunk in lexical_pool),
         key=lambda item: item[1],
