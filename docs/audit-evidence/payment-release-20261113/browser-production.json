@@ -1,0 +1,109 @@
+{
+  "base": "https://yance.ai",
+  "mode": "GET/HEAD only; no authentication or real purchase",
+  "release": {
+    "release": "sms-20261029-01",
+    "scope": "website-and-backend",
+    "compatibility": "legacy-workspace-supported",
+    "backendUpgradeIncluded": true,
+    "website_source": "4332071c804fc6e3f045746a5b71354e49ad4e57",
+    "api_release": "payment-metrics-20261115-02",
+    "backend_commit": "cf078f6267df52f2067a05982edf27e27b3dbcf1"
+  },
+  "apiRuntime": {
+    "application_version": "payment-metrics-20261115-02",
+    "source_revision": "cf078f6267df52f2067a05982edf27e27b3dbcf1",
+    "database_revisions": [
+      "20261113_0042"
+    ]
+  },
+  "results": [
+    {
+      "width": 390,
+      "route": "/",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "production-390-home.png"
+    },
+    {
+      "width": 390,
+      "route": "/pricing",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "production-390-pricing.png"
+    },
+    {
+      "width": 390,
+      "route": "/login",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "production-390-login.png"
+    },
+    {
+      "width": 390,
+      "route": "/discover",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "production-390-discover.png"
+    },
+    {
+      "width": 390,
+      "route": "/checkout",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "production-390-checkout.png"
+    },
+    {
+      "width": 390,
+      "route": "/success",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "production-390-success.png"
+    },
+    {
+      "width": 1440,
+      "route": "/",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "production-1440-home.png"
+    },
+    {
+      "width": 1440,
+      "route": "/pricing",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "production-1440-pricing.png"
+    },
+    {
+      "width": 1440,
+      "route": "/login",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "production-1440-login.png"
+    },
+    {
+      "width": 1440,
+      "route": "/discover",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "production-1440-discover.png"
+    },
+    {
+      "width": 1440,
+      "route": "/checkout",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "production-1440-checkout.png"
+    },
+    {
+      "width": 1440,
+      "route": "/success",
+      "status": 200,
+      "overflow": false,
+      "screenshot": "production-1440-success.png"
+    }
+  ],
+  "ssrPrice": true,
+  "hsts": true,
+  "pageErrors": []
+}

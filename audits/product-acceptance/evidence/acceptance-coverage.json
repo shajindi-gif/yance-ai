@@ -1,0 +1,11 @@
+{
+  "runtime_checked": 38,
+  "static_checked": 10,
+  "historical_only": 4,
+  "unverified": 8,
+  "denominator": 60,
+  "runtime_acceptance_coverage_percent": 63.3,
+  "inspection_coverage_including_static_and_history_percent": 86.7,
+  "statement_coverage_percent": 81.4008114456545,
+  "not_equivalent_to_pass_rate": true
+}

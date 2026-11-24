@@ -1,0 +1,138 @@
+
+Running 11 tests using 1 worker
+
+(node:54290) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   1 [chromium] › e2e/company-wide-closure.spec.ts:14:5 › real login returns to feedback; lost response retry creates one record and operator progress is visible (1.0m)
+(node:54564) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   2 [chromium] › e2e/company-wide-closure.spec.ts:72:5 › unsafe post-login destinations return to the workspace (1.8s)
+  ✓   3 [chromium] › e2e/frontend-redesign.spec.ts:11:5 › public design: real product image, readable mobile menu, focus containment and Escape (642ms)
+  ✘   4 [chromium] › e2e/frontend-redesign.spec.ts:35:5 › pricing error recovers into the real server catalogue without a purchase (5.3s)
+(node:54597) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   5 [chromium] › e2e/frontend-redesign.spec.ts:45:5 › real workspace: keyboard tabs, unsaved edit protection and mobile navigation (1.0m)
+(node:54728) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   6 [chromium] › e2e/frontend-redesign.spec.ts:77:5 › real workspace route sweep preserves existing core and billing entrances on mobile (8.2s)
+  ✘   7 [chromium] › e2e/frontend-redesign.spec.ts:93:5 › real isolated workflow: customer reviews a source-bound version, then downloads DOCX (1.0m)
+(node:54849) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   8 [chromium] › e2e/frontend-redesign.spec.ts:118:5 › login and registration fields expose their visible Chinese labels (1.9s)
+  ✘   9 [chromium] › e2e/workspace-roles.spec.ts:5:5 › real isolated API: owner edits and rejects stale suggestion; viewer reads but cannot write (36ms)
+(node:54859) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  10 [chromium] › e2e/sms-auth.spec.ts:8:5 › mobile registration through real local API, OTP replay rejected, company accessible (2.8s)
+  ✓  11 [chromium] › e2e/sms-auth.spec.ts:39:5 › email account binds phone through authenticated local API (1.0s)
+
+
+  1) [chromium] › e2e/company-wide-closure.spec.ts:14:5 › real login returns to feedback; lost response retry creates one record and operator progress is visible
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.click: Test ended.
+    Call log:
+      - waiting for getByRole('tab', { name: /^Feedback/ })
+
+
+      54 |   const operatorPage=await operatorContext.newPage();
+      55 |   await operatorPage.goto('/admin');
+    > 56 |   await operatorPage.getByRole('tab',{name:/^Feedback/}).click();
+         |                                                          ^
+      57 |   const feedbackRow=operatorPage.getByRole('row').filter({hasText:syntheticMessage});
+      58 |   await expect(feedbackRow).toBeVisible();
+      59 |   const processed=operatorPage.waitForResponse(response=>response.url().endsWith(`/admin/feedback/${feedbackId}`)&&response.request().method()==='PATCH');
+        at /private/tmp/yance-acceptance-20261029/website/e2e/company-wide-closure.spec.ts:56:58
+
+    Error Context: test-results/company-wide-closure-real--b17e9-perator-progress-is-visible-chromium/error-context.md
+
+  2) [chromium] › e2e/frontend-redesign.spec.ts:35:5 › pricing error recovers into the real server catalogue without a purchase
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('alert').filter({ hasText: '当前无法读取' })
+    Expected substring: "当前无法读取"
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toContainText" getByRole('alert').filter({ hasText: '当前无法读取' }) with timeout 5000ms
+      - waiting for getByRole('alert').filter({ hasText: '当前无法读取' })
+
+
+      37 |   await page.route('**/api/v1/products',route => { if(first){first=false;return route.fulfill({status:503,json:{detail:'Synthetic outage'}});}return route.continue(); });
+      38 |   await page.goto('/pricing');
+    > 39 |   await expect(page.getByRole('alert').filter({hasText:'当前无法读取'})).toContainText('当前无法读取');
+         |                                                                    ^
+      40 |   await page.getByRole('button',{name:'重新加载产品目录'}).click();
+      41 |   await expect(page.locator('.pricing-card').first()).toBeVisible();
+      42 |   await expect(page.getByRole('alert').filter({hasText:'当前无法读取'})).toHaveCount(0);
+        at /private/tmp/yance-acceptance-20261029/website/e2e/frontend-redesign.spec.ts:39:68
+
+    Error Context: test-results/frontend-redesign-pricing--0c879-atalogue-without-a-purchase-chromium/error-context.md
+
+  3) [chromium] › e2e/frontend-redesign.spec.ts:45:5 › real workspace: keyboard tabs, unsaved edit protection and mobile navigation
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.focus: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByRole('tab', { name: '资格矩阵', exact: true })
+
+
+      49 |   await page.goto(`/applications/${data.application_id}`);
+      50 |   const first=page.getByRole('tab',{name:'资格矩阵',exact:true});
+    > 51 |   await first.focus();
+         |               ^
+      52 |   await page.keyboard.press('ArrowRight');
+      53 |   await expect(page.getByRole('tab',{name:'项目概览',exact:true})).toBeFocused();
+      54 |   await expect(page.getByRole('tabpanel')).toHaveAttribute('aria-labelledby','application-tab-overview');
+        at /private/tmp/yance-acceptance-20261029/website/e2e/frontend-redesign.spec.ts:51:15
+
+    Error Context: test-results/frontend-redesign-real-wor-1528c-ction-and-mobile-navigation-chromium/error-context.md
+
+  4) [chromium] › e2e/frontend-redesign.spec.ts:93:5 › real isolated workflow: customer reviews a source-bound version, then downloads DOCX
+
+    Test timeout of 60000ms exceeded.
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: '开始准备', exact: true })
+
+
+       97 |   await page.addInitScript(token => localStorage.setItem('yance_token',token),data.export_token);
+       98 |   await page.goto(`/applications/${data.export_application_id}`);
+    >  99 |   await page.getByRole('button',{name:'开始准备',exact:true}).click();
+          |                                                           ^
+      100 |   await expect(page.getByRole('button',{name:'提交复核',exact:true})).toBeEnabled();
+      101 |   await page.getByRole('button',{name:'提交复核',exact:true}).click();
+      102 |   await page.getByRole('tab',{name:/工作稿/}).click();
+        at /private/tmp/yance-acceptance-20261029/website/e2e/frontend-redesign.spec.ts:99:59
+
+    Error Context: test-results/frontend-redesign-real-iso-3a4c0-version-then-downloads-DOCX-chromium/error-context.md
+
+  5) [chromium] › e2e/workspace-roles.spec.ts:5:5 › real isolated API: owner edits and rejects stale suggestion; viewer reads but cannot write
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 401
+
+      12 |   await owner.addInitScript(token => localStorage.setItem('yance_token', token), fixture.token);
+      13 |   const initialResponse = await owner.request.get(`/api/v1/applications/${fixture.application_id}`, { headers: { Authorization: `Bearer ${fixture.token}` } });
+    > 14 |   expect(initialResponse.status()).toBe(200);
+         |                                    ^
+      15 |   const initial = await initialResponse.json();
+      16 |   const priorVersion = Math.max(0, ...initial.generated.map((item: {version:number}) => item.version));
+      17 |   const page = await owner.newPage();
+        at /private/tmp/yance-acceptance-20261029/website/e2e/workspace-roles.spec.ts:14:36
+
+    Error Context: test-results/workspace-roles-real-isola-242dd-ewer-reads-but-cannot-write-chromium/error-context.md
+
+  5 failed
+    [chromium] › e2e/company-wide-closure.spec.ts:14:5 › real login returns to feedback; lost response retry creates one record and operator progress is visible
+    [chromium] › e2e/frontend-redesign.spec.ts:35:5 › pricing error recovers into the real server catalogue without a purchase
+    [chromium] › e2e/frontend-redesign.spec.ts:45:5 › real workspace: keyboard tabs, unsaved edit protection and mobile navigation
+    [chromium] › e2e/frontend-redesign.spec.ts:93:5 › real isolated workflow: customer reviews a source-bound version, then downloads DOCX
+    [chromium] › e2e/workspace-roles.spec.ts:5:5 › real isolated API: owner edits and rejects stale suggestion; viewer reads but cannot write
+  6 passed (3.4m)

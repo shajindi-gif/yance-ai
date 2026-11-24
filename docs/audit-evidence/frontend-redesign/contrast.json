@@ -1,0 +1,32 @@
+[
+  {
+    "label": "正文",
+    "foreground": "#203038",
+    "background": "#f7f7f2",
+    "ratio": 12.68
+  },
+  {
+    "label": "次要文字",
+    "foreground": "#59676d",
+    "background": "#f7f7f2",
+    "ratio": 5.45
+  },
+  {
+    "label": "主按钮",
+    "foreground": "#ffffff",
+    "background": "#126a9a",
+    "ratio": 5.91
+  },
+  {
+    "label": "成功状态",
+    "foreground": "#067647",
+    "background": "#ecfdf3",
+    "ratio": 5.4
+  },
+  {
+    "label": "警告状态",
+    "foreground": "#b54708",
+    "background": "#fffaeb",
+    "ratio": 5.2
+  }
+]

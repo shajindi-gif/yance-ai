@@ -1,0 +1,20 @@
+{
+  "source": "cf078f6267df52f2067a05982edf27e27b3dbcf1",
+  "restored_snapshot": {
+    "restored_snapshot_counts": [
+      27,
+      35
+    ],
+    "paying_customers": 0,
+    "recognized_revenue": [],
+    "unverified_paid_orders": 23,
+    "read_only": true
+  },
+  "actual_image": {
+    "image": "sha256:2d23c2e0c404353ded22b55f3a7f6ffab20328629da61d2fd8fafdeb3bccfa7d",
+    "config": "sha256:0715e31010ea4eb813264976acb661867ebb87eedd6c12f67c78453ef32fda27",
+    "fixed_high_critical": 0,
+    "layers": 78
+  },
+  "migration_executed": false
+}

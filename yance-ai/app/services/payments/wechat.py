@@ -54,6 +54,8 @@ def is_wechat_configured() -> bool:
         and settings.wxpay_serial_no
         and settings.wxpay_private_key
         and settings.wxpay_apiv3_key
+        and settings.wxpay_pubkey
+        and settings.wxpay_pubkey_id
         and not _is_placeholder(settings.wxpay_mch_id)
         and not _is_placeholder(settings.wxpay_private_key)
     )
@@ -95,7 +97,7 @@ def _headers(method: str, url_path: str, body: str) -> dict:
 
 
 def create_native_order(
-    out_trade_no: str, total_fen: int, description: str, notify_url: str
+    out_trade_no: str, total_fen: int, description: str, notify_url: str, expires_at: str | None = None
 ) -> tuple[str | None, str | None]:
     """Create a Native order. Returns (code_url, error_code)."""
     if not is_wechat_configured():
@@ -121,6 +123,8 @@ def create_native_order(
             "notify_url": notify_url,
             "amount": {"total": total_fen, "currency": "CNY"},
         }
+    if expires_at:
+        body["time_expire"] = expires_at
     payload = json.dumps(body, ensure_ascii=False, separators=(",", ":"))
     try:
         response = httpx.post(
@@ -168,6 +172,7 @@ def query_order(out_trade_no: str) -> dict | None:
             "payer_total": amount.get("payer_total") or amount.get("total"),
             "total": amount.get("total"),
             "currency": amount.get("currency"),
+            "success_time": data.get("success_time"),
         }
     except (httpx.HTTPError, ValueError, KeyError):
         return None
@@ -200,7 +205,11 @@ def verify_notify_signature(
     timestamp: str, nonce: str, body: str, signature_b64: str, serial: str
 ) -> bool:
     """Verify callback signature using the WeChat Pay public key (PUB_KEY_ID mode)."""
-    if not settings.wxpay_pubkey:
+    try:
+        fresh = abs(time.time() - int(timestamp)) <= 300
+    except (ValueError, TypeError):
+        return False
+    if not fresh or not settings.wxpay_pubkey:
         return False
     # In public-key mode the callback serial is the configured PUB_KEY_ID.
     if settings.wxpay_pubkey_id and serial != settings.wxpay_pubkey_id:
@@ -224,3 +233,33 @@ def decrypt_resource(resource: dict) -> dict:
     cipher.update((resource.get("associated_data") or "").encode("utf-8"))
     plaintext = cipher.decrypt_and_verify(data, tag)
     return json.loads(plaintext.decode("utf-8"))
+
+
+def close_order(out_trade_no: str) -> bool:
+    if not is_wechat_configured():
+        return False
+    partner = settings.wxpay_mode == 'partner'
+    prefix = '/v3/pay/partner/transactions' if partner else '/v3/pay/transactions'
+    path = f'{prefix}/out-trade-no/{out_trade_no}/close'
+    identity = {'sp_mchid':settings.wxpay_sp_mch_id,'sub_mchid':settings.wxpay_sub_mch_id} if partner else {'mchid':settings.wxpay_mch_id}
+    body = json.dumps(identity,separators=(',',':'))
+    try:
+        response = httpx.post(settings.wxpay_gateway+path,content=body.encode(),headers=_headers('POST',path,body),timeout=10)
+        return response.status_code == 204
+    except httpx.HTTPError:
+        return False
+
+
+def request_refund(out_trade_no: str, refund_no: str, total: int, reason: str) -> tuple[dict, bytes]:
+    path = '/v3/refund/domestic/refunds'
+    body = {'out_trade_no':out_trade_no,'out_refund_no':refund_no,'reason':reason,
+            'notify_url':settings.wxpay_refund_notify_url,
+            'amount':{'refund':total,'total':total,'currency':'CNY'}}
+    if settings.wxpay_mode == 'partner':
+        body['sub_mchid'] = settings.wxpay_sub_mch_id
+    payload = json.dumps(body,ensure_ascii=False,separators=(',',':'))
+    response = httpx.post(settings.wxpay_gateway+path,content=payload.encode(),headers=_headers('POST',path,payload),timeout=10)
+    response.raise_for_status()
+    if not verify_notify_signature(response.headers.get('Wechatpay-Timestamp',''),response.headers.get('Wechatpay-Nonce',''),response.text,response.headers.get('Wechatpay-Signature',''),response.headers.get('Wechatpay-Serial','')):
+        raise ValueError('WeChat refund response signature failed')
+    return response.json(),response.content

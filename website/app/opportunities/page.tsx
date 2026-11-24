@@ -12,6 +12,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import AppShell from "@/components/workspace/AppShell";
 import flow from "@/components/workspace/CoreWorkflow.module.css";
+import ReportShareCard from "@/components/workspace/ReportShareCard";
 import content from "@/components/workspace/WorkspaceContent.module.css";
 import api, { type Company, type Opportunity, type PolicyScan } from "@/lib/api";
 
@@ -115,7 +116,7 @@ export default function OpportunitiesPage() {
       <PageHeader
         eyebrow="Opportunities"
         title="政策机会"
-        description="匹配分表示相关性，不等于申报资格；资格在证据核验前保持“需要更多信息”。"
+        description="列表按实效排序（可申报 × 窗口 × 证据 × 同城 − 宣传噪声）。分数不等于政府认定资格。"
         actions={
           <Button type="button" onClick={startScan} disabled={scanning || !companyId}>
             {scanning ? "创建扫描中…" : "开始政策扫描"}
@@ -149,6 +150,15 @@ export default function OpportunitiesPage() {
             )}
           </div>
 
+          {opportunities.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <ReportShareCard
+                opportunities={opportunities}
+                companyName={companies.find((company) => company.id === companyId)?.name ?? null}
+              />
+            </div>
+          )}
+
           {opportunities.length === 0 ? (
             <EmptyState
               icon="◎"
@@ -161,17 +171,36 @@ export default function OpportunitiesPage() {
               {opportunities.map((opportunity) => {
                 const eligibility = ELIGIBILITY[opportunity.eligibility_status];
                 const snapshot = opportunity.policy_snapshot_json;
+                const evidence = opportunity.evidence_json || {};
+                const features = (evidence.rank_features || {}) as Record<string, unknown>;
+                const note = typeof features.ranking_note === "string" ? features.ranking_note : "";
+                const weak = note.includes("弱匹配") || Number(evidence.active_hard_rules || 0) <= 0;
+                const demoted = note.includes("降权") || Number(features.noise_penalty || 0) < -10;
+                const sameCity = Number(features.region_fit || 0) >= 16;
+                const hasWindow = Boolean(snapshot.deadline || evidence.deadline);
+                const tags: Array<{ label: string; tone: "success" | "info" | "warning" | "neutral" | "danger" }> = [];
+                if (sameCity) tags.push({ label: "同城优先", tone: "success" });
+                if (hasWindow) tags.push({ label: "有窗口", tone: "info" });
+                if (Number(evidence.active_hard_rules || 0) > 0) tags.push({ label: "有规则", tone: "info" });
+                if (Number(features.actionability || 0) >= 8) tags.push({ label: "可申报倾向", tone: "success" });
+                if (weak) tags.push({ label: "弱匹配降权", tone: "warning" });
+                if (demoted && !weak) tags.push({ label: "宣传/规划降权", tone: "neutral" });
                 return (
                   <Link key={opportunity.id} href={`/opportunities/${opportunity.id}`} className={content.listCard}>
                     <div className={content.listCardHeader}>
                       <span className={content.itemTitle}>{snapshot.title || opportunity.title}</span>
                       <div className={flow.inlineMeta}>
-                        <Badge tone="info">匹配 {Math.round((opportunity.score || 0) * 100)}%</Badge>
+                        <Badge tone="info">实效 {Math.round(Number(features.final_score ?? ((opportunity.score || 0) * 100)))}</Badge>
                         <Badge tone={eligibility.tone}>{eligibility.label}</Badge>
                       </div>
                     </div>
+                    {tags.length > 0 && (
+                      <div className={flow.inlineMeta} style={{ marginTop: 8, flexWrap: "wrap" }}>
+                        {tags.map((tag) => <Badge key={tag.label} tone={tag.tone}>{tag.label}</Badge>)}
+                      </div>
+                    )}
                     <div className={content.meta}>
-                      {[snapshot.issuing_authority, snapshot.jurisdiction, snapshot.support_amount, snapshot.deadline ? `截止 ${new Date(snapshot.deadline).toLocaleDateString("zh-CN")}` : null].filter(Boolean).join(" · ") || "政策元数据待补齐"}
+                      {[note || null, snapshot.issuing_authority, snapshot.jurisdiction, snapshot.support_amount, snapshot.deadline ? `截止 ${new Date(snapshot.deadline).toLocaleDateString("zh-CN")}` : null].filter(Boolean).join(" · ") || "政策元数据待补齐"}
                     </div>
                   </Link>
                 );

@@ -1,0 +1,103 @@
+{
+  "release": {
+    "release": "frontend-20261109-01",
+    "website_source": "680e048",
+    "api_patch_source": "68b3d5b",
+    "runtime_version_url": "/api/runtime-version",
+    "scope": "frontend-only"
+  },
+  "results": [
+    {
+      "width": 390,
+      "path": "/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/intelligence",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/login",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/pricing",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "path": "/orders",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "path": "/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "path": "/intelligence",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "path": "/login",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "path": "/pricing",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 768,
+      "path": "/orders",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/intelligence",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/login",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/pricing",
+      "status": 200,
+      "overflow": false
+    },
+    {
+      "width": 1440,
+      "path": "/orders",
+      "status": 200,
+      "overflow": false
+    }
+  ],
+  "localTextTool": true,
+  "requests": "GET/HEAD only"
+}

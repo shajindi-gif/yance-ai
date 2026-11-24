@@ -1,0 +1,9 @@
+active
+{"release":"web-20261031-01","source":"5bd9e19","backend":"b408a535+sms-consent-5bd9e19","migration":"20261029_0034"}
+{"status":"ok","service":"yance.ai API","version":"b408a535+sms-consent-5bd9e19"}20261029_0034
+BOTH_CONSENT_VERSIONS_SYNTHETIC_REGISTRATION_PASSED_NO_MESSAGES_SENT
+
+
+> yance-website@0.1.0 postbuild
+> node scripts/prepare-standalone.mjs
+

@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import AppShell from "@/components/workspace/AppShell";
 import content from "@/components/workspace/WorkspaceContent.module.css";
 import api, { type NotificationItem } from "@/lib/api";
+import pageStyles from './page.module.css';
 
 const SEVERITY_TONE = { info: "neutral", warning: "warning", critical: "danger" } as const;
 
@@ -110,16 +111,16 @@ export default function NotificationsPage() {
               className={content.card}
               style={item.read_at ? { opacity: 0.62 } : undefined}
             >
-              <div className={content.rowBetween} style={{ gap: 12, flexWrap: "wrap" }}>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <div className={[content.rowBetween, pageStyles.section].filter(Boolean).join(' ')} >
+                <div className={pageStyles.section2}>
+                  <div className={pageStyles.layout}>
                     <Badge tone={SEVERITY_TONE[item.severity] || "neutral"}>{item.severity}</Badge>
-                    <strong style={{ fontSize: 14.5 }}>{item.title}</strong>
+                    <strong className={pageStyles.section3}>{item.title}</strong>
                   </div>
                   {item.body ? (
-                    <div className={content.subtle} style={{ marginTop: 6, fontSize: 13 }}>{item.body}</div>
+                    <div className={[content.subtle, pageStyles.section4].filter(Boolean).join(' ')} >{item.body}</div>
                   ) : null}
-                  <div className={content.meta} style={{ marginTop: 6 }}>
+                  <div className={[content.meta, pageStyles.section5].filter(Boolean).join(' ')} >
                     {new Date(item.created_at).toLocaleString("zh-CN")}
                   </div>
                 </div>

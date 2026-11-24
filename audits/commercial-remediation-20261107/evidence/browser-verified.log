@@ -1,0 +1,28 @@
+
+Running 19 tests using 1 worker
+
+(node:8744) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › e2e/evidence-workspace.spec.ts:5:5 › evidence matrix links real API results and creates persistent gap tasks (1.0s)
+  ✓   2 [chromium] › e2e/login-payment-ux.spec.ts:8:5 › two identity entrances, code signup and legacy email password access (334ms)
+  ✓   3 [chromium] › e2e/login-payment-ux.spec.ts:25:5 › return URL cannot claim payment; retry displays only server-confirmed order state (272ms)
+  ✓   4 [chromium] › e2e/login-payment-ux.spec.ts:38:5 › resume uses server price and payment channel and never creates another order (392ms)
+  ✓   5 [chromium] › e2e/login-payment-ux.spec.ts:56:5 › price change requires another confirmation before contacting a payment provider (391ms)
+  ✓   6 [chromium] › e2e/login-payment-ux.spec.ts:73:5 › real local API restores an order and preserves it when provider is unavailable (416ms)
+  ✓   7 [chromium] › e2e/login-payment-ux.spec.ts:92:5 › pending return automatically refreshes the server status without claiming early success (3.6s)
+  ✓   8 [chromium] › e2e/policy-evidence.spec.ts:4:5 › customer searches collected evidence and reads its immutable source version (445ms)
+  ✓   9 [chromium] › e2e/remediation.spec.ts:10:5 › nine audited page/viewport samples have no automated WCAG violations (8.7s)
+  ✓  10 [chromium] › e2e/remediation.spec.ts:23:5 › payment QR is rendered locally without an external image service (307ms)
+  ✓  11 [chromium] › e2e/remediation.spec.ts:41:5 › real isolated API: demo request is persisted privately and displayed with a server status (370ms)
+  ✓  12 [chromium] › e2e/remediation.spec.ts:57:5 › private entrances are excluded from indexing and base/embed protection is present (261ms)
+(node:8826) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  13 [chromium] › e2e/frontend-redesign.spec.ts:11:5 › public design: real product image, readable mobile menu, focus containment and Escape (372ms)
+  ✓  14 [chromium] › e2e/frontend-redesign.spec.ts:35:5 › pricing error recovers into the real server catalogue without a purchase (204ms)
+  ✓  15 [chromium] › e2e/frontend-redesign.spec.ts:45:5 › real workspace: keyboard tabs, unsaved edit protection and mobile navigation (338ms)
+  ✓  16 [chromium] › e2e/frontend-redesign.spec.ts:77:5 › real workspace route sweep preserves existing core and billing entrances on mobile (1.6s)
+  ✓  17 [chromium] › e2e/frontend-redesign.spec.ts:93:5 › real isolated workflow: customer reviews a source-bound version, then downloads DOCX (618ms)
+  ✓  18 [chromium] › e2e/frontend-redesign.spec.ts:118:5 › login and registration fields expose their visible Chinese labels (153ms)
+  ✓  19 [chromium] › e2e/workspace-roles.spec.ts:5:5 › real isolated API: owner edits and rejects stale suggestion; viewer reads but cannot write (1.2s)
+
+  19 passed (21.8s)

@@ -1,0 +1,10 @@
+[
+  {
+    "name": "firefox",
+    "status": "not executed: browser runtime unavailable"
+  },
+  {
+    "name": "webkit",
+    "status": "not executed: browser runtime unavailable"
+  }
+]

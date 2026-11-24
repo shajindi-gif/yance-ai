@@ -15,3 +15,7 @@ ea0c27e66b328bed0264e2954efe35caf0ac81d7:yance-ai/tests/test_wechat_pay.py:gener
 30753ba6c0b245783c76eafa36b3ab233f91ae14:yance-ai/.env.example:stripe-access-token:28
 # Historical PEM header/footer template around a runtime variable; no key body.
 74be4643826c6afdf60f63622e8bd57dd4292a3e:yance-ai/app/api/routes/payments.py:private-key:49
+# Synthetic repeating hexadecimal key in a MockTransport government API fixture.
+b245bc548f95694710ee5da1bfd6d7f9318d483b:yance-ai/tests/policy_collection/test_open_api_adapter.py:generic-api-key:23
+# Fixed synthetic account password in an isolated SMS-binding integration test.
+7459e6196e20f6e1cd79a03b859f64f9a546b258:yance-ai/tests/test_sms_auth.py:generic-api-key:161

@@ -1,0 +1,14 @@
+[Unit]
+Description=yance.ai policy collector guard every 15 minutes
+Documentation=file:///opt/yance/collector-20261106-r3/docs/policy-collection-host-native-2026-11-06.md
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=15min
+AccuracySec=30s
+Unit=yance-collector-guard.service
+# Never pile up: one run at a time, no catch-up bursts after a reboot.
+Persistent=false
+
+[Install]
+WantedBy=timers.target

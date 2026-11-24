@@ -1,0 +1,50 @@
+.section {
+  font-size: 12px;
+}
+
+.layout {
+  display: flex;
+  gap: 8px;
+}
+
+.section2 {
+  margin-top: 16px;
+}
+
+.section3 {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.layout2 {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.section4 {
+  flex: 1;
+  min-width: 140px;
+  padding: 10px 12px;
+  border: 1px solid #dde3eb;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.section5 {
+  flex: 1;
+  min-width: 180px;
+  padding: 10px 12px;
+  border: 1px solid #dde3eb;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.section6 {
+  flex: 1;
+  min-width: 160px;
+  padding: 10px 12px;
+  border: 1px solid #dde3eb;
+  border-radius: 8px;
+  font-size: 13px;
+}

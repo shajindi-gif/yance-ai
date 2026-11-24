@@ -1,0 +1,27 @@
+> yance-website@0.1.0 test:e2e
+> playwright test e2e/frontend-redesign.spec.ts e2e/artifact-comparison.spec.ts e2e/legacy-workspace.spec.ts e2e/workspace-roles.spec.ts e2e/audit-journey.spec.ts e2e/legacy-api.spec.ts e2e/documents.spec.ts
+
+
+Running 15 tests using 1 worker
+
+(node:56179) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › e2e/artifact-comparison.spec.ts:3:5 › synthetic UI contract: compare saved versions and bind a version comment (990ms)
+  ✓   2 [chromium] › e2e/audit-journey.spec.ts:5:5 › password login recovers from an error and logout revokes the saved session (856ms)
+  ✓   3 [chromium] › e2e/audit-journey.spec.ts:30:5 › pricing hydrates with the server catalogue and records a local timing sample (251ms)
+  ✓   4 [chromium] › e2e/audit-journey.spec.ts:46:5 › mobile login has no horizontal page overflow and the first keyboard target is visible (212ms)
+  ✓   5 [chromium] › e2e/audit-journey.spec.ts:55:5 › district evidence survives saving and refreshing a company profile (512ms)
+  ✓   6 [chromium] › e2e/documents.spec.ts:3:5 › authenticated documents workspace renders the verified ingestion controls (394ms)
+  ✓   7 [chromium] › e2e/legacy-api.spec.ts:5:5 › older API supports profile saving and local logout without new endpoints (532ms)
+  ✓   8 [chromium] › e2e/legacy-workspace.spec.ts:4:5 › legacy application preserves general comments and hides unsupported V2 writes (435ms)
+(node:56221) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   9 [chromium] › e2e/frontend-redesign.spec.ts:11:5 › public design: real product image, readable mobile menu, focus containment and Escape (297ms)
+  ✓  10 [chromium] › e2e/frontend-redesign.spec.ts:35:5 › pricing error recovers into the real server catalogue without a purchase (242ms)
+  ✓  11 [chromium] › e2e/frontend-redesign.spec.ts:45:5 › real workspace: keyboard tabs, unsaved edit protection and mobile navigation (696ms)
+  ✓  12 [chromium] › e2e/frontend-redesign.spec.ts:77:5 › real workspace route sweep preserves existing core and billing entrances on mobile (1.6s)
+  ✓  13 [chromium] › e2e/frontend-redesign.spec.ts:93:5 › real isolated workflow: customer reviews a source-bound version, then downloads DOCX (565ms)
+  ✓  14 [chromium] › e2e/frontend-redesign.spec.ts:118:5 › login and registration fields expose their visible Chinese labels (161ms)
+  ✓  15 [chromium] › e2e/workspace-roles.spec.ts:5:5 › real isolated API: owner edits and rejects stale suggestion; viewer reads but cannot write (1.1s)
+
+  15 passed (10.0s)

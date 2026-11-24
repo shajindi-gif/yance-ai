@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-29",
+  "status": "local_candidate_not_deployed",
+  "backend": {
+    "passed": 243,
+    "database": "fresh isolated PostgreSQL18",
+    "commands": [
+      "alembic upgrade head",
+      "pytest --tb=short -q",
+      "ruff check app tests",
+      "python scripts/export_openapi.py --check"
+    ]
+  },
+  "frontend": {
+    "unit_passed": 6,
+    "browser_passed": 10,
+    "commands": [
+      "npm run typecheck",
+      "npm run test:unit",
+      "npm run build",
+      "PLAYWRIGHT_EXTERNAL_SERVER=1 PLAYWRIGHT_BASE_URL=http://127.0.0.1:3028 npx playwright test e2e/growth-journey.spec.ts e2e/pricing-system.spec.ts e2e/audience-feedback.spec.ts --reporter=list"
+    ],
+    "browser_scope": "isolated localhost only; provider paths contract-mocked; server concurrency tested separately against real isolated DB"
+  },
+  "not_verified": [
+    "real provider sandbox",
+    "live payment or invoice",
+    "order bound immutable report version",
+    "conversion uplift",
+    "production rollout"
+  ],
+  "image_bytes": 266824
+}

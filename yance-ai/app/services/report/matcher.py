@@ -13,16 +13,26 @@
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from app.models.models import Company, CompanyProfileVersion, Opportunity, Policy
+from app.models.models import (
+    Company,
+    CompanyProfileVersion,
+    EligibilityRule,
+    Opportunity,
+    Policy,
+)
 from app.services.llm.registry import embed_texts
 from app.services.policies.applicability import applicable_region_clauses, current_policy_clauses
 from app.services.policies.ingestion import latest_policy_version
 from app.services.policies.retrieval import hybrid_policy_candidates
 from app.services.policies.visibility import visible_policy_clause
-
+from app.services.report.ranking import (
+    compute_rank_features,
+    enforce_local_diversity,
+    sort_key_for_opportunity,
+)
 # 行业关键词映射
 INDUSTRY_KEYWORDS = {
     "人工智能": ["AI", "人工智能", "算力", "模型", "智能", "机器学习", "深度学习", "大模型", "GPU"],
@@ -87,7 +97,7 @@ async def match_policies_for_company(
         tenant_id=tenant_id,
         query=profile_text,
         query_vector=company_vector,
-        limit=50,
+        limit=60,
         region=region,
     )
     retrieval_chunks = {item.policy.id: item.chunk_ids for item in candidates}
@@ -105,6 +115,8 @@ async def match_policies_for_company(
                 Policy.embedding.isnot(None),
                 *current_policy_clauses(),
                 *applicable_region_clauses(region),
+                # 与 hybrid 通道一致的质量闸门：排除 withheld 政策。
+                or_(Policy.quality_deliverable.is_(None), Policy.quality_deliverable.is_(True)),
             )
             .order_by(Policy.embedding.cosine_distance(company_vector))
             .limit(50)
@@ -148,57 +160,35 @@ async def match_policies_for_company(
         source_version = latest_policy_version(db, policy.id)
         score_breakdown = {}
 
-        # ── 地区匹配 (20分) ──
-        region_score = 0
-        if company.province and policy.province:
-            if company.province == policy.province:
-                region_score = 15
-                if company.city and policy.city and company.city == policy.city:
-                    region_score = 18
-                if company.city and policy.district and company.city == policy.district:
-                    region_score = 20
-            elif policy.level == "national":
-                region_score = 20  # 国家政策全国适用
-        elif policy.level == "national":
-            region_score = 20
-        elif not policy.province and not policy.level:
-            region_score = 10  # 无地区限制
-        score_breakdown["region"] = region_score
-
-        # ── 行业匹配 (15分) ──
+        # ── Legacy interpretable components (feed rank_features; not final alone) ──
         industry_score = 0
         if company.industry:
             if policy.industry and company.industry == policy.industry:
                 industry_score = 15
             else:
-                # 关键词匹配
                 for key, words in INDUSTRY_KEYWORDS.items():
                     if key in (company.industry or ""):
                         if any(w.lower() in (policy.content or "").lower() for w in words):
                             industry_score = max(industry_score, 10)
                         if any(w.lower() in (policy.industry or "").lower() for w in words):
                             industry_score = max(industry_score, 12)
-        score_breakdown["industry"] = industry_score
 
-        # ── 企业规模 (10分) ──
-        scale_score = 5  # 默认（政策无规模要求）
+        scale_score = 5
         if company_scale and policy.policy_type:
             if "中小" in (policy.content or "") and company_scale in ["小型", "微型"]:
                 scale_score = 10
             elif "大型" in (policy.content or "") and company_scale == "大型":
                 scale_score = 10
             elif not any(kw in (policy.content or "") for kw in ["小型", "微型", "大型", "中小"]):
-                scale_score = 8  # 政策未限定规模
-        score_breakdown["scale"] = scale_score
+                scale_score = 8
 
-        # ── 企业资质 (20分) ──
         qual_score = 0
         content_lower = (policy.content or "").lower()
         if "高新技术" in content_lower or "高企" in content_lower:
             if "高企" in company_qualifications or "高新技术企业" in company_qualifications:
                 qual_score += 20
             else:
-                qual_score += 5  # 尚未获得，可申报
+                qual_score += 5
         if "专精特新" in content_lower:
             if any("专精特新" in q for q in company_qualifications):
                 qual_score += 15
@@ -210,9 +200,7 @@ async def match_policies_for_company(
             else:
                 qual_score += 5
         qual_score = min(qual_score, 20)
-        score_breakdown["qualification"] = qual_score
 
-        # ── 技术方向 (15分) ──
         tech_score = 0
         for key, words in INDUSTRY_KEYWORDS.items():
             if key in company_tech_keywords:
@@ -222,11 +210,9 @@ async def match_policies_for_company(
                 elif matches >= 1:
                     tech_score = max(tech_score, 10)
         if tech_score == 0:
-            tech_score = 5  # 默认
-        score_breakdown["tech"] = tech_score
+            tech_score = 5
 
-        # ── 财务相关 (10分) ──
-        finance_score = 5  # 默认
+        finance_score = 5
         if "研发费用" in content_lower or "研发支出" in content_lower:
             if company_rd_expense and company_rd_expense > 3:
                 finance_score = 10
@@ -234,25 +220,75 @@ async def match_policies_for_company(
                 finance_score = 7
         if "营业收入" in content_lower and company_revenue:
             finance_score = min(finance_score + 3, 10)
-        score_breakdown["finance"] = finance_score
 
-        # ── 语义相似度 (10分) ──
         semantic_score = round(semantic_sim * 10, 1)
-        score_breakdown["semantic"] = semantic_score
 
-        # ── 总分 ──
-        final_score = sum(score_breakdown.values())
-        final_score = max(0, min(100, final_score))
-        # ── 生成 evidence ──
+        active_rule_count = 0
+        if source_version is not None:
+            active_rule_count = len(
+                list(
+                    db.scalars(
+                        select(EligibilityRule.id).where(
+                            EligibilityRule.policy_version_id == source_version.id,
+                            EligibilityRule.status == "active",
+                            EligibilityRule.is_hard_gate.is_(True),
+                        )
+                    ).all()
+                )
+            )
+        company_province = region.get("province") or company.province
+        company_city = region.get("city") or company.city
+        company_district = region.get("district") or getattr(company, "district", None)
+
+        ranked = compute_rank_features(
+            title=policy.title,
+            policy_type=policy.policy_type,
+            company_province=company_province,
+            company_city=company_city,
+            company_district=company_district,
+            policy_province=policy.province,
+            policy_city=policy.city,
+            policy_district=policy.district,
+            policy_level=policy.level,
+            industry_component=float(industry_score),
+            scale_component=float(scale_score),
+            qualification_component=float(qual_score),
+            tech_component=float(tech_score),
+            finance_component=float(finance_score),
+            semantic_component=float(semantic_score),
+            active_hard_rules=active_rule_count,
+            deadline=policy.deadline,
+            expires_at=policy.expires_at,
+        )
+        if ranked.skip:
+            continue
+
+        region_score = ranked.region_fit
+        score_breakdown = {
+            "region": region_score,
+            "industry": industry_score,
+            "scale": scale_score,
+            "qualification": qual_score,
+            "tech": tech_score,
+            "finance": finance_score,
+            "semantic": semantic_score,
+            "usefulness": ranked.usefulness,
+        }
+        final_score = ranked.final_score
+        # ── 生成 evidence（含可审计 rank_features）──
         evidence = {
             "score_breakdown": score_breakdown,
+            "rank_features": ranked.as_audit(),
             "total_score": final_score,
-            "jurisdiction_match": region_score >= 15,
+            "jurisdiction_match": region_score >= 16,
             "industry_match": industry_score >= 10,
             "support_amount": policy.support_amount or "未公开",
             "support_type": policy.support_type or "",
             "deadline": policy.deadline.isoformat() if policy.deadline else None,
+            "published_at": policy.published_at.isoformat() if policy.published_at else None,
             "level": policy.level or "",
+            "active_hard_rules": active_rule_count,
+            "ranking_note": ranked.ranking_note,
             "gap_analysis_status": "not_verified_against_documents",
             "retrieval": {
                 "mode": retrieval_mode,
@@ -337,9 +373,60 @@ async def match_policies_for_company(
             )
         opportunities.append(opp)
 
-    # 5. 按总分排序，存入数据库
-    opportunities.sort(key=lambda o: o.score, reverse=True)
-    for opp in opportunities:
+    # 5. 有规则优先；无规则最多占主列表 <15%；同分按规则/窗口/同城打破
+    opportunities.sort(
+        key=lambda o: sort_key_for_opportunity(o.evidence_json or {}, float(o.score or 0))
+    )
+    ruled = [
+        opp
+        for opp in opportunities
+        if int((opp.evidence_json or {}).get("active_hard_rules") or 0) > 0
+    ]
+    unruled = [
+        opp
+        for opp in opportunities
+        if int((opp.evidence_json or {}).get("active_hard_rules") or 0) <= 0
+    ]
+    # Keep no-rule share under 15% of the brief when any ruled opportunities exist.
+    max_unruled = min(len(unruled), max(0, (len(ruled) * 14) // 86)) if ruled else min(5, len(unruled))
+    selected = ruled + unruled[:max_unruled]
+    selected.sort(
+        key=lambda o: sort_key_for_opportunity(o.evidence_json or {}, float(o.score or 0))
+    )
+    company_province = region.get("province") or company.province
+
+    def _opp_province(opp: Opportunity) -> str | None:
+        snap = opp.policy_snapshot_json or {}
+        return snap.get("province")
+
+    selected = enforce_local_diversity(
+        selected,
+        company_province=company_province,
+        top_n=10,
+        min_local=3,
+        province_getter=_opp_province,
+    )
+
+    def _is_activity_opp(opp: Opportunity) -> bool:
+        features = ((opp.evidence_json or {}).get("rank_features") or {})
+        note = (opp.evidence_json or {}).get("ranking_note") or ""
+        return bool(features.get("noise_penalty", 0) <= -28) or "规划/活动类" in note
+
+    # Push remaining activity/plan titles out of the first 10 when alternatives exist.
+    head: list[Opportunity] = []
+    activity_tail: list[Opportunity] = []
+    rest: list[Opportunity] = []
+    for opp in selected:
+        if _is_activity_opp(opp):
+            activity_tail.append(opp)
+        elif len(head) < 10:
+            head.append(opp)
+        else:
+            rest.append(opp)
+    while len(head) < 10 and rest:
+        head.append(rest.pop(0))
+    selected = head + rest + activity_tail
+    for opp in selected:
         db.add(opp)
     db.commit()
-    return opportunities
+    return selected

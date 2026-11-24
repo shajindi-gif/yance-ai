@@ -1,0 +1,705 @@
+catalog_version: "2026.11.06-parks.1"
+generated_at: "2026-11-06T15:00:00+08:00"
+catalog_kind: "national_high_tech_zones_first_batch"
+
+notes: |
+  首批国家高新区目录，与国家/省级/重点 30 城政策来源目录对齐，每城取一个代表性国家高新区。
+
+  登记口径（必须逐条阅读，不得当作已验证事实）：
+    - designation_basis 只陈述“国务院批复设立的国家高新技术产业开发区”这一层级事实，
+      不填写未经本轮核验的批复文号；文号与批次须在核验后补录。
+    - district（区县）在本轮刻意留空：国家高新区的实际管辖范围普遍为“一区多园”或跨区，
+      从园区名称反推区县属于不可靠裁剪。boundary_status 统一为 needs_confirmation。
+    - official_url 只填写有较高把握的官方域名，其余留空，避免猜测路径。
+    - verification_status 含义：
+        registered        已登记，本轮未做网络核验
+        reachable        本机探针可访问官网首页（2026-11-06）
+        metadata_verified 已与官方名录页面核对名称与行政区划
+        unreachable      本机探针不可访问（DNS/超时/4xx），生产侧待复核
+    - 本机探针结果不代表生产服务器可达性；生产侧需重新核验。
+
+  “园区所在地”不等于“园区政策适用范围”：企业注册或实际经营在园区所在行政区划，
+  并不自动构成享受园区专属政策的条件。适用范围一律由 park_policy_scopes 依据原文登记。
+
+parks:
+  - park_id: park_bj_zgc
+    name: 中关村国家自主创新示范区
+    aliases: [中关村科技园区, 中关村示范区, 中关村]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区及国家自主创新示范区
+    designation_year: 1988
+    province: 北京市
+    city: 北京市
+    district: null
+    operator: 中关村科技园区管理委员会
+    official_url: "https://www.zgc.gov.cn/"
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 一区多园，覆盖海淀园、丰台园、昌平园、朝阳园等多个园区，边界需以官方名录核对。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: unreachable
+    verified_at: "2026-11-06T14:55:00+08:00"
+    verification_note: 本机探针域名解析失败（Errno 8），生产侧待复核。
+    confidence: 0.78
+
+  - park_id: park_sh_zj
+    name: 上海张江高新技术产业开发区
+    aliases: [张江高新区, 张江科学城, 上海张江]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 上海市
+    city: 上海市
+    district: null
+    operator: 上海推进科技创新中心建设办公室
+    official_url: "https://www.zhangjiang.net/"
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 与张江科学城范围交叉但不完全等同，二者不得混用。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: unreachable
+    verified_at: "2026-11-06T14:55:00+08:00"
+    verification_note: 本机探针返回 HTTP 404，官网入口路径待重新确认。
+    confidence: 0.75
+
+  - park_id: park_tj_bh
+    name: 天津滨海高新技术产业开发区
+    aliases: [天津高新区, 滨海高新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 天津市
+    city: 天津市
+    district: null
+    operator: 天津滨海高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 含华苑、渤龙湖、海洋等片区，边界需以官方名录核对。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.7
+
+  - park_id: park_cq_gx
+    name: 重庆高新技术产业开发区
+    aliases: [重庆高新区, 西部（重庆）科学城]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 重庆市
+    city: 重庆市
+    district: null
+    operator: 重庆高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 与西部（重庆）科学城为两套体系，不得视为同一主体。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.7
+
+  - park_id: park_sz_gx
+    name: 深圳高新技术产业开发区
+    aliases: [深圳高新区, 深圳国家高新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1996
+    province: 广东省
+    city: 深圳市
+    district: null
+    operator: 深圳市科技创新局
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 含南山园区、坪山园区等多片区，边界需以官方名录核对。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.72
+
+  - park_id: park_gz_gx
+    name: 广州高新技术产业开发区
+    aliases: [广州高新区, 广州科学城]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 广东省
+    city: 广州市
+    district: null
+    operator: 广州开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 与广州经济技术开发区管理机构重合，两套政策体系不得混同。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.7
+
+  - park_id: park_hz_gx
+    name: 杭州高新技术产业开发区
+    aliases: [杭州高新区, 滨江高新区, 杭州高新区（滨江）]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 浙江省
+    city: 杭州市
+    district: null
+    operator: 杭州高新技术产业开发区（滨江）管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 与滨江区实行“区政合一”，行政边界与政策适用范围仍需分别认定。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.72
+
+  - park_id: park_nj_gx
+    name: 南京高新技术产业开发区
+    aliases: [南京高新区, 南京江北新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 江苏省
+    city: 南京市
+    district: null
+    operator: 南京江北新区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 与南京江北新区为两套名称体系，适用范围需分别认定。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.7
+
+  - park_id: park_sz_jj
+    name: 苏州高新技术产业开发区
+    aliases: [苏州高新区, 苏州新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1992
+    province: 江苏省
+    city: 苏州市
+    district: null
+    operator: 苏州高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 与苏州工业园区是两个独立园区，不得互相替代。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.72
+
+  - park_id: park_sz_sip
+    name: 苏州工业园区
+    aliases: [SIP, 苏州工业园, 中国-新加坡苏州工业园区]
+    park_type: economic_dev_zone
+    designation_level: national
+    designation_basis: 国务院批准设立的国家级经济技术开发区，并列入国家自主创新示范区
+    designation_year: 1994
+    province: 江苏省
+    city: 苏州市
+    district: null
+    operator: 苏州工业园区管理委员会
+    official_url: "https://www.sipac.gov.cn/"
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 类型为国家级经开区（非国家高新区序列），目录中不得与苏州高新区合并计数。
+    source_url: "https://www.sipac.gov.cn/"
+    source_kind: park_site
+    verification_status: reachable
+    verified_at: "2026-11-06T14:55:00+08:00"
+    verification_note: 本机探针 HTTP 200，首页约 92KB。
+    confidence: 0.8
+
+  - park_id: park_cd_gx
+    name: 成都高新技术产业开发区
+    aliases: [成都高新区, 成都高新]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 四川省
+    city: 成都市
+    district: null
+    operator: 成都高新技术产业开发区管理委员会
+    official_url: "https://www.cdht.gov.cn/"
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 含南部园区、西部园区，边界需以官方名录核对。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: unreachable
+    verified_at: "2026-11-06T14:55:00+08:00"
+    verification_note: 本机探针返回 HTTP 412（站点访问控制），生产侧需以合规方式复核。
+    confidence: 0.72
+
+  - park_id: park_wh_dh
+    name: 武汉东湖新技术开发区
+    aliases: [中国光谷, 武汉东湖高新区, 武汉高新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 湖北省
+    city: 武汉市
+    district: null
+    operator: 武汉东湖新技术开发区管理委员会
+    official_url: "https://www.wehdz.gov.cn/"
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 与湖北自贸区武汉片区范围交叉，两套政策体系需分别认定。
+    source_url: "https://www.wehdz.gov.cn/"
+    source_kind: park_site
+    verification_status: reachable
+    verified_at: "2026-11-06T14:55:00+08:00"
+    verification_note: 本机探针 HTTP 200，首页约 67KB。
+    confidence: 0.8
+
+  - park_id: park_xa_gx
+    name: 西安高新技术产业开发区
+    aliases: [西安高新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 陕西省
+    city: 西安市
+    district: null
+    operator: 西安高新技术产业开发区管理委员会
+    official_url: "https://www.xdz.gov.cn/"
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 含多个园区组团，边界需以官方名录核对。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: unreachable
+    verified_at: "2026-11-06T14:55:00+08:00"
+    verification_note: 本机探针域名解析失败（Errno 8），生产侧待复核。
+    confidence: 0.7
+
+  - park_id: park_hf_gx
+    name: 合肥高新技术产业开发区
+    aliases: [合肥高新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 安徽省
+    city: 合肥市
+    district: null
+    operator: 合肥高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 与合肥综合性国家科学中心为不同体系。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.7
+
+  - park_id: park_qd_gx
+    name: 青岛高新技术产业开发区
+    aliases: [青岛高新区, 红岛高新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1992
+    province: 山东省
+    city: 青岛市
+    district: null
+    operator: 青岛高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 边界需以官方名录核对。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.68
+
+  - park_id: park_jn_gx
+    name: 济南高新技术产业开发区
+    aliases: [济南高新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 山东省
+    city: 济南市
+    district: null
+    operator: 济南高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 含中心区、东区、临空等片区。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.68
+
+  - park_id: park_nb_gx
+    name: 宁波高新技术产业开发区
+    aliases: [宁波高新区, 宁波国家高新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 2007
+    province: 浙江省
+    city: 宁波市
+    district: null
+    operator: 宁波高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 边界需以官方名录核对。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.68
+
+  - park_id: park_wx_gx
+    name: 无锡高新技术产业开发区
+    aliases: [无锡高新区, 无锡新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1992
+    province: 江苏省
+    city: 无锡市
+    district: null
+    operator: 无锡高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 与新吴区实行区政合一，行政边界与政策适用范围需分别认定。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.68
+
+  - park_id: park_cs_gx
+    name: 长沙高新技术产业开发区
+    aliases: [长沙高新区, 麓谷]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 湖南省
+    city: 长沙市
+    district: null
+    operator: 长沙高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 边界需以官方名录核对。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.68
+
+  - park_id: park_zz_gx
+    name: 郑州高新技术产业开发区
+    aliases: [郑州高新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 河南省
+    city: 郑州市
+    district: null
+    operator: 郑州高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 边界需以官方名录核对。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.68
+
+  - park_id: park_dg_ssl
+    name: 东莞松山湖高新技术产业开发区
+    aliases: [松山湖高新区, 松山湖科学城, 东莞松山湖]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 2010
+    province: 广东省
+    city: 东莞市
+    district: null
+    operator: 东莞市松山湖高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 与松山湖科学城范围交叉，二者不得视为同一主体。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.7
+
+  - park_id: park_xm_hj
+    name: 厦门火炬高技术产业开发区
+    aliases: [厦门火炬高新区, 厦门火炬]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 福建省
+    city: 厦门市
+    district: null
+    operator: 厦门火炬高技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 含火炬园、信息光电园、同安园等多个园区，边界需以官方名录核对。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.7
+
+  - park_id: park_fz_gx
+    name: 福州高新技术产业开发区
+    aliases: [福州高新区, 海西高新技术产业园]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 福建省
+    city: 福州市
+    district: null
+    operator: 福州高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 含海西园、马尾园等片区，边界需以官方名录核对。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.68
+
+  - park_id: park_nc_gx
+    name: 南昌高新技术产业开发区
+    aliases: [南昌高新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1992
+    province: 江西省
+    city: 南昌市
+    district: null
+    operator: 南昌高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 边界需以官方名录核对。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.68
+
+  - park_id: park_sy_gx
+    name: 沈阳高新技术产业开发区
+    aliases: [沈阳高新区, 浑南高新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 辽宁省
+    city: 沈阳市
+    district: null
+    operator: 沈阳高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 与浑南区实行区政合一，行政边界与政策适用范围需分别认定。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.68
+
+  - park_id: park_dl_gx
+    name: 大连高新技术产业开发区
+    aliases: [大连高新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 辽宁省
+    city: 大连市
+    district: null
+    operator: 大连高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 含七贤岭、旅顺南路等片区。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.68
+
+  - park_id: park_cc_gx
+    name: 长春高新技术产业开发区
+    aliases: [长春高新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 吉林省
+    city: 长春市
+    district: null
+    operator: 长春高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 边界需以官方名录核对。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.68
+
+  - park_id: park_hrb_gx
+    name: 哈尔滨高新技术产业开发区
+    aliases: [哈尔滨高新区, 哈尔滨科技创新城]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 黑龙江省
+    city: 哈尔滨市
+    district: null
+    operator: 哈尔滨高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 与哈尔滨新区范围交叉，二者不得视为同一主体。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.68
+
+  - park_id: park_km_gx
+    name: 昆明高新技术产业开发区
+    aliases: [昆明高新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1992
+    province: 云南省
+    city: 昆明市
+    district: null
+    operator: 昆明高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 含主城片区与马金铺片区。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.68
+
+  - park_id: park_gy_gx
+    name: 贵阳高新技术产业开发区
+    aliases: [贵阳高新区, 贵阳国家高新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1992
+    province: 贵州省
+    city: 贵阳市
+    district: null
+    operator: 贵阳高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 边界需以官方名录核对。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.68
+
+  - park_id: park_lz_gx
+    name: 兰州高新技术产业开发区
+    aliases: [兰州高新区]
+    park_type: national_high_tech_zone
+    designation_level: national
+    designation_basis: 国务院批复设立的国家高新技术产业开发区
+    designation_year: 1991
+    province: 甘肃省
+    city: 兰州市
+    district: null
+    operator: 兰州高新技术产业开发区管理委员会
+    official_url: null
+    status: active
+    boundary_status: needs_confirmation
+    boundary_note: 含雁滩、榆中、九州等片区。
+    source_url: "https://www.chinatorch.gov.cn/"
+    source_kind: official_catalog
+    verification_status: registered
+    verified_at: null
+    verification_note: 本轮未做网络核验。
+    confidence: 0.68

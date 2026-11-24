@@ -39,6 +39,7 @@ def hybrid_policy_candidates(
     query_vector: list[float],
     limit: int = 50,
     region: dict | None = None,
+    evidence_ready: bool = False,
 ) -> list[PolicyCandidate]:
     """Character/term lexical retrieval + vector retrieval + deterministic RRF."""
     latest = (
@@ -61,8 +62,32 @@ def hybrid_policy_candidates(
             *applicable_region_clauses(region or {}),
             PolicyVersion.status == "published",
             or_(PolicyChunk.tenant_id.is_(None), PolicyChunk.tenant_id == tenant_id),
+            # Quality rubric gate.  A published version can still be one the delivery
+            # policy withholds (repealed last year, region contradicts its own level);
+            # those must not enter either ranking channel.  NULL = not yet assessed and
+            # stays visible, so this filter cannot empty search before the backfill.
+            or_(Policy.quality_deliverable.is_(None), Policy.quality_deliverable.is_(True)),
         )
     )
+    readiness = []
+    if evidence_ready:
+        # Evidence answers need verified metadata before ranking/limiting, unlike discovery.
+        readiness = [
+            *current_policy_clauses(),
+            Policy.effective_at.is_not(None),
+            Policy.expires_at.is_not(None),
+            Policy.deadline.is_not(None),
+            or_(Policy.quality_deliverable.is_(None), Policy.quality_deliverable.is_(True)),
+        ]
+        for key in ("province", "city", "district"):
+            column = getattr(Policy, key)
+            actual = (region or {}).get(key)
+            readiness.append(
+                or_(column.is_(None), column == "", column == actual)
+                if actual
+                else or_(column.is_(None), column == "")
+            )
+        base = base.where(*readiness)
     lexical_pool = list(db.scalars(base.order_by(PolicyChunk.created_at.desc()).limit(500)).all())
     query_tokens = _tokens(query)
     lexical = sorted(
@@ -70,12 +95,16 @@ def hybrid_policy_candidates(
         key=lambda item: item[1],
         reverse=True,
     )[:100]
-    vector = list(
-        db.scalars(
-            base.where(PolicyChunk.embedding.isnot(None))
-            .order_by(PolicyChunk.embedding.cosine_distance(query_vector))
-            .limit(100)
-        ).all()
+    vector = (
+        []
+        if not query_vector
+        else list(
+            db.scalars(
+                base.where(PolicyChunk.embedding.isnot(None))
+                .order_by(PolicyChunk.embedding.cosine_distance(query_vector))
+                .limit(100)
+            ).all()
+        )
     )
 
     fused: dict[UUID, float] = {}
@@ -87,16 +116,51 @@ def hybrid_policy_candidates(
         for rank, chunk in enumerate(ranking, start=1):
             fused[chunk.policy_id] = fused.get(chunk.policy_id, 0) + 1 / (60 + rank)
             chunks_by_policy.setdefault(chunk.policy_id, set()).add(chunk.id)
+    # Third RRF channel: pg_trgm keyword retrieval.
+    #
+    # The lexical pool above is the newest ``500`` chunks, so a document the
+    # collector stored an hour ago is pushed out of the window as soon as later
+    # pages arrive — the document is in the database and searchable by
+    # ``evidence-search``, yet the web search box never returns it.  Trigram
+    # matching runs against the index instead of a recency window, and it needs
+    # no embedding, which is exactly the state freshly collected chunks are in.
+    #
+    # A failure here must never break semantic search, hence the guard: the
+    # trigram index is an enhancement channel, not a dependency.
+    try:
+        from app.services.policy_collection.keyword_search import keyword_search
+
+        for rank, hit in enumerate(
+            keyword_search(db, query, limit=100, tenant_id=tenant_id), start=1
+        ):
+            policy_uuid = UUID(str(hit.policy_id))
+            # k=20 and a x4 weight instead of the usual k=60: the two legacy
+            # channels accumulate one vote per matching *chunk*, so a document that
+            # merely repeats a common phrase could outscore an exact title hit.  For
+            # a policy analyst an exact phrase hit is what "search" means.
+            fused[policy_uuid] = fused.get(policy_uuid, 0) + 4.0 / (20 + rank)
+            if hit.chunk_id:
+                chunks_by_policy.setdefault(policy_uuid, set()).add(UUID(str(hit.chunk_id)))
+    except Exception:  # pragma: no cover - defensive, see comment above
+        pass
+
     if not fused:
         return []
+    # Keyword/trigram channel can vote for out-of-region rows; enforce the same
+    # applicability gate used by lexical/vector so Shanghai briefs stay local.
     policies = {
         item.id: item
         for item in db.scalars(
-            select(Policy).where(Policy.id.in_(fused), visible_policy_clause(tenant_id))
+            select(Policy).where(
+                Policy.id.in_(list(fused.keys())),
+                visible_policy_clause(tenant_id),
+                *applicable_region_clauses(region or {}),
+                *readiness,
+            )
         ).all()
     }
-    ranked = sorted(fused, key=fused.get, reverse=True)[:limit]
-    ceiling = max(fused.values()) or 1
+    ranked = sorted((key for key in fused if key in policies), key=fused.get, reverse=True)[:limit]
+    ceiling = max((fused[key] for key in ranked), default=1) or 1
     return [
         PolicyCandidate(
             policy=policies[policy_id],

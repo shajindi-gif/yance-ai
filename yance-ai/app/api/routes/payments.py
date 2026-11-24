@@ -2,6 +2,7 @@ import json
 import time
 import uuid
 from binascii import Error as BinasciiError
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from urllib.parse import quote, urlencode
 
@@ -9,6 +10,7 @@ from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -16,9 +18,12 @@ from sqlalchemy.orm import Session
 from app.api.deps import Principal, get_principal, require_roles
 from app.core.config import settings
 from app.core.db import get_db
-from app.models.models import Order, Payment, UserRole
+from app.models.models import Order, Payment, Product, Refund, UserRole
+from app.services.commerce.availability import purchase_status
+from app.services.commerce.delivery import require_order_report
+from app.services.payments import alipay as ali
 from app.services.payments import wechat as wx
-from app.services.payments.settlement import settle_payment
+from app.services.payments.settlement import provider_paid_time, settle_payment
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -29,11 +34,22 @@ def _checkout_payment(db: Session, order: Order, provider: str) -> Payment | Non
     Switching channels requires provider-confirmed closure/reconciliation.
     Issuing another payable link can charge twice even if entitlements dedupe.
     """
+    if order.expires_at and order.expires_at <= datetime.now(UTC):
+        raise HTTPException(409, "订单付款时间已过，请返回订单核对")
     if order.status not in {"created", "pending"}:
         raise HTTPException(status_code=409, detail="Order is not open for payment")
+    require_order_report(db, order)
     existing = db.scalar(select(Payment).where(Payment.order_id == order.id, Payment.tenant_id == order.tenant_id).order_by(Payment.created_at.desc()))
-    if existing and (existing.provider != provider or existing.status not in {"created", "pending"}):
+    if existing and (existing.provider != provider or existing.status not in {"created", "pending", "expired"}):
         raise HTTPException(status_code=409, detail="该订单已有支付记录，请先核实原渠道交易状态，不会自动创建第二笔支付")
+    if not existing:
+        product = db.scalar(select(Product).where(Product.code == order.product_code))
+        availability = purchase_status(product) if product else {"purchase_available": False, "purchase_unavailable_reason": "商品当前不可新购，请联系支持核对。"}
+        if not availability["purchase_available"]:
+            raise HTTPException(status_code=409, detail={
+                "code": "product_not_available_for_new_orders",
+                "message": availability["purchase_unavailable_reason"],
+            })
     return existing
 
 
@@ -55,9 +71,9 @@ def _is_unconfigured(value: str | None) -> bool:
 
 
 def _alipay_available() -> bool:
-    return not _is_unconfigured(settings.alipay_app_id) and not _is_unconfigured(
-        settings.alipay_private_key
-    )
+    return (not _is_unconfigured(settings.alipay_app_id)
+        and not _is_unconfigured(settings.alipay_private_key)
+        and _alipay_notify_available())
 
 
 def _alipay_notify_available() -> bool:
@@ -155,7 +171,18 @@ def alipay_page_pay(
         raise HTTPException(status_code=400, detail="Alipay checkout requires CNY")
 
     existing = _checkout_payment(db, order, "alipay")
-    out_trade_no = existing.provider_trade_no if existing else order.order_no
+    if existing and (
+        existing.status == "expired"
+        or existing.created_at + timedelta(minutes=settings.order_payment_ttl_minutes) <= datetime.now(UTC)
+    ):
+        from app.services.payments.lifecycle import close_payment
+        if not close_payment(db, existing):
+            raise HTTPException(409, "原支付状态正在核对，请稍后重试")
+        attempt = len(list(db.scalars(select(Payment.id).where(Payment.order_id == order.id))))
+        out_trade_no = f"{order.order_no}-{attempt + 1}"
+        existing = None
+    else:
+        out_trade_no = existing.provider_trade_no if existing else order.order_no
     subject = f"yance.ai - {order.product_code}"
     total_amount = f"{order.amount:.2f}"
 
@@ -165,6 +192,7 @@ def alipay_page_pay(
         "total_amount": total_amount,
         "subject": subject,
         "body": subject,
+        "timeout_express": f"{max(1, int(((order.expires_at or datetime.now(UTC) + timedelta(minutes=settings.order_payment_ttl_minutes)) - datetime.now(UTC)).total_seconds() / 60))}m",
     }
 
     params = {
@@ -208,7 +236,7 @@ def alipay_page_pay(
     return {"url": payment_url, "out_trade_no": out_trade_no}
 
 
-@router.post("/alipay/notify")
+@router.post("/alipay/notify", response_class=PlainTextResponse)
 async def alipay_notify(request: Request, db: Session = Depends(get_db)) -> str:
     """Alipay async payment notification (POST). Must return 'success' or 'fail'."""
     body = await request.body()
@@ -255,7 +283,7 @@ async def alipay_notify(request: Request, db: Session = Depends(get_db)) -> str:
         "total_amount": form_data.get("total_amount"),
     }
 
-    if trade_status == "TRADE_SUCCESS":
+    if trade_status in {"TRADE_SUCCESS", "TRADE_FINISHED"}:
         if not trade_no:
             return "fail"
         result = settle_payment(
@@ -266,6 +294,7 @@ async def alipay_notify(request: Request, db: Session = Depends(get_db)) -> str:
             paid_amount=form_data.get("total_amount"),
             currency="CNY",
             payload=body,
+            paid_at=provider_paid_time(form_data.get("gmt_payment")),
         )
         return "success" if result.accepted else "fail"
     elif trade_status == "TRADE_CLOSED":
@@ -276,8 +305,50 @@ async def alipay_notify(request: Request, db: Session = Depends(get_db)) -> str:
     return "success"
 
 
+def query_alipay_payment(db: Session, payment: Payment) -> dict:
+    state, raw = ali.call("alipay.trade.query", {"out_trade_no": payment.provider_trade_no}, _build_alipay_sign)
+    if state.get("code") != "10000":
+        return {"status": payment.status, "queried": False}
+    if state.get("out_trade_no") != payment.provider_trade_no:
+        raise HTTPException(502, "Alipay query order mismatch")
+    seller = state.get("seller_id") or state.get("seller_user_id")
+    if settings.alipay_seller_id and seller and seller != settings.alipay_seller_id:
+        raise HTTPException(502, "Alipay query merchant mismatch")
+    status = state.get("trade_status")
+    if status in {"TRADE_SUCCESS", "TRADE_FINISHED"}:
+        trade_no = state.get("trade_no")
+        if not trade_no:
+            raise HTTPException(502, "Alipay query missing transaction")
+        payment.alipay_trade_no = trade_no
+        result = settle_payment(db, payment=payment,
+            provider_event_id=f"{trade_no}:{status}", event_type=status,
+            paid_amount=state.get("total_amount"), currency="CNY", payload=raw,
+            paid_at=provider_paid_time(state.get("send_pay_date")))
+        if not result.accepted:
+            raise HTTPException(409, detail={"code": result.error_code, "message": "付款结果需要核对，请联系支持"})
+        return {"status": "paid", "queried": True, "trade_state": status}
+    return {"status": payment.status, "queried": True, "trade_state": status}
+
+
+@router.post("/alipay/query")
+def alipay_query(
+    order_id: uuid.UUID,
+    principal: Principal = Depends(require_roles(UserRole.owner, UserRole.admin, UserRole.member)),
+    db: Session = Depends(get_db),
+) -> dict:
+    if not _alipay_available() or not _alipay_notify_available():
+        raise HTTPException(503, "Alipay not configured")
+    order = db.scalar(select(Order).where(Order.id == order_id, Order.tenant_id == principal.tenant_id).with_for_update())
+    if not order:
+        raise HTTPException(404, "Order not found")
+    payment = db.scalar(select(Payment).where(Payment.order_id == order.id, Payment.tenant_id == order.tenant_id, Payment.provider == "alipay").order_by(Payment.created_at.desc()))
+    if not payment:
+        return {"status": order.status, "queried": False}
+    return query_alipay_payment(db, payment)
+
+
 @router.post("/alipay/return")
-async def alipay_return(request: Request, db: Session = Depends(get_db)) -> dict:
+async def alipay_return(request: Request, principal: Principal = Depends(get_principal), db: Session = Depends(get_db)) -> dict:
     """Alipay sync return (GET redirect). Verify and return order status."""
     params = dict(request.query_params)
     if not _alipay_notify_available():
@@ -292,12 +363,15 @@ async def alipay_return(request: Request, db: Session = Depends(get_db)) -> dict
     if not signature_valid:
         raise HTTPException(status_code=400, detail="Invalid signature")
 
+    if params.get("app_id") != settings.alipay_app_id:
+        raise HTTPException(400, "Alipay application mismatch")
     out_trade_no = params.get("out_trade_no", "")
     trade_no = params.get("trade_no", "")
 
     payment = db.scalar(
         select(Payment).where(
             Payment.provider == "alipay",
+            Payment.tenant_id == principal.tenant_id,
             Payment.provider_trade_no == out_trade_no,
         )
     )
@@ -339,36 +413,40 @@ def wechat_native(
     if order.currency.upper() != "CNY":
         raise HTTPException(status_code=400, detail="WeChat checkout requires CNY")
 
-    out_trade_no = _wechat_out_trade_no(order)
     existing = _checkout_payment(db, order, "wechat")
+    out_trade_no = existing.provider_trade_no if existing else _wechat_out_trade_no(order)
     if existing and existing.status == "completed":
         raise HTTPException(status_code=400, detail="Order already paid")
 
     total_fen = int(Decimal(str(order.amount)) * 100)
-    if existing and existing.raw_response and existing.raw_response.get("code_url"):
-        return {"code_url": existing.raw_response["code_url"], "out_trade_no": existing.provider_trade_no, "amount_fen": total_fen}
+    now = datetime.now(UTC)
+    expires = min(order.expires_at or now + timedelta(hours=1), (existing.created_at if existing else now) + timedelta(hours=1))
+    if existing and existing.status in {"created", "pending"} and existing.raw_response and existing.raw_response.get("code_url"):
+        if expires > now:
+            return {"code_url": existing.raw_response["code_url"], "out_trade_no": existing.provider_trade_no, "amount_fen": total_fen, "expires_at": expires.isoformat()}
+    if existing and (existing.status == "expired" or existing.raw_response.get("code_url")):
+        from app.services.payments.lifecycle import close_payment
+        if not close_payment(db, existing):
+            raise HTTPException(409, "原支付状态正在核对，请稍后重试")
+        attempt = len(list(db.scalars(select(Payment.id).where(Payment.order_id == order.id))))
+        out_trade_no = f"{order.order_no}-{attempt + 1}"
+        existing = None
+        expires = min(order.expires_at or now + timedelta(hours=1), now + timedelta(hours=1))
     description = f"yance.ai - {order.product_code}"
-    code_url, error = wx.create_native_order(out_trade_no, total_fen, description, settings.wxpay_notify_url)
-    if not code_url:
-        raise HTTPException(status_code=502, detail=f"WeChat native order failed: {error}")
-
-    if existing:
-        payment = existing
-    else:
-        payment = Payment(
-            tenant_id=principal.tenant_id,
-            order_id=order.id,
-            provider="wechat",
-            provider_trade_no=out_trade_no,
-            amount=order.amount,
-            currency=order.currency,
-            status="created",
-        )
+    payment = existing or Payment(tenant_id=principal.tenant_id, order_id=order.id,
+        provider="wechat", provider_trade_no=out_trade_no, amount=order.amount,
+        currency=order.currency, status="created")
+    if not existing:
         db.add(payment)
+    db.commit()
+    db.scalar(select(Order).where(Order.id == order.id).with_for_update())
+    code_url, error = wx.create_native_order(out_trade_no, total_fen, description, settings.wxpay_notify_url, expires_at=expires.isoformat())
+    if not code_url:
+        raise HTTPException(502, f"WeChat native order failed: {error}")
     payment.raw_response = {"code_url": code_url}
     db.commit()
 
-    return {"code_url": code_url, "out_trade_no": out_trade_no, "amount_fen": total_fen}
+    return {"code_url": code_url, "out_trade_no": out_trade_no, "amount_fen": total_fen, "expires_at": expires.isoformat()}
 
 
 @router.post("/wechat/notify")
@@ -425,6 +503,7 @@ async def wechat_notify(request: Request, db: Session = Depends(get_db)) -> dict
             paid_amount=Decimal(str(total_fen)) / 100 if isinstance(total_fen, int) and not isinstance(total_fen, bool) else None,
             currency=(result.get("amount") or {}).get("currency", ""),
             payload=body,
+            paid_at=provider_paid_time(result.get("success_time")),
         )
         if not settle.accepted:
             return {"code": "FAIL", "message": settle.error_code or "结算被拒绝"}
@@ -451,30 +530,13 @@ def wechat_query(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    payment = db.scalar(
-        select(Payment).where(
-            Payment.provider == "wechat",
-            Payment.provider_trade_no == _wechat_out_trade_no(order),
-        )
-    )
+    payment = db.scalar(select(Payment).where(Payment.order_id == order.id,
+        Payment.tenant_id == order.tenant_id, Payment.provider == "wechat").order_by(Payment.created_at.desc()))
     if not payment:
         return {"status": order.status, "queried": False}
-    state = wx.query_order(_wechat_out_trade_no(order))
-    if state is None:
-        return {"status": payment.status, "queried": False}
-    if state["trade_state"] == "SUCCESS" and payment.status != "completed":
-        total_fen = state.get("total")
-        settle = settle_payment(
-            db,
-            payment=payment,
-            provider_event_id=state.get("transaction_id") or f"query:{order.order_no}",
-            event_type="TRANSACTION.SUCCESS.QUERY",
-            paid_amount=Decimal(str(total_fen)) / 100 if isinstance(total_fen, int) and not isinstance(total_fen, bool) else None,
-            currency=state.get("currency") or "",
-            payload=b'{"source":"active_query"}',
-        )
-        return {"status": "paid" if settle.accepted else payment.status, "queried": True}
-    return {"status": payment.status if payment.status != "created" else order.status, "queried": True, "trade_state": state["trade_state"]}
+    from app.services.payments.lifecycle import query_payment
+    result = query_payment(db, payment)
+    return {"status": "paid" if result.get("status") == "paid" else order.status, **result}
 
 
 @router.post("/checkout")
@@ -654,3 +716,37 @@ def verify_bank_transfer(
 ):
     """管理端核实银行转账到账，将订单标记为已支付。"""
     raise HTTPException(status_code=501, detail="Bank transfer verification is not available")
+
+
+@router.post("/wechat/refund-notify")
+async def wechat_refund_notify(request: Request, db: Session = Depends(get_db)) -> dict:
+    from app.services.payments.refunds import complete_refund
+    body = await request.body()
+    if not wx.is_wechat_configured() or not wx.verify_notify_signature(
+        request.headers.get("wechatpay-timestamp", ""), request.headers.get("wechatpay-nonce", ""),
+        body.decode("utf-8", errors="replace"), request.headers.get("wechatpay-signature", ""),
+        request.headers.get("wechatpay-serial", ""),
+    ):
+        raise HTTPException(400, "Invalid refund signature")
+    try:
+        result = wx.decrypt_resource(json.loads(body).get("resource") or {})
+        refund = db.scalar(select(Refund).where(Refund.provider == "wechat", Refund.provider_refund_no == result.get("out_refund_no")))
+        if not refund:
+            raise HTTPException(404, "Refund not found")
+        payment = db.get(Payment, refund.payment_id)
+        merchant = settings.wxpay_sp_mch_id if settings.wxpay_mode == "partner" else settings.wxpay_mch_id
+        if result.get("mchid") != merchant or result.get("out_trade_no") != payment.provider_trade_no:
+            raise HTTPException(400, "Refund merchant or order mismatch")
+        if result.get("refund_status") != "SUCCESS":
+            return {"code": "SUCCESS", "message": "退款尚未完成，保留待核对状态"}
+        amounts = result.get("amount") or {}
+        if amounts.get("total") != int(Decimal(str(payment.amount)) * 100):
+            raise HTTPException(400, "Refund total mismatch")
+        amount = amounts.get("refund")
+        if not isinstance(amount, int) or isinstance(amount, bool):
+            raise HTTPException(400, "Invalid refund amount")
+        complete_refund(db, refund, provider_id=result.get("refund_id", ""), amount=Decimal(amount)/100,
+            currency=amounts.get("currency", ""), payload=body)
+    except (ValueError, KeyError, TypeError) as exc:
+        raise HTTPException(400, "Invalid refund notification") from exc
+    return {"code": "SUCCESS", "message": "成功"}

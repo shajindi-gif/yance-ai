@@ -1,0 +1,7 @@
+Verify and package without production access	Verify backend	2026-10-27T21:18:52.8683984Z TOTAL                                              9142   1733    81%
+Verify and package without production access	Verify backend	2026-10-27T21:18:53.3169784Z 242 passed, 2 warnings in 33.64s
+Verify and package without production access	Verify frontend	2026-10-27T21:19:00.1991020Z found 0 vulnerabilities
+Verify and package without production access	Verify frontend	2026-10-27T21:19:00.6348030Z found 0 vulnerabilities
+Verify and package without production access	Verify frontend	2026-10-27T21:19:04.9577320Z # tests 6
+Verify and package without production access	Verify frontend	2026-10-27T21:19:04.9577773Z # pass 6
+Verify and package without production access	Verify frontend	2026-10-27T21:19:04.9577994Z # fail 0

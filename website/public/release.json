@@ -1,5 +1,6 @@
 {
-  "release": "web-20261020-01",
-  "scope": "website",
-  "apiCompatibility": "capability-negotiated"
+  "release": "sms-20261029-01",
+  "scope": "website-and-backend",
+  "compatibility": "legacy-workspace-supported",
+  "backendUpgradeIncluded": true
 }

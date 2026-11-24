@@ -1,0 +1,52 @@
+
+Running 2 tests using 1 worker
+
+(node:8280) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 [chromium] › e2e/browser-compatibility.spec.ts:6:7 › firefox: public pages and read-only workspace remain usable (2.4s)
+(node:8298) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 [chromium] › e2e/browser-compatibility.spec.ts:6:7 › webkit: public pages and read-only workspace remain usable (10.1s)
+
+
+  1) [chromium] › e2e/browser-compatibility.spec.ts:6:7 › firefox: public pages and read-only workspace remain usable 
+
+    Error: browserType.launch: Failed to launch the browser process.
+    Browser logs:
+
+    <launching> /Users/shajindi/Library/Caches/ms-playwright/firefox-1543/firefox/Nightly.app/Contents/MacOS/firefox -no-remote -headless -profile /private/tmp/playwright_firefoxdev_profile-nhUYQc -juggler-pipe -silent
+    <launched> pid=8281
+    [pid=8281][err] *** You are running in headless mode.
+    [pid=8281][err] Could not find profile folder.
+    [pid=8281] <process did exit: exitCode=1, signal=null>
+    [pid=8281] starting temporary directories cleanup
+    Call log:
+      - <launching> /Users/shajindi/Library/Caches/ms-playwright/firefox-1543/firefox/Nightly.app/Contents/MacOS/firefox -no-remote -headless -profile /private/tmp/playwright_firefoxdev_profile-nhUYQc -juggler-pipe -silent
+      - <launched> pid=8281
+      - [pid=8281][err] *** You are running in headless mode.
+      - [pid=8281][err] Could not find profile folder.
+      - [pid=8281] <process did exit: exitCode=1, signal=null>
+      - [pid=8281] starting temporary directories cleanup
+      - [pid=8281] <gracefully close start>
+      - [pid=8281] <kill>
+      - [pid=8281] <skipped force kill spawnedProcess.killed=false processClosed=true>
+      - [pid=8281] finished temporary directories cleanup
+      - [pid=8281] <gracefully close end>
+
+
+       7 |     test.skip(!existsSync(engine.executablePath()),'Browser engine is not installed');
+       8 |     expect(new URL(baseURL!).hostname).toMatch(/^(localhost|127\.0\.0\.1)$/);
+    >  9 |     const browser=await engine.launch();
+         |                                ^
+      10 |     try {
+      11 |       for (const width of [1440,768,390]) {
+      12 |         const context=await browser.newContext({baseURL,viewport:{width,height:900}});
+        at /Users/shajindi/yance-backup/yance/website/e2e/browser-compatibility.spec.ts:9:32
+
+    Error: ENOENT: no such file or directory, open '/Users/shajindi/yance-backup/yance/website/test-results/.playwright-artifacts-0/7763135bd0589197ab7081f867756a01.zip'
+
+    Error Context: test-results/browser-compatibility-fire-7100d-nly-workspace-remain-usable-chromium/error-context.md
+
+  1 failed
+    [chromium] › e2e/browser-compatibility.spec.ts:6:7 › firefox: public pages and read-only workspace remain usable 
+  1 passed (13.1s)

@@ -1,0 +1,325 @@
+[
+  {
+    "width": 1440,
+    "path": "/",
+    "violations": [
+      {
+        "id": "label-content-name-mismatch",
+        "impact": "serious",
+        "description": "Ensure that elements labelled through their content must have their visible text as part of their accessible name",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/label-content-name-mismatch?application=playwright",
+        "nodes": [
+          {
+            "target": [
+              ".yc-chat-trigger"
+            ],
+            "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "count": 2
+      }
+    ],
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "path": "/pricing",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "target": [
+              ".card > ul > li:nth-child(1)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.42 (foreground color: #64748b, background color: #f7f7f2, font size: 10.8pt (14.4px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".card > ul > li:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.42 (foreground color: #64748b, background color: #f7f7f2, font size: 10.8pt (14.4px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".card > ul > li:nth-child(3)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.42 (foreground color: #64748b, background color: #f7f7f2, font size: 10.8pt (14.4px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              "li:nth-child(4)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.42 (foreground color: #64748b, background color: #f7f7f2, font size: 10.8pt (14.4px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "label-content-name-mismatch",
+        "impact": "serious",
+        "description": "Ensure that elements labelled through their content must have their visible text as part of their accessible name",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/label-content-name-mismatch?application=playwright",
+        "nodes": [
+          {
+            "target": [
+              ".yc-chat-trigger"
+            ],
+            "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "count": 5
+      }
+    ],
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "path": "/login",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "target": [
+              ".yc-auth-tab[type=\"button\"]:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".yc-auth-tabs.jsx-a0b49bde7a81c3af:nth-child(3) > .yc-auth-tab:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "label-content-name-mismatch",
+        "impact": "serious",
+        "description": "Ensure that elements labelled through their content must have their visible text as part of their accessible name",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/label-content-name-mismatch?application=playwright",
+        "nodes": [
+          {
+            "target": [
+              ".yc-chat-trigger"
+            ],
+            "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "count": 1
+      }
+    ],
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "path": "/about",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "target": [
+              ".section-alt.section:nth-child(5) > .container > .grid-3.grid > .card:nth-child(3) > div"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.64 (foreground color: #f97316, background color: #fff7ed, font size: 18.0pt (24px), font weight: bold). Expected contrast ratio of 3:1"
+          }
+        ]
+      },
+      {
+        "id": "label-content-name-mismatch",
+        "impact": "serious",
+        "description": "Ensure that elements labelled through their content must have their visible text as part of their accessible name",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/label-content-name-mismatch?application=playwright",
+        "nodes": [
+          {
+            "target": [
+              ".yc-chat-trigger"
+            ],
+            "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "count": 5
+      }
+    ],
+    "overflow": false
+  },
+  {
+    "width": 1440,
+    "path": "/privacy",
+    "violations": [
+      {
+        "id": "label-content-name-mismatch",
+        "impact": "serious",
+        "description": "Ensure that elements labelled through their content must have their visible text as part of their accessible name",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/label-content-name-mismatch?application=playwright",
+        "nodes": [
+          {
+            "target": [
+              ".yc-chat-trigger"
+            ],
+            "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "count": 1
+      }
+    ],
+    "overflow": false
+  },
+  {
+    "width": 768,
+    "path": "/",
+    "violations": [
+      {
+        "id": "label-content-name-mismatch",
+        "impact": "serious",
+        "description": "Ensure that elements labelled through their content must have their visible text as part of their accessible name",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/label-content-name-mismatch?application=playwright",
+        "nodes": [
+          {
+            "target": [
+              ".yc-chat-trigger"
+            ],
+            "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "count": 2
+      }
+    ],
+    "overflow": false
+  },
+  {
+    "width": 768,
+    "path": "/login",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "target": [
+              ".yc-auth-tab[type=\"button\"]:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".yc-auth-tabs.jsx-a0b49bde7a81c3af:nth-child(3) > .yc-auth-tab:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      },
+      {
+        "id": "label-content-name-mismatch",
+        "impact": "serious",
+        "description": "Ensure that elements labelled through their content must have their visible text as part of their accessible name",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/label-content-name-mismatch?application=playwright",
+        "nodes": [
+          {
+            "target": [
+              ".yc-chat-trigger"
+            ],
+            "summary": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "count": 1
+      }
+    ],
+    "overflow": false
+  },
+  {
+    "width": 390,
+    "path": "/",
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "count": 1
+      }
+    ],
+    "overflow": false
+  },
+  {
+    "width": 390,
+    "path": "/login",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.14/color-contrast?application=playwright",
+        "nodes": [
+          {
+            "target": [
+              ".yc-auth-tab[type=\"button\"]:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          },
+          {
+            "target": [
+              ".yc-auth-tabs.jsx-a0b49bde7a81c3af:nth-child(3) > .yc-auth-tab:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #64748b, background color: #f1f5f9, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ],
+    "incomplete": [],
+    "overflow": false
+  }
+]

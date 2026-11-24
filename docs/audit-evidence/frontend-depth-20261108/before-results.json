@@ -1,0 +1,92 @@
+[
+  {
+    "name": "home",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "discover",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "application",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "login",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "orders",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "pricing",
+    "width": 390,
+    "overflow": false
+  },
+  {
+    "name": "home",
+    "width": 768,
+    "overflow": false
+  },
+  {
+    "name": "discover",
+    "width": 768,
+    "overflow": false
+  },
+  {
+    "name": "application",
+    "width": 768,
+    "overflow": false
+  },
+  {
+    "name": "login",
+    "width": 768,
+    "overflow": false
+  },
+  {
+    "name": "orders",
+    "width": 768,
+    "overflow": false
+  },
+  {
+    "name": "pricing",
+    "width": 768,
+    "overflow": false
+  },
+  {
+    "name": "home",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "name": "discover",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "name": "application",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "name": "login",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "name": "orders",
+    "width": 1440,
+    "overflow": false
+  },
+  {
+    "name": "pricing",
+    "width": 1440,
+    "overflow": false
+  }
+]

@@ -19,6 +19,8 @@ from app.models.models import (
     Feedback,
     Invoice,
     Order,
+    Payment,
+    PaymentEvent,
     Policy,
     PolicyScan,
     Tenant,
@@ -70,6 +72,35 @@ def _real_policy_count(db: Session) -> int:
     )
 
 
+def _confirmed_order_payment():
+    receipt = (
+        select(PaymentEvent.id)
+        .where(
+            PaymentEvent.payment_id == Payment.id,
+            PaymentEvent.tenant_id == Payment.tenant_id,
+            PaymentEvent.provider == Payment.provider,
+            PaymentEvent.status == "processed",
+        )
+        .correlate(Payment)
+        .exists()
+    )
+    return (
+        select(Payment.id)
+        .where(
+            Payment.order_id == Order.id,
+            Payment.tenant_id == Order.tenant_id,
+            Payment.provider.in_(["alipay", "wechat", "stripe"]),
+            Payment.status == "completed",
+            Order.amount > 0,
+            Payment.amount == Order.amount,
+            Payment.currency == Order.currency,
+            receipt,
+        )
+        .correlate(Order)
+        .exists()
+    )
+
+
 def investor_metrics(db: Session) -> dict:
     now = datetime.now(UTC)
     active_since = now - timedelta(days=30)
@@ -85,7 +116,7 @@ def investor_metrics(db: Session) -> dict:
     revenue_rows = db.execute(
         select(Order.currency, func.coalesce(func.sum(Order.amount), 0))
         .join(Tenant, Order.tenant_id == Tenant.id)
-        .where(Order.status == "paid", Tenant.is_demo.is_(False))
+        .where(Order.status == "paid", Tenant.is_demo.is_(False), _confirmed_order_payment())
         .group_by(Order.currency)
         .order_by(Order.currency)
     ).all()
@@ -97,6 +128,17 @@ def investor_metrics(db: Session) -> dict:
                 AnalyticsEvent.name.in_([name for name, _ in FUNNEL_STEPS]),
                 AnalyticsEvent.source == "server",
                 Tenant.is_demo.is_(False),
+                or_(
+                    AnalyticsEvent.name != "payment_completed",
+                    select(Order.id)
+                    .where(
+                        Order.tenant_id == AnalyticsEvent.tenant_id,
+                        Order.status == "paid",
+                        _confirmed_order_payment(),
+                    )
+                    .correlate(AnalyticsEvent)
+                    .exists(),
+                ),
             )
             .group_by(AnalyticsEvent.name)
         ).all()
@@ -197,9 +239,14 @@ def investor_metrics(db: Session) -> dict:
             db.scalar(
                 select(func.count(distinct(Order.tenant_id)))
                 .join(Tenant, Order.tenant_id == Tenant.id)
-                .where(Order.status == "paid", Tenant.is_demo.is_(False))
+                .where(
+                    Order.status == "paid", Tenant.is_demo.is_(False), _confirmed_order_payment()
+                )
             )
             or 0
+        ),
+        "unverified_paid_orders": _real_tenant_count(
+            db, Order, Order.status == "paid", ~_confirmed_order_payment()
         ),
         "llm_cost_usd": round(llm_cost, 6),
         "cost_per_run_usd": round(llm_cost / total_runs, 6) if total_runs else None,
@@ -219,8 +266,9 @@ def investor_metrics(db: Session) -> dict:
             "reports_generated": "Server-owned report_generated events; there is no standalone Report table.",
             "documents_generated": "Persisted ApplicationArtifact versions.",
             "poc_accounts": "Tenants explicitly classified with account_stage=poc.",
-            "paying_customers": "Distinct tenants with at least one paid Order.",
-            "revenue": "Sum of paid Order amounts, separated by currency.",
+            "paying_customers": "Distinct non-demo tenants with a paid order, matching completed real-channel payment and processed provider receipt.",
+            "revenue": "Paid orders with matching completed alipay/wechat/stripe payments and processed receipts, once per order and separated by currency. Excludes demo/mock and unverified history; not a bank-statement reconciliation claim.",
+            "unverified_paid_orders": "Paid order status without matching real-channel payment evidence; retained in order history and excluded from revenue.",
             "llm_cost_usd": "Sum of persisted AgentRun.cost_usd; deterministic runs record zero.",
             "cost_per_run_usd": "Total persisted AgentRun cost divided by all Agent Runs.",
             "funnel": "Distinct organizations with each server-owned milestone event; not cohort-normalized.",
@@ -270,9 +318,7 @@ def system_health(db: Session) -> dict:
                 db, Document, Document.ingestion_status == "failed"
             ),
         },
-        "errors_24h": _real_tenant_count(
-            db, AgentRunError, AgentRunError.occurred_at >= day_ago
-        ),
+        "errors_24h": _real_tenant_count(db, AgentRunError, AgentRunError.occurred_at >= day_ago),
         "open_feedback": _real_tenant_count(
             db, Feedback, Feedback.status.in_(["open", "reviewing"])
         ),

@@ -1,0 +1,15 @@
+> yance-website@0.1.0 test:e2e
+> playwright test e2e/audit-journey.spec.ts e2e/frontend-redesign.spec.ts --grep password login|mobile login|visible Chinese
+
+
+Running 3 tests using 1 worker
+
+(node:51041) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [chromium] › e2e/audit-journey.spec.ts:5:5 › password login recovers from an error and logout revokes the saved session (1.3s)
+  ✓  2 [chromium] › e2e/audit-journey.spec.ts:46:5 › mobile login has no horizontal page overflow and the first keyboard target is visible (210ms)
+(node:51072) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  3 [chromium] › e2e/frontend-redesign.spec.ts:118:5 › login and registration fields expose their visible Chinese labels (195ms)
+
+  3 passed (2.6s)

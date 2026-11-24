@@ -12,6 +12,7 @@ import AppShell from "@/components/workspace/AppShell";
 import content from "@/components/workspace/WorkspaceContent.module.css";
 import flow from "@/components/workspace/CoreWorkflow.module.css";
 import api, { type ApplicationSummary, type MilestoneItem } from "@/lib/api";
+import pageStyles from './page.module.css';
 
 const STAGES: { key: string; label: string; statuses: string[] }[] = [
   { key: "pipeline", label: "准备中", statuses: ["draft", "preparing", "revision_requested"] },
@@ -140,7 +141,7 @@ export default function ProjectsPage() {
                   <Badge tone="neutral">{stage.items.length}</Badge>
                 </div>
                 {stage.items.length === 0 ? (
-                  <div className={content.subtle} style={{ fontSize: 13, padding: "8px 0" }}>暂无</div>
+                  <div className={[content.subtle, pageStyles.section].filter(Boolean).join(' ')} >暂无</div>
                 ) : (
                   <div className={content.rows}>
                     {stage.items.map((application) => (
@@ -148,17 +149,12 @@ export default function ProjectsPage() {
                         key={application.id}
                         type="button"
                         onClick={() => setSelectedId(application.id)}
-                        className={content.row}
-                        style={{
-                          textAlign: "left",
-                          cursor: "pointer",
-                          border: selectedId === application.id ? "1px solid #126a9a" : undefined,
-                          background: selectedId === application.id ? "#f2f8fc" : undefined,
-                        }}
+                        className={[content.row, pageStyles.inlineAction].filter(Boolean).join(' ')}
+                        style={{ border: selectedId === application.id ? "1px solid #126a9a" : undefined, background: selectedId === application.id ? "#f2f8fc" : undefined }}
                       >
-                        <div style={{ minWidth: 0 }}>
+                        <div className={pageStyles.section2}>
                           <strong>{application.title}</strong>
-                          <div className={content.subtle} style={{ fontSize: 12 }}>
+                          <div className={[content.subtle, pageStyles.section3].filter(Boolean).join(' ')} >
                             {application.due_at
                               ? `截止 ${new Date(application.due_at).toLocaleDateString("zh-CN")}`
                               : "未设截止日"}
@@ -177,11 +173,11 @@ export default function ProjectsPage() {
           </div>
 
           {selected ? (
-            <section className={content.card} style={{ marginTop: 20 }}>
+            <section className={[content.card, pageStyles.section4].filter(Boolean).join(' ')} >
               <div className={content.cardHeader}>
                 <div>
                   <strong>里程碑 · {selected.title}</strong>
-                  <div className={content.subtle} style={{ fontSize: 12, marginTop: 4 }}>
+                  <div className={[content.subtle, pageStyles.section5].filter(Boolean).join(' ')} >
                     {selected.status === "completed" || selected.status === "submitted"
                       ? "获批/提交后在此管理验收材料、报告义务与拨款节点。"
                       : "为准备过程添加可跟踪的节点，截止提醒会自动进入通知。"}
@@ -191,40 +187,40 @@ export default function ProjectsPage() {
                   进入申报工作区
                 </Link>
               </div>
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+              <div className={pageStyles.layout}>
                 <input
                   value={newTitle}
                   onChange={(event) => setNewTitle(event.target.value)}
                   placeholder="里程碑名称（如：提交软著申请）"
-                  style={{ flex: 1, minWidth: 220, padding: "10px 12px", border: "1px solid #dde3eb", borderRadius: 8, fontSize: 13 }}
+                  className={pageStyles.section6}
                 />
                 <input
                   type="date"
                   value={newDue}
                   onChange={(event) => setNewDue(event.target.value)}
                   aria-label="计划完成日期"
-                  style={{ padding: "9px 12px", border: "1px solid #dde3eb", borderRadius: 8, fontSize: 13 }}
+                  className={pageStyles.section7}
                 />
                 <Button onClick={addMilestone} disabled={newTitle.trim().length < 2}>添加</Button>
               </div>
               {milestoneLoading ? (
-                <div className={content.subtle} style={{ fontSize: 13 }}>加载里程碑…</div>
+                <div className={[content.subtle, pageStyles.section8].filter(Boolean).join(' ')} >加载里程碑…</div>
               ) : milestones.length === 0 ? (
-                <div className={content.subtle} style={{ fontSize: 13 }}>暂无里程碑。</div>
+                <div className={[content.subtle, pageStyles.section8].filter(Boolean).join(' ')} >暂无里程碑。</div>
               ) : (
                 <div className={content.rows}>
                   {milestones.map((milestone) => (
                     <div key={milestone.id} className={content.row}>
-                      <div style={{ minWidth: 0 }}>
+                      <div className={pageStyles.section2}>
                         <strong style={{ textDecoration: milestone.status === "done" ? "line-through" : undefined }}>
                           {milestone.title}
                         </strong>
-                        <div className={content.subtle} style={{ fontSize: 12 }}>
+                        <div className={[content.subtle, pageStyles.section3].filter(Boolean).join(' ')} >
                           {milestone.due_at ? `计划 ${new Date(milestone.due_at).toLocaleDateString("zh-CN")}` : "无期限"}
                           {milestone.completion_note ? ` · ${milestone.completion_note}` : ""}
                         </div>
                       </div>
-                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <div className={pageStyles.layout2}>
                         <Badge tone={MILESTONE_TONE[milestone.status] || "neutral"}>{MILESTONE_LABEL[milestone.status] || milestone.status}</Badge>
                         <Button variant="secondary" onClick={() => void cycleStatus(milestone)}>
                           {milestone.status === "todo" ? "开始" : milestone.status === "doing" ? "完成" : "重开"}

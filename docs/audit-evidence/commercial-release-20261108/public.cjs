@@ -1,0 +1,5 @@
+const {createRequire}=require('module');const fs=require('fs');
+const req=createRequire('/Users/shajindi/yance-backup/yance/website/package.json');const {chromium}=req('playwright');
+(async()=>{const b=await chromium.launch();const out='/Users/shajindi/yance-backup/yance/docs/audit-evidence/commercial-release-20261108/';let results=[];
+for(const width of [1440,390]){const c=await b.newContext({viewport:{width,height:900}});await c.route('**/*',r=>{let u=new URL(r.request().url());return r.request().method()==='GET' && ['yance.ai','api.yance.ai'].includes(u.hostname)?r.continue():r.abort()});const p=await c.newPage();for(const route of ['/','/pricing','/login']){let start=Date.now();await p.goto('https://yance.ai'+route);await p.screenshot({path:out+`production-${width}-${route.replaceAll('/','')||'home'}.png`,fullPage:true});results.push({width,route,elapsed_ms:Date.now()-start,overflow:await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth)});}await c.close();}
+fs.writeFileSync(out+'public-browser.json',JSON.stringify(results,null,2));await b.close()})().catch(e=>{console.error(e);process.exit(1)});

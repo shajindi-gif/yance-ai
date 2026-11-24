@@ -1,0 +1,17 @@
+# Log rotation for the host-native collector.
+# copytruncate is required: systemd holds the file descriptor open via
+# StandardOutput=append:/..., so the process must not be asked to reopen it.
+/var/log/yance/collector.log /var/log/yance/collector.err.log /var/log/yance/guard.log {
+    daily
+    rotate 14
+    maxsize 100M
+    missingok
+    notifempty
+    compress
+    delaycompress
+    copytruncate
+    create 0640 yancecoll adm
+    dateext
+    dateformat -%Y%m%d
+    su yancecoll adm
+}

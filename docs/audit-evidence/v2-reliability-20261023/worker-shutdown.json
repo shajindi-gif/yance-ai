@@ -1,0 +1,1 @@
+{"results": [{"worker": "agent_worker", "exit_code": 0, "sigterm_passed": true}, {"worker": "notification_worker", "exit_code": 0, "sigterm_passed": true}], "external_email_enabled": false}
