@@ -196,11 +196,23 @@ def _verify_with_key(message: str, signature_b64: str) -> bool:
         return False
 
 
+NOTIFY_MAX_SKEW_SECONDS = 300
+
+
 def verify_notify_signature(
     timestamp: str, nonce: str, body: str, signature_b64: str, serial: str
 ) -> bool:
     """Verify callback signature using the WeChat Pay public key (PUB_KEY_ID mode)."""
     if not settings.wxpay_pubkey:
+        return False
+    # ACC-17: WeChat Pay recommends rejecting callbacks whose timestamp is more
+    # than 5 minutes from now; settlement is idempotent, but replays should not
+    # reach it at all.
+    try:
+        skew = abs(time.time() - int(timestamp))
+    except (TypeError, ValueError):
+        return False
+    if skew > NOTIFY_MAX_SKEW_SECONDS:
         return False
     # In public-key mode the callback serial is the configured PUB_KEY_ID.
     if settings.wxpay_pubkey_id and serial != settings.wxpay_pubkey_id:

@@ -2,6 +2,7 @@
 
 import base64
 import json
+import time
 
 import pytest
 from Crypto.Cipher import AES
@@ -41,7 +42,8 @@ def test_sign_and_verify_are_symmetric(wechat_test_keys):
 
 
 def test_notify_signature_verification_matches_scheme(wechat_test_keys):
-    timestamp, nonce, body = "1700000000", "ABC123", '{"id":"evt"}'
+    # Current time: ACC-17 rejects callbacks outside a 5-minute window.
+    timestamp, nonce, body = str(int(time.time())), "ABC123", '{"id":"evt"}'
     message = f"{timestamp}\n{nonce}\n{body}\n"
     signer = PKCS1_v1_5.new(wechat_test_keys)
     signature = base64.b64encode(signer.sign(SHA256.new(message.encode()))).decode()
@@ -87,3 +89,14 @@ def test_transaction_identity_must_match_merchant_and_app(wechat_test_keys):
     assert wx.trade_identity_matches({"mchid":"1900000001", "appid":"wxtestappid"})
     assert not wx.trade_identity_matches({"mchid":"foreign", "appid":"wxtestappid"})
     assert not wx.trade_identity_matches({"mchid":"1900000001", "appid":"foreign"})
+
+
+@pytest.mark.parametrize("offset", [-301, 301, None])
+def test_notify_rejects_stale_future_or_malformed_timestamps(wechat_test_keys, offset):
+    """ACC-17: a validly signed callback outside the freshness window is a replay."""
+    timestamp = "not-a-number" if offset is None else str(int(time.time()) + offset)
+    nonce, body = "ABC123", '{"id":"evt"}'
+    message = f"{timestamp}\n{nonce}\n{body}\n"
+    signer = PKCS1_v1_5.new(wechat_test_keys)
+    signature = base64.b64encode(signer.sign(SHA256.new(message.encode()))).decode()
+    assert wx.verify_notify_signature(timestamp, nonce, body, signature, "PUB_KEY_ID_TEST") is False
