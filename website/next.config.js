@@ -17,6 +17,9 @@ const securityHeaders = [
 const nextConfig = {
   output: 'standalone',
   poweredByHeader: false,
+  experimental: {
+    agentUpgrade: 'security',
+  },
   async headers() {
     return [
       ...['admin','dashboard','onboarding','orders','billing','settings','tasks','companies',

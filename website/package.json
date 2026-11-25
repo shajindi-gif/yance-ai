@@ -13,7 +13,7 @@
     "postbuild": "node scripts/prepare-standalone.mjs"
   },
   "dependencies": {
-    "next": "16.4.3",
+    "next": "16.4.6",
     "qrcode": "^1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8"
