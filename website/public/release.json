@@ -1,5 +1,5 @@
 {
-  "release": "sms-20261029-01",
+  "release": "website-20261125-next1646",
   "scope": "website-and-backend",
   "compatibility": "legacy-workspace-supported",
   "backendUpgradeIncluded": true
