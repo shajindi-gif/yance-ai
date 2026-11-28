@@ -62,14 +62,18 @@ def test_window_resets_after_expiry():
 
 
 def test_login_failure_counter_and_success_clear():
+    # ACC-02: success clears only the authenticated account's counter, never the
+    # shared IP counter (the previous expectation here was the bypass itself).
     with SessionLocal() as db:
         ip = f"7.7.{uuid.uuid4().int % 250}.5"
-        assert rl.login_is_limited(db, ip) is False
+        email = f"unit-{uuid.uuid4().hex[:8]}@example.com"
+        assert rl.login_is_limited(db, ip, email) is False
         for _ in range(rl.LOGIN_FAIL_LIMIT):
-            assert rl.login_failure(db, ip) is True
-        assert rl.login_is_limited(db, ip) is True
-        rl.login_success(db, ip)
-        assert rl.login_is_limited(db, ip) is False
+            assert rl.login_failure(db, ip, email) is True
+        assert rl.login_is_limited(db, ip, email) is True
+        rl.login_success(db, email)
+        assert rl.login_is_limited(db, ip, email) is False
+        assert db.get(AuthRateLimit, f"loginfail:{ip}").count == rl.LOGIN_FAIL_LIMIT
 
 
 # ── endpoint level (multi-worker-safe by construction: shared DB) ─────
@@ -162,6 +166,8 @@ def test_successful_login_clears_failure_counter():
         )
         assert r.status_code == 401, "counter should have been cleared by the successful login"
     with SessionLocal() as db:
-        assert db.get(AuthRateLimit, f"loginfail:{ip}") is None or (
-            db.get(AuthRateLimit, f"loginfail:{ip}").count < rl.LOGIN_FAIL_LIMIT
-        )
+        # ACC-02: the account counter was cleared by its own success; the shared
+        # IP counter keeps counting but stays under the higher IP limit.
+        account = db.get(AuthRateLimit, f"loginfail-acct:{email}")
+        assert account is not None and account.count < rl.LOGIN_FAIL_LIMIT
+        assert db.get(AuthRateLimit, "loginfail:testclient").count < rl.LOGIN_IP_FAIL_LIMIT

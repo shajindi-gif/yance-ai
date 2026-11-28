@@ -23,7 +23,16 @@ from app.models.models import AuthRateLimit, now_utc
 REGISTER_WINDOW_SECONDS = 3600
 REGISTER_LIMIT = 5  # per IP per hour (matches the previous documented intent)
 LOGIN_FAIL_WINDOW_SECONDS = 900
-LOGIN_FAIL_LIMIT = 10  # failed logins per IP per 15 minutes
+# Failed logins per *account* per 15 minutes. Cleared only by that account's own
+# successful login. Trade-off: anyone can lock a known account for one window by
+# guessing wrong, so the limit is not set lower and the 429 text never reveals
+# whether the account exists.
+LOGIN_FAIL_LIMIT = 10
+# Failed logins per *source IP* per 15 minutes, across all accounts (stops
+# password spraying). Never cleared by a successful login — any account's
+# success resetting it was the ACC-02 bypass. Higher than the account limit so
+# one office NAT is not locked out by a few typos.
+LOGIN_IP_FAIL_LIMIT = 30
 
 
 def _upsert_hit(db: Session, key: str, window_seconds: int, limit: int) -> int | None:
@@ -70,20 +79,31 @@ def register_attempt(db: Session, client_ip: str) -> bool:
     return _upsert_hit(db, key, REGISTER_WINDOW_SECONDS, REGISTER_LIMIT) is not None
 
 
-def login_is_limited(db: Session, client_ip: str) -> bool:
-    """True when this IP is currently blocked by the failed-login limiter."""
+def _account_key(email: str) -> str:
+    return f"loginfail-acct:{email.strip().lower()}"
+
+
+def _ip_key(client_ip: str) -> str:
+    return f"loginfail:{client_ip}"
+
+
+def login_is_limited(db: Session, client_ip: str, email: str) -> bool:
+    """True when either the source IP or the target account is currently blocked."""
     return not is_allowed(
-        db, f"loginfail:{client_ip}", limit=LOGIN_FAIL_LIMIT, window_seconds=LOGIN_FAIL_WINDOW_SECONDS
+        db, _ip_key(client_ip), limit=LOGIN_IP_FAIL_LIMIT, window_seconds=LOGIN_FAIL_WINDOW_SECONDS
+    ) or not is_allowed(
+        db, _account_key(email), limit=LOGIN_FAIL_LIMIT, window_seconds=LOGIN_FAIL_WINDOW_SECONDS
     )
 
 
-def login_failure(db: Session, client_ip: str) -> bool:
-    """Record a failed login; False means over limit (429)."""
-    key = f"loginfail:{client_ip}"
-    return _upsert_hit(db, key, LOGIN_FAIL_WINDOW_SECONDS, LOGIN_FAIL_LIMIT) is not None
+def login_failure(db: Session, client_ip: str, email: str) -> bool:
+    """Record a failed login against both the IP and the account; False means over limit."""
+    ip_ok = _upsert_hit(db, _ip_key(client_ip), LOGIN_FAIL_WINDOW_SECONDS, LOGIN_IP_FAIL_LIMIT)
+    account_ok = _upsert_hit(db, _account_key(email), LOGIN_FAIL_WINDOW_SECONDS, LOGIN_FAIL_LIMIT)
+    return ip_ok is not None and account_ok is not None
 
 
-def login_success(db: Session, client_ip: str) -> None:
-    """Clear the failed-login counter for a successful authentication."""
-    db.query(AuthRateLimit).filter(AuthRateLimit.key == f"loginfail:{client_ip}").delete()
+def login_success(db: Session, email: str) -> None:
+    """Clear only the authenticated account's own counter (never the shared IP counter)."""
+    db.query(AuthRateLimit).filter(AuthRateLimit.key == _account_key(email)).delete()
     db.commit()
