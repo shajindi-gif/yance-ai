@@ -292,8 +292,6 @@ def sources_for(db, principal, company, question, limit):
             .limit(2)
         ).all()
         for chunk in chunks:
-            if len(sources) >= limit:
-                break
             if not _checked_passage(version, chunk):
                 continue
             sources.append(
@@ -311,6 +309,13 @@ def sources_for(db, principal, company, question, limit):
                     "review_state": review_state,
                 }
             )
+    # Verified sources first, then unreviewed readings, each group keeping its
+    # retrieval rank: undated or collected records must not crowd a verified
+    # policy out of the evidence slots.
+    sources.sort(key=lambda item: item["evidence_grade"] != "verified")
+    sources = sources[:limit]
+    for position, item in enumerate(sources, start=1):
+        item["index"] = position
     seen = {item["policy_id"] for item in sources}
     if len(sources) >= limit:
         return sources
@@ -581,7 +586,9 @@ async def ask(
                     text = (
                         "证据不足：模型未给出可逐字核对的条款。请查看检索原文，或进入项目补充证明。"
                     )
-                elif sources and all(item.get("evidence_grade") == "reading" for item in sources):
+                elif any(item.get("evidence_grade") == "reading" for item in citations):
+                    # The disclaimer follows what the answer actually cites: one cited
+                    # unreviewed reading is enough, whatever else was retrieved.
                     text = _READING_PREFIX + text
             with SessionLocal() as auth_db:
                 if not still_authorized(auth_db, principal):

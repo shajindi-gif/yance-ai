@@ -432,9 +432,12 @@ def test_collected_policy_is_read_by_ask_without_an_eligibility_claim(monkeypatc
             db.commit()
 
         async def stream(*args, **kwargs):
+            # Cite the collected reading by content, not by position: verified
+            # sources rank first, and the disclaimer must follow what is cited.
             sources = json.loads(args[1][1]["content"])["sources"]
-            quote = sources[0]["policy_quote"]
-            yield json.dumps({"claims": [{"text": quote, "source": 1, "policy_quote": quote}]})
+            cited = next(item for item in sources if marker in item["policy_quote"])
+            quote = cited["policy_quote"]
+            yield json.dumps({"claims": [{"text": quote, "source": cited["index"], "policy_quote": quote}]})
 
         monkeypatch.setattr(workspace.gateway, "complete_stream", stream)
         response = client.post(
