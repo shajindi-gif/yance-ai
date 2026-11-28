@@ -58,6 +58,8 @@ async def request_logging(request: Request, call_next):
         path=request.url.path,
         status_code=response.status_code,
         duration_ms=duration_ms,
+        # ACC-04: lets operators confirm the real client address survives the proxy hop.
+        client_ip=request.client.host if request.client else None,
     )
     structlog.contextvars.clear_contextvars()
     return response
