@@ -14,14 +14,11 @@
 
 ## 0. 前置条件（含本次踩到的两个坑）
 
-### 0.1 服务器上的非 Git 改动必须先提交
+### 0.1 先确认线上没有未入库的热修
 
-本次核对发现线上代码与 `origin/feat/phase-a-foundation` 不一致的两处：
+线上曾出现过直接在服务器改代码、Git 里没有对应提交的情况，这类改动会在发版时静默丢失。发版前必须做一次镜像级的文件比对（命令见 1.3），确认「旧镜像里有的文件、新分支里都有；内容有差异的文件、都能在 `git log` 里对上提交」。
 
-- `yance-ai/app/services/policy_collection/policy_dates.py`
-- `yance-ai/app/services/policy_collection/scheduler.py`
-
-均为此前热修、Git 里没有。**这类改动一旦发版必然回潮。** 发版前必须做一次容器内源码与本分支的哈希比对（命令见 1.3），把热修改补成提交并合入分支。
+**本次核对结论**：旧镜像 `opportunity-20261119-rank01` 与新镜像各 236 个 py 文件，文件集合完全一致（无「旧有新无」），仅 11 个文件内容不同，全部可对应到本分支的提交。**未发现未入库热修，无需回补。**
 
 ### 0.2 镜像必须自己先构建
 
@@ -51,15 +48,19 @@ docker ps --format '{{.Names}}\t{{.Image}}\t{{.Status}}'
 sudo grep -E '^(FORWARDED_ALLOW_IPS|LOG_LEVEL|AGENT_LOG_PROMPTS)=' /opt/yance/releases/sms-20261029-01/yance-ai/.env.prod
 ```
 
-### 1.3 比对容器内源码与分支（关键，用于发现 0.1 的热修）
+### 1.3 镜像级文件比对（发现 0.1 所述热修的手段）
 
 ```bash
-# 逐个 py 文件比哈希：容器内 vs 本分支
-docker exec yance-prod-api-1 find /app -name '*.py' -type f | while read f; do \
-  docker exec yance-prod-api-1 sha256sum "$f"; done | sort -k2 > /tmp/live.txt
+docker run --rm --entrypoint sh yance-backend:opportunity-20261119-rank01 -c \
+  'cd /app && find . -name "*.py" | sort | xargs sha256sum' > /tmp/old.txt
+# 构建出新镜像后同样导出 /tmp/new.txt，然后：
+echo '=== 缺文件（旧有新无）==='
+comm -23 <(awk '{print $2}' /tmp/old.txt | sort) <(awk '{print $2}' /tmp/new.txt | sort)
+echo '=== 内容变更 ==='
+join -j 2 <(sort -k2 /tmp/old.txt) <(sort -k2 /tmp/new.txt) | awk '$2!=$3{print $1}'
 ```
 
-发现在 0.1 里列出的差异后，先补齐提交再继续。
+「缺文件」必须为空；「内容变更」的每一项都要能用 `git log` 解释。对不上的，先补提交再继续。
 
 ### 1.4 记录回滚起点
 
@@ -293,12 +294,11 @@ sudo bash /opt/yance/releases/opportunity-20261119-rank01/activate.sh
 | 回滚快照 | `/opt/yance/backups/backend-20261128-phase-a/rollback.services.json` |
 | 数据库备份 | `/opt/yance-backups/yance_20261128_105557.dump.gz`（80M，本机） |
 
-**发版中发现的两项**
+**发版中的核对结论**
 
-1. 线上两处热修（`policy_dates.py`、`scheduler.py`）不在 Git 中 —— 已作为 0.1 的检查项固化到流程；**热修本身尚未回补为提交，列为待办**。
+1. 新旧镜像文件级比对通过：236 / 236 个 py 文件，文件集合一致，仅 11 个文件内容变更（`auth.py`、`workspace.py`、`config.py`、`main.py`、`auth_rate_limit.py`、`url_fetcher.py`、`policy_dates.py`、`rule_seeding.py`、`scheduler.py`、`matcher.py`、`ranking.py`），**未发现未入库热修，无需回补**。
 2. 原 override 会让支付服务跟随主服务切换 —— 已在 5.2 固化为「按容器实际运行值 pin」，本次 override 已按实际值改好。
 
-**遗留 / 待办**
+**遗留**
 
-- [ ] 把 `policy_dates.py`、`scheduler.py` 两处线上热修补成提交并合入 `feat/phase-a-foundation`，否则下次发版会回潮。
 - `payment-expiry` / `payment-reconcile` 实际仍跑 `opportunity-20261118-03`（本次已在 override 中显式 pin，全量 `up -d` 不会再被带走）。代码无支付相关改动，风险低。
