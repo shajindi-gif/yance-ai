@@ -33,6 +33,7 @@ from app.services.report.ranking import (
     enforce_local_diversity,
     sort_key_for_opportunity,
 )
+
 # 行业关键词映射
 INDUSTRY_KEYWORDS = {
     "人工智能": ["AI", "人工智能", "算力", "模型", "智能", "机器学习", "深度学习", "大模型", "GPU"],

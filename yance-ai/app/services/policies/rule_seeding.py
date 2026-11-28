@@ -6,7 +6,6 @@ Intended for ops coverage of high-priority slices (e.g. Shanghai + tech SMEs).
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from typing import Any
 from uuid import UUID

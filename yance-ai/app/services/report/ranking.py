@@ -11,7 +11,6 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-
 # Titles that rarely help an SME act on subsidies / applications.
 _NOISE_TITLE_TOKENS = (
     "地理标志专用标志",
