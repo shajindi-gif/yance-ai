@@ -10,6 +10,10 @@ RUN python -m venv /opt/venv && /opt/venv/bin/pip install --upgrade pip && \
 FROM python:3.12-slim AS runtime
 
 ENV PATH="/opt/venv/bin:$PATH" PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+# ACC-12: fail closed. A container started without an explicit APP_ENV runs the
+# production validators and refuses default secrets instead of silently
+# behaving as development. Local compose and CI set APP_ENV explicitly.
+ENV APP_ENV=production
 
 # The runtime uses /opt/venv. Remove the base image's unused pip and its
 # stale vendored libraries; the builder retains its own package manager.

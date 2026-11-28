@@ -260,6 +260,15 @@ jobs:
           docker run --rm --entrypoint tesseract "yance-${{ matrix.name }}:ci" --list-langs | grep -F chi_sim
           docker run --rm --entrypoint tesseract "yance-${{ matrix.name }}:ci" --list-langs | grep -F eng
 
+      - name: Verify backend image fails closed without configuration
+        if: matrix.name == 'backend'
+        run: |
+          if docker run --rm "yance-${{ matrix.name }}:ci" python -c "import app.core.config" 2>err.txt; then
+            echo "image loaded configuration with default secrets" >&2
+            exit 1
+          fi
+          grep -F "Production secrets must be replaced" err.txt
+
   browser-e2e:
     name: Browser product journeys
     runs-on: ubuntu-latest
