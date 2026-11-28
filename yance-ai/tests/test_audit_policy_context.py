@@ -21,8 +21,9 @@ def _source():
     ("effective_at", NOW+timedelta(days=1), "尚未生效"),
     ("expires_at", NOW-timedelta(days=1), "有效期已结束"),
     ("deadline", NOW-timedelta(days=1), "申报已截止"),
-    ("expires_at", None, "日期未核实"),
-    ("deadline", None, "批次与截止日未核实"),
+    # 92256b5 made missing dates advisory with "未收录" wording; they must still be flagged.
+    ("expires_at", None, "失效日期未收录"),
+    ("deadline", None, "截止日未收录"),
 ])
 def test_context_does_not_imply_current_eligibility(field, value, message):
     policy, version = _source()
